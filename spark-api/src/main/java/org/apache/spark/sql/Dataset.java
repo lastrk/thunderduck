@@ -109,6 +109,12 @@ public class Dataset<T> {
         return orderBy(col, cols);
     }
 
+    // Join operations with various overloads
+    public Dataset<Row> join(Dataset<?> right) {
+        // Cross join (no condition)
+        return join(right, null, "cross");
+    }
+
     public Dataset<Row> join(Dataset<?> right, Column joinExpression) {
         return join(right, joinExpression, "inner");
     }
@@ -117,12 +123,60 @@ public class Dataset<T> {
     public Dataset<Row> join(Dataset<?> right, Column joinExpression, String joinType) {
         LOG.debug("Adding {} join", joinType);
         return new Dataset<>(sparkSession,
-            new Join(logicalPlan, right.logicalPlan, joinExpression.expr(), joinType),
+            new Join(logicalPlan, right.logicalPlan,
+                     joinExpression != null ? joinExpression.expr() : null,
+                     joinType),
             (Encoder<Row>) RowEncoder.apply(deriveJoinSchema(right)));
     }
 
     public Dataset<Row> join(Dataset<?> right, String usingColumn) {
-        return join(right, functions.col(usingColumn).equalTo(functions.col(usingColumn)));
+        // Natural join on same column name
+        Column leftCol = functions.col(usingColumn);
+        Column rightCol = functions.col(usingColumn);
+        return join(right, leftCol.equalTo(rightCol));
+    }
+
+
+    public Dataset<Row> join(Dataset<?> right, String[] usingColumns) {
+        if (usingColumns.length == 0) {
+            return join(right); // Cross join
+        }
+
+        Column condition = null;
+        for (String col : usingColumns) {
+            Column eq = functions.col(col).equalTo(functions.col(col));
+            condition = (condition == null) ? eq : condition.and(eq);
+        }
+        return join(right, condition);
+    }
+
+    // Convenience methods for specific join types
+    public Dataset<Row> crossJoin(Dataset<?> right) {
+        return join(right, null, "cross");
+    }
+
+    public Dataset<Row> innerJoin(Dataset<?> right, Column condition) {
+        return join(right, condition, "inner");
+    }
+
+    public Dataset<Row> leftJoin(Dataset<?> right, Column condition) {
+        return join(right, condition, "left");
+    }
+
+    public Dataset<Row> rightJoin(Dataset<?> right, Column condition) {
+        return join(right, condition, "right");
+    }
+
+    public Dataset<Row> fullOuterJoin(Dataset<?> right, Column condition) {
+        return join(right, condition, "full_outer");
+    }
+
+    public Dataset<Row> leftSemiJoin(Dataset<?> right, Column condition) {
+        return join(right, condition, "left_semi");
+    }
+
+    public Dataset<Row> leftAntiJoin(Dataset<?> right, Column condition) {
+        return join(right, condition, "left_anti");
     }
 
     public RelationalGroupedDataset groupBy(Column... columns) {

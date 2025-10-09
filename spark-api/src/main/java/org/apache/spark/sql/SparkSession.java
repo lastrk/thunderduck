@@ -3,10 +3,13 @@ package org.apache.spark.sql;
 import com.spark2sql.execution.ExecutionEngine;
 import com.spark2sql.execution.DuckDBExecutor;
 import com.spark2sql.plan.PlanBuilder;
+import com.spark2sql.plan.nodes.LocalRelation;
+import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -66,6 +69,31 @@ public class SparkSession implements AutoCloseable {
             LOG.error("Error closing execution engine", e);
             throw new RuntimeException("Failed to close SparkSession", e);
         }
+    }
+
+    // Alias for close() for compatibility with real Spark
+    public void stop() {
+        close();
+    }
+
+    // Create a DataFrame from a list of Rows
+    public Dataset<Row> createDataFrame(List<Row> rows, StructType schema) {
+        return new Dataset<>(this, new LocalRelation(rows, schema), RowEncoder.apply(schema));
+    }
+
+    // Create a DataFrame from Java beans
+    public <T> Dataset<T> createDataFrame(List<T> data, Class<T> beanClass) {
+        throw new UnsupportedOperationException("Bean-based DataFrame creation not yet supported");
+    }
+
+    // Create a DataFrame from an RDD (not supported in embedded mode)
+    public Dataset<Row> createDataFrame(Object rdd, StructType schema) {
+        throw new UnsupportedOperationException("RDD-based DataFrame creation not supported in embedded mode");
+    }
+
+    // Create an empty DataFrame with schema
+    public Dataset<Row> emptyDataFrame() {
+        return createDataFrame(new java.util.ArrayList<>(), new StructType());
     }
 
     // Package-private methods for internal use

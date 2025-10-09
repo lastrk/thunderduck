@@ -57,7 +57,7 @@ public abstract class DifferentialTestFramework {
 
     protected SparkSession createEmbeddedSparkSession() throws Exception {
         // Use our implementation
-        return com.spark2sql.SparkSession.builder()
+        return org.apache.spark.sql.SparkSession.builder()
             .appName("DifferentialTest-Embedded")
             .config("spark.sql.session.timeZone", "UTC")
             .getOrCreate();
@@ -243,12 +243,53 @@ public abstract class DifferentialTestFramework {
             );
         }
 
+        public DataFramePair orderBy(String... cols) {
+            return new DataFramePair(
+                spark.orderBy(cols[0], Arrays.copyOfRange(cols, 1, cols.length)),
+                embedded.orderBy(cols[0], Arrays.copyOfRange(cols, 1, cols.length))
+            );
+        }
+
         public void assertSameResults() {
-            DifferentialTestFramework.this.assertSameResults(spark, embedded);
+            assertSameResults(true);
         }
 
         public void assertSameResults(boolean checkOrder) {
-            DifferentialTestFramework.this.assertSameResults(spark, embedded, checkOrder);
+            // Get the containing test framework instance
+            List<Row> sparkRows = spark.collectAsList();
+            List<Row> embeddedRows = embedded.collectAsList();
+
+            assertThat(embeddedRows.size())
+                .as("Row count mismatch")
+                .isEqualTo(sparkRows.size());
+
+            if (!checkOrder) {
+                sparkRows.sort(new RowComparator());
+                embeddedRows.sort(new RowComparator());
+            }
+
+            for (int i = 0; i < sparkRows.size(); i++) {
+                Row sparkRow = sparkRows.get(i);
+                Row embeddedRow = embeddedRows.get(i);
+                assertThat(embeddedRow.length())
+                    .as("Column count mismatch at row " + i)
+                    .isEqualTo(sparkRow.length());
+
+                for (int j = 0; j < sparkRow.length(); j++) {
+                    Object sparkVal = sparkRow.get(j);
+                    Object embeddedVal = embeddedRow.get(j);
+
+                    if (sparkVal == null) {
+                        assertThat(embeddedVal)
+                            .as("Value mismatch at row " + i + ", column " + j)
+                            .isNull();
+                    } else {
+                        assertThat(embeddedVal)
+                            .as("Value mismatch at row " + i + ", column " + j)
+                            .isEqualTo(sparkVal);
+                    }
+                }
+            }
         }
     }
 

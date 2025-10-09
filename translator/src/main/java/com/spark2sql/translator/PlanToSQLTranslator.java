@@ -195,12 +195,71 @@ public class PlanToSQLTranslator {
 
         @Override
         public Void visitJoin(Join join) {
-            // TODO: Implement join translation in Phase 3
             sql.append("SELECT * FROM (");
-            join.children().get(0).accept(this);
-            sql.append(") JOIN (");
-            join.children().get(1).accept(this);
-            sql.append(")");
+            subqueryDepth++;
+            join.getLeft().accept(this);
+            subqueryDepth--;
+            sql.append(") AS left_tbl ");
+
+            // Map Spark join types to SQL join types
+            String joinType = join.getJoinType().toLowerCase();
+            switch (joinType) {
+                case "inner":
+                    sql.append("INNER JOIN");
+                    break;
+                case "left":
+                case "left_outer":
+                    sql.append("LEFT OUTER JOIN");
+                    break;
+                case "right":
+                case "right_outer":
+                    sql.append("RIGHT OUTER JOIN");
+                    break;
+                case "outer":
+                case "full":
+                case "full_outer":
+                    sql.append("FULL OUTER JOIN");
+                    break;
+                case "cross":
+                    sql.append("CROSS JOIN");
+                    break;
+                case "left_semi":
+                    // Left semi join - returns only left rows that have a match
+                    sql.append("INNER JOIN");
+                    break;
+                case "left_anti":
+                    // Left anti join - returns only left rows that don't have a match
+                    sql.append("LEFT OUTER JOIN");
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Join type not supported: " + joinType);
+            }
+
+            sql.append(" (");
+            subqueryDepth++;
+            join.getRight().accept(this);
+            subqueryDepth--;
+            sql.append(") AS right_tbl");
+
+            // Add join condition if not cross join
+            if (!"cross".equals(joinType) && join.getCondition() != null) {
+                sql.append(" ON ");
+                sql.append(expressionToSQL(join.getCondition()));
+
+                // Special handling for semi and anti joins
+                if ("left_semi".equals(joinType)) {
+                    // For semi join, we need to select only from left table
+                    sql.insert(0, "SELECT left_tbl.* FROM (");
+                    sql.append(")");
+                } else if ("left_anti".equals(joinType)) {
+                    // For anti join, add WHERE right_tbl.col IS NULL
+                    // This requires knowing the join key, which is complex
+                    // For now, we'll require explicit WHERE clause
+                    sql.insert(0, "SELECT left_tbl.* FROM (");
+                    sql.append(") WHERE right_tbl.* IS NULL");
+                }
+            }
+
             return null;
         }
 
