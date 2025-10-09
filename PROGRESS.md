@@ -120,9 +120,10 @@ Successfully tested operations:
 - Limit operations
 - Expression evaluation with expr()
 
-## Phase 2: Expression Support and Core Functions (PLANNED)
+## Phase 2: Expression Support and Core Functions (IN PROGRESS)
 
-### Target Completion: Week 2-3
+**Started**: October 9, 2025
+**Target Completion**: Week 2-3
 
 ### Expression Enhancements
 - [ ] Implement remaining math functions (pow, exp, log, trigonometric)
@@ -131,12 +132,15 @@ Successfully tested operations:
 - [ ] JSON path expressions
 - [ ] Array and struct operations
 
-### Join Operations
-- [ ] Inner join implementation
-- [ ] Left/Right outer joins
-- [ ] Full outer join
-- [ ] Cross join
-- [ ] Join condition optimization
+### Join Operations ✅ COMPLETE (Oct 9, 2025)
+- [x] Inner join implementation
+- [x] Left/Right outer joins
+- [x] Full outer join
+- [x] Cross join
+- [x] Semi and anti joins
+- [x] Multi-condition joins
+- [x] Natural join syntax (using column names)
+- [x] Comprehensive test suite (8 test cases)
 
 ### Aggregation Framework
 - [ ] GROUP BY implementation
