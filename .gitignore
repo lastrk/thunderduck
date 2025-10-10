@@ -37,5 +37,12 @@ surefire-reports/
 *.swp
 *~
 
+# DevContainer secrets
+.devcontainer/.claude-token
+.devcontainer/.claude-oauth.json
+
 # Initial prompt (development only)
 initial_prompt.txt
+
+# Claude Code state files (contain secrets)
+claude.json

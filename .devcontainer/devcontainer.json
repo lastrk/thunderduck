@@ -1,0 +1,300 @@
+{
+	// Container Name: Human-readable identifier shown in VSCode
+	// Purpose: Helps identify this container in VSCode's Remote Explorer
+	// Why necessary: Multiple containers may be running; name distinguishes them
+	// Impact: Purely cosmetic, no security or functional impact
+	"name": "cudf-metal Development Container",
+
+	// Build Configuration: How to build the container image
+	// Purpose: Tells VSCode where to find Dockerfile and what context to use
+	// Why object notation: Allows additional build arguments if needed
+	"build": {
+		// Dockerfile Path: Location of Dockerfile relative to this JSON file
+		// Purpose: Specifies which Dockerfile to build from
+		// Why "Dockerfile": Standard naming convention, located in same directory
+		// Alternative: Could specify different name like "dev.Dockerfile"
+		"dockerfile": "Dockerfile",
+
+		// Build Context: Directory containing files needed during build
+		// Purpose: Sets root directory for COPY/ADD commands in Dockerfile
+		// Why "..": Parent directory (project root) is context, not .devcontainer/
+		// Impact: Allows Dockerfile to access project files if needed during build
+		// Security: Combined with .dockerignore, prevents leaking sensitive files
+		"context": ".."
+	},
+
+	// Remote User: User for VSCode operations inside container
+	// Purpose: VSCode extensions and terminals will run as this user
+	// Why "vscode": Non-root user pre-created by Microsoft's base image
+	// Security: Running as non-root prevents accidental system-wide changes
+	// Impact: All VSCode operations (terminal, debugging, etc.) use this user
+	"remoteUser": "vscode",
+
+	// Container User: Primary user for container processes
+	// Purpose: Specifies which user the container runs as
+	// Why same as remoteUser: Ensures consistency between container and VSCode
+	// Security: Non-root execution is fundamental security best practice
+	// Why UID 1000: Matches typical first user on Linux systems
+	"containerUser": "vscode",
+
+	// Mounts: Filesystem bindings between host and container
+	// Purpose: Controls what host directories are accessible inside container
+	// Why explicit: Default mounting can be too permissive; explicit is more secure
+	// Format: Docker CLI mount syntax (source,target,type,options)
+	"mounts": [
+		// Project Workspace Mount (Read-Write)
+		// Purpose: Makes project files accessible inside container for development
+		// source: ${localWorkspaceFolder} resolves to project root on host
+		// target: /workspace is mount point inside container
+		// type: bind creates direct link to host filesystem (not a copy)
+		// consistency: cached optimizes for read-heavy workloads (macOS/Windows)
+		// Why read-write: Need to edit code, run builds, create files
+		// Security: Isolated to project directory only, not entire home or root
+		// Note: Includes .devcontainer directory - not mounted separately as read-only
+		// Rationale: Container config files aren't accessed at runtime; complexity
+		//            of read-only mounting outweighs security benefit in dev environment
+		"source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+	],
+
+	// Workspace Folder: Initial working directory inside container
+	// Purpose: Where VSCode opens when connecting to container
+	// Why /workspace: Matches the mount point of project files
+	// Impact: Terminal, file explorer, and tasks start from this directory
+	// Benefit: Immediate access to project root without navigation
+	"workspaceFolder": "/workspace",
+
+	// Run Arguments: Additional flags passed to container runtime (Podman/Docker)
+	// Purpose: Implements defense-in-depth security through container hardening
+	// Why array: Each element is separate CLI argument to podman/docker run
+	// Compatibility: Works with both Docker and Podman (uses standard OCI flags)
+	"runArgs": [
+		// Capability Drop: Remove ALL Linux capabilities
+		// Purpose: Starts with zero capabilities, implements least privilege
+		// Why necessary: Default container has many capabilities it doesn't need
+		// Security: Reduces attack surface by removing powerful system capabilities
+		// Examples of dropped: CAP_NET_ADMIN (network manipulation), CAP_SYS_ADMIN (mount, etc.)
+		// Impact: Container cannot perform privileged operations by default
+		"--cap-drop=ALL",
+
+		// Capability Add: SETUID (Change user IDs)
+		// Purpose: Allows processes to change their user ID
+		// Why necessary: Required for 'su', 'sudo', and user switching
+		// Use case: Installing packages with sudo, running commands as different user
+		// Security risk: Minimal - limited to user namespace, not host system
+		// Alternative: Could omit if sudo access not needed (more restrictive)
+		"--cap-add=SETUID",
+
+		// Capability Add: SETGID (Change group IDs)
+		// Purpose: Allows processes to change their group ID
+		// Why necessary: Required for group switching, complements SETUID
+		// Use case: File operations requiring specific group ownership
+		// Security risk: Minimal - limited to user namespace
+		"--cap-add=SETGID",
+
+		// Capability Add: AUDIT_WRITE (Write to kernel audit log)
+		// Purpose: Allows writing records to kernel auditing system
+		// Why necessary: Some system tools and PAM modules require this
+		// Use case: Login operations, sudo may write audit logs
+		// Security risk: Low - only writes to logs, doesn't read or modify system
+		// Impact: Without this, some authentication operations may fail
+		"--cap-add=AUDIT_WRITE",
+
+		// Network Mode: slirp4netns (User-mode networking)
+		// Purpose: Isolates container network from host while allowing internet
+		// Why slirp4netns: User-mode TCP/IP stack, no root privileges required
+		// How it works: NAT-based networking, container gets own IP namespace
+		// What's accessible: Internet via HTTP/HTTPS, DNS resolution
+		// What's blocked: Host services (127.0.0.1 on host), other containers, host network
+		// Security: Prevents lateral movement to host or other services
+		// Trade-off: Slightly slower than host networking (5-10% latency overhead)
+		// Podman compatibility: Optimal for rootless Podman
+		// Alternative: "--network=none" (no network) or "--network=host" (no isolation)
+		"--network=slirp4netns",
+
+		// Security Option: no-new-privileges
+		// Purpose: Prevents privilege escalation via setuid binaries or file capabilities
+		// How it works: Sets Linux kernel PR_SET_NO_NEW_PRIVS bit
+		// What it blocks: Setuid/setgid executables cannot gain elevated privileges
+		// Attack prevented: Even if attacker finds setuid root binary, can't exploit it
+		// Compatibility: Works with sudo (relies on CAP_SETUID, not setuid bit)
+		// Security: Defense-in-depth - adds extra layer beyond capability dropping
+		// Standard: Recommended by Docker/Podman security best practices
+		"--security-opt=no-new-privileges",
+
+		// User Namespace: keep-id (Podman-specific)
+		// Purpose: Maps container user UID/GID to host user UID/GID
+		// Why necessary: Prevents file ownership issues on mounted volumes
+		// How it works: Container UID 1000 maps to host UID (your user)
+		// Problem solved: Without this, files created in container may be inaccessible on host
+		// Rootless Podman: Essential for proper file permissions
+		// Docker equivalent: Handled automatically by Docker Desktop on macOS/Windows
+		// Security: Isolates user namespace, prevents container from accessing other users' files
+		"--userns=keep-id"
+	],
+
+	// Features: Pre-packaged DevContainer functionality modules
+	// Purpose: Install additional tools using DevContainer feature system
+	// Why features: Modular, versioned, reusable across different containers
+	// Format: Map of feature identifier to configuration object
+	// Source: Features hosted on GitHub Container Registry (ghcr.io)
+	// NOTE: Disabled temporarily due to Podman buildx --load flag incompatibility
+	// Git LFS can be installed manually in Dockerfile if needed
+	"features": {
+		// Git LFS Feature: Large File Storage support for Git
+		// Purpose: Enables handling of large binary files in Git repositories
+		// Why necessary: Some projects use Git LFS for assets, models, datasets
+		// Already installed: Base image has git, this adds LFS extension
+		// Version: ":1" means major version 1, gets latest 1.x.x
+		// Configuration: {} means use defaults (no custom options needed)
+		// Impact: 'git lfs' commands will be available
+		// "ghcr.io/devcontainers/features/git-lfs:1": {}
+	},
+
+	// Customizations: Tool-specific settings and extensions
+	// Purpose: Configure VSCode (or other IDEs) when connecting to container
+	// Why customizations: Each IDE has different configuration needs
+	// Structure: Organized by tool name (vscode, vim, etc.)
+	"customizations": {
+		// VSCode-specific customizations
+		// Purpose: Configure VSCode behavior and install extensions
+		// Applied when: VSCode connects to container for first time
+		// Persistence: Extensions installed in container, not on host
+		"vscode": {
+			// Extensions: VSCode extensions to install automatically
+			// Purpose: Provides IDE functionality for C++ development
+			// Format: Array of extension IDs from VSCode marketplace
+			// Why auto-install: Ensures consistent dev environment for all users
+			// Installation: Happens once during container creation (cached in image)
+			"extensions": [
+				// C/C++ Extension: IntelliSense, debugging, code navigation
+				// Purpose: Required for C++ language support in VSCode
+				// Why necessary: Project is C++ (compiles to Metal shaders)
+				// Provides: Syntax highlighting, autocomplete, error checking, debugging
+				"ms-vscode.cpptools",
+
+				// CMake Tools: CMake project support
+				// Purpose: Integration with CMake build system
+				// Why necessary: Project uses CMakeLists.txt for building
+				// Provides: CMake configuration, build/test from VSCode, target selection
+				"ms-vscode.cmake-tools",
+
+				// GitLens: Enhanced Git capabilities
+				// Purpose: Advanced Git visualization and history exploration
+				// Why useful: Blame annotations, commit history, repository insights
+				// Not strictly necessary: Base Git works without it, but improves workflow
+				"eamodio.gitlens",
+
+				// EditorConfig: Maintain consistent coding styles
+				// Purpose: Respects .editorconfig file for formatting rules
+				// Why useful: Ensures consistent indentation, line endings across editors
+				// Common in projects: Many open-source projects use .editorconfig
+				"editorconfig.editorconfig"
+			],
+
+			// VSCode Settings: Editor configuration specific to this container
+			// Purpose: Override default VSCode settings for better container experience
+			// Scope: Applied only in this container, doesn't affect host VSCode
+			"settings": {
+				// Terminal Default Profile: Which shell to use for integrated terminal
+				// Purpose: Specifies bash as the default shell
+				// Why bash: Dockerfile uses bash, ensures consistency
+				// Platform: "linux" because container runs Linux (even on macOS host)
+				// Alternative: Could use zsh, fish, etc. if installed in Dockerfile
+				"terminal.integrated.defaultProfile.linux": "bash"
+			}
+		}
+	},
+
+	// Post-Create Command: Script to run after container is created
+	// Purpose: Perform initialization tasks on first container startup
+	// When executed: Once, after container is built and started for first time
+	// Execution context: Runs as remoteUser (vscode) inside container
+	// Why useful: Automate setup steps, install tools, verify environment
+	// Format: String (shell command) or array (executable + args)
+	// This command: Sets up Claude Code with API key in settings.json env field
+	// Why mkdir: Ensures directories exist with correct ownership
+	// Why npm install: Auto-installs Claude Code globally
+	// Why settings.json env field: Proper way to set ANTHROPIC_API_KEY per Claude Code docs
+	// Why .claude.json: Creates OAuth account config for organization support
+	// Why git --version: Verifies git works (tests safe.directory config)
+	// &&: Chain commands - each must succeed for next to run
+	"postCreateCommand": "mkdir -p /vscode ~/.claude && npm install -g @anthropic-ai/claude-code && if [ -f /workspace/.devcontainer/.claude-token ]; then TOKEN=$(cat /workspace/.devcontainer/.claude-token) && echo \"{\\\"env\\\": {\\\"ANTHROPIC_API_KEY\\\": \\\"$TOKEN\\\"}}\" > ~/.claude/settings.json && chmod 600 ~/.claude/settings.json; fi && if [ -f /workspace/.devcontainer/generate-claude-config.sh ]; then /workspace/.devcontainer/generate-claude-config.sh; fi && echo 'DevContainer created successfully! Claude Code installed.' && git --version",
+
+	// Forward Ports: Automatically forward ports from container to host
+	// Purpose: Makes services running in container accessible from host browser/tools
+	// Format: Array of port numbers (e.g., [3000, 8080])
+	// Why empty: This project doesn't run web services by default
+	// Use case: If running web server, add its port here
+	// Security: Only forwarded ports are accessible; others remain isolated
+	// Example: If running HTTP server on port 3000, would add: [3000]
+	"forwardPorts": [],
+
+	// Port Attributes: Fine-grained control over port forwarding behavior
+	// Purpose: Configure how each forwarded port is handled
+	// Why object: Maps port number to configuration object
+	// When useful: Control visibility, labels, auto-forward behavior per port
+	"portsAttributes": {
+		// Example configuration (commented out):
+		// "3000": Port number to configure
+		//   "label": Human-readable name shown in VSCode
+		//   "onAutoForward": Action when VSCode auto-detects port
+		//     - "notify": Show notification
+		//     - "openBrowser": Automatically open in browser
+		//     - "ignore": Do nothing
+		// Security: Can prevent auto-opening untrusted services in browser
+	},
+
+	// Remote Environment Variables: Set environment variables inside container
+	// Purpose: Configure environment for development tools and scripts
+	// Scope: Available to all processes in container (shells, VSCode tasks, etc.)
+	// Format: Object mapping variable names to values
+	// Why useful: Provide consistent configuration without modifying shell profiles
+	// Initialize Command: Runs on HOST before container is created
+	// Purpose: Extract secrets and OAuth config from host system and prepare for container
+	// When executed: Before container build/start, runs on your Mac/host OS
+	// Why necessary: Container can't access macOS keychain or host home directory directly
+	// How it works: Extracts Claude OAuth token from keychain and OAuth account from ~/.claude.json
+	// Why tr -d '\n': security command adds trailing newline which makes token invalid
+	// Security: Files are gitignored, only exist locally, deleted on container rebuild
+	"initializeCommand": "security find-generic-password -s 'Claude Code' -w 2>/dev/null | tr -d '\\n' > ${localWorkspaceFolder}/.devcontainer/.claude-token && jq '{oauthAccount, userID, hasAvailableSubscription}' ~/.claude.json > ${localWorkspaceFolder}/.devcontainer/.claude-oauth.json 2>/dev/null || echo 'Warning: Claude Code config extraction failed'",
+
+	"remoteEnv": {
+		// WORKSPACE_DIR: Path to workspace directory
+		// Purpose: Provides consistent way to reference workspace in scripts
+		// Why useful: Scripts can use $WORKSPACE_DIR instead of hardcoding /workspace
+		// Use case: Build scripts, test scripts that need to know project root
+		"WORKSPACE_DIR": "/workspace"
+	},
+
+	// Privileged Mode: Grant container extended privileges
+	// Purpose: Control whether container has access to all host devices and kernel features
+	// Why false: Privileged mode bypasses all security restrictions
+	// Security: false is critical - privileged containers can escape to host
+	// When true needed: Docker-in-Docker, direct hardware access (not needed here)
+	// Impact: With false, container cannot access host devices or modify kernel
+	// Best practice: Always false unless absolutely required
+	"privileged": false,
+
+	// Init Process: Run init system inside container
+	// Purpose: Ensures proper process management (reaping zombie processes)
+	// Why true: Prevents zombie processes from accumulating
+	// What it does: Runs tini (tiny init) as PID 1
+	// Problem solved: Orphaned processes get adopted by init and properly cleaned up
+	// Use case: Long-running terminals, background processes
+	// Impact: Minimal overhead (~1MB RAM), prevents process table pollution
+	// Best practice: Recommended for interactive containers
+	"init": true,
+
+	// Shutdown Action: What to do when VSCode disconnects
+	// Purpose: Controls container lifecycle when closing VSCode window
+	// Options:
+	//   - "none": Leave container running (can reconnect later)
+	//   - "stopContainer": Stop but don't remove (preserves state)
+	//   - "stopCompose": Stop docker-compose setup
+	// Why stopContainer: Saves resources but preserves container for quick restart
+	// State preserved: Installed packages, shell history, file changes in container
+	// State lost: Running processes, network connections
+	// Trade-off: Start time vs resource usage
+	// Alternative: "none" if you want to keep services running between sessions
+	"shutdownAction": "stopContainer"
+}
