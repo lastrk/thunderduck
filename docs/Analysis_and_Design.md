@@ -2,13 +2,13 @@
 
 ## Executive Summary
 
-This document analyzes approaches for translating Spark DataFrame API operations to SQL, targeting intermediate representations like Apache Calcite or Substrait for flexibility and optimization. The focus is on query operations with consistent numerical semantics, excluding streaming capabilities.
+This document analyzes approaches for translating Spark DataFrame API operations to SQL, targeting Apache Calcite to leverage its powerful optimization capabilities and flexibility of targetting different SQL dialects and engines. The focus is on query operations with consistent numerical semantics, excluding streaming capabilities.
 
 ## Problem Statement
 
 Build a translation layer that:
 - Converts Spark 3.5+ DataFrame API calls to SQL operations
-- Targets Apache Calcite or Substrait for multi-engine support
+- Targets Apache Calcite for multi-engine support
 - Ensures numerical consistency between Spark and SQL data types
 - Maps unsupported Spark functions to SQL extension functions
 - Supports common DataFrame transformations (not 100% coverage)
