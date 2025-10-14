@@ -2,3 +2,32 @@
 .claude-flow/
 .swarm/
 .hive-mind/
+
+# Maven build artifacts
+target/
+*/target/
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven metadata
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# IDE artifacts
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS artifacts
+.DS_Store
+Thumbs.db

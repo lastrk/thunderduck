@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.catalyst2sql.translation.ExpressionTranslationTest$StringFunctionTests
--------------------------------------------------------------------------------
-Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.089 s -- in com.catalyst2sql.translation.ExpressionTranslationTest$StringFunctionTests
