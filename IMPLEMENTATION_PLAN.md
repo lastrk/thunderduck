@@ -1079,7 +1079,296 @@ This implementation plan provides a comprehensive roadmap for delivering a high-
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2025-10-13
-**Status**: Ready for Implementation
-**Approval**: Pending Review
+**Document Version**: 1.1
+**Last Updated**: 2025-10-14
+**Status**: Week 2 Complete - Week 3 In Progress
+**Approval**: Approved
+
+---
+
+## 13. WEEK 3 DETAILED IMPLEMENTATION PLAN
+
+### 13.1 Executive Summary
+
+Building on Week 2's foundation (5 basic operators, 430 tests, 100% pass rate), Week 3 implements advanced SQL features to achieve production-ready query translation:
+
+**Key Deliverables**:
+- JOIN operators (INNER, LEFT, RIGHT, FULL, CROSS)
+- UNION/UNION ALL set operations
+- Aggregate with GROUP BY and HAVING
+- Window Functions (ROW_NUMBER, RANK, LAG, LEAD)
+- Subquery support (IN, EXISTS, scalar subqueries)
+- Query optimization (filter pushdown, column pruning)
+- 185+ new tests (580+ total)
+
+**Target**: 100% implementation + 95%+ test pass rate (550+/580 tests passing)
+
+### 13.2 Week 3 Tasks Breakdown
+
+#### Task W3-1: JOIN Operators (8 hours)
+
+**File**: `core/src/main/java/com/catalyst2sql/logical/Join.java`
+
+**Implementation**:
+```java
+@Override
+public String toSQL(SQLGenerator generator) {
+    // 1. Generate left subquery
+    // 2. Generate JOIN type keyword
+    // 3. Generate right subquery
+    // 4. Generate ON or USING clause
+    // 5. Handle CROSS JOIN (no condition)
+}
+```
+
+**Test Coverage** (40 tests):
+- INNER JOIN with simple/complex ON clauses
+- LEFT/RIGHT/FULL OUTER JOIN with null handling
+- CROSS JOIN without conditions
+- JOIN with USING clause
+- Multi-table joins (3+ tables)
+- Self-joins
+
+**Success Criteria**: All 5 JOIN types working, 40+ tests passing
+
+#### Task W3-2: UNION Operators (3 hours)
+
+**File**: `core/src/main/java/com/catalyst2sql/logical/Union.java`
+
+**Implementation**:
+```java
+@Override
+public String toSQL(SQLGenerator generator) {
+    String leftSQL = generator.generate(left);
+    String rightSQL = generator.generate(right);
+    String operator = isAll ? "UNION ALL" : "UNION";
+    return "(" + leftSQL + ") " + operator + " (" + rightSQL + ")";
+}
+```
+
+**Test Coverage** (15 tests):
+- UNION with duplicate elimination
+- UNION ALL preserving duplicates
+- UNION of 3+ queries
+- Schema compatibility validation
+
+**Success Criteria**: UNION/UNION ALL working, 15+ tests passing
+
+#### Task W3-3: Aggregate with GROUP BY (6 hours)
+
+**File**: `core/src/main/java/com/catalyst2sql/logical/Aggregate.java`
+
+**Implementation**:
+```java
+@Override
+public String toSQL(SQLGenerator generator) {
+    // SELECT with aggregate functions
+    // FROM clause
+    // GROUP BY clause
+    // HAVING clause (if present)
+}
+```
+
+**Test Coverage** (30 tests):
+- GROUP BY with COUNT, SUM, AVG, MIN, MAX
+- Multiple grouping columns
+- HAVING clause filtering
+- Global aggregation (no GROUP BY)
+
+**Success Criteria**: Aggregation fully working, 30+ tests passing
+
+#### Task W3-4: Window Functions (8 hours)
+
+**File**: `core/src/main/java/com/catalyst2sql/expression/WindowFunction.java` (NEW)
+
+**Implementation**:
+```java
+@Override
+public String toSQL() {
+    // Function call
+    // OVER clause
+    // PARTITION BY
+    // ORDER BY
+    // Frame specification (ROWS/RANGE BETWEEN)
+}
+```
+
+**Test Coverage** (25 tests):
+- ROW_NUMBER, RANK, DENSE_RANK
+- LAG/LEAD with offset and default
+- Window frames (ROWS BETWEEN)
+- PARTITION BY and ORDER BY
+
+**Success Criteria**: 10+ window functions working, 25+ tests passing
+
+#### Task W3-5: Subquery Support (8 hours)
+
+**Files**:
+- `core/src/main/java/com/catalyst2sql/expression/ScalarSubquery.java` (NEW)
+- `core/src/main/java/com/catalyst2sql/expression/InSubquery.java` (NEW)
+- `core/src/main/java/com/catalyst2sql/expression/ExistsSubquery.java` (NEW)
+
+**Implementation**:
+```java
+// Scalar subquery
+public String toSQL() {
+    return "(" + generator.generate(subquery) + ")";
+}
+
+// IN subquery
+public String toSQL() {
+    String operator = isNegated ? "NOT IN" : "IN";
+    return testExpression.toSQL() + " " + operator +
+        " (" + generator.generate(subquery) + ")";
+}
+```
+
+**Test Coverage** (30 tests):
+- Scalar subqueries in SELECT/WHERE
+- IN/NOT IN subqueries
+- EXISTS/NOT EXISTS subqueries
+- Correlated subqueries
+
+**Success Criteria**: Subquery support working, 30+ tests passing
+
+#### Task W3-6: Query Optimizer (10 hours)
+
+**Files**:
+- `core/src/main/java/com/catalyst2sql/optimizer/QueryOptimizer.java` (NEW)
+- `core/src/main/java/com/catalyst2sql/optimizer/FilterPushdownRule.java` (NEW)
+- `core/src/main/java/com/catalyst2sql/optimizer/ColumnPruningRule.java` (NEW)
+- `core/src/main/java/com/catalyst2sql/optimizer/ProjectionPushdownRule.java` (NEW)
+
+**Implementation**:
+```java
+public LogicalPlan optimize(LogicalPlan plan) {
+    // Apply optimization rules iteratively
+    // Until no more changes or max iterations
+}
+```
+
+**Test Coverage** (25 tests):
+- Filter pushdown correctness
+- Column pruning effectiveness
+- Projection pushdown into scans
+- Optimizer correctness validation
+
+**Success Criteria**: 4 optimization rules working, 25+ tests passing
+
+#### Task W3-7: Testing & Validation (12 hours)
+
+**New Test Files**:
+- `tests/src/test/java/com/catalyst2sql/advanced/JoinTest.java`
+- `tests/src/test/java/com/catalyst2sql/advanced/UnionTest.java`
+- `tests/src/test/java/com/catalyst2sql/advanced/AggregateTest.java`
+- `tests/src/test/java/com/catalyst2sql/advanced/WindowFunctionTest.java`
+- `tests/src/test/java/com/catalyst2sql/advanced/SubqueryTest.java`
+- `tests/src/test/java/com/catalyst2sql/optimizer/OptimizerTest.java`
+- `tests/src/test/java/com/catalyst2sql/integration/ComplexQueryTest.java`
+
+**Total New Tests**: 185 tests
+**Total Tests**: 580+ (Week 2: 430 + Week 3: 185)
+
+**Success Criteria**: 95%+ pass rate (550+ passing tests)
+
+#### Task W3-8: Performance Benchmarks (4 hours)
+
+**File**: `tests/src/test/java/com/catalyst2sql/benchmark/AdvancedBenchmark.java`
+
+**Benchmarks**:
+- JOIN performance (< 50ms SQL generation)
+- Aggregate performance (< 30ms SQL generation)
+- Window function performance (< 40ms SQL generation)
+- Optimizer effectiveness (10-20% improvement)
+
+**Success Criteria**: All performance targets met
+
+### 13.3 Implementation Timeline
+
+**Day 1 (8 hours)**: JOIN + UNION operators
+**Day 2 (8 hours)**: Aggregate with GROUP BY + HAVING
+**Day 3 (8 hours)**: Window Functions
+**Day 4 (8 hours)**: Subquery Support
+**Day 5 (8 hours)**: Query Optimizer (Part 1)
+**Day 6 (2 hours)**: Query Optimizer (Part 2)
+**Day 6-7 (12 hours)**: Testing & Validation
+**Day 7 (4 hours)**: Performance Benchmarks & Documentation
+
+**Total**: ~58 hours (~7.5 days at 8 hours/day)
+
+### 13.4 Success Criteria
+
+**Functional**:
+- ✅ All 5 JOIN types implemented
+- ✅ UNION/UNION ALL working
+- ✅ GROUP BY/HAVING working
+- ✅ 10+ window functions supported
+- ✅ Scalar/IN/EXISTS subqueries working
+- ✅ 4 optimization rules implemented
+
+**Testing**:
+- ✅ 185 new tests created
+- ✅ 580+ total tests
+- ✅ 95%+ pass rate (550+ passing)
+- ✅ 0 critical bugs
+- ✅ All security tests passing
+
+**Performance**:
+- ✅ SQL generation < 100ms for complex queries
+- ✅ 5-15x faster than Spark
+- ✅ 10-20% improvement from optimizer
+
+**Quality**:
+- ✅ All code compiles without errors
+- ✅ 100% JavaDoc coverage
+- ✅ Consistent code style
+- ✅ Comprehensive error handling
+
+### 13.5 Risk Mitigation
+
+**High Risk**: Correlated subqueries complexity
+- Mitigation: Start with uncorrelated subqueries first
+- Contingency: Defer to Week 4 if needed
+
+**Medium Risk**: Query optimizer correctness
+- Mitigation: Extensive differential testing
+- Contingency: Disable aggressive optimizations if issues
+
+**Medium Risk**: Window function edge cases
+- Mitigation: Comprehensive test coverage
+- Contingency: Limit to common window functions initially
+
+### 13.6 Completion Checklist
+
+Implementation:
+- [ ] JOIN operators (5 types)
+- [ ] UNION/UNION ALL
+- [ ] Aggregate with GROUP BY/HAVING
+- [ ] Window functions (10+)
+- [ ] Subquery support (scalar, IN, EXISTS)
+- [ ] Query optimizer (4 rules)
+- [ ] SQL Generator enhanced
+
+Testing:
+- [ ] 185 new tests created
+- [ ] All tests passing (580+ total)
+- [ ] Performance benchmarks validated
+- [ ] Security tests passing
+
+Quality:
+- [ ] All code compiles
+- [ ] 100% JavaDoc coverage
+- [ ] No code duplication
+- [ ] Error handling comprehensive
+
+Documentation:
+- [ ] WEEK3_COMPLETION_REPORT.md created
+- [ ] README updated
+- [ ] All changes committed
+
+---
+
+**Week 3 Plan Version**: 1.0
+**Created**: 2025-10-14
+**Status**: READY TO IMPLEMENT
+**Estimated Effort**: 58 hours (~7.5 days)

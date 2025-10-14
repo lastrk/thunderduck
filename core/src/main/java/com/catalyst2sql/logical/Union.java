@@ -93,8 +93,26 @@ public class Union extends LogicalPlan {
 
     @Override
     public String toSQL(SQLGenerator generator) {
-        // SQL generation will be implemented by the generator
-        throw new UnsupportedOperationException("SQL generation not yet implemented");
+        StringBuilder sql = new StringBuilder();
+
+        // Generate left subquery
+        sql.append("(");
+        sql.append(generator.generate(left));
+        sql.append(")");
+
+        // Generate UNION or UNION ALL
+        if (all) {
+            sql.append(" UNION ALL ");
+        } else {
+            sql.append(" UNION ");
+        }
+
+        // Generate right subquery
+        sql.append("(");
+        sql.append(generator.generate(right));
+        sql.append(")");
+
+        return sql.toString();
     }
 
     @Override

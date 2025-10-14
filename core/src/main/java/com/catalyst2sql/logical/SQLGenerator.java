@@ -1,9 +1,9 @@
 package com.catalyst2sql.logical;
 
 /**
- * Marker interface for SQL generation.
+ * Interface for SQL generation from logical plans.
  *
- * <p>The actual SQL generator implementation will be provided in the sql package.
+ * <p>The actual SQL generator implementation is provided in the generator package.
  * This interface is used to maintain a clean separation between the logical plan
  * representation and the SQL generation logic.
  *
@@ -11,5 +11,19 @@ package com.catalyst2sql.logical;
  * DuckDB SQL strings.
  */
 public interface SQLGenerator {
-    // Marker interface - actual methods will be added in sql package
+
+    /**
+     * Generates SQL for a logical plan node.
+     *
+     * @param plan the logical plan to translate
+     * @return the generated DuckDB SQL string
+     */
+    String generate(LogicalPlan plan);
+
+    /**
+     * Generates a unique subquery alias.
+     *
+     * @return a unique alias like "subquery_1", "subquery_2", etc.
+     */
+    String generateSubqueryAlias();
 }

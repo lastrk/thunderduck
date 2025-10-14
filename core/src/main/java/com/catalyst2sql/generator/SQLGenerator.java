@@ -27,7 +27,7 @@ import static com.catalyst2sql.generator.SQLQuoting.*;
  *
  * @see LogicalPlan
  */
-public class SQLGenerator {
+public class SQLGenerator implements com.catalyst2sql.logical.SQLGenerator {
 
     private final StringBuilder sql;
     private final Stack<GenerationContext> contextStack;
@@ -284,27 +284,21 @@ public class SQLGenerator {
      * Visits an Aggregate node (GROUP BY clause).
      */
     private void visitAggregate(Aggregate plan) {
-        // Basic aggregate support - will be fully implemented in Week 3
-        throw new UnsupportedOperationException(
-            "Aggregate SQL generation will be implemented in Week 3");
+        sql.append(plan.toSQL(this));
     }
 
     /**
      * Visits a Join node.
      */
     private void visitJoin(Join plan) {
-        // Join support - will be fully implemented in Week 3
-        throw new UnsupportedOperationException(
-            "Join SQL generation will be implemented in Week 3");
+        sql.append(plan.toSQL(this));
     }
 
     /**
      * Visits a Union node.
      */
     private void visitUnion(Union plan) {
-        // Union support - will be fully implemented in Week 3
-        throw new UnsupportedOperationException(
-            "Union SQL generation will be implemented in Week 3");
+        sql.append(plan.toSQL(this));
     }
 
     /**
@@ -414,7 +408,7 @@ public class SQLGenerator {
      *
      * @return a unique alias like "subquery_1", "subquery_2", etc.
      */
-    private String generateSubqueryAlias() {
+    public String generateSubqueryAlias() {
         return "subquery_" + (++aliasCounter);
     }
 

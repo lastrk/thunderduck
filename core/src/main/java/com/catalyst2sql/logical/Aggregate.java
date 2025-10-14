@@ -80,8 +80,47 @@ public class Aggregate extends LogicalPlan {
         if (aggregateExpressions.isEmpty()) {
             throw new IllegalArgumentException("Cannot generate SQL for aggregation with no aggregate expressions");
         }
-        // SQL generation will be implemented by the generator
-        throw new UnsupportedOperationException("SQL generation not yet implemented");
+
+        StringBuilder sql = new StringBuilder();
+
+        // SELECT clause with grouping expressions and aggregates
+        sql.append("SELECT ");
+
+        List<String> selectExprs = new ArrayList<>();
+
+        // Add grouping columns
+        for (Expression expr : groupingExpressions) {
+            selectExprs.add(expr.toSQL());
+        }
+
+        // Add aggregate expressions
+        for (AggregateExpression aggExpr : aggregateExpressions) {
+            String aggSQL = aggExpr.toSQL();
+            // Add alias if provided
+            if (aggExpr.alias() != null && !aggExpr.alias().isEmpty()) {
+                aggSQL += " AS " + com.catalyst2sql.generator.SQLQuoting.quoteIdentifier(aggExpr.alias());
+            }
+            selectExprs.add(aggSQL);
+        }
+
+        sql.append(String.join(", ", selectExprs));
+
+        // FROM clause
+        sql.append(" FROM (");
+        sql.append(generator.generate(child()));
+        sql.append(") AS ").append(generator.generateSubqueryAlias());
+
+        // GROUP BY clause
+        if (!groupingExpressions.isEmpty()) {
+            sql.append(" GROUP BY ");
+            List<String> groupExprs = new ArrayList<>();
+            for (Expression expr : groupingExpressions) {
+                groupExprs.add(expr.toSQL());
+            }
+            sql.append(String.join(", ", groupExprs));
+        }
+
+        return sql.toString();
     }
 
     @Override

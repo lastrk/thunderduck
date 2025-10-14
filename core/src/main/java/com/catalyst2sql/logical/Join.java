@@ -99,8 +99,58 @@ public class Join extends LogicalPlan {
 
     @Override
     public String toSQL(SQLGenerator generator) {
-        // SQL generation will be implemented by the generator
-        throw new UnsupportedOperationException("SQL generation not yet implemented");
+        StringBuilder sql = new StringBuilder();
+
+        // Generate left subquery
+        sql.append("SELECT * FROM (");
+        sql.append(generator.generate(left));
+        sql.append(") AS ").append(generator.generateSubqueryAlias());
+
+        // Generate JOIN keyword with type
+        sql.append(" ");
+        sql.append(getJoinKeyword());
+        sql.append(" ");
+
+        // Generate right subquery
+        sql.append("(");
+        sql.append(generator.generate(right));
+        sql.append(") AS ").append(generator.generateSubqueryAlias());
+
+        // Generate ON clause (if condition exists)
+        if (condition != null) {
+            sql.append(" ON ");
+            sql.append(condition.toSQL());
+        }
+
+        return sql.toString();
+    }
+
+    /**
+     * Returns the SQL keyword for this join type.
+     *
+     * @return the JOIN keyword
+     */
+    private String getJoinKeyword() {
+        switch (joinType) {
+            case INNER:
+                return "INNER JOIN";
+            case LEFT:
+                return "LEFT OUTER JOIN";
+            case RIGHT:
+                return "RIGHT OUTER JOIN";
+            case FULL:
+                return "FULL OUTER JOIN";
+            case CROSS:
+                return "CROSS JOIN";
+            case LEFT_SEMI:
+                // DuckDB supports LEFT SEMI JOIN
+                return "LEFT SEMI JOIN";
+            case LEFT_ANTI:
+                // DuckDB supports LEFT ANTI JOIN
+                return "LEFT ANTI JOIN";
+            default:
+                throw new IllegalStateException("Unsupported join type: " + joinType);
+        }
     }
 
     @Override
