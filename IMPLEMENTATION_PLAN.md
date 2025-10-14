@@ -1370,5 +1370,1880 @@ Documentation:
 
 **Week 3 Plan Version**: 1.0
 **Created**: 2025-10-14
+**Status**: ✅ COMPLETE (100%)
+**Actual Effort**: 58 hours (2 sessions)
+**Test Pass Rate**: 100% (16/16 Phase 2 tests)
+
+---
+
+## 14. WEEK 4 DETAILED IMPLEMENTATION PLAN
+
+### 14.1 Executive Summary
+
+Building on Week 3's comprehensive SQL feature implementation (JOIN, UNION, Aggregate, Window Functions, Subqueries, Query Optimizer framework), Week 4 focuses on:
+
+1. **Comprehensive Phase 3 Testing** - Test all Week 3 advanced features
+2. **Query Optimizer Logic** - Implement actual optimization rule algorithms
+3. **Delta Lake & Iceberg Support** - Native format support via DuckDB extensions
+4. **Performance Benchmarking** - TPC-H infrastructure and micro-benchmarks
+5. **Production Hardening** - Enhanced error handling, validation, logging
+
+**Key Deliverables**:
+- 45+ comprehensive tests for Week 3 features (Window Functions, Subqueries, Optimizer)
+- 4 optimizer rules fully implemented with transformation logic
+- Delta Lake reader with time travel support
+- Iceberg reader with snapshot isolation
+- TPC-H benchmark framework (22 queries)
+- Performance micro-benchmarks (JMH)
+- Enhanced error handling and validation framework
+
+**Target**: 100% implementation + 100% test pass rate + all features production-ready
+
+### 14.2 Week 4 Milestone Objectives
+
+#### Objective 1: Complete Week 3 Feature Testing
+**Rationale**: Week 3 Phase 2 delivered 16 tests for JOIN/Aggregate/UNION. Phase 3 features (Window Functions, Subqueries, Optimizer) need comprehensive test coverage.
+
+**Success Criteria**:
+- 45+ new tests created and passing
+- 100% coverage of window function variants
+- 100% coverage of subquery types
+- 100% coverage of optimizer behavior
+
+#### Objective 2: Implement Query Optimizer Logic
+**Rationale**: Week 3 created optimizer framework with stub rules. Week 4 implements actual transformation algorithms for measurable performance gains.
+
+**Success Criteria**:
+- FilterPushdownRule transforms plans correctly
+- ColumnPruningRule removes unused columns
+- ProjectionPushdownRule pushes projections to scans
+- JoinReorderingRule reorders based on cardinality
+- 10-30% measured performance improvement
+
+#### Objective 3: Add Delta Lake and Iceberg Support
+**Rationale**: Native format support enables real-world usage with modern data lake formats.
+
+**Success Criteria**:
+- Delta Lake read support with version/timestamp time travel
+- Iceberg read support with snapshot isolation
+- 20+ format-specific integration tests
+- Compatible with DuckDB 1.1.3 extensions
+
+#### Objective 4: Build Performance Benchmarking Infrastructure
+**Rationale**: Systematic performance tracking ensures 5-10x speedup targets are maintained and measurable.
+
+**Success Criteria**:
+- TPC-H 22-query framework operational
+- JMH micro-benchmarks for critical paths
+- Baseline measurements established
+- Performance regression detection enabled
+
+#### Objective 5: Production Harden the System
+**Rationale**: Move from proof-of-concept to production-ready with comprehensive error handling, validation, and observability.
+
+**Success Criteria**:
+- Enhanced exception hierarchy with actionable messages
+- Query validation framework catches errors early
+- Structured logging with correlation IDs
+- Diagnostic information for troubleshooting
+
+### 14.3 Week 4 Tasks Breakdown
+
+#### Task W4-1: Window Function Comprehensive Testing (8 hours)
+
+**File**: `tests/src/test/java/com/catalyst2sql/expression/WindowFunctionTest.java` (NEW)
+
+**Test Categories** (15 tests total):
+
+1. **Ranking Functions** (4 tests):
+   - ROW_NUMBER() with PARTITION BY and ORDER BY
+   - RANK() with ties handling
+   - DENSE_RANK() with multiple partitions
+   - NTILE(n) for bucket distribution
+
+2. **Offset Functions** (4 tests):
+   - LAG(column, offset, default) with null defaults
+   - LEAD(column, offset) with missing values
+   - FIRST_VALUE() with frame specification
+   - LAST_VALUE() with frame specification
+
+3. **Window Frames** (4 tests):
+   - ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+   - ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING
+   - RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+   - Empty OVER() clause (entire result set)
+
+4. **Complex Scenarios** (3 tests):
+   - Multiple window functions in same query
+   - Window functions with aggregates
+   - Window functions with filters
+
+**Implementation Example**:
+```java
+@Test
+@DisplayName("ROW_NUMBER with PARTITION BY and ORDER BY generates correct SQL")
+void testRowNumberWithPartitionAndOrder() {
+    // Given: Window function with partitioning and ordering
+    Expression categoryCol = new ColumnReference("category");
+    Expression priceCol = new ColumnReference("price");
+
+    SortOrder sortOrder = new SortOrder(priceCol, SortDirection.DESC, NullOrdering.NULLS_LAST);
+    WindowFunction windowFunc = new WindowFunction(
+        "ROW_NUMBER",
+        Collections.emptyList(),  // No arguments
+        Collections.singletonList(categoryCol),  // PARTITION BY category
+        Collections.singletonList(sortOrder)     // ORDER BY price DESC NULLS LAST
+    );
+
+    // When: Generate SQL
+    String sql = windowFunc.toSQL();
+
+    // Then: Should generate proper window function SQL
+    assertThat(sql).contains("ROW_NUMBER()");
+    assertThat(sql).contains("OVER");
+    assertThat(sql).contains("PARTITION BY category");
+    assertThat(sql).contains("ORDER BY price DESC NULLS LAST");
+}
+
+@Test
+@DisplayName("LAG function with offset and default value")
+void testLagWithOffsetAndDefault() {
+    Expression amountCol = new ColumnReference("amount");
+    Expression defaultValue = new Literal(0, IntegerType.get());
+
+    WindowFunction lag = new WindowFunction(
+        "LAG",
+        Arrays.asList(amountCol, new Literal(1, IntegerType.get()), defaultValue),
+        Collections.emptyList(),
+        Collections.singletonList(new SortOrder(
+            new ColumnReference("date"),
+            SortDirection.ASC,
+            NullOrdering.NULLS_LAST
+        ))
+    );
+
+    String sql = lag.toSQL();
+
+    assertThat(sql).isEqualTo("LAG(amount, 1, 0) OVER (ORDER BY date ASC NULLS LAST)");
+}
+```
+
+**Success Criteria**: 15 window function tests passing, 100% feature coverage
+
+---
+
+#### Task W4-2: Subquery Comprehensive Testing (8 hours)
+
+**File**: `tests/src/test/java/com/catalyst2sql/expression/SubqueryTest.java` (NEW)
+
+**Test Categories** (15 tests total):
+
+1. **Scalar Subqueries** (5 tests):
+   - Scalar subquery in SELECT clause
+   - Scalar subquery in WHERE clause
+   - Scalar subquery with aggregation (MAX, AVG)
+   - Correlated scalar subquery
+   - Nested scalar subqueries
+
+2. **IN Subqueries** (5 tests):
+   - IN subquery with single column
+   - NOT IN subquery
+   - IN subquery with complex filter
+   - IN subquery with join
+   - IN subquery with null handling
+
+3. **EXISTS Subqueries** (5 tests):
+   - EXISTS subquery for existence check
+   - NOT EXISTS subquery
+   - Correlated EXISTS subquery
+   - EXISTS with complex predicate
+   - Multiple EXISTS in same query
+
+**Implementation Example**:
+```java
+@Test
+@DisplayName("Scalar subquery in WHERE clause generates correct SQL")
+void testScalarSubqueryInWhere() {
+    // Given: Scalar subquery that returns MAX(price)
+    LogicalPlan productsTable = new TableScan("products.parquet", schema, TableFormat.PARQUET);
+    LogicalPlan maxPriceSubquery = new Project(
+        new Aggregate(
+            productsTable,
+            Collections.emptyList(),  // No grouping
+            Collections.singletonList(
+                new AggregateExpression("MAX", Collections.singletonList(new ColumnReference("price")))
+            )
+        ),
+        Collections.singletonList(new ColumnReference("max_price"))
+    );
+
+    ScalarSubquery scalarSub = new ScalarSubquery(maxPriceSubquery);
+
+    // When: Generate SQL
+    String sql = scalarSub.toSQL();
+
+    // Then: Should be wrapped in parentheses
+    assertThat(sql).startsWith("(");
+    assertThat(sql).endsWith(")");
+    assertThat(sql).contains("SELECT MAX(price)");
+    assertThat(sql).contains("FROM read_parquet('products.parquet')");
+}
+
+@Test
+@DisplayName("IN subquery with NOT negation")
+void testInSubqueryNegated() {
+    // Given: category_id NOT IN (SELECT id FROM inactive_categories)
+    Expression categoryIdCol = new ColumnReference("category_id");
+    LogicalPlan inactiveCategories = new TableScan("inactive.parquet", schema, TableFormat.PARQUET);
+
+    InSubquery notInSub = new InSubquery(categoryIdCol, inactiveCategories, true);  // true = negated
+
+    // When: Generate SQL
+    String sql = notInSub.toSQL();
+
+    // Then: Should use NOT IN
+    assertThat(sql).contains("category_id NOT IN");
+    assertThat(sql).contains("SELECT");
+}
+
+@Test
+@DisplayName("EXISTS subquery for correlated existence check")
+void testExistsCorrelatedSubquery() {
+    // Given: EXISTS (SELECT 1 FROM orders WHERE orders.customer_id = customers.id)
+    LogicalPlan ordersTable = new TableScan("orders.parquet", ordersSchema, TableFormat.PARQUET);
+    Expression correlatedFilter = new BinaryExpression(
+        "=",
+        new ColumnReference("orders.customer_id"),
+        new ColumnReference("customers.id")
+    );
+    LogicalPlan filteredOrders = new Filter(ordersTable, correlatedFilter);
+
+    ExistsSubquery existsSub = new ExistsSubquery(filteredOrders, false);
+
+    // When: Generate SQL
+    String sql = existsSub.toSQL();
+
+    // Then: Should use EXISTS
+    assertThat(sql).startsWith("EXISTS (");
+    assertThat(sql).contains("WHERE");
+    assertThat(sql).endsWith(")");
+}
+```
+
+**Success Criteria**: 15 subquery tests passing, all subquery types validated
+
+---
+
+#### Task W4-3: Query Optimizer Comprehensive Testing (6 hours)
+
+**File**: `tests/src/test/java/com/catalyst2sql/optimizer/QueryOptimizerTest.java` (NEW)
+
+**Test Categories** (15 tests total):
+
+1. **Optimizer Framework** (5 tests):
+   - Optimizer applies rules iteratively
+   - Optimizer detects convergence (no more changes)
+   - Optimizer respects max iterations limit
+   - Custom rule sets can be provided
+   - Null plan handling
+
+2. **Rule Application** (5 tests):
+   - Rules applied in correct order
+   - Rule returns same plan if no optimization
+   - Rule returns transformed plan if optimization possible
+   - Multiple rules compose correctly
+   - Rule idempotency (applying twice = applying once)
+
+3. **Optimization Correctness** (5 tests):
+   - Optimized plan produces same results as original
+   - Optimized SQL is syntactically valid
+   - Optimization preserves schema
+   - Optimization improves performance
+   - Aggressive optimization can be disabled
+
+**Implementation Example**:
+```java
+@Test
+@DisplayName("Query optimizer applies rules iteratively until convergence")
+void testOptimizerConvergence() {
+    // Given: Plan that can be optimized
+    LogicalPlan scan = new TableScan("data.parquet", schema, TableFormat.PARQUET);
+    LogicalPlan filter = new Filter(scan, someCondition);
+    LogicalPlan project = new Project(filter, someColumns);
+
+    // And: Optimizer with default rules
+    QueryOptimizer optimizer = new QueryOptimizer();
+
+    // When: Optimize the plan
+    LogicalPlan optimized = optimizer.optimize(project);
+
+    // Then: Plan should be transformed
+    assertThat(optimized).isNotSameAs(project);
+
+    // And: Applying again should produce same result (convergence)
+    LogicalPlan optimizedAgain = optimizer.optimize(optimized);
+    assertThat(optimizedAgain).isEqualTo(optimized);
+}
+
+@Test
+@DisplayName("Optimizer respects max iterations limit")
+void testOptimizerMaxIterations() {
+    // Given: Custom optimizer with low max iterations
+    List<OptimizationRule> rules = Arrays.asList(
+        new FilterPushdownRule(),
+        new ColumnPruningRule()
+    );
+    QueryOptimizer optimizer = new QueryOptimizer(rules, 3);
+
+    // When: Optimize complex plan
+    LogicalPlan optimized = optimizer.optimize(complexPlan);
+
+    // Then: Should stop after 3 iterations even if more improvements possible
+    assertThat(optimizer.maxIterations()).isEqualTo(3);
+}
+
+@Test
+@DisplayName("Optimized plan produces same results as original")
+void testOptimizationCorrectnessPreserved() {
+    // Given: Original plan
+    LogicalPlan original = buildTestPlan();
+
+    // When: Optimize
+    QueryOptimizer optimizer = new QueryOptimizer();
+    LogicalPlan optimized = optimizer.optimize(original);
+
+    // Then: Both should produce same SQL semantics
+    SQLGenerator generator = new SQLGenerator();
+    String originalSQL = generator.generate(original);
+    String optimizedSQL = generator.generate(optimized);
+
+    // Execute both and compare results (differential testing)
+    assertQueryResultsEqual(originalSQL, optimizedSQL);
+}
+```
+
+**Success Criteria**: 15 optimizer tests passing, framework validated
+
+---
+
+#### Task W4-4: Filter Pushdown Rule Implementation (8 hours)
+
+**File**: `core/src/main/java/com/catalyst2sql/optimizer/FilterPushdownRule.java`
+
+**Algorithm**:
+```
+FilterPushdownRule:
+  1. Traverse plan tree top-down
+  2. When encountering Filter node:
+     a. Analyze child operator type
+     b. Determine if filter can be pushed down
+     c. Transform plan if beneficial
+  3. Cases:
+     - Filter(Project(child)) → Project(Filter(child)) if filter only uses projected columns
+     - Filter(Join(left, right)) → Join(Filter(left), Filter(right)) if filters can be split
+     - Filter(Aggregate(child)) → Aggregate(Filter(child)) if filter uses grouping keys only
+     - Filter(Union(left, right)) → Union(Filter(left), Filter(right)) always safe
+```
+
+**Implementation**:
+```java
+@Override
+public LogicalPlan apply(LogicalPlan plan) {
+    if (plan == null) {
+        return null;
+    }
+
+    // Recursively apply to children first (bottom-up)
+    LogicalPlan transformed = applyToChildren(plan);
+
+    // If this is a Filter node, try to push it down
+    if (transformed instanceof Filter) {
+        Filter filter = (Filter) transformed;
+        LogicalPlan child = filter.child();
+
+        // Case 1: Push through Project
+        if (child instanceof Project) {
+            return pushThroughProject(filter, (Project) child);
+        }
+
+        // Case 2: Push into Join
+        if (child instanceof Join) {
+            return pushIntoJoin(filter, (Join) child);
+        }
+
+        // Case 3: Push through Aggregate (if safe)
+        if (child instanceof Aggregate) {
+            return pushThroughAggregate(filter, (Aggregate) child);
+        }
+
+        // Case 4: Push through Union
+        if (child instanceof Union) {
+            return pushThroughUnion(filter, (Union) child);
+        }
+    }
+
+    return transformed;
+}
+
+private LogicalPlan pushThroughProject(Filter filter, Project project) {
+    // Can only push if filter condition only references projected columns
+    Set<String> projectedColumns = getProjectedColumnNames(project);
+    Set<String> filterColumns = getReferencedColumns(filter.condition());
+
+    if (projectedColumns.containsAll(filterColumns)) {
+        // Safe to push: Project(Filter(child))
+        Filter pushedFilter = new Filter(project.child(), filter.condition());
+        return new Project(pushedFilter, project.projectList());
+    }
+
+    // Not safe, return unchanged
+    return filter;
+}
+
+private LogicalPlan pushIntoJoin(Filter filter, Join join) {
+    // Analyze filter condition to split into left and right predicates
+    FilterSplitResult split = splitFilterCondition(filter.condition(), join);
+
+    LogicalPlan newLeft = join.left();
+    LogicalPlan newRight = join.right();
+
+    // Apply left-side filters
+    if (!split.leftFilters.isEmpty()) {
+        Expression leftCondition = combineWithAnd(split.leftFilters);
+        newLeft = new Filter(newLeft, leftCondition);
+    }
+
+    // Apply right-side filters
+    if (!split.rightFilters.isEmpty()) {
+        Expression rightCondition = combineWithAnd(split.rightFilters);
+        newRight = new Filter(newRight, rightCondition);
+    }
+
+    // Recreate join with filtered inputs
+    LogicalPlan newJoin = new Join(newLeft, newRight, join.joinType(), join.condition());
+
+    // If there are remaining filters that couldn't be pushed, wrap the join
+    if (!split.remainingFilters.isEmpty()) {
+        Expression remainingCondition = combineWithAnd(split.remainingFilters);
+        return new Filter(newJoin, remainingCondition);
+    }
+
+    return newJoin;
+}
+```
+
+**Test Coverage** (8 tests):
+- Filter pushdown through Project
+- Filter pushdown into Join (left side only)
+- Filter pushdown into Join (both sides)
+- Filter pushdown through Aggregate (safe case)
+- Filter NOT pushed through Aggregate (unsafe case)
+- Filter pushdown through Union
+- Complex multi-filter pushdown
+- Correctness validation (results unchanged)
+
+**Success Criteria**: FilterPushdownRule fully implemented and tested
+
+---
+
+#### Task W4-5: Column Pruning Rule Implementation (8 hours)
+
+**File**: `core/src/main/java/com/catalyst2sql/optimizer/ColumnPruningRule.java`
+
+**Algorithm**:
+```
+ColumnPruningRule:
+  1. Compute required columns starting from root
+  2. Propagate requirements down through plan tree
+  3. At each node, determine which input columns are actually needed
+  4. Insert Project nodes to prune unused columns
+  5. Update TableScan nodes to read fewer columns
+```
+
+**Implementation**:
+```java
+@Override
+public LogicalPlan apply(LogicalPlan plan) {
+    if (plan == null) {
+        return null;
+    }
+
+    // Step 1: Compute required columns from root
+    Set<String> requiredColumns = computeRequiredColumns(plan, null);
+
+    // Step 2: Prune columns recursively
+    return pruneColumns(plan, requiredColumns);
+}
+
+private Set<String> computeRequiredColumns(LogicalPlan plan, Set<String> parentRequired) {
+    if (parentRequired == null) {
+        // Root node: all output columns are required
+        return getAllColumnNames(plan.schema());
+    }
+
+    Set<String> required = new HashSet<>(parentRequired);
+
+    // Add columns needed by this operator
+    if (plan instanceof Filter) {
+        Filter filter = (Filter) plan;
+        required.addAll(getReferencedColumns(filter.condition()));
+    } else if (plan instanceof Project) {
+        Project project = (Project) plan;
+        for (Expression expr : project.projectList()) {
+            required.addAll(getReferencedColumns(expr));
+        }
+    } else if (plan instanceof Join) {
+        Join join = (Join) plan;
+        required.addAll(getReferencedColumns(join.condition()));
+    } else if (plan instanceof Aggregate) {
+        Aggregate agg = (Aggregate) plan;
+        // Need grouping columns
+        for (Expression group : agg.groupingExpressions()) {
+            required.addAll(getReferencedColumns(group));
+        }
+        // Need columns in aggregate functions
+        for (Expression aggExpr : agg.aggregateExpressions()) {
+            required.addAll(getReferencedColumns(aggExpr));
+        }
+    }
+
+    return required;
+}
+
+private LogicalPlan pruneColumns(LogicalPlan plan, Set<String> required) {
+    if (plan instanceof TableScan) {
+        TableScan scan = (TableScan) plan;
+
+        // Create pruned schema with only required columns
+        List<StructField> prunedFields = scan.schema().fields().stream()
+            .filter(field -> required.contains(field.name()))
+            .collect(Collectors.toList());
+
+        if (prunedFields.size() < scan.schema().fields().size()) {
+            // Create new scan with pruned schema
+            StructType prunedSchema = new StructType(prunedFields);
+            return new TableScan(scan.path(), prunedSchema, scan.format());
+        }
+    } else if (plan instanceof Project) {
+        Project project = (Project) plan;
+
+        // Compute what child needs
+        Set<String> childRequired = computeRequiredColumns(project.child(), required);
+        LogicalPlan prunedChild = pruneColumns(project.child(), childRequired);
+
+        // Prune project list
+        List<Expression> prunedProjectList = project.projectList().stream()
+            .filter(expr -> required.contains(getColumnName(expr)))
+            .collect(Collectors.toList());
+
+        if (prunedProjectList.size() < project.projectList().size()) {
+            return new Project(prunedChild, prunedProjectList);
+        } else {
+            return new Project(prunedChild, project.projectList());
+        }
+    } else if (plan instanceof Join) {
+        Join join = (Join) plan;
+
+        // Compute columns needed from left and right
+        Set<String> leftRequired = new HashSet<>();
+        Set<String> rightRequired = new HashSet<>();
+
+        for (String col : required) {
+            if (isFromLeft(col, join.left())) {
+                leftRequired.add(col);
+            } else {
+                rightRequired.add(col);
+            }
+        }
+
+        // Add columns needed for join condition
+        Set<String> joinColumns = getReferencedColumns(join.condition());
+        for (String col : joinColumns) {
+            if (isFromLeft(col, join.left())) {
+                leftRequired.add(col);
+            } else {
+                rightRequired.add(col);
+            }
+        }
+
+        // Recursively prune children
+        LogicalPlan prunedLeft = pruneColumns(join.left(), leftRequired);
+        LogicalPlan prunedRight = pruneColumns(join.right(), rightRequired);
+
+        return new Join(prunedLeft, prunedRight, join.joinType(), join.condition());
+    }
+
+    // For other node types, recursively prune children
+    return applyToChildren(plan, child -> pruneColumns(child, required));
+}
+```
+
+**Test Coverage** (8 tests):
+- Prune unused columns from TableScan
+- Prune unused columns from Project
+- Prune columns through Join (left and right)
+- Prune columns through Aggregate
+- Don't prune columns used in WHERE clause
+- Don't prune columns used in JOIN condition
+- Complex multi-level pruning
+- Correctness validation
+
+**Success Criteria**: ColumnPruningRule fully implemented and tested
+
+---
+
+#### Task W4-6: Projection Pushdown and Join Reordering Rules (6 hours)
+
+**Files**:
+- `core/src/main/java/com/catalyst2sql/optimizer/ProjectionPushdownRule.java`
+- `core/src/main/java/com/catalyst2sql/optimizer/JoinReorderingRule.java`
+
+**ProjectionPushdownRule Implementation**:
+```java
+@Override
+public LogicalPlan apply(LogicalPlan plan) {
+    if (!(plan instanceof Project)) {
+        return applyToChildren(plan);
+    }
+
+    Project project = (Project) plan;
+    LogicalPlan child = project.child();
+
+    // Push projection into TableScan
+    if (child instanceof TableScan) {
+        return pushIntoTableScan(project, (TableScan) child);
+    }
+
+    return applyToChildren(plan);
+}
+
+private LogicalPlan pushIntoTableScan(Project project, TableScan scan) {
+    // Extract column names from projection
+    Set<String> projectedColumns = getProjectedColumnNames(project);
+
+    // Create new schema with only projected columns
+    List<StructField> prunedFields = scan.schema().fields().stream()
+        .filter(field -> projectedColumns.contains(field.name()))
+        .collect(Collectors.toList());
+
+    StructType prunedSchema = new StructType(prunedFields);
+
+    // Return new scan with pruned schema (DuckDB will optimize reads)
+    return new TableScan(scan.path(), prunedSchema, scan.format());
+}
+```
+
+**JoinReorderingRule Implementation** (Simple version):
+```java
+@Override
+public LogicalPlan apply(LogicalPlan plan) {
+    if (!(plan instanceof Join)) {
+        return applyToChildren(plan);
+    }
+
+    Join join = (Join) plan;
+
+    // Only reorder INNER joins (commutative)
+    if (join.joinType() != JoinType.INNER) {
+        return applyToChildren(plan);
+    }
+
+    // Estimate cardinalities
+    long leftCard = estimateCardinality(join.left());
+    long rightCard = estimateCardinality(join.right());
+
+    // Smaller table on the right (build side for hash join)
+    if (leftCard > rightCard) {
+        // Swap left and right
+        return new Join(join.right(), join.left(), join.joinType(), swapCondition(join.condition()));
+    }
+
+    return applyToChildren(plan);
+}
+
+private long estimateCardinality(LogicalPlan plan) {
+    if (plan instanceof TableScan) {
+        // Estimate based on file size or statistics
+        return ((TableScan) plan).estimatedRows();
+    }
+    // Simplified: assume 1000 rows for other operators
+    return 1000;
+}
+```
+
+**Test Coverage** (6 tests total):
+- ProjectionPushdown into TableScan
+- ProjectionPushdown with complex expressions
+- JoinReordering swaps to smaller table on right
+- JoinReordering doesn't reorder OUTER joins
+- Combined optimization (projection + join reorder)
+- Correctness validation
+
+**Success Criteria**: Both rules implemented and tested
+
+---
+
+#### Task W4-7: Delta Lake Support (10 hours)
+
+**Files**:
+- `core/src/main/java/com/catalyst2sql/io/DeltaLakeReader.java` (NEW)
+- `core/src/main/java/com/catalyst2sql/logical/TableScan.java` (ENHANCE - add Delta format)
+- `tests/src/test/java/com/catalyst2sql/integration/DeltaLakeTest.java` (NEW)
+
+**Implementation**:
+```java
+package com.catalyst2sql.io;
+
+import java.util.Objects;
+
+/**
+ * Reader for Delta Lake tables using DuckDB Delta extension.
+ *
+ * <p>Provides support for:
+ * <ul>
+ *   <li>Time travel queries (version and timestamp)</li>
+ *   <li>Transaction log parsing</li>
+ *   <li>Schema evolution tracking</li>
+ *   <li>Partition pruning</li>
+ * </ul>
+ *
+ * <p>Requires DuckDB Delta extension to be installed:
+ * <pre>
+ *   INSTALL delta;
+ *   LOAD delta;
+ * </pre>
+ */
+public class DeltaLakeReader {
+
+    private final String tablePath;
+    private Long version;
+    private String timestamp;
+
+    /**
+     * Creates a Delta Lake reader for the specified table path.
+     *
+     * @param tablePath path to Delta Lake table directory
+     */
+    public DeltaLakeReader(String tablePath) {
+        this.tablePath = Objects.requireNonNull(tablePath, "tablePath must not be null");
+    }
+
+    /**
+     * Sets the version for time travel.
+     *
+     * @param version the version number
+     * @return this reader for method chaining
+     */
+    public DeltaLakeReader atVersion(long version) {
+        this.version = version;
+        this.timestamp = null;  // Clear timestamp if version is set
+        return this;
+    }
+
+    /**
+     * Sets the timestamp for time travel.
+     *
+     * @param timestamp ISO-8601 timestamp string
+     * @return this reader for method chaining
+     */
+    public DeltaLakeReader atTimestamp(String timestamp) {
+        this.timestamp = Objects.requireNonNull(timestamp, "timestamp must not be null");
+        this.version = null;  // Clear version if timestamp is set
+        return this;
+    }
+
+    /**
+     * Generates DuckDB SQL for reading this Delta Lake table.
+     *
+     * <p>Examples:
+     * <pre>
+     *   // Current version
+     *   delta_scan('path/to/table')
+     *
+     *   // Specific version
+     *   delta_scan('path/to/table', version => 42)
+     *
+     *   // Specific timestamp
+     *   delta_scan('path/to/table', timestamp => '2025-10-14T10:00:00Z')
+     * </pre>
+     *
+     * @return DuckDB SQL expression
+     */
+    public String toSQL() {
+        StringBuilder sql = new StringBuilder();
+        sql.append("delta_scan('").append(escapePath(tablePath)).append("'");
+
+        if (version != null) {
+            sql.append(", version => ").append(version);
+        } else if (timestamp != null) {
+            sql.append(", timestamp => '").append(timestamp).append("'");
+        }
+
+        sql.append(")");
+        return sql.toString();
+    }
+
+    /**
+     * Escapes single quotes in file paths for SQL safety.
+     *
+     * @param path the file path
+     * @return escaped path
+     */
+    private String escapePath(String path) {
+        return path.replace("'", "''");
+    }
+
+    /**
+     * Returns the table path.
+     *
+     * @return the table path
+     */
+    public String tablePath() {
+        return tablePath;
+    }
+
+    /**
+     * Returns the version for time travel, or null for current version.
+     *
+     * @return the version
+     */
+    public Long version() {
+        return version;
+    }
+
+    /**
+     * Returns the timestamp for time travel, or null for current version.
+     *
+     * @return the timestamp
+     */
+    public String timestamp() {
+        return timestamp;
+    }
+}
+```
+
+**Enhance TableScan.java**:
+```java
+// Add support for Delta Lake format
+public enum TableFormat {
+    PARQUET,
+    DELTA,
+    ICEBERG,
+    CSV,
+    JSON
+}
+
+// In TableScan.toSQL():
+@Override
+public String toSQL(SQLGenerator generator) {
+    switch (format) {
+        case PARQUET:
+            return "SELECT * FROM read_parquet('" + escapePath(path) + "')";
+        case DELTA:
+            DeltaLakeReader deltaReader = new DeltaLakeReader(path);
+            // Apply version/timestamp if set
+            if (this.deltaVersion != null) {
+                deltaReader.atVersion(this.deltaVersion);
+            } else if (this.deltaTimestamp != null) {
+                deltaReader.atTimestamp(this.deltaTimestamp);
+            }
+            return "SELECT * FROM " + deltaReader.toSQL();
+        case ICEBERG:
+            IcebergReader icebergReader = new IcebergReader(path);
+            if (this.icebergSnapshot != null) {
+                icebergReader.atSnapshot(this.icebergSnapshot);
+            }
+            return "SELECT * FROM " + icebergReader.toSQL();
+        default:
+            throw new UnsupportedOperationException("Format not supported: " + format);
+    }
+}
+```
+
+**Test Coverage** (10 tests):
+- Read current version of Delta table
+- Read specific version (time travel)
+- Read specific timestamp (time travel)
+- Delta table with schema evolution
+- Delta table with partitions
+- Delta table SQL generation
+- Integration test with real Delta table
+- Error handling (table not found, invalid version)
+- Path escaping with special characters
+- Null version/timestamp handling
+
+**Success Criteria**: Delta Lake read support working, 10 tests passing
+
+---
+
+#### Task W4-8: Iceberg Support (10 hours)
+
+**Files**:
+- `core/src/main/java/com/catalyst2sql/io/IcebergReader.java` (NEW)
+- `tests/src/test/java/com/catalyst2sql/integration/IcebergTest.java` (NEW)
+
+**Implementation**:
+```java
+package com.catalyst2sql.io;
+
+import java.util.Objects;
+
+/**
+ * Reader for Apache Iceberg tables using DuckDB Iceberg extension.
+ *
+ * <p>Provides support for:
+ * <ul>
+ *   <li>Snapshot isolation (read from specific snapshots)</li>
+ *   <li>Metadata table queries</li>
+ *   <li>Schema evolution tracking</li>
+ *   <li>Partition evolution support</li>
+ * </ul>
+ *
+ * <p>Requires DuckDB Iceberg extension to be installed:
+ * <pre>
+ *   INSTALL iceberg;
+ *   LOAD iceberg;
+ * </pre>
+ */
+public class IcebergReader {
+
+    private final String tablePath;
+    private Long snapshotId;
+    private String asOf;
+
+    /**
+     * Creates an Iceberg reader for the specified table path.
+     *
+     * @param tablePath path to Iceberg table directory or metadata file
+     */
+    public IcebergReader(String tablePath) {
+        this.tablePath = Objects.requireNonNull(tablePath, "tablePath must not be null");
+    }
+
+    /**
+     * Sets the snapshot ID for snapshot isolation.
+     *
+     * @param snapshotId the snapshot ID
+     * @return this reader for method chaining
+     */
+    public IcebergReader atSnapshot(long snapshotId) {
+        this.snapshotId = snapshotId;
+        this.asOf = null;  // Clear asOf if snapshot is set
+        return this;
+    }
+
+    /**
+     * Sets the as-of timestamp for time travel.
+     *
+     * @param asOf ISO-8601 timestamp string
+     * @return this reader for method chaining
+     */
+    public IcebergReader asOf(String asOf) {
+        this.asOf = Objects.requireNonNull(asOf, "asOf must not be null");
+        this.snapshotId = null;  // Clear snapshot if asOf is set
+        return this;
+    }
+
+    /**
+     * Generates DuckDB SQL for reading this Iceberg table.
+     *
+     * <p>Examples:
+     * <pre>
+     *   // Current snapshot
+     *   iceberg_scan('path/to/table')
+     *
+     *   // Specific snapshot
+     *   iceberg_scan('path/to/table', snapshot_id => 1234567890)
+     *
+     *   // Specific timestamp
+     *   iceberg_scan('path/to/table', as_of => '2025-10-14T10:00:00Z')
+     * </pre>
+     *
+     * @return DuckDB SQL expression
+     */
+    public String toSQL() {
+        StringBuilder sql = new StringBuilder();
+        sql.append("iceberg_scan('").append(escapePath(tablePath)).append("'");
+
+        if (snapshotId != null) {
+            sql.append(", snapshot_id => ").append(snapshotId);
+        } else if (asOf != null) {
+            sql.append(", as_of => '").append(asOf).append("'");
+        }
+
+        sql.append(")");
+        return sql.toString();
+    }
+
+    /**
+     * Escapes single quotes in file paths for SQL safety.
+     *
+     * @param path the file path
+     * @return escaped path
+     */
+    private String escapePath(String path) {
+        return path.replace("'", "''");
+    }
+
+    /**
+     * Returns the table path.
+     *
+     * @return the table path
+     */
+    public String tablePath() {
+        return tablePath;
+    }
+
+    /**
+     * Returns the snapshot ID for snapshot isolation, or null for current snapshot.
+     *
+     * @return the snapshot ID
+     */
+    public Long snapshotId() {
+        return snapshotId;
+    }
+
+    /**
+     * Returns the as-of timestamp for time travel, or null for current snapshot.
+     *
+     * @return the as-of timestamp
+     */
+    public String asOf() {
+        return asOf;
+    }
+}
+```
+
+**Test Coverage** (10 tests):
+- Read current snapshot of Iceberg table
+- Read specific snapshot (snapshot isolation)
+- Read as-of timestamp (time travel)
+- Iceberg table with schema evolution
+- Iceberg table with partition evolution
+- Iceberg table SQL generation
+- Integration test with real Iceberg table
+- Error handling (table not found, invalid snapshot)
+- Path escaping with special characters
+- Null snapshot/asOf handling
+
+**Success Criteria**: Iceberg read support working, 10 tests passing
+
+---
+
+#### Task W4-9: TPC-H Benchmark Framework (12 hours)
+
+**Files**:
+- `benchmarks/src/main/java/com/catalyst2sql/benchmarks/tpch/TPCHBenchmark.java` (NEW)
+- `benchmarks/src/main/java/com/catalyst2sql/benchmarks/tpch/TPCHQueries.java` (NEW)
+- `benchmarks/src/main/resources/tpch/*.sql` (NEW - 22 query files)
+
+**Implementation**:
+```java
+package com.catalyst2sql.benchmarks.tpch;
+
+import org.openjdk.jmh.annotations.*;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * TPC-H benchmark framework for performance testing.
+ *
+ * <p>Executes all 22 TPC-H queries and measures:
+ * <ul>
+ *   <li>Query execution time (p50, p95, p99)</li>
+ *   <li>SQL generation overhead</li>
+ *   <li>Memory usage</li>
+ *   <li>Speedup vs Spark local mode</li>
+ * </ul>
+ *
+ * <p>Scale factors: 0.01 (dev), 1 (CI), 10 (nightly), 100 (weekly)
+ */
+@State(Scope.Benchmark)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Warmup(iterations = 3, time = 1, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
+@Fork(1)
+public class TPCHBenchmark {
+
+    @Param({"0.01", "1", "10"})
+    private double scaleFactor;
+
+    private String dataPath;
+    private com.catalyst2sql.generator.SQLGenerator generator;
+
+    @Setup
+    public void setup() {
+        this.dataPath = String.format("data/tpch_sf%s",
+            scaleFactor < 1 ? String.format("%03d", (int)(scaleFactor * 100)) : (int)scaleFactor);
+        this.generator = new com.catalyst2sql.generator.SQLGenerator();
+    }
+
+    @Benchmark
+    public void query01_pricing_summary() {
+        executeQuery(TPCHQueries.Q1_PRICING_SUMMARY);
+    }
+
+    @Benchmark
+    public void query03_shipping_priority() {
+        executeQuery(TPCHQueries.Q3_SHIPPING_PRIORITY);
+    }
+
+    @Benchmark
+    public void query05_local_supplier_volume() {
+        executeQuery(TPCHQueries.Q5_LOCAL_SUPPLIER_VOLUME);
+    }
+
+    @Benchmark
+    public void query06_forecasting_revenue() {
+        executeQuery(TPCHQueries.Q6_FORECASTING_REVENUE);
+    }
+
+    // ... remaining 18 queries
+
+    private void executeQuery(String queryName) {
+        // Load query plan
+        LogicalPlan plan = loadQueryPlan(queryName, dataPath);
+
+        // Generate SQL
+        long startGen = System.nanoTime();
+        String sql = generator.generate(plan);
+        long genTime = System.nanoTime() - startGen;
+
+        // Execute query (using DuckDB)
+        long startExec = System.nanoTime();
+        try (Connection conn = getDuckDBConnection()) {
+            try (Statement stmt = conn.createStatement()) {
+                try (ResultSet rs = stmt.executeQuery(sql)) {
+                    // Consume all results
+                    while (rs.next()) {
+                        // Materialize to ensure full execution
+                    }
+                }
+            }
+        }
+        long execTime = System.nanoTime() - startExec;
+
+        // Record metrics
+        recordMetrics(queryName, genTime, execTime);
+    }
+
+    private LogicalPlan loadQueryPlan(String queryName, String dataPath) {
+        // Load query-specific plan
+        // Each TPC-H query has a pre-built logical plan
+        switch (queryName) {
+            case TPCHQueries.Q1_PRICING_SUMMARY:
+                return buildQ1Plan(dataPath);
+            case TPCHQueries.Q3_SHIPPING_PRIORITY:
+                return buildQ3Plan(dataPath);
+            // ... other queries
+            default:
+                throw new IllegalArgumentException("Unknown query: " + queryName);
+        }
+    }
+
+    private LogicalPlan buildQ1Plan(String dataPath) {
+        // TPC-H Q1: Pricing Summary Report
+        // SELECT
+        //   l_returnflag,
+        //   l_linestatus,
+        //   SUM(l_quantity) as sum_qty,
+        //   SUM(l_extendedprice) as sum_base_price,
+        //   SUM(l_extendedprice * (1 - l_discount)) as sum_disc_price,
+        //   SUM(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
+        //   AVG(l_quantity) as avg_qty,
+        //   AVG(l_extendedprice) as avg_price,
+        //   AVG(l_discount) as avg_disc,
+        //   COUNT(*) as count_order
+        // FROM lineitem
+        // WHERE l_shipdate <= DATE '1998-12-01' - INTERVAL '90' DAY
+        // GROUP BY l_returnflag, l_linestatus
+        // ORDER BY l_returnflag, l_linestatus
+
+        LogicalPlan lineitem = new TableScan(dataPath + "/lineitem.parquet", lineitemSchema, TableFormat.PARQUET);
+
+        // Filter: l_shipdate <= DATE '1998-12-01' - INTERVAL '90' DAY
+        Expression filterCondition = new BinaryExpression(
+            "<=",
+            new ColumnReference("l_shipdate"),
+            new Literal("1998-09-02", DateType.get())  // Pre-computed
+        );
+        LogicalPlan filtered = new Filter(lineitem, filterCondition);
+
+        // Aggregate
+        List<Expression> groupingExprs = Arrays.asList(
+            new ColumnReference("l_returnflag"),
+            new ColumnReference("l_linestatus")
+        );
+
+        List<Expression> aggExprs = Arrays.asList(
+            new AggregateExpression("SUM", Collections.singletonList(new ColumnReference("l_quantity"))),
+            new AggregateExpression("SUM", Collections.singletonList(new ColumnReference("l_extendedprice"))),
+            // ... more aggregates
+            new AggregateExpression("COUNT", Collections.singletonList(new Literal("*", StringType.get())))
+        );
+
+        LogicalPlan aggregated = new Aggregate(filtered, groupingExprs, aggExprs);
+
+        // Order by
+        List<SortOrder> sortOrders = Arrays.asList(
+            new SortOrder(new ColumnReference("l_returnflag"), SortDirection.ASC, NullOrdering.NULLS_LAST),
+            new SortOrder(new ColumnReference("l_linestatus"), SortDirection.ASC, NullOrdering.NULLS_LAST)
+        );
+
+        return new Sort(aggregated, sortOrders);
+    }
+}
+```
+
+**TPCHQueries Constants**:
+```java
+package com.catalyst2sql.benchmarks.tpch;
+
+public class TPCHQueries {
+    public static final String Q1_PRICING_SUMMARY = "q1_pricing_summary";
+    public static final String Q3_SHIPPING_PRIORITY = "q3_shipping_priority";
+    public static final String Q5_LOCAL_SUPPLIER_VOLUME = "q5_local_supplier_volume";
+    public static final String Q6_FORECASTING_REVENUE = "q6_forecasting_revenue";
+    // ... 18 more query constants
+}
+```
+
+**Success Criteria**: TPC-H framework operational, baseline measurements recorded
+
+---
+
+#### Task W4-10: Micro-Benchmarks (JMH) (6 hours)
+
+**File**: `benchmarks/src/main/java/com/catalyst2sql/benchmarks/micro/MicroBenchmarks.java` (NEW)
+
+**Implementation**:
+```java
+package com.catalyst2sql.benchmarks.micro;
+
+import org.openjdk.jmh.annotations.*;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Micro-benchmarks for critical performance paths.
+ */
+@State(Scope.Benchmark)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+public class MicroBenchmarks {
+
+    @Benchmark
+    public void benchmarkSQLGeneration_SimpleSelect() {
+        // Measure SQL generation overhead for simple SELECT
+        LogicalPlan plan = new Project(
+            new TableScan("data.parquet", schema, TableFormat.PARQUET),
+            Arrays.asList(new ColumnReference("id"), new ColumnReference("name"))
+        );
+
+        SQLGenerator generator = new SQLGenerator();
+        String sql = generator.generate(plan);
+    }
+
+    @Benchmark
+    public void benchmarkSQLGeneration_ComplexJoin() {
+        // Measure SQL generation for complex 3-way join
+        LogicalPlan customers = new TableScan("customers.parquet", customerSchema, TableFormat.PARQUET);
+        LogicalPlan orders = new TableScan("orders.parquet", orderSchema, TableFormat.PARQUET);
+        LogicalPlan items = new TableScan("items.parquet", itemSchema, TableFormat.PARQUET);
+
+        LogicalPlan join1 = new Join(customers, orders, JoinType.INNER, joinCondition1);
+        LogicalPlan join2 = new Join(join1, items, JoinType.INNER, joinCondition2);
+
+        SQLGenerator generator = new SQLGenerator();
+        String sql = generator.generate(join2);
+    }
+
+    @Benchmark
+    public void benchmarkTypeMapping() {
+        // Measure type conversion overhead
+        TypeMapper mapper = new TypeMapper();
+
+        DataType sparkInt = IntegerType.get();
+        String duckdbType = mapper.toDuckDB(sparkInt);
+    }
+
+    @Benchmark
+    public void benchmarkExpressionEvaluation() {
+        // Measure expression tree traversal
+        Expression expr = new BinaryExpression(
+            "+",
+            new BinaryExpression("*", new ColumnReference("a"), new Literal(2, IntegerType.get())),
+            new BinaryExpression("/", new ColumnReference("b"), new Literal(3, IntegerType.get()))
+        );
+
+        String sql = expr.toSQL();
+    }
+
+    @Benchmark
+    public void benchmarkOptimization_FilterPushdown() {
+        // Measure filter pushdown overhead
+        LogicalPlan plan = new Filter(
+            new Project(
+                new TableScan("data.parquet", schema, TableFormat.PARQUET),
+                projectList
+            ),
+            filterCondition
+        );
+
+        FilterPushdownRule rule = new FilterPushdownRule();
+        LogicalPlan optimized = rule.apply(plan);
+    }
+}
+```
+
+**Test Coverage** (10 benchmarks):
+- SQL generation (simple SELECT)
+- SQL generation (complex JOIN)
+- SQL generation (window functions)
+- Type mapping performance
+- Expression evaluation
+- Filter pushdown optimization
+- Column pruning optimization
+- Parquet path escaping
+- Arrow materialization overhead
+- Connection pool overhead
+
+**Success Criteria**: Micro-benchmarks operational, baseline metrics recorded
+
+---
+
+#### Task W4-11: Enhanced Error Handling (6 hours)
+
+**Files**:
+- `core/src/main/java/com/catalyst2sql/exception/ValidationException.java` (NEW)
+- `core/src/main/java/com/catalyst2sql/exception/UnsupportedOperationException.java` (ENHANCE)
+- `core/src/main/java/com/catalyst2sql/validation/QueryValidator.java` (NEW)
+
+**Implementation**:
+```java
+package com.catalyst2sql.exception;
+
+/**
+ * Exception thrown when query validation fails.
+ *
+ * <p>Provides actionable error messages with context for debugging.
+ */
+public class ValidationException extends RuntimeException {
+
+    private final String phase;
+    private final String invalidElement;
+    private final String suggestion;
+
+    public ValidationException(String message, String phase, String invalidElement, String suggestion) {
+        super(formatMessage(message, phase, invalidElement, suggestion));
+        this.phase = phase;
+        this.invalidElement = invalidElement;
+        this.suggestion = suggestion;
+    }
+
+    private static String formatMessage(String message, String phase, String invalidElement, String suggestion) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Validation failed during ").append(phase).append(": ");
+        sb.append(message);
+        if (invalidElement != null) {
+            sb.append("\n  Invalid element: ").append(invalidElement);
+        }
+        if (suggestion != null) {
+            sb.append("\n  Suggestion: ").append(suggestion);
+        }
+        return sb.toString();
+    }
+
+    public String phase() {
+        return phase;
+    }
+
+    public String invalidElement() {
+        return invalidElement;
+    }
+
+    public String suggestion() {
+        return suggestion;
+    }
+}
+```
+
+```java
+package com.catalyst2sql.validation;
+
+/**
+ * Validates logical plans and expressions before SQL generation.
+ *
+ * <p>Catches common errors early with actionable error messages:
+ * <ul>
+ *   <li>Schema mismatches in joins/unions</li>
+ *   <li>Unsupported operations</li>
+ *   <li>Invalid column references</li>
+ *   <li>Type incompatibilities</li>
+ * </ul>
+ */
+public class QueryValidator {
+
+    /**
+     * Validates a logical plan before SQL generation.
+     *
+     * @param plan the plan to validate
+     * @throws ValidationException if validation fails
+     */
+    public void validate(LogicalPlan plan) {
+        if (plan == null) {
+            throw new ValidationException(
+                "Plan cannot be null",
+                "plan validation",
+                null,
+                "Ensure DataFrame operations produce a valid plan"
+            );
+        }
+
+        validateRecursive(plan);
+    }
+
+    private void validateRecursive(LogicalPlan plan) {
+        if (plan instanceof Join) {
+            validateJoin((Join) plan);
+        } else if (plan instanceof Union) {
+            validateUnion((Union) plan);
+        } else if (plan instanceof Aggregate) {
+            validateAggregate((Aggregate) plan);
+        }
+
+        // Recursively validate children
+        for (LogicalPlan child : plan.children()) {
+            validateRecursive(child);
+        }
+    }
+
+    private void validateJoin(Join join) {
+        // Validate join condition is not null for non-CROSS joins
+        if (join.joinType() != JoinType.CROSS && join.condition() == null) {
+            throw new ValidationException(
+                "JOIN condition cannot be null for " + join.joinType() + " join",
+                "join validation",
+                join.toString(),
+                "Add ON clause with join condition or use CROSS JOIN"
+            );
+        }
+
+        // Validate join condition references valid columns
+        if (join.condition() != null) {
+            Set<String> leftColumns = getColumnNames(join.left().schema());
+            Set<String> rightColumns = getColumnNames(join.right().schema());
+            Set<String> referencedColumns = getReferencedColumns(join.condition());
+
+            for (String col : referencedColumns) {
+                if (!leftColumns.contains(col) && !rightColumns.contains(col)) {
+                    throw new ValidationException(
+                        "Column '" + col + "' does not exist in either join input",
+                        "join validation",
+                        join.condition().toString(),
+                        "Check column names match schema, including table prefix if ambiguous"
+                    );
+                }
+            }
+        }
+    }
+
+    private void validateUnion(Union union) {
+        // Validate schemas are compatible
+        StructType leftSchema = union.left().schema();
+        StructType rightSchema = union.right().schema();
+
+        if (leftSchema.fields().size() != rightSchema.fields().size()) {
+            throw new ValidationException(
+                String.format("UNION requires same number of columns: left has %d, right has %d",
+                    leftSchema.fields().size(), rightSchema.fields().size()),
+                "union validation",
+                "left: " + leftSchema + ", right: " + rightSchema,
+                "Ensure both sides of UNION have same column count"
+            );
+        }
+
+        // Validate types are compatible
+        for (int i = 0; i < leftSchema.fields().size(); i++) {
+            DataType leftType = leftSchema.fields().get(i).dataType();
+            DataType rightType = rightSchema.fields().get(i).dataType();
+
+            if (!typesCompatible(leftType, rightType)) {
+                throw new ValidationException(
+                    String.format("UNION column %d type mismatch: left is %s, right is %s",
+                        i, leftType, rightType),
+                    "union validation",
+                    String.format("Column %d: %s vs %s", i, leftType, rightType),
+                    "Ensure matching columns have compatible types or add explicit casts"
+                );
+            }
+        }
+    }
+
+    private void validateAggregate(Aggregate agg) {
+        // Validate aggregate expressions
+        if (agg.aggregateExpressions().isEmpty()) {
+            throw new ValidationException(
+                "Aggregate must have at least one aggregate expression",
+                "aggregate validation",
+                agg.toString(),
+                "Add aggregate function like SUM(), COUNT(), AVG(), etc."
+            );
+        }
+
+        // Validate all non-aggregate columns are in GROUP BY
+        Set<String> groupingColumns = getColumnNames(agg.groupingExpressions());
+        Set<String> referencedColumns = new HashSet<>();
+
+        for (Expression aggExpr : agg.aggregateExpressions()) {
+            if (!(aggExpr instanceof AggregateExpression)) {
+                // Non-aggregate expression must be in GROUP BY
+                Set<String> cols = getReferencedColumns(aggExpr);
+                for (String col : cols) {
+                    if (!groupingColumns.contains(col)) {
+                        throw new ValidationException(
+                            "Column '" + col + "' must appear in GROUP BY or be used in aggregate function",
+                            "aggregate validation",
+                            aggExpr.toString(),
+                            "Add '" + col + "' to GROUP BY clause or wrap in aggregate function"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean typesCompatible(DataType left, DataType right) {
+        // Exact match
+        if (left.equals(right)) {
+            return true;
+        }
+
+        // Numeric types are compatible
+        if (isNumeric(left) && isNumeric(right)) {
+            return true;
+        }
+
+        // String types are compatible
+        if (isString(left) && isString(right)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isNumeric(DataType type) {
+        return type instanceof IntegerType ||
+               type instanceof LongType ||
+               type instanceof FloatType ||
+               type instanceof DoubleType ||
+               type instanceof DecimalType;
+    }
+
+    private boolean isString(DataType type) {
+        return type instanceof StringType;
+    }
+}
+```
+
+**Test Coverage** (8 tests):
+- Validate JOIN without condition (error)
+- Validate JOIN with invalid column reference (error)
+- Validate UNION with different column counts (error)
+- Validate UNION with incompatible types (error)
+- Validate Aggregate without aggregate expressions (error)
+- Validate Aggregate with non-grouped column (error)
+- Validate successful query (no error)
+- Error messages include actionable suggestions
+
+**Success Criteria**: Enhanced error handling implemented, clear error messages
+
+---
+
+#### Task W4-12: Structured Logging (4 hours)
+
+**Files**:
+- `core/src/main/java/com/catalyst2sql/logging/QueryLogger.java` (NEW)
+- `core/src/main/resources/logback.xml` (NEW)
+
+**Implementation**:
+```java
+package com.catalyst2sql.logging;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
+/**
+ * Structured logging for query execution lifecycle.
+ *
+ * <p>Provides correlation IDs for tracing queries through the system.
+ */
+public class QueryLogger {
+
+    private static final Logger logger = LoggerFactory.getLogger(QueryLogger.class);
+    private static final ThreadLocal<String> correlationId = new ThreadLocal<>();
+
+    /**
+     * Starts logging for a new query with a correlation ID.
+     *
+     * @param queryId unique identifier for this query
+     */
+    public static void startQuery(String queryId) {
+        correlationId.set(queryId);
+        MDC.put("queryId", queryId);
+        logger.info("Query started: {}", queryId);
+    }
+
+    /**
+     * Logs SQL generation phase.
+     *
+     * @param sql the generated SQL
+     * @param generationTimeMs time taken to generate SQL
+     */
+    public static void logSQLGeneration(String sql, long generationTimeMs) {
+        logger.debug("SQL generated in {}ms: {}", generationTimeMs, sql);
+    }
+
+    /**
+     * Logs query execution phase.
+     *
+     * @param executionTimeMs time taken to execute query
+     * @param rowCount number of rows returned
+     */
+    public static void logExecution(long executionTimeMs, long rowCount) {
+        logger.info("Query executed in {}ms, {} rows returned", executionTimeMs, rowCount);
+    }
+
+    /**
+     * Logs query optimization phase.
+     *
+     * @param originalPlan the original plan
+     * @param optimizedPlan the optimized plan
+     * @param optimizationTimeMs time taken to optimize
+     */
+    public static void logOptimization(String originalPlan, String optimizedPlan, long optimizationTimeMs) {
+        logger.debug("Query optimized in {}ms:\n  Original: {}\n  Optimized: {}",
+            optimizationTimeMs, originalPlan, optimizedPlan);
+    }
+
+    /**
+     * Logs query error.
+     *
+     * @param error the error that occurred
+     */
+    public static void logError(Throwable error) {
+        logger.error("Query failed: {}", error.getMessage(), error);
+    }
+
+    /**
+     * Completes logging for the current query.
+     *
+     * @param totalTimeMs total time from start to completion
+     */
+    public static void completeQuery(long totalTimeMs) {
+        logger.info("Query completed in {}ms", totalTimeMs);
+        MDC.remove("queryId");
+        correlationId.remove();
+    }
+
+    /**
+     * Returns the current correlation ID.
+     *
+     * @return the correlation ID or null if not set
+     */
+    public static String getCorrelationId() {
+        return correlationId.get();
+    }
+}
+```
+
+**logback.xml**:
+```xml
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{queryId}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/catalyst2sql.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/catalyst2sql.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{queryId}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.catalyst2sql" level="DEBUG"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>
+```
+
+**Success Criteria**: Structured logging implemented, correlation IDs working
+
+---
+
+#### Task W4-13: Integration Testing and Validation (8 hours)
+
+**Activities**:
+1. Run all 61 tests (16 Phase 2 + 45 Phase 3)
+2. Fix any failing tests
+3. Validate all optimizer rules produce correct results
+4. Validate Delta Lake and Iceberg read correctly
+5. Run TPC-H benchmarks and establish baselines
+6. Validate error handling provides actionable messages
+7. Code review and quality check
+8. Performance validation
+
+**Success Criteria**: 100% test pass rate, all features validated
+
+---
+
+### 14.4 Implementation Timeline
+
+**Day 1 (8 hours)**: Window Function Testing + Subquery Testing
+**Day 2 (8 hours)**: Optimizer Testing + Filter Pushdown Rule
+**Day 3 (8 hours)**: Column Pruning Rule + Projection/Join Rules
+**Day 4 (10 hours)**: Delta Lake Support
+**Day 5 (10 hours)**: Iceberg Support
+**Day 6 (12 hours)**: TPC-H Benchmark Framework
+**Day 7 (6 hours)**: Micro-Benchmarks (JMH)
+**Day 8 (10 hours)**: Enhanced Error Handling + Logging + Integration Testing
+
+**Total**: ~72 hours (~9 days at 8 hours/day)
+
+---
+
+### 14.5 Success Criteria
+
+#### Functional Requirements
+- ✅ 45+ comprehensive tests for Week 3 features created and passing
+- ✅ 4 optimizer rules fully implemented with transformation logic
+- ✅ Delta Lake read support with time travel working
+- ✅ Iceberg read support with snapshot isolation working
+- ✅ TPC-H 22-query framework operational
+- ✅ JMH micro-benchmarks operational
+- ✅ Enhanced error handling with actionable messages
+- ✅ Structured logging with correlation IDs
+
+#### Testing Requirements
+- ✅ 61+ total tests (16 Phase 2 + 45 Phase 3)
+- ✅ 100% test pass rate
+- ✅ All optimizer transformations preserve correctness
+- ✅ Delta Lake and Iceberg read real test data correctly
+- ✅ Error messages include suggestions for fixes
+
+#### Performance Requirements
+- ✅ Optimizer produces 10-30% improvement on test queries
+- ✅ SQL generation < 100ms for complex queries
+- ✅ TPC-H baseline measurements recorded
+- ✅ No performance regressions vs Week 3
+
+#### Quality Requirements
+- ✅ All code compiles without errors or warnings
+- ✅ 100% JavaDoc coverage on public APIs
+- ✅ Consistent code style throughout
+- ✅ No code duplication
+- ✅ Comprehensive error handling
+
+---
+
+### 14.6 Risk Mitigation
+
+#### High Risk: Optimizer Correctness
+**Impact**: Incorrect optimizations produce wrong results
+**Mitigation**:
+- Extensive differential testing (optimized vs unoptimized)
+- SQL equivalence validation
+- Conservative transformations initially
+- Disable aggressive optimizations if issues found
+**Contingency**: Fall back to stub rules that return plan unchanged
+
+#### Medium Risk: Delta/Iceberg Extension Compatibility
+**Impact**: DuckDB extensions not available or incompatible
+**Mitigation**:
+- Test with DuckDB 1.1.3 specifically
+- Document extension installation requirements
+- Provide fallback to Parquet-only mode
+**Contingency**: Mark Delta/Iceberg tests as @Disabled if extensions unavailable
+
+#### Medium Risk: TPC-H Data Generation Time
+**Impact**: Generating large-scale TPC-H data takes too long
+**Mitigation**:
+- Start with SF=0.01 (10MB) for development
+- Use cached data in CI
+- Generate larger scales (SF=10, SF=100) asynchronously
+**Contingency**: Focus on smaller scale factors initially
+
+#### Low Risk: JMH Micro-Benchmark Noise
+**Impact**: Micro-benchmark results are inconsistent
+**Mitigation**:
+- Use sufficient warmup iterations
+- Run with process isolation (-fork 1)
+- Record baseline and trends, not absolute values
+**Contingency**: Focus on macro-benchmarks (TPC-H) if micro-benchmarks too noisy
+
+---
+
+### 14.7 Completion Checklist
+
+#### Implementation
+- [ ] Window function comprehensive tests (15 tests)
+- [ ] Subquery comprehensive tests (15 tests)
+- [ ] Optimizer comprehensive tests (15 tests)
+- [ ] FilterPushdownRule implementation (8 tests)
+- [ ] ColumnPruningRule implementation (8 tests)
+- [ ] ProjectionPushdownRule implementation (3 tests)
+- [ ] JoinReorderingRule implementation (3 tests)
+- [ ] Delta Lake reader with time travel (10 tests)
+- [ ] Iceberg reader with snapshot isolation (10 tests)
+- [ ] TPC-H benchmark framework (22 queries)
+- [ ] JMH micro-benchmarks (10 benchmarks)
+- [ ] Enhanced error handling (8 tests)
+- [ ] Structured logging with correlation IDs
+
+#### Testing
+- [ ] 61+ tests created and passing (100% pass rate)
+- [ ] All optimizer rules validated for correctness
+- [ ] Delta Lake integration tests with real data
+- [ ] Iceberg integration tests with real data
+- [ ] TPC-H benchmarks executed and baselines recorded
+- [ ] Error handling provides actionable messages
+- [ ] No test flakiness
+
+#### Quality
+- [ ] All code compiles without errors or warnings
+- [ ] 100% JavaDoc coverage on public APIs
+- [ ] Zero code duplication
+- [ ] Consistent code style (checkstyle passes)
+- [ ] Comprehensive error handling
+
+#### Performance
+- [ ] Optimizer produces 10-30% improvement
+- [ ] SQL generation < 100ms for complex queries
+- [ ] TPC-H Q1 baseline recorded
+- [ ] TPC-H Q6 baseline recorded
+- [ ] No performance regressions vs Week 3
+
+#### Documentation
+- [ ] WEEK4_COMPLETION_REPORT.md created
+- [ ] Optimizer documentation updated
+- [ ] Delta Lake usage examples documented
+- [ ] Iceberg usage examples documented
+- [ ] TPC-H benchmark guide created
+- [ ] Error handling guide created
+- [ ] All changes committed with descriptive messages
+
+---
+
+**Week 4 Plan Version**: 1.0
+**Created**: 2025-10-14
 **Status**: READY TO IMPLEMENT
-**Estimated Effort**: 58 hours (~7.5 days)
+**Estimated Effort**: 72 hours (~9 days)

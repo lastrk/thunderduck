@@ -1,4 +1,3 @@
 # IGNORE THIS FILE
 
-hive mind create a milestone focused detail plan for week 3 in IMPLEMENTATION_PLAN.md, implement to 100% completion and write a consolidated completion report before
-  committing
+npx claude-flow@alpha hive-mind spawn "check current status and resume work on WEEK4_COMPLETION_REPORT.md" --claude
