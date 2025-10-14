@@ -247,9 +247,6 @@ public class DuckDBConnectionManager implements AutoCloseable {
 
             // Enable parallel CSV/Parquet reading
             stmt.execute("SET preserve_insertion_order=false");
-
-            // Enable parallel execution
-            stmt.execute("SET force_parallelism=true");
         }
 
         return duckConn;
