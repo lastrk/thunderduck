@@ -59,9 +59,32 @@ public class QueryOptimizer {
      * @return the optimized plan
      */
     public LogicalPlan optimize(LogicalPlan plan) {
-        // Optimization will be implemented in Phase 3
-        throw new UnsupportedOperationException(
-            "Query optimization will be implemented in Week 3 Phase 3");
+        if (plan == null) {
+            return null;
+        }
+
+        LogicalPlan currentPlan = plan;
+
+        for (int iteration = 0; iteration < maxIterations; iteration++) {
+            LogicalPlan previousPlan = currentPlan;
+
+            // Apply each rule in sequence
+            for (OptimizationRule rule : rules) {
+                currentPlan = rule.apply(currentPlan);
+                if (currentPlan == null) {
+                    // Rule returned null, stop optimization
+                    return previousPlan;
+                }
+            }
+
+            // Check if plan changed
+            if (currentPlan == previousPlan || currentPlan.equals(previousPlan)) {
+                // No changes in this iteration, optimization complete
+                break;
+            }
+        }
+
+        return currentPlan;
     }
 
     /**

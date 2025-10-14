@@ -110,9 +110,72 @@ public class WindowFunction extends Expression {
 
     @Override
     public String toSQL() {
-        // SQL generation will be implemented in Phase 3
-        throw new UnsupportedOperationException(
-            "Window function SQL generation will be implemented in Week 3 Phase 3");
+        StringBuilder sql = new StringBuilder();
+
+        // Function name and arguments
+        sql.append(function.toUpperCase());
+        sql.append("(");
+
+        // Add arguments
+        for (int i = 0; i < arguments.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+            sql.append(arguments.get(i).toSQL());
+        }
+
+        sql.append(")");
+
+        // OVER clause
+        sql.append(" OVER (");
+
+        boolean hasPartition = !partitionBy.isEmpty();
+        boolean hasOrder = !orderBy.isEmpty();
+
+        // PARTITION BY clause
+        if (hasPartition) {
+            sql.append("PARTITION BY ");
+            for (int i = 0; i < partitionBy.size(); i++) {
+                if (i > 0) {
+                    sql.append(", ");
+                }
+                sql.append(partitionBy.get(i).toSQL());
+            }
+        }
+
+        // ORDER BY clause
+        if (hasOrder) {
+            if (hasPartition) {
+                sql.append(" ");
+            }
+            sql.append("ORDER BY ");
+            for (int i = 0; i < orderBy.size(); i++) {
+                if (i > 0) {
+                    sql.append(", ");
+                }
+
+                Sort.SortOrder order = orderBy.get(i);
+                sql.append(order.expression().toSQL());
+
+                // Add sort direction
+                if (order.direction() == Sort.SortDirection.DESCENDING) {
+                    sql.append(" DESC");
+                } else {
+                    sql.append(" ASC");
+                }
+
+                // Add null ordering
+                if (order.nullOrdering() == Sort.NullOrdering.NULLS_FIRST) {
+                    sql.append(" NULLS FIRST");
+                } else if (order.nullOrdering() == Sort.NullOrdering.NULLS_LAST) {
+                    sql.append(" NULLS LAST");
+                }
+            }
+        }
+
+        sql.append(")");
+
+        return sql.toString();
     }
 
     @Override

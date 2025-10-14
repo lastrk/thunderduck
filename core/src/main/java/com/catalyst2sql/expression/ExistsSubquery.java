@@ -63,9 +63,23 @@ public class ExistsSubquery extends SubqueryExpression {
 
     @Override
     public String toSQL() {
-        // SQL generation will be implemented in Phase 3
-        throw new UnsupportedOperationException(
-            "EXISTS subquery SQL generation will be implemented in Week 3 Phase 3");
+        StringBuilder sql = new StringBuilder();
+
+        // EXISTS or NOT EXISTS
+        if (isNegated) {
+            sql.append("NOT EXISTS ");
+        } else {
+            sql.append("EXISTS ");
+        }
+
+        // Subquery
+        com.catalyst2sql.generator.SQLGenerator generator =
+            new com.catalyst2sql.generator.SQLGenerator();
+        sql.append("(");
+        sql.append(generator.generate(subquery));
+        sql.append(")");
+
+        return sql.toString();
     }
 
     @Override
