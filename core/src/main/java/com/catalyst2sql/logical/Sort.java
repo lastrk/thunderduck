@@ -60,8 +60,34 @@ public class Sort extends LogicalPlan {
 
     @Override
     public String toSQL(SQLGenerator generator) {
-        // SQL generation will be implemented by the generator
-        throw new UnsupportedOperationException("SQL generation not yet implemented");
+        Objects.requireNonNull(generator, "generator must not be null");
+
+        String childSQL = child().toSQL(generator);
+
+        List<String> orderClauses = new ArrayList<>();
+        for (SortOrder order : sortOrders) {
+            StringBuilder clause = new StringBuilder();
+            clause.append(order.expression().toSQL());
+
+            // Add direction
+            if (order.direction() == SortDirection.DESCENDING) {
+                clause.append(" DESC");
+            } else {
+                clause.append(" ASC");
+            }
+
+            // Add null ordering
+            if (order.nullOrdering() == NullOrdering.NULLS_FIRST) {
+                clause.append(" NULLS FIRST");
+            } else {
+                clause.append(" NULLS LAST");
+            }
+
+            orderClauses.add(clause.toString());
+        }
+
+        return String.format("SELECT * FROM (%s) AS subquery ORDER BY %s",
+            childSQL, String.join(", ", orderClauses));
     }
 
     @Override

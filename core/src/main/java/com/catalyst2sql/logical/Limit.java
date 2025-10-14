@@ -1,6 +1,7 @@
 package com.catalyst2sql.logical;
 
 import com.catalyst2sql.types.StructType;
+import java.util.Objects;
 
 /**
  * Logical plan node representing a limit (LIMIT clause).
@@ -79,8 +80,17 @@ public class Limit extends LogicalPlan {
 
     @Override
     public String toSQL(SQLGenerator generator) {
-        // SQL generation will be implemented by the generator
-        throw new UnsupportedOperationException("SQL generation not yet implemented");
+        Objects.requireNonNull(generator, "generator must not be null");
+
+        String childSQL = child().toSQL(generator);
+
+        if (offset > 0) {
+            return String.format("SELECT * FROM (%s) AS subquery LIMIT %d OFFSET %d",
+                childSQL, limit, offset);
+        } else {
+            return String.format("SELECT * FROM (%s) AS subquery LIMIT %d",
+                childSQL, limit);
+        }
     }
 
     @Override

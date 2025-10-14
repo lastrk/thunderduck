@@ -93,9 +93,28 @@ public class TableScan extends LogicalPlan {
 
     @Override
     public String toSQL(SQLGenerator generator) {
-        // SQL generation will be implemented by the generator
-        // Example: read_parquet('/path/to/file.parquet')
-        throw new UnsupportedOperationException("SQL generation not yet implemented");
+        Objects.requireNonNull(generator, "generator must not be null");
+
+        switch (format) {
+            case PARQUET:
+                // Use DuckDB's read_parquet function with safe path quoting
+                return String.format("SELECT * FROM read_parquet(%s)",
+                    com.catalyst2sql.generator.SQLQuoting.quoteFilePath(source));
+
+            case DELTA:
+                // Use DuckDB's delta_scan function with safe path quoting
+                return String.format("SELECT * FROM delta_scan(%s)",
+                    com.catalyst2sql.generator.SQLQuoting.quoteFilePath(source));
+
+            case ICEBERG:
+                // Use DuckDB's iceberg_scan function with safe path quoting
+                return String.format("SELECT * FROM iceberg_scan(%s)",
+                    com.catalyst2sql.generator.SQLQuoting.quoteFilePath(source));
+
+            default:
+                throw new UnsupportedOperationException(
+                    "Unsupported table format: " + format);
+        }
     }
 
     @Override

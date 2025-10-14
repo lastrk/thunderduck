@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.catalyst2sql.functions.FunctionRegistryTest$ArrayFunctionMappings
--------------------------------------------------------------------------------
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.072 s -- in com.catalyst2sql.functions.FunctionRegistryTest$ArrayFunctionMappings

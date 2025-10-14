@@ -53,8 +53,13 @@ public class Filter extends LogicalPlan {
 
     @Override
     public String toSQL(SQLGenerator generator) {
-        // SQL generation will be implemented by the generator
-        throw new UnsupportedOperationException("SQL generation not yet implemented");
+        Objects.requireNonNull(generator, "generator must not be null");
+
+        String childSQL = child().toSQL(generator);
+        String conditionSQL = condition.toSQL();
+
+        return String.format("SELECT * FROM (%s) AS subquery WHERE %s",
+            childSQL, conditionSQL);
     }
 
     @Override

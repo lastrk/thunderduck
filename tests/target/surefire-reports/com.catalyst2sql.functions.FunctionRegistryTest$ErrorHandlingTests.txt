@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.catalyst2sql.functions.FunctionRegistryTest$ErrorHandlingTests
--------------------------------------------------------------------------------
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.029 s -- in com.catalyst2sql.functions.FunctionRegistryTest$ErrorHandlingTests

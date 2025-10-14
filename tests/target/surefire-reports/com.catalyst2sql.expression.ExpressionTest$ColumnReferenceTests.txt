@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.catalyst2sql.expression.ExpressionTest$ColumnReferenceTests
 -------------------------------------------------------------------------------
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.054 s -- in com.catalyst2sql.expression.ExpressionTest$ColumnReferenceTests
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.038 s -- in com.catalyst2sql.expression.ExpressionTest$ColumnReferenceTests

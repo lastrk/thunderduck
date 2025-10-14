@@ -87,8 +87,33 @@ public class Project extends LogicalPlan {
 
     @Override
     public String toSQL(SQLGenerator generator) {
-        // SQL generation will be implemented by the generator
-        throw new UnsupportedOperationException("SQL generation not yet implemented");
+        Objects.requireNonNull(generator, "generator must not be null");
+
+        StringBuilder sql = new StringBuilder("SELECT ");
+
+        // Generate projection list
+        for (int i = 0; i < projections.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+
+            Expression expr = projections.get(i);
+            sql.append(expr.toSQL());
+
+            // Add alias if provided
+            String alias = aliases.get(i);
+            if (alias != null && !alias.isEmpty()) {
+                sql.append(" AS ");
+                sql.append(com.catalyst2sql.generator.SQLGenerator.quoteIdentifier(alias));
+            }
+        }
+
+        // Add FROM clause from child
+        sql.append(" FROM (");
+        sql.append(child().toSQL(generator));
+        sql.append(") AS subquery");
+
+        return sql.toString();
     }
 
     @Override

@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.catalyst2sql.expression.ExpressionTest$ComparisonExpressionTests
 -------------------------------------------------------------------------------
-Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.292 s -- in com.catalyst2sql.expression.ExpressionTest$ComparisonExpressionTests
+Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.369 s -- in com.catalyst2sql.expression.ExpressionTest$ComparisonExpressionTests
