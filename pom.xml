@@ -97,6 +97,15 @@
                 <version>${assertj.version}</version>
                 <scope>test</scope>
             </dependency>
+
+            <!-- Jackson BOM for version consistency across Spark and DuckDB -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>2.15.4</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <build>
