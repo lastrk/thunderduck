@@ -544,13 +544,48 @@ mvn clean deploy -Prelease
 - **161 fully implemented tests passing** (39 documented as engine incompatibilities)
 - **Result**: Comprehensive Spark parity achieved for all supported features
 
-#### Week 9: Production Hardening & Documentation 📋 PLANNED
-- Implement comprehensive error handling and validation
-- Add detailed error messages for unsupported operations
-- Implement logging and observability (SLF4J integration)
-- Write production documentation and migration guide
-- Create usage examples and best practices guide
-- Implement basic performance smoke tests (correctness-focused, not benchmarking)
+#### Week 9: Logging, SQL Introspection & Integration Strategies 📋 PLANNED
+
+**Goal 1: Logging & Error Reporting Analysis**
+- Identify user scenarios that need better logging/error reporting
+- Document current gaps in observability
+- Design logging strategy for production deployment
+- Identify error cases that need better user-facing messages
+
+**Goal 2: ANALYZE Support & SQL Introspection**
+- Implement ANALYZE command support
+- Add DataFrame API method to expose generated DuckDB SQL
+- Return DuckDB's native ANALYZE response
+- Enable users to inspect query plans and SQL translation
+- Document SQL introspection API
+
+**Goal 3: Drop-in Replacement & Integration Strategies**
+
+Explore three integration approaches:
+
+**Option A: Direct Dependency Replacement**
+- Replace `org.apache.spark:spark-core_2.12:3.5.3` or `spark-sql_2.13:3.5.3`
+- Consumer builds work unchanged if only using non-streaming DataFrame API
+- Full drop-in replacement for Spark SQL workloads
+- Document compatibility boundaries
+
+**Option B: Shadowing/Hooking Strategy**
+- Add catalyst2sql as additional dependency
+- Shadow or hook into Spark API at runtime
+- Redirect execution to DuckDB transparently
+- Zero code changes for consumers
+
+**Option C: Hybrid Approach**
+- Provide both modes (replacement + shadowing)
+- Let users choose integration strategy
+- Document trade-offs and use cases
+
+**Deliverables:**
+- User scenario analysis document
+- ANALYZE implementation with SQL introspection API
+- Integration strategy POC for each approach
+- Recommendation on best integration path
+- Migration guide for each approach
 
 ### Phase 4: Spark Connect Server (Weeks 10-12)
 
