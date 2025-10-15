@@ -517,32 +517,34 @@ mvn clean deploy -Prelease
 - Write 50+ format reader tests
 - Test with real Delta/Iceberg tables
 
-### Phase 3: Optimization & Production (Weeks 7-9)
+### Phase 3: Correctness & Production Readiness (Weeks 7-9)
 
-**Goal**: Production-ready system with comprehensive testing and optimization
+**Goal**: Production-ready system with comprehensive Spark parity testing
 
-#### Week 7: Query Optimization 📋 PLANNED
-- Implement filter fusion optimization
-- Implement column pruning
-- Add predicate pushdown to format readers
-- Optimize SQL generation for common patterns
-- Run full TPC-H benchmark suite (all 22 queries)
+#### Week 7: Spark Differential Testing Framework 📋 PLANNED
+- Set up Spark 3.5.3 local mode as reference oracle
+- Implement automated differential testing harness
+- Create test data generation utilities (synthetic + real-world patterns)
+- Implement schema validation framework
+- Implement data comparison utilities (row-by-row, numerical epsilon)
+- Write 50+ differential test cases (basic operations)
 
-#### Week 8: Production Hardening 📋 PLANNED
-- Implement comprehensive error handling
-- Add validation for unsupported operations
-- Implement logging and metrics collection
-- Add connection pooling
-- Write production documentation
-- Create migration guide from Spark
+#### Week 8: Comprehensive Spark Parity Testing 📋 PLANNED
+- **Null Handling Tests** (30+ tests): Outer joins, window functions, aggregates, filters
+- **Numerical Semantics Tests** (30+ tests): Integer division, modulo, decimal precision, NaN/Infinity
+- **Type Coercion Tests** (20+ tests): Timestamp zones, implicit casts, array/struct nullability
+- **Join Correctness Tests** (60+ tests): All join types, null handling, complex conditions
+- **Aggregation Correctness Tests** (40+ tests): DISTINCT, ROLLUP/CUBE, HAVING, window functions
+- **Edge Case Tests** (30+ tests): Empty datasets, single row, all nulls, extreme values
+- **Total: 200+ differential tests ensuring 100% parity with Spark**
 
-#### Week 9: Comprehensive Testing & Benchmarking 📋 PLANNED
-- Generate TPC-H data (SF=1, SF=10, SF=100)
-- Generate TPC-DS data (SF=1, SF=10)
-- Run full TPC-H benchmark suite
-- Run selected TPC-DS queries (80 of 99)
-- Implement 48 performance regression tests
-- Set up nightly benchmark tracking
+#### Week 9: Production Hardening & Documentation 📋 PLANNED
+- Implement comprehensive error handling and validation
+- Add detailed error messages for unsupported operations
+- Implement logging and observability (SLF4J integration)
+- Write production documentation and migration guide
+- Create usage examples and best practices guide
+- Implement basic performance smoke tests (correctness-focused, not benchmarking)
 
 ### Phase 4: Spark Connect Server (Weeks 10-12)
 
@@ -569,6 +571,31 @@ mvn clean deploy -Prelease
 - Implement monitoring and metrics
 - Create client connection examples
 - Final integration testing
+
+---
+
+### Postponed Items (Future Phases)
+
+**Advanced Query Optimization** (Deferred from Phase 3):
+- Filter fusion optimization
+- Column pruning across complex queries
+- Predicate pushdown to format readers
+- SQL generation optimization for common patterns
+- Cost-based optimization rules
+
+**Large-Scale Performance Testing** (Deferred from Phase 3):
+- TPC-H full benchmark suite (SF=1, SF=10, SF=100)
+- TPC-DS comprehensive benchmarking (SF=1, SF=10)
+- 48 performance regression tests with trend tracking
+- Nightly benchmark automation and monitoring
+- Memory efficiency profiling and optimization
+
+**Rationale for Postponement**:
+- **Correctness First**: Ensuring 100% Spark parity is critical before performance optimization
+- **Differential Testing Priority**: 200+ tests ensuring correctness provides solid foundation
+- **Iterative Optimization**: Query optimization is more effective after comprehensive testing reveals real bottlenecks
+- **Resource Efficiency**: Focus Phase 3 resources on correctness and production readiness
+- **Future Phases**: Performance optimization and large-scale testing remain high priority for Phase 5+
 
 ---
 
@@ -849,9 +876,9 @@ public void benchmarkParquetScan() {
 - 1 QA Engineer (test framework)
 
 **Phase 3 (Weeks 7-9)**:
-- 2 Senior Engineers (optimization, production hardening)
-- 1 Performance Engineer (benchmarking)
-- 1 Technical Writer (documentation)
+- 2 Senior Engineers (differential testing, correctness validation)
+- 1 QA Engineer (Spark parity testing, edge cases)
+- 1 Technical Writer (documentation, migration guide)
 
 **Phase 4 (Weeks 10-12)**:
 - 2 Senior Engineers (Spark Connect server)
@@ -973,15 +1000,18 @@ This implementation plan provides a comprehensive roadmap for delivering a high-
 - **Week 3**: Working embedded API with Parquet support ✅
 - **Week 4**: Complete expression system and joins ✅
 - **Week 5**: Aggregations and window functions ✅
-- **Week 9**: Production-ready system with comprehensive testing
+- **Week 6**: Delta Lake & Iceberg support
+- **Week 7**: Differential testing framework
+- **Week 8**: 200+ Spark parity tests (100% correctness validation)
+- **Week 9**: Production-ready system with comprehensive documentation
 - **Week 12**: Spark Connect server mode operational
 
 ---
 
-**Document Version**: 1.3
+**Document Version**: 1.4
 **Last Updated**: 2025-10-15
 **Status**: Week 5 Complete - Week 6 Ready to Start
-**Approval**: Approved
+**Approval**: Approved (Revised - Correctness-First Approach)
 
 ---
 
