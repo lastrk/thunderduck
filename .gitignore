@@ -12,6 +12,9 @@ target/
 *.war
 *.ear
 
+# generated test data
+data/*
+
 # Maven metadata
 pom.xml.tag
 pom.xml.releaseBackup
