@@ -4,6 +4,7 @@ import com.thunderduck.logical.*;
 import com.thunderduck.expression.Expression;
 import com.thunderduck.expression.ColumnReference;
 import com.thunderduck.expression.BinaryExpression;
+import com.thunderduck.expression.FunctionCall;
 import com.thunderduck.types.StructType;
 import com.thunderduck.types.StructField;
 
@@ -97,7 +98,8 @@ public class RelationConverter {
                 }
 
                 logger.debug("Creating TableScan for parquet file: {}", path);
-                return new TableScan(path, "parquet");
+                // Schema will be inferred by DuckDB from Parquet file
+                return new TableScan(path, TableScan.TableFormat.PARQUET, null);
             }
 
             // Add support for other formats as needed
@@ -106,7 +108,8 @@ public class RelationConverter {
             Read.NamedTable namedTable = read.getNamedTable();
             String tableName = namedTable.getUnparsedIdentifier();
             logger.debug("Creating TableScan for table: {}", tableName);
-            return new TableScan(tableName, "table");
+            // For named tables, assume parquet format (will be enhanced later)
+            return new TableScan(tableName, TableScan.TableFormat.PARQUET, null);
         } else {
             throw new PlanConversionException("Read relation must have either data_source or named_table");
         }
@@ -135,7 +138,7 @@ public class RelationConverter {
                 .collect(Collectors.toList());
 
         logger.debug("Creating Project with {} expressions", expressions.size());
-        return new Project(input, expressions);
+        return new com.thunderduck.logical.Project(input, expressions);
     }
 
     /**
@@ -149,7 +152,7 @@ public class RelationConverter {
         Expression condition = expressionConverter.convert(filter.getCondition());
 
         logger.debug("Creating Filter with condition: {}", condition);
-        return new Filter(input, condition);
+        return new com.thunderduck.logical.Filter(input, condition);
     }
 
     /**
@@ -174,7 +177,24 @@ public class RelationConverter {
         logger.debug("Creating Aggregate with {} grouping and {} aggregate expressions",
                 groupingExprs.size(), aggregateExprs.size());
 
-        return new Aggregate(input, groupingExprs, aggregateExprs, GroupingType.SIMPLE);
+        // Convert aggregate expressions to AggregateExpression objects
+        List<com.thunderduck.logical.Aggregate.AggregateExpression> aggExprs = new ArrayList<>();
+        for (Expression expr : aggregateExprs) {
+            // For now, wrap each expression as an aggregate
+            // TODO: Extract function name and alias from the expression
+            if (expr instanceof FunctionCall) {
+                FunctionCall func = (FunctionCall) expr;
+                com.thunderduck.logical.Aggregate.AggregateExpression aggExpr =
+                    new com.thunderduck.logical.Aggregate.AggregateExpression(
+                        func.functionName(),
+                        func.arguments().isEmpty() ? null : func.arguments().get(0),
+                        null  // alias will be set later
+                    );
+                aggExprs.add(aggExpr);
+            }
+        }
+
+        return new com.thunderduck.logical.Aggregate(input, groupingExprs, aggExprs);
     }
 
     /**
@@ -206,7 +226,7 @@ public class RelationConverter {
         int limitValue = limit.getLimit();
 
         logger.debug("Creating Limit with value: {}", limitValue);
-        return new Limit(input, limitValue);
+        return new com.thunderduck.logical.Limit(input, limitValue);
     }
 
     /**
@@ -229,7 +249,7 @@ public class RelationConverter {
         com.thunderduck.logical.Join.JoinType joinType = mapJoinType(join.getJoinType());
 
         logger.debug("Creating Join of type: {}", joinType);
-        return new Join(left, right, condition, joinType);
+        return new com.thunderduck.logical.Join(left, right, joinType, condition);
     }
 
     /**

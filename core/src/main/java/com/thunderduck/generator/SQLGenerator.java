@@ -133,10 +133,19 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             visitInMemoryRelation((InMemoryRelation) plan);
         } else if (plan instanceof LocalRelation) {
             visitLocalRelation((LocalRelation) plan);
+        } else if (plan instanceof SQLRelation) {
+            visitSQLRelation((SQLRelation) plan);
         } else {
             throw new UnsupportedOperationException(
                 "SQL generation not implemented for: " + plan.getClass().getSimpleName());
         }
+    }
+
+    /**
+     * Visits an SQLRelation node.
+     */
+    private void visitSQLRelation(SQLRelation plan) {
+        sql.append(plan.toSQL(this));
     }
 
     /**

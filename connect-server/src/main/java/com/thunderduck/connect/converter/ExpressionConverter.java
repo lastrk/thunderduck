@@ -147,7 +147,9 @@ public class ExpressionConverter {
         }
 
         logger.trace("Creating function call: {} with {} arguments", functionName, arguments.size());
-        return new FunctionCall(functionName, arguments);
+        // FunctionCall requires DataType - use StringType as default for now
+        // TODO: Infer proper return type based on function
+        return new FunctionCall(functionName, arguments, StringType.get());
     }
 
     /**
@@ -190,8 +192,8 @@ public class ExpressionConverter {
      */
     private com.thunderduck.expression.Expression convertUnresolvedStar(UnresolvedStar star) {
         // Handle qualified star (table.*)
-        if (star.hasTarget()) {
-            String target = star.getTarget();
+        if (star.hasUnparsedTarget() && !star.getUnparsedTarget().isEmpty()) {
+            String target = star.getUnparsedTarget();
             return new StarExpression(target);
         }
         // Unqualified star

@@ -1,7 +1,10 @@
 package com.thunderduck.connect.service;
 
+import com.thunderduck.connect.converter.PlanConverter;
 import com.thunderduck.connect.session.Session;
 import com.thunderduck.connect.session.SessionManager;
+import com.thunderduck.generator.SQLGenerator;
+import com.thunderduck.logical.LogicalPlan;
 import com.thunderduck.runtime.DuckDBConnectionManager;
 import com.thunderduck.runtime.QueryExecutor;
 import io.grpc.Status;
@@ -25,6 +28,8 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
     private final SessionManager sessionManager;
     private final DuckDBConnectionManager connectionManager;
+    private final PlanConverter planConverter;
+    private final SQLGenerator sqlGenerator;
 
     /**
      * Create Spark Connect service with session manager and DuckDB connection manager.
@@ -36,7 +41,9 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                                   DuckDBConnectionManager connectionManager) {
         this.sessionManager = sessionManager;
         this.connectionManager = connectionManager;
-        logger.info("SparkConnectServiceImpl initialized");
+        this.planConverter = new PlanConverter();
+        this.sqlGenerator = new SQLGenerator();
+        logger.info("SparkConnectServiceImpl initialized with plan deserialization support");
     }
 
     /**
@@ -119,15 +126,33 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     // Regular SQL execution
                     executeSQL(sql, sessionId, responseObserver);
                 }
-            } else {
-                // Log more details for debugging
-                String details = String.format("Plan type: %s", plan.getOpTypeCase());
-                if (plan.hasRoot()) {
-                    details += String.format(", Root type: %s", plan.getRoot().getRelTypeCase());
-                }
+            } else if (plan.hasRoot()) {
+                // Non-SQL plan - use plan deserialization
+                logger.info("Deserializing DataFrame plan: {}", plan.getRoot().getRelTypeCase());
 
+                try {
+                    // Convert Protobuf plan to LogicalPlan
+                    LogicalPlan logicalPlan = planConverter.convert(plan);
+
+                    // Generate SQL from LogicalPlan
+                    String generatedSQL = sqlGenerator.generate(logicalPlan);
+                    logger.info("Generated SQL from plan: {}", generatedSQL);
+
+                    // Execute the generated SQL
+                    executeSQL(generatedSQL, sessionId, responseObserver);
+
+                } catch (Exception e) {
+                    logger.error("Plan deserialization failed", e);
+                    responseObserver.onError(Status.INTERNAL
+                        .withDescription("Plan deserialization failed: " + e.getMessage())
+                        .withCause(e)
+                        .asRuntimeException());
+                }
+            } else {
+                // Unsupported plan type
+                String details = String.format("Plan type: %s", plan.getOpTypeCase());
                 responseObserver.onError(Status.UNIMPLEMENTED
-                    .withDescription("Only SQL queries are supported in MVP. " + details)
+                    .withDescription("Unsupported plan type. " + details)
                     .asRuntimeException());
             }
 
