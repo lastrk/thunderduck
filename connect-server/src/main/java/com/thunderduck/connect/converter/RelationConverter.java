@@ -62,6 +62,9 @@ public class RelationConverter {
             case SQL:
                 // Direct SQL relation - we'll handle this as a special case
                 return new SQLRelation(relation.getSql().getQuery());
+            case SHOW_STRING:
+                // ShowString wraps another relation - just unwrap and convert the inner relation
+                return convert(relation.getShowString().getInput());
             default:
                 throw new PlanConversionException("Unsupported relation type: " + relation.getRelTypeCase());
         }

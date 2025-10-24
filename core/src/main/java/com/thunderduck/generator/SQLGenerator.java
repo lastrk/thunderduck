@@ -74,7 +74,10 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         try {
             // Generate SQL
             visit(plan);
-            return sql.toString();
+            String result = sql.toString();
+            // Clean buffer to prevent pollution in recursive calls
+            sql.setLength(0);
+            return result;
 
         } catch (UnsupportedOperationException e) {
             // Rollback state

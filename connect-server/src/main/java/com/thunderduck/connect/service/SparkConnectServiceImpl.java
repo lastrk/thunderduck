@@ -91,18 +91,31 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 Relation root = plan.getRoot();
                 logger.debug("Root relation type: {}", root.getRelTypeCase());
 
-                // Check for ShowString wrapping a SQL relation
+                // Check for ShowString wrapping any relation
                 if (root.hasShowString() && root.getShowString().hasInput()) {
                     var showString = root.getShowString();
                     Relation input = showString.getInput();
+                    isShowString = true;
+                    showStringNumRows = showString.getNumRows();
+                    showStringTruncate = showString.getTruncate();
+                    showStringVertical = showString.getVertical();
+
                     if (input.hasSql()) {
                         sql = input.getSql().getQuery();
-                        isShowString = true;
-                        showStringNumRows = showString.getNumRows();
-                        showStringTruncate = showString.getTruncate();
-                        showStringVertical = showString.getVertical();
-                        logger.debug("Found SQL in ShowString.input: {}, numRows={}, truncate={}",
-                            sql, showStringNumRows, showStringTruncate);
+                        logger.debug("Found SQL in ShowString.input: {}", sql);
+                    } else {
+                        // Deserialize non-SQL relation and generate SQL
+                        try {
+                            LogicalPlan innerPlan = planConverter.convertRelation(input);
+                            sql = sqlGenerator.generate(innerPlan);
+                            logger.debug("Generated SQL from ShowString.input: {}", sql);
+                        } catch (Exception e) {
+                            logger.error("Failed to deserialize ShowString inner relation", e);
+                            responseObserver.onError(Status.INTERNAL
+                                .withDescription("ShowString deserialization failed: " + e.getMessage())
+                                .asRuntimeException());
+                            return;
+                        }
                     }
                 } else if (root.hasSql()) {
                     // Direct SQL relation

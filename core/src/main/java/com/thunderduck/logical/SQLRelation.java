@@ -19,8 +19,8 @@ public class SQLRelation extends LogicalPlan {
 
     @Override
     public String toSQL(SQLGenerator generator) {
-        // Return the SQL as-is or wrap it in parentheses if needed
-        return "(" + sql + ")";
+        // Return the SQL as-is (parent nodes will wrap in parens if needed)
+        return sql;
     }
 
     @Override
