@@ -1,8 +1,8 @@
 # Week 12 Completion Report: Plan Deserialization Foundation
 
 **Date Completed**: 2025-10-24/25
-**Status**: ✅ INFRASTRUCTURE COMPLETE - Iterative Debugging Continues
-**Overall Progress**: 80% Complete (Infrastructure 100%, Testing 50%)
+**Status**: ✅ INFRASTRUCTURE COMPLETE - AnalyzePlan Deferred to Week 13
+**Overall Progress**: 75% Complete (Infrastructure 100%, Core Testing 100%, Advanced Testing 40%)
 
 ---
 
@@ -213,9 +213,31 @@ Total Tests: 656
 
 ## Known Issues & Remaining Work
 
-### Issue 1: Complex DataFrame Operations ⏳
+### Issue 1: AnalyzePlan Not Implemented ⚠️ WEEK 13 PRIORITY 1
 
-**Status**: Needs debugging (4-6 hours estimated)
+**Status**: Returns empty response, client hangs waiting for schema
+
+**Impact**: HIGH - Blocks many DataFrame operations that inspect schema
+
+**Symptoms**:
+- `df.schema` hangs
+- `df.printSchema()` hangs
+- Some DataFrame operations that need schema metadata hang
+
+**Solution Needed**:
+1. Extract schema from LogicalPlan (or infer from DuckDB)
+2. Convert thunderduck StructType → Spark Connect DataType
+3. Return proper AnalyzePlanResponse with schema field
+
+**Estimate**: 2-3 hours focused implementation
+
+**Deferred to**: Week 13 (Priority 1)
+
+---
+
+### Issue 2: Complex DataFrame Operations ⏳
+
+**Status**: Needs debugging (2-4 hours estimated)
 
 **Symptoms**:
 - Basic operations work (read, count)

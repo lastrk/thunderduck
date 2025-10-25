@@ -195,7 +195,8 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         try {
             updateOrCreateSession(sessionId);
 
-            // For MVP, return minimal analyze response
+            // Build minimal response - schema extraction deferred to Week 13
+            // For now, return empty response which signals to client to infer schema from execution
             AnalyzePlanResponse response = AnalyzePlanResponse.newBuilder()
                 .setSessionId(sessionId)
                 .build();
