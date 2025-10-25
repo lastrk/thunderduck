@@ -195,14 +195,56 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         try {
             updateOrCreateSession(sessionId);
 
-            // Build minimal response - schema extraction deferred to Week 13
-            // For now, return empty response which signals to client to infer schema from execution
-            AnalyzePlanResponse response = AnalyzePlanResponse.newBuilder()
-                .setSessionId(sessionId)
-                .build();
+            // Handle different analysis types
+            if (request.hasSchema()) {
+                // Schema analysis - extract schema from plan
+                Plan plan = request.getSchema().getPlan();
+                logger.debug("Schema analysis for plan type: {}", plan.getOpTypeCase());
 
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
+                try {
+                    // Deserialize plan
+                    LogicalPlan logicalPlan = planConverter.convert(plan);
+
+                    // Get or infer schema
+                    com.thunderduck.types.StructType schema = logicalPlan.schema();
+                    if (schema == null) {
+                        // Infer schema from DuckDB
+                        String sql = sqlGenerator.generate(logicalPlan);
+                        schema = inferSchemaFromDuckDB(sql);
+                    }
+
+                    // Convert to Spark Connect proto DataType
+                    org.apache.spark.connect.proto.DataType protoDataType = convertSchemaToProto(schema);
+
+                    // Build response with schema
+                    AnalyzePlanResponse response = AnalyzePlanResponse.newBuilder()
+                        .setSessionId(sessionId)
+                        .setSchema(AnalyzePlanResponse.Schema.newBuilder()
+                            .setSchema(protoDataType)
+                            .build())
+                        .build();
+
+                    responseObserver.onNext(response);
+                    responseObserver.onCompleted();
+
+                    logger.debug("Schema analysis complete: {} fields", schema.size());
+
+                } catch (Exception e) {
+                    logger.error("Schema extraction failed", e);
+                    responseObserver.onError(Status.INTERNAL
+                        .withDescription("Schema analysis failed: " + e.getMessage())
+                        .withCause(e)
+                        .asRuntimeException());
+                }
+            } else {
+                // Other analysis types not yet implemented
+                logger.warn("Unsupported analyze type: {}", request.getAnalyzeCase());
+                AnalyzePlanResponse response = AnalyzePlanResponse.newBuilder()
+                    .setSessionId(sessionId)
+                    .build();
+                responseObserver.onNext(response);
+                responseObserver.onCompleted();
+            }
 
         } catch (Exception e) {
             logger.error("Error analyzing plan for session " + sessionId, e);
@@ -686,5 +728,154 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 .withDescription("Result serialization failed: " + e.getMessage())
                 .asRuntimeException());
         }
+    }
+
+    // ==================== Helper Methods for Schema Conversion ====================
+
+    /**
+     * Converts thunderduck StructType to Spark Connect DataType.
+     */
+    private org.apache.spark.connect.proto.DataType convertSchemaToProto(com.thunderduck.types.StructType schema) {
+        org.apache.spark.connect.proto.DataType.Struct.Builder structBuilder =
+            org.apache.spark.connect.proto.DataType.Struct.newBuilder();
+
+        for (com.thunderduck.types.StructField field : schema.fields()) {
+            org.apache.spark.connect.proto.DataType.StructField.Builder fieldBuilder =
+                org.apache.spark.connect.proto.DataType.StructField.newBuilder()
+                    .setName(field.name())
+                    .setNullable(field.nullable())
+                    .setDataType(convertDataTypeToProto(field.dataType()));
+            structBuilder.addFields(fieldBuilder);
+        }
+
+        return org.apache.spark.connect.proto.DataType.newBuilder()
+            .setStruct(structBuilder)
+            .build();
+    }
+
+    /**
+     * Converts thunderduck DataType to Spark Connect DataType.
+     */
+    private org.apache.spark.connect.proto.DataType convertDataTypeToProto(com.thunderduck.types.DataType dataType) {
+        if (dataType instanceof com.thunderduck.types.IntegerType) {
+            return org.apache.spark.connect.proto.DataType.newBuilder()
+                .setInteger(org.apache.spark.connect.proto.DataType.Integer.newBuilder().build())
+                .build();
+        } else if (dataType instanceof com.thunderduck.types.LongType) {
+            return org.apache.spark.connect.proto.DataType.newBuilder()
+                .setLong(org.apache.spark.connect.proto.DataType.Long.newBuilder().build())
+                .build();
+        } else if (dataType instanceof com.thunderduck.types.DoubleType) {
+            return org.apache.spark.connect.proto.DataType.newBuilder()
+                .setDouble(org.apache.spark.connect.proto.DataType.Double.newBuilder().build())
+                .build();
+        } else if (dataType instanceof com.thunderduck.types.FloatType) {
+            return org.apache.spark.connect.proto.DataType.newBuilder()
+                .setFloat(org.apache.spark.connect.proto.DataType.Float.newBuilder().build())
+                .build();
+        } else if (dataType instanceof com.thunderduck.types.StringType) {
+            return org.apache.spark.connect.proto.DataType.newBuilder()
+                .setString(org.apache.spark.connect.proto.DataType.String.newBuilder().build())
+                .build();
+        } else if (dataType instanceof com.thunderduck.types.BooleanType) {
+            return org.apache.spark.connect.proto.DataType.newBuilder()
+                .setBoolean(org.apache.spark.connect.proto.DataType.Boolean.newBuilder().build())
+                .build();
+        } else if (dataType instanceof com.thunderduck.types.DateType) {
+            return org.apache.spark.connect.proto.DataType.newBuilder()
+                .setDate(org.apache.spark.connect.proto.DataType.Date.newBuilder().build())
+                .build();
+        } else if (dataType instanceof com.thunderduck.types.TimestampType) {
+            return org.apache.spark.connect.proto.DataType.newBuilder()
+                .setTimestamp(org.apache.spark.connect.proto.DataType.Timestamp.newBuilder().build())
+                .build();
+        } else if (dataType instanceof com.thunderduck.types.DecimalType) {
+            com.thunderduck.types.DecimalType decimalType = (com.thunderduck.types.DecimalType) dataType;
+            return org.apache.spark.connect.proto.DataType.newBuilder()
+                .setDecimal(org.apache.spark.connect.proto.DataType.Decimal.newBuilder()
+                    .setPrecision(decimalType.precision())
+                    .setScale(decimalType.scale())
+                    .build())
+                .build();
+        } else {
+            // Default to string for unsupported types
+            logger.warn("Unsupported data type for schema conversion: {}, defaulting to STRING", dataType.getClass().getSimpleName());
+            return org.apache.spark.connect.proto.DataType.newBuilder()
+                .setString(org.apache.spark.connect.proto.DataType.String.newBuilder().build())
+                .build();
+        }
+    }
+
+    /**
+     * Infers schema from DuckDB by executing LIMIT 0 query.
+     */
+    private com.thunderduck.types.StructType inferSchemaFromDuckDB(String sql) throws Exception {
+        QueryExecutor executor = new QueryExecutor(connectionManager);
+        String schemaQuery = "SELECT * FROM (" + sql + ") AS schema_infer LIMIT 0";
+
+        logger.debug("Inferring schema from SQL: {}", schemaQuery);
+
+        try (org.apache.arrow.vector.VectorSchemaRoot result = executor.executeQuery(schemaQuery)) {
+            // Extract schema from Arrow VectorSchemaRoot
+            org.apache.arrow.vector.types.pojo.Schema arrowSchema = result.getSchema();
+
+            // Convert Arrow schema to thunderduck StructType
+            java.util.List<com.thunderduck.types.StructField> fields = new java.util.ArrayList<>();
+            for (org.apache.arrow.vector.types.pojo.Field arrowField : arrowSchema.getFields()) {
+                com.thunderduck.types.DataType fieldType = convertArrowTypeToDataType(arrowField.getType());
+                fields.add(new com.thunderduck.types.StructField(
+                    arrowField.getName(),
+                    fieldType,
+                    arrowField.isNullable()
+                ));
+            }
+
+            logger.debug("Inferred schema with {} fields", fields.size());
+            return new com.thunderduck.types.StructType(fields);
+        }
+    }
+
+    /**
+     * Converts Arrow type to thunderduck DataType.
+     */
+    private com.thunderduck.types.DataType convertArrowTypeToDataType(org.apache.arrow.vector.types.pojo.ArrowType arrowType) {
+        if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Int) {
+            org.apache.arrow.vector.types.pojo.ArrowType.Int intType =
+                (org.apache.arrow.vector.types.pojo.ArrowType.Int) arrowType;
+            if (intType.getBitWidth() == 32) {
+                return com.thunderduck.types.IntegerType.get();
+            } else if (intType.getBitWidth() == 64) {
+                return com.thunderduck.types.LongType.get();
+            } else if (intType.getBitWidth() == 16) {
+                return com.thunderduck.types.ShortType.get();
+            } else if (intType.getBitWidth() == 8) {
+                return com.thunderduck.types.ByteType.get();
+            }
+        } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.FloatingPoint) {
+            org.apache.arrow.vector.types.pojo.ArrowType.FloatingPoint fpType =
+                (org.apache.arrow.vector.types.pojo.ArrowType.FloatingPoint) arrowType;
+            if (fpType.getPrecision() == org.apache.arrow.vector.types.FloatingPointPrecision.DOUBLE) {
+                return com.thunderduck.types.DoubleType.get();
+            } else if (fpType.getPrecision() == org.apache.arrow.vector.types.FloatingPointPrecision.SINGLE) {
+                return com.thunderduck.types.FloatType.get();
+            }
+        } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Utf8 ||
+                   arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.LargeUtf8) {
+            return com.thunderduck.types.StringType.get();
+        } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Bool) {
+            return com.thunderduck.types.BooleanType.get();
+        } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Date) {
+            return com.thunderduck.types.DateType.get();
+        } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Timestamp) {
+            return com.thunderduck.types.TimestampType.get();
+        } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Decimal) {
+            org.apache.arrow.vector.types.pojo.ArrowType.Decimal decimalType =
+                (org.apache.arrow.vector.types.pojo.ArrowType.Decimal) arrowType;
+            return new com.thunderduck.types.DecimalType(decimalType.getPrecision(), decimalType.getScale());
+        }
+
+        // Default to string for unknown types
+        logger.warn("Unknown Arrow type: {}, defaulting to STRING", arrowType.getClass().getSimpleName());
+        return com.thunderduck.types.StringType.get();
     }
 }

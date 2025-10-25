@@ -5,6 +5,7 @@ import com.thunderduck.expression.Expression;
 import com.thunderduck.expression.ColumnReference;
 import com.thunderduck.expression.BinaryExpression;
 import com.thunderduck.expression.FunctionCall;
+import com.thunderduck.expression.AliasExpression;
 import com.thunderduck.types.StructType;
 import com.thunderduck.types.StructField;
 
@@ -200,18 +201,43 @@ public class RelationConverter {
         // Convert aggregate expressions to AggregateExpression objects
         List<com.thunderduck.logical.Aggregate.AggregateExpression> aggExprs = new ArrayList<>();
         for (Expression expr : aggregateExprs) {
-            // For now, wrap each expression as an aggregate
-            // TODO: Extract function name and alias from the expression
+            // Extract function name, argument, and alias from expression
+            String functionName = null;
+            Expression argument = null;
+            String alias = null;
+
+            // Unwrap AliasExpression if present
+            if (expr instanceof AliasExpression) {
+                AliasExpression aliasExpr = (AliasExpression) expr;
+                alias = aliasExpr.alias();
+                expr = aliasExpr.expression();  // Unwrap to get inner expression
+            }
+
+            // Extract function name and arguments
             if (expr instanceof FunctionCall) {
                 FunctionCall func = (FunctionCall) expr;
+                functionName = func.functionName();
+                argument = func.arguments().isEmpty() ? null : func.arguments().get(0);
+            } else {
+                logger.warn("Unexpected aggregate expression type: {}", expr.getClass().getSimpleName());
+                continue;
+            }
+
+            if (functionName != null) {
                 com.thunderduck.logical.Aggregate.AggregateExpression aggExpr =
                     new com.thunderduck.logical.Aggregate.AggregateExpression(
-                        func.functionName(),
-                        func.arguments().isEmpty() ? null : func.arguments().get(0),
-                        null  // alias will be set later
+                        functionName,
+                        argument,
+                        alias
                     );
                 aggExprs.add(aggExpr);
+                logger.debug("Added aggregate: {}({}) AS {}", functionName, argument, alias);
             }
+        }
+
+        if (aggExprs.isEmpty()) {
+            logger.error("No aggregate expressions extracted. Input had {} expressions", aggregateExprs.size());
+            throw new PlanConversionException("Failed to convert aggregate expressions");
         }
 
         return new com.thunderduck.logical.Aggregate(input, groupingExprs, aggExprs);

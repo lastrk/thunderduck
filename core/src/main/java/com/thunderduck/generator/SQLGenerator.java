@@ -62,21 +62,26 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
     public String generate(LogicalPlan plan) {
         Objects.requireNonNull(plan, "plan must not be null");
 
-        // Reset state
-        sql.setLength(0);
-        contextStack.clear();
-        aliasCounter = 0;
-        subqueryDepth = 0;
+        // Check if this is a recursive call (buffer not empty or subquery depth > 0)
+        boolean isRecursive = sql.length() > 0 || subqueryDepth > 0;
 
-        // Save state for rollback
+        // Save state for recursive calls or rollback
         int savedLength = sql.length();
+        int savedAliasCounter = aliasCounter;
+        int savedSubqueryDepth = subqueryDepth;
+
+        if (!isRecursive) {
+            // Top-level call: reset all state
+            sql.setLength(0);
+            contextStack.clear();
+            aliasCounter = 0;
+            subqueryDepth = 0;
+        }
 
         try {
             // Generate SQL
             visit(plan);
-            String result = sql.toString();
-            // Clean buffer to prevent pollution in recursive calls
-            sql.setLength(0);
+            String result = sql.toString().substring(savedLength);  // Get only the new part
             return result;
 
         } catch (UnsupportedOperationException e) {
@@ -240,38 +245,10 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
     /**
      * Visits a Sort node (ORDER BY clause).
+     * Uses toSQL() method to avoid buffer corruption.
      */
     private void visitSort(Sort plan) {
-        sql.append("SELECT * FROM (");
-        subqueryDepth++;
-        visit(plan.child());
-        subqueryDepth--;
-        sql.append(") AS ").append(generateSubqueryAlias());
-        sql.append(" ORDER BY ");
-
-        List<Sort.SortOrder> sortOrders = plan.sortOrders();
-        for (int i = 0; i < sortOrders.size(); i++) {
-            if (i > 0) {
-                sql.append(", ");
-            }
-
-            Sort.SortOrder order = sortOrders.get(i);
-            sql.append(order.expression().toSQL());
-
-            // Add direction
-            if (order.direction() == Sort.SortDirection.DESCENDING) {
-                sql.append(" DESC");
-            } else {
-                sql.append(" ASC");
-            }
-
-            // Add null ordering
-            if (order.nullOrdering() == Sort.NullOrdering.NULLS_FIRST) {
-                sql.append(" NULLS FIRST");
-            } else {
-                sql.append(" NULLS LAST");
-            }
-        }
+        sql.append(plan.toSQL(this));
     }
 
     /**
