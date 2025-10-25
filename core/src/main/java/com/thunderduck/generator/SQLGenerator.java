@@ -271,23 +271,127 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
     /**
      * Visits an Aggregate node (GROUP BY clause).
+     * Builds SQL directly in buffer to avoid corruption from generate() calls.
      */
     private void visitAggregate(Aggregate plan) {
-        sql.append(plan.toSQL(this));
+        if (plan.aggregateExpressions().isEmpty()) {
+            throw new IllegalArgumentException("Cannot generate SQL for aggregation with no aggregate expressions");
+        }
+
+        // SELECT clause with grouping expressions and aggregates
+        sql.append("SELECT ");
+
+        java.util.List<String> selectExprs = new java.util.ArrayList<>();
+
+        // Add grouping columns
+        for (com.thunderduck.expression.Expression expr : plan.groupingExpressions()) {
+            selectExprs.add(expr.toSQL());
+        }
+
+        // Add aggregate expressions
+        for (Aggregate.AggregateExpression aggExpr : plan.aggregateExpressions()) {
+            String aggSQL = aggExpr.toSQL();
+            // Add alias if provided
+            if (aggExpr.alias() != null && !aggExpr.alias().isEmpty()) {
+                aggSQL += " AS " + quoteIdentifier(aggExpr.alias());
+            }
+            selectExprs.add(aggSQL);
+        }
+
+        sql.append(String.join(", ", selectExprs));
+
+        // FROM clause
+        sql.append(" FROM (");
+        subqueryDepth++;
+        visit(plan.child());  // Use visit(), not generate()
+        subqueryDepth--;
+        sql.append(") AS ").append(generateSubqueryAlias());
+
+        // GROUP BY clause
+        if (!plan.groupingExpressions().isEmpty()) {
+            sql.append(" GROUP BY ");
+            java.util.List<String> groupExprs = new java.util.ArrayList<>();
+            for (com.thunderduck.expression.Expression expr : plan.groupingExpressions()) {
+                groupExprs.add(expr.toSQL());
+            }
+            sql.append(String.join(", ", groupExprs));
+        }
+
+        // HAVING clause
+        if (plan.havingCondition() != null) {
+            sql.append(" HAVING ");
+            sql.append(plan.havingCondition().toSQL());
+        }
     }
 
     /**
      * Visits a Join node.
+     * Builds SQL directly in buffer to avoid corruption.
      */
     private void visitJoin(Join plan) {
-        sql.append(plan.toSQL(this));
+        // SELECT * FROM left
+        sql.append("SELECT * FROM (");
+        subqueryDepth++;
+        visit(plan.left());
+        subqueryDepth--;
+        sql.append(") AS ").append(generateSubqueryAlias());
+
+        // JOIN type
+        switch (plan.joinType()) {
+            case INNER:
+                sql.append(" INNER JOIN ");
+                break;
+            case LEFT:
+                sql.append(" LEFT OUTER JOIN ");
+                break;
+            case RIGHT:
+                sql.append(" RIGHT OUTER JOIN ");
+                break;
+            case FULL:
+                sql.append(" FULL OUTER JOIN ");
+                break;
+            case CROSS:
+                sql.append(" CROSS JOIN ");
+                break;
+            case LEFT_SEMI:
+                sql.append(" LEFT SEMI JOIN ");
+                break;
+            case LEFT_ANTI:
+                sql.append(" LEFT ANTI JOIN ");
+                break;
+        }
+
+        // Right side
+        sql.append("(");
+        subqueryDepth++;
+        visit(plan.right());
+        subqueryDepth--;
+        sql.append(") AS ").append(generateSubqueryAlias());
+
+        // ON clause (except for CROSS join)
+        if (plan.joinType() != Join.JoinType.CROSS && plan.condition() != null) {
+            sql.append(" ON ");
+            sql.append(plan.condition().toSQL());
+        }
     }
 
     /**
      * Visits a Union node.
+     * Builds SQL directly in buffer.
      */
     private void visitUnion(Union plan) {
-        sql.append(plan.toSQL(this));
+        // Left side
+        visit(plan.left());
+
+        // UNION operator
+        if (plan.all()) {
+            sql.append(" UNION ALL ");
+        } else {
+            sql.append(" UNION ");
+        }
+
+        // Right side
+        visit(plan.right());
     }
 
     /**
