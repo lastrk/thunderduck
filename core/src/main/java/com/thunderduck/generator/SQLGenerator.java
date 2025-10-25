@@ -245,10 +245,39 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
     /**
      * Visits a Sort node (ORDER BY clause).
-     * Uses toSQL() method to avoid buffer corruption.
+     * Builds SQL directly in buffer to avoid corruption.
      */
     private void visitSort(Sort plan) {
-        sql.append(plan.toSQL(this));
+        sql.append("SELECT * FROM (");
+        subqueryDepth++;
+        visit(plan.child());  // Use visit(), not generate()
+        subqueryDepth--;
+        sql.append(") AS ").append(generateSubqueryAlias());
+        sql.append(" ORDER BY ");
+
+        java.util.List<Sort.SortOrder> sortOrders = plan.sortOrders();
+        for (int i = 0; i < sortOrders.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+
+            Sort.SortOrder order = sortOrders.get(i);
+            sql.append(order.expression().toSQL());
+
+            // Add direction
+            if (order.direction() == Sort.SortDirection.DESCENDING) {
+                sql.append(" DESC");
+            } else {
+                sql.append(" ASC");
+            }
+
+            // Add null ordering
+            if (order.nullOrdering() == Sort.NullOrdering.NULLS_FIRST) {
+                sql.append(" NULLS FIRST");
+            } else {
+                sql.append(" NULLS LAST");
+            }
+        }
     }
 
     /**
