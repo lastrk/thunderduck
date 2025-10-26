@@ -104,7 +104,7 @@ public class Project extends LogicalPlan {
             String alias = aliases.get(i);
             if (alias != null && !alias.isEmpty()) {
                 sql.append(" AS ");
-                sql.append(com.thunderduck.generator.SQLGenerator.quoteIdentifier(alias));
+                sql.append(com.thunderduck.generator.SQLQuoting.quoteIdentifier(alias));
             }
         }
 

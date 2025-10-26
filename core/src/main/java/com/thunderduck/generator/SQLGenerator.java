@@ -30,7 +30,7 @@ import static com.thunderduck.generator.SQLQuoting.*;
 public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
     private final StringBuilder sql;
-    private final Stack<GenerationContext> contextStack;
+    //private final Stack<GenerationContext> contextStack;
     private int aliasCounter;
     private int subqueryDepth;
 
@@ -39,7 +39,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      */
     public SQLGenerator() {
         this.sql = new StringBuilder();
-        this.contextStack = new Stack<>();
+      //  this.contextStack = new Stack<>();
         this.aliasCounter = 0;
         this.subqueryDepth = 0;
     }
@@ -71,7 +71,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         if (!isRecursive) {
             // Top-level call: reset all state
             sql.setLength(0);
-            contextStack.clear();
+            //contextStack.clear();
             aliasCounter = 0;
             subqueryDepth = 0;
         }
@@ -85,7 +85,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         } catch (UnsupportedOperationException e) {
             // Rollback state
             sql.setLength(savedLength);
-            contextStack.clear();
+            //contextStack.clear();
 
             // Re-throw UnsupportedOperationException without wrapping
             // so callers can catch it directly if needed
@@ -94,7 +94,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         } catch (IllegalArgumentException e) {
             // Rollback state
             sql.setLength(savedLength);
-            contextStack.clear();
+            //contextStack.clear();
 
             // Re-throw IllegalArgumentException without wrapping
             // This includes validation errors from quoting/escaping
@@ -103,7 +103,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         } catch (Exception e) {
             // Rollback state
             sql.setLength(savedLength);
-            contextStack.clear();
+            //contextStack.clear();
 
             // Wrap in SQLGenerationException with context
             throw new SQLGenerationException(
@@ -320,7 +320,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             String aggSQL = aggExpr.toSQL();
             // Add alias if provided
             if (aggExpr.alias() != null && !aggExpr.alias().isEmpty()) {
-                aggSQL += " AS " + quoteIdentifier(aggExpr.alias());
+                aggSQL += " AS " + SQLQuoting.quoteIdentifier(aggExpr.alias());
             }
             selectExprs.add(aggSQL);
         }
@@ -439,79 +439,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             "LocalRelation SQL generation will be implemented in Week 3");
     }
 
-    /**
-     * Quotes an identifier for use in SQL.
-     *
-     * <p>DuckDB uses double quotes for identifiers that need quoting
-     * (e.g., reserved words, special characters, case-sensitive names).
-     *
-     * @param identifier the identifier to quote
-     * @return the quoted identifier
-     */
-    public static String quoteIdentifier(String identifier) {
-        Objects.requireNonNull(identifier, "identifier must not be null");
-
-        // Check if identifier needs quoting
-        if (needsQuoting(identifier)) {
-            // Escape any double quotes in the identifier
-            String escaped = identifier.replace("\"", "\"\"");
-            return "\"" + escaped + "\"";
-        }
-
-        return identifier;
-    }
-
-    /**
-     * Checks if an identifier needs quoting.
-     *
-     * @param identifier the identifier to check
-     * @return true if quoting is needed
-     */
-    private static boolean needsQuoting(String identifier) {
-        if (identifier.isEmpty()) {
-            return true;
-        }
-
-        // Check if it starts with a letter or underscore
-        char first = identifier.charAt(0);
-        if (!Character.isLetter(first) && first != '_') {
-            return true;
-        }
-
-        // Check if it contains only letters, digits, and underscores
-        for (int i = 0; i < identifier.length(); i++) {
-            char c = identifier.charAt(i);
-            if (!Character.isLetterOrDigit(c) && c != '_') {
-                return true;
-            }
-        }
-
-        // Check if it's a reserved word (simplified check)
-        String upper = identifier.toUpperCase();
-        if (isReservedWord(upper)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Checks if a word is a SQL reserved word.
-     *
-     * @param word the word to check (uppercase)
-     * @return true if reserved
-     */
-    private static boolean isReservedWord(String word) {
-        // Common SQL reserved words
-        Set<String> reserved = Set.of(
-            "SELECT", "FROM", "WHERE", "GROUP", "BY", "ORDER", "HAVING",
-            "JOIN", "LEFT", "RIGHT", "INNER", "OUTER", "FULL", "CROSS",
-            "ON", "USING", "AS", "AND", "OR", "NOT", "IN", "EXISTS",
-            "CASE", "WHEN", "THEN", "ELSE", "END", "NULL", "TRUE", "FALSE",
-            "UNION", "INTERSECT", "EXCEPT", "LIMIT", "OFFSET"
-        );
-        return reserved.contains(word);
-    }
+    // Removed local quoteIdentifier() methods - using SQLQuoting.quoteIdentifier() everywhere
+    // which always quotes identifiers for consistency and security (see Week 13 Phase 1 fixes)
 
     /**
      * Escapes single quotes in a string literal.
@@ -519,9 +448,9 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * @param str the string to escape
      * @return the escaped string
      */
-    private String escapeSingleQuotes(String str) {
+    /*private String escapeSingleQuotes(String str) {
         return str.replace("'", "''");
-    }
+    }*/
 
     /**
      * Generates a unique subquery alias.
@@ -538,15 +467,15 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * <p>Tracks state during traversal, such as current aliases,
      * available columns, and generation options.
      */
-    private static class GenerationContext {
-        private final Map<String, String> aliases;
-        private final Set<String> availableColumns;
+    //private static class GenerationContext {
+        //private final Map<String, String> aliases;
+        // private final Set<String> availableColumns;
 
-        public GenerationContext() {
-            this.aliases = new HashMap<>();
-            this.availableColumns = new HashSet<>();
-        }
-    }
+        /*public GenerationContext() {
+            //this.aliases = new HashMap<>();
+           // this.availableColumns = new HashSet<>();
+        }*/
+    //}
 
     /**
      * Returns the current subquery depth.
