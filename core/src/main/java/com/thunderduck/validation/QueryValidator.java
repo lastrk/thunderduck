@@ -235,7 +235,7 @@ public class QueryValidator {
         }
 
         // Validate all non-aggregate columns are in GROUP BY
-        Set<String> groupingColumns = getColumnNamesFromExpressions(agg.groupingExpressions());
+        //Set<String> groupingColumns = getColumnNamesFromExpressions(agg.groupingExpressions());
 
         // Check each aggregate expression
         for (AggregateExpression aggExpr : agg.aggregateExpressions()) {
@@ -329,7 +329,7 @@ public class QueryValidator {
      * @param expressions the expressions
      * @return set of column names
      */
-    private static Set<String> getColumnNamesFromExpressions(List<Expression> expressions) {
+    /*private static Set<String> getColumnNamesFromExpressions(List<Expression> expressions) {
         Set<String> columns = new HashSet<>();
         for (Expression expr : expressions) {
             if (expr instanceof ColumnReference) {
@@ -337,7 +337,7 @@ public class QueryValidator {
             }
         }
         return columns;
-    }
+    }*/
 
     /**
      * Extracts all column references from an expression tree.

@@ -291,7 +291,7 @@ public class TypeMapper {
      * @param delimiter the delimiter character
      * @return the split parts
      */
-    private static String[] splitTopLevel(String str, char delimiter) {
+    /*private static String[] splitTopLevel(String str, char delimiter) {
         java.util.List<String> parts = new java.util.ArrayList<>();
         int depth = 0;
         int start = 0;
@@ -314,5 +314,5 @@ public class TypeMapper {
         }
 
         return parts.toArray(new String[0]);
-    }
+    }*/
 }
