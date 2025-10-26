@@ -305,15 +305,32 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 logger.debug("Schema analysis for plan type: {}", plan.getOpTypeCase());
 
                 try {
-                    // Deserialize plan
-                    LogicalPlan logicalPlan = planConverter.convert(plan);
+                    com.thunderduck.types.StructType schema = null;
+                    String sql = null;
 
-                    // Get or infer schema
-                    com.thunderduck.types.StructType schema = logicalPlan.schema();
-                    if (schema == null) {
-                        // Infer schema from DuckDB
-                        String sql = sqlGenerator.generate(logicalPlan);
+                    // Check if this is a SQL query (special handling needed)
+                    if (plan.hasRoot() && plan.getRoot().hasSql()) {
+                        // Direct SQL query - infer schema using LIMIT 0
+                        sql = plan.getRoot().getSql().getQuery();
+                        logger.debug("Analyzing SQL query schema: {}", sql.substring(0, Math.min(100, sql.length())));
                         schema = inferSchemaFromDuckDB(sql);
+
+                    } else if (plan.hasCommand() && plan.getCommand().hasSqlCommand()) {
+                        // SQL command - infer schema
+                        sql = plan.getCommand().getSqlCommand().getSql();
+                        logger.debug("Analyzing SQL command schema: {}", sql.substring(0, Math.min(100, sql.length())));
+                        schema = inferSchemaFromDuckDB(sql);
+
+                    } else {
+                        // Regular plan - deserialize and extract schema
+                        LogicalPlan logicalPlan = planConverter.convert(plan);
+                        schema = logicalPlan.schema();
+
+                        if (schema == null) {
+                            // Infer schema from generated SQL
+                            sql = sqlGenerator.generate(logicalPlan);
+                            schema = inferSchemaFromDuckDB(sql);
+                        }
                     }
 
                     // Convert to Spark Connect proto DataType
