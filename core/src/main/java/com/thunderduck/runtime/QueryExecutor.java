@@ -4,6 +4,8 @@ import com.thunderduck.exception.QueryExecutionException;
 import com.thunderduck.logging.QueryLogger;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.duckdb.DuckDBConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.sql.*;
 import java.util.Objects;
 import java.util.UUID;
@@ -41,6 +43,8 @@ import java.util.UUID;
  * @see ArrowInterchange
  */
 public class QueryExecutor {
+
+    private static final Logger logger = LoggerFactory.getLogger(QueryExecutor.class);
 
     private final DuckDBConnectionManager connectionManager;
 
@@ -139,7 +143,7 @@ public class QueryExecutor {
                             rs.close();
                         } catch (SQLException e) {
                             // Log but don't throw
-                            System.err.println("Error closing ResultSet: " + e.getMessage());
+                            logger.warn("Error closing ResultSet: " + e.getMessage());
                         }
                     }
                     if (stmt != null) {
@@ -147,7 +151,7 @@ public class QueryExecutor {
                             stmt.close();
                         } catch (SQLException e) {
                             // Log but don't throw
-                            System.err.println("Error closing Statement: " + e.getMessage());
+                            logger.warn("Error closing Statement: " + e.getMessage());
                         }
                     }
                 }
@@ -223,7 +227,7 @@ public class QueryExecutor {
                         stmt.close();
                     } catch (SQLException e) {
                         // Log but don't throw
-                        System.err.println("Error closing Statement: " + e.getMessage());
+                        logger.warn("Error closing Statement: " + e.getMessage());
                     }
                 }
             }
@@ -271,7 +275,7 @@ public class QueryExecutor {
                         stmt.close();
                     } catch (SQLException e) {
                         // Log but don't throw
-                        System.err.println("Error closing Statement: " + e.getMessage());
+                        logger.warn("Error closing Statement: " + e.getMessage());
                     }
                 }
             }

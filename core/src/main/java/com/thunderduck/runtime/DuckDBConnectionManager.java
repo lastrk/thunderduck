@@ -1,6 +1,8 @@
 package com.thunderduck.runtime;
 
 import org.duckdb.DuckDBConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.sql.*;
 import java.util.concurrent.*;
 import java.util.Objects;
@@ -47,6 +49,8 @@ import java.util.Objects;
  * @see QueryExecutor
  */
 public class DuckDBConnectionManager implements AutoCloseable {
+
+    private static final Logger logger = LoggerFactory.getLogger(DuckDBConnectionManager.class);
 
     private final String jdbcUrl;
     private final HardwareProfile hardware;
@@ -167,7 +171,7 @@ public class DuckDBConnectionManager implements AutoCloseable {
         try {
             // Validate connection health before returning to pool
             if (!isConnectionValid(conn)) {
-                System.err.println("Invalid connection detected, not returning to pool");
+                logger.warn("Invalid connection detected, not returning to pool");
                 try {
                     conn.close();
                 } catch (SQLException ignored) {
@@ -178,26 +182,26 @@ public class DuckDBConnectionManager implements AutoCloseable {
                 try {
                     DuckDBConnection replacement = createConnection();
                     if (!connectionPool.offer(replacement)) {
-                        System.err.println("Connection pool full, closing replacement");
+                        logger.warn("Connection pool full, closing replacement");
                         replacement.close();
                     }
                 } catch (SQLException e) {
-                    System.err.println("Failed to create replacement connection: " + e.getMessage());
+                    logger.warn("Failed to create replacement connection: " + e.getMessage());
                 }
                 return;
             }
 
             // Return valid connection to pool
             if (!connectionPool.offer(conn)) {
-                System.err.println("Connection pool full, closing extra connection");
+                logger.warn("Connection pool full, closing extra connection");
                 try {
                     conn.close();
                 } catch (SQLException e) {
-                    System.err.println("Failed to close connection: " + e.getMessage());
+                    logger.warn("Failed to close connection: " + e.getMessage());
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error releasing connection: " + e.getMessage());
+            logger.warn("Error releasing connection: " + e.getMessage());
         }
     }
 

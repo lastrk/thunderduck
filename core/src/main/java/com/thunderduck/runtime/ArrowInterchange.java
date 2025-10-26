@@ -87,14 +87,8 @@ public class ArrowInterchange {
         root.setRowCount(rows.size());
         for (int col = 0; col < columnCount; col++) {
             FieldVector vector = root.getVector(col);
-            String vectorType = vector.getClass().getSimpleName();
-            String columnName = vector.getName();
-            System.err.println("DEBUG: Column " + columnName + " uses " + vectorType);
             for (int row = 0; row < rows.size(); row++) {
                 Object value = rows.get(row).get(col);
-                if (row == 0) {
-                    System.err.println("DEBUG:   Row 0 value: " + value + " (type: " + (value != null ? value.getClass().getSimpleName() : "null") + ")");
-                }
                 setVectorValue(vector, row, value);
             }
         }
