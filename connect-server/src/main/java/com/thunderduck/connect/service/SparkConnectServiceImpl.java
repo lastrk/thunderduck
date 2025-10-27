@@ -138,6 +138,11 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             }
 
             if (sql != null) {
+                // Translate Spark SQL backticks to DuckDB double quotes for identifier quoting
+                // Spark SQL: SELECT col AS `my column`
+                // DuckDB:    SELECT col AS "my column"
+                sql = sql.replace('`', '"');
+
                 logger.info("Executing SQL: {}", sql);
 
                 if (isShowString) {
