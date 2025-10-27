@@ -1,0 +1,410 @@
+{
+  "query_num": 56,
+  "row_count": 100,
+  "columns": [
+    "i_item_id",
+    "total_sales"
+  ],
+  "rows": [
+    {
+      "i_item_id": "AAAAAAAAMOAAAAAA",
+      "total_sales": null
+    },
+    {
+      "i_item_id": "AAAAAAAAMBNDAAAA",
+      "total_sales": null
+    },
+    {
+      "i_item_id": "AAAAAAAAEPDEAAAA",
+      "total_sales": 0.0
+    },
+    {
+      "i_item_id": "AAAAAAAAEMICAAAA",
+      "total_sales": 0.0
+    },
+    {
+      "i_item_id": "AAAAAAAAAPABAAAA",
+      "total_sales": 5.85
+    },
+    {
+      "i_item_id": "AAAAAAAANEFAAAAA",
+      "total_sales": 6.93
+    },
+    {
+      "i_item_id": "AAAAAAAADOIDAAAA",
+      "total_sales": 8.36
+    },
+    {
+      "i_item_id": "AAAAAAAAEJLBAAAA",
+      "total_sales": 10.28
+    },
+    {
+      "i_item_id": "AAAAAAAAINGBAAAA",
+      "total_sales": 13.57
+    },
+    {
+      "i_item_id": "AAAAAAAAGNDDAAAA",
+      "total_sales": 17.85
+    },
+    {
+      "i_item_id": "AAAAAAAAKFFCAAAA",
+      "total_sales": 21.21
+    },
+    {
+      "i_item_id": "AAAAAAAAOKNBAAAA",
+      "total_sales": 29.54
+    },
+    {
+      "i_item_id": "AAAAAAAAMEKAAAAA",
+      "total_sales": 29.75
+    },
+    {
+      "i_item_id": "AAAAAAAABIDEAAAA",
+      "total_sales": 31.93
+    },
+    {
+      "i_item_id": "AAAAAAAAKMPAAAAA",
+      "total_sales": 51.45
+    },
+    {
+      "i_item_id": "AAAAAAAAKEGCAAAA",
+      "total_sales": 63.1
+    },
+    {
+      "i_item_id": "AAAAAAAACPIBAAAA",
+      "total_sales": 66.25
+    },
+    {
+      "i_item_id": "AAAAAAAAIKFAAAAA",
+      "total_sales": 74.63
+    },
+    {
+      "i_item_id": "AAAAAAAAJHNCAAAA",
+      "total_sales": 80.08
+    },
+    {
+      "i_item_id": "AAAAAAAAMGCCAAAA",
+      "total_sales": 80.32
+    },
+    {
+      "i_item_id": "AAAAAAAANDHCAAAA",
+      "total_sales": 84.15
+    },
+    {
+      "i_item_id": "AAAAAAAAKMCCAAAA",
+      "total_sales": 84.96
+    },
+    {
+      "i_item_id": "AAAAAAAAIBBAAAAA",
+      "total_sales": 91.26
+    },
+    {
+      "i_item_id": "AAAAAAAAOLPAAAAA",
+      "total_sales": 95.6
+    },
+    {
+      "i_item_id": "AAAAAAAAAPDBAAAA",
+      "total_sales": 99.72
+    },
+    {
+      "i_item_id": "AAAAAAAACIBAAAAA",
+      "total_sales": 102.08
+    },
+    {
+      "i_item_id": "AAAAAAAAEOIDAAAA",
+      "total_sales": 127.4
+    },
+    {
+      "i_item_id": "AAAAAAAAGHBCAAAA",
+      "total_sales": 153.79
+    },
+    {
+      "i_item_id": "AAAAAAAAGJHDAAAA",
+      "total_sales": 158.46
+    },
+    {
+      "i_item_id": "AAAAAAAAKFNDAAAA",
+      "total_sales": 161.7
+    },
+    {
+      "i_item_id": "AAAAAAAAHHBBAAAA",
+      "total_sales": 164.28
+    },
+    {
+      "i_item_id": "AAAAAAAAIOAAAAAA",
+      "total_sales": 166.04
+    },
+    {
+      "i_item_id": "AAAAAAAAJGBDAAAA",
+      "total_sales": 182.85
+    },
+    {
+      "i_item_id": "AAAAAAAALNHDAAAA",
+      "total_sales": 193.8
+    },
+    {
+      "i_item_id": "AAAAAAAAMKAEAAAA",
+      "total_sales": 208.5
+    },
+    {
+      "i_item_id": "AAAAAAAAGLIDAAAA",
+      "total_sales": 208.62
+    },
+    {
+      "i_item_id": "AAAAAAAAKPKCAAAA",
+      "total_sales": 224.98
+    },
+    {
+      "i_item_id": "AAAAAAAAOFDAAAAA",
+      "total_sales": 251.22
+    },
+    {
+      "i_item_id": "AAAAAAAAKOPBAAAA",
+      "total_sales": 251.25
+    },
+    {
+      "i_item_id": "AAAAAAAANFPBAAAA",
+      "total_sales": 285.84
+    },
+    {
+      "i_item_id": "AAAAAAAAONBAAAAA",
+      "total_sales": 290.4
+    },
+    {
+      "i_item_id": "AAAAAAAAEGPAAAAA",
+      "total_sales": 292.22
+    },
+    {
+      "i_item_id": "AAAAAAAADEJAAAAA",
+      "total_sales": 295.24
+    },
+    {
+      "i_item_id": "AAAAAAAAFBGBAAAA",
+      "total_sales": 326.16
+    },
+    {
+      "i_item_id": "AAAAAAAAJHGDAAAA",
+      "total_sales": 327.31
+    },
+    {
+      "i_item_id": "AAAAAAAAIDECAAAA",
+      "total_sales": 332.35
+    },
+    {
+      "i_item_id": "AAAAAAAAELHAAAAA",
+      "total_sales": 362.02
+    },
+    {
+      "i_item_id": "AAAAAAAAEKCDAAAA",
+      "total_sales": 365.5
+    },
+    {
+      "i_item_id": "AAAAAAAAPLEBAAAA",
+      "total_sales": 367.4
+    },
+    {
+      "i_item_id": "AAAAAAAAOFECAAAA",
+      "total_sales": 384.26
+    },
+    {
+      "i_item_id": "AAAAAAAAGBPBAAAA",
+      "total_sales": 385.65
+    },
+    {
+      "i_item_id": "AAAAAAAAEGDDAAAA",
+      "total_sales": 409.04
+    },
+    {
+      "i_item_id": "AAAAAAAAMACAAAAA",
+      "total_sales": 427.59
+    },
+    {
+      "i_item_id": "AAAAAAAAEHKBAAAA",
+      "total_sales": 432.25
+    },
+    {
+      "i_item_id": "AAAAAAAAINHAAAAA",
+      "total_sales": 438.38
+    },
+    {
+      "i_item_id": "AAAAAAAAEPPBAAAA",
+      "total_sales": 444.88
+    },
+    {
+      "i_item_id": "AAAAAAAAOICEAAAA",
+      "total_sales": 473.24
+    },
+    {
+      "i_item_id": "AAAAAAAAEMHCAAAA",
+      "total_sales": 484.38
+    },
+    {
+      "i_item_id": "AAAAAAAADGDEAAAA",
+      "total_sales": 502.18
+    },
+    {
+      "i_item_id": "AAAAAAAAANCBAAAA",
+      "total_sales": 529.56
+    },
+    {
+      "i_item_id": "AAAAAAAAAFNBAAAA",
+      "total_sales": 529.83
+    },
+    {
+      "i_item_id": "AAAAAAAAHOBDAAAA",
+      "total_sales": 538.18
+    },
+    {
+      "i_item_id": "AAAAAAAAHAFEAAAA",
+      "total_sales": 544.5
+    },
+    {
+      "i_item_id": "AAAAAAAACNACAAAA",
+      "total_sales": 548.34
+    },
+    {
+      "i_item_id": "AAAAAAAAOCEAAAAA",
+      "total_sales": 588.39
+    },
+    {
+      "i_item_id": "AAAAAAAAEMDBAAAA",
+      "total_sales": 592.32
+    },
+    {
+      "i_item_id": "AAAAAAAAGANAAAAA",
+      "total_sales": 603.09
+    },
+    {
+      "i_item_id": "AAAAAAAACCOBAAAA",
+      "total_sales": 604.8
+    },
+    {
+      "i_item_id": "AAAAAAAAMBNAAAAA",
+      "total_sales": 619.18
+    },
+    {
+      "i_item_id": "AAAAAAAAKNCEAAAA",
+      "total_sales": 621.26
+    },
+    {
+      "i_item_id": "AAAAAAAAKDGDAAAA",
+      "total_sales": 633.24
+    },
+    {
+      "i_item_id": "AAAAAAAAABLBAAAA",
+      "total_sales": 636.5
+    },
+    {
+      "i_item_id": "AAAAAAAAKIEEAAAA",
+      "total_sales": 638.91
+    },
+    {
+      "i_item_id": "AAAAAAAAGMGBAAAA",
+      "total_sales": 641.58
+    },
+    {
+      "i_item_id": "AAAAAAAAENCBAAAA",
+      "total_sales": 643.55
+    },
+    {
+      "i_item_id": "AAAAAAAAIGBEAAAA",
+      "total_sales": 663.52
+    },
+    {
+      "i_item_id": "AAAAAAAAGBEAAAAA",
+      "total_sales": 694.2
+    },
+    {
+      "i_item_id": "AAAAAAAAHIOCAAAA",
+      "total_sales": 694.88
+    },
+    {
+      "i_item_id": "AAAAAAAAAELCAAAA",
+      "total_sales": 707.52
+    },
+    {
+      "i_item_id": "AAAAAAAACENDAAAA",
+      "total_sales": 744.5
+    },
+    {
+      "i_item_id": "AAAAAAAAIOCEAAAA",
+      "total_sales": 755.65
+    },
+    {
+      "i_item_id": "AAAAAAAAKGFBAAAA",
+      "total_sales": 780.07
+    },
+    {
+      "i_item_id": "AAAAAAAADIBBAAAA",
+      "total_sales": 795.4
+    },
+    {
+      "i_item_id": "AAAAAAAAGIOBAAAA",
+      "total_sales": 796.95
+    },
+    {
+      "i_item_id": "AAAAAAAAJBCEAAAA",
+      "total_sales": 821.26
+    },
+    {
+      "i_item_id": "AAAAAAAAKFKBAAAA",
+      "total_sales": 832.56
+    },
+    {
+      "i_item_id": "AAAAAAAANNEBAAAA",
+      "total_sales": 835.12
+    },
+    {
+      "i_item_id": "AAAAAAAALOCEAAAA",
+      "total_sales": 885.78
+    },
+    {
+      "i_item_id": "AAAAAAAAKPFEAAAA",
+      "total_sales": 898.56
+    },
+    {
+      "i_item_id": "AAAAAAAAAEGAAAAA",
+      "total_sales": 901.81
+    },
+    {
+      "i_item_id": "AAAAAAAACAPCAAAA",
+      "total_sales": 909.96
+    },
+    {
+      "i_item_id": "AAAAAAAAIKCAAAAA",
+      "total_sales": 919.81
+    },
+    {
+      "i_item_id": "AAAAAAAALFADAAAA",
+      "total_sales": 930.8
+    },
+    {
+      "i_item_id": "AAAAAAAAMMCAAAAA",
+      "total_sales": 933.98
+    },
+    {
+      "i_item_id": "AAAAAAAACCPAAAAA",
+      "total_sales": 936.08
+    },
+    {
+      "i_item_id": "AAAAAAAAKCABAAAA",
+      "total_sales": 944.85
+    },
+    {
+      "i_item_id": "AAAAAAAAALIBAAAA",
+      "total_sales": 962.7
+    },
+    {
+      "i_item_id": "AAAAAAAAKMBCAAAA",
+      "total_sales": 977.68
+    },
+    {
+      "i_item_id": "AAAAAAAAAPNBAAAA",
+      "total_sales": 985.01
+    },
+    {
+      "i_item_id": "AAAAAAAAIKNBAAAA",
+      "total_sales": 1005.17
+    }
+  ]
+}

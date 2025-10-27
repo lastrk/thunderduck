@@ -1,0 +1,66 @@
+{
+  "query_num": 58,
+  "row_count": 5,
+  "columns": [
+    "item_id",
+    "ss_item_rev",
+    "ss_dev",
+    "cs_item_rev",
+    "cs_dev",
+    "ws_item_rev",
+    "ws_dev",
+    "average"
+  ],
+  "rows": [
+    {
+      "item_id": "AAAAAAAAEHEBAAAA",
+      "ss_item_rev": 4112.78,
+      "ss_dev": 11.524362735620397,
+      "cs_item_rev": 3968.8,
+      "cs_dev": 11.120918411665643,
+      "ws_item_rev": 3814.32,
+      "ws_dev": 10.688052186047294,
+      "average": 3965.3
+    },
+    {
+      "item_id": "AAAAAAAAFDKBAAAA",
+      "ss_item_rev": 4262.34,
+      "ss_dev": 11.22031309599868,
+      "cs_item_rev": 4141.02,
+      "cs_dev": 10.900946648271244,
+      "ws_item_rev": 4259.21,
+      "ws_dev": 11.21207358906341,
+      "average": 4220.856667
+    },
+    {
+      "item_id": "AAAAAAAAGOPDAAAA",
+      "ss_item_rev": 2005.56,
+      "ss_dev": 11.67208787064536,
+      "cs_item_rev": 1840.35,
+      "cs_dev": 10.710588021670848,
+      "ws_item_rev": 1881.6,
+      "ws_dev": 10.950657441017126,
+      "average": 1909.17
+    },
+    {
+      "item_id": "AAAAAAAAOMOAAAAA",
+      "ss_item_rev": 2749.75,
+      "ss_dev": 10.592555183562558,
+      "cs_item_rev": 2989.31,
+      "cs_dev": 11.515385448049964,
+      "ws_item_rev": 2914.03,
+      "ws_dev": 11.22539270172081,
+      "average": 2884.363333
+    },
+    {
+      "item_id": "AAAAAAAAPGOCAAAA",
+      "ss_item_rev": 1343.9,
+      "ss_dev": 10.69886117115073,
+      "cs_item_rev": 1408.53,
+      "cs_dev": 11.213384124861179,
+      "ws_item_rev": 1434.62,
+      "ws_dev": 11.421088037321423,
+      "average": 1395.683333
+    }
+  ]
+}
