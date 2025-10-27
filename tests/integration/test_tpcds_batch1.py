@@ -546,7 +546,7 @@ class TestTPCDSBatch1:
         print(f"\n✅ TPC-DS Q15 CORRECTNESS VALIDATED")
 
     def test_tpcds_q16_correctness(self, spark, tpcds_tables, load_tpcds_query):
-        """TPC-DS Q16: Order counts by ship mode validation"""
+        """TPC-DS Q16: Order counts by ship mode validation (ORDER BY with ties)"""
         print("\n" + "=" * 80)
         print("TPC-DS Q16 CORRECTNESS TEST")
         print("=" * 80)
@@ -561,19 +561,20 @@ class TestTPCDSBatch1:
         assert len(td_rows) == len(ref_rows)
         print(f"\n✓ Row counts match: {len(td_rows)}")
 
-        mismatches = []
-        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
-            td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+        # Use order-independent comparison (ORDER BY has ties)
+        print("  Note: Using order-independent comparison (ORDER BY has ties)")
+        sorted_ref, sorted_td = self.compare_results_order_independent(ref_rows, td_rows)
 
+        mismatches = []
+        for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
             for col in ref_row.keys():
-                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                if not self.compare_values(ref_row[col], td_row.get(col)):
                     mismatches.append(
-                        f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+                        f"Row {i}, '{col}': {ref_row[col]} vs {td_row.get(col)}"
                     )
 
         assert len(mismatches) == 0, f"Mismatches: {mismatches[:5]}"
-        print(f"✓ All values match!")
+        print(f"✓ All values match (after stable sort)!")
         print(f"\n✅ TPC-DS Q16 CORRECTNESS VALIDATED")
 
     def test_tpcds_q17_correctness(self, spark, tpcds_tables, load_tpcds_query):
@@ -825,7 +826,7 @@ class TestTPCDSBatch1:
         print(f"\n✅ TPC-DS Q23b CORRECTNESS VALIDATED")
 
     def test_tpcds_q24a_correctness(self, spark, tpcds_tables, load_tpcds_query):
-        """TPC-DS Q24a: Multi-channel customer analysis validation (part 1)"""
+        """TPC-DS Q24a: Multi-channel customer analysis validation (part 1) (ORDER BY with ties)"""
         print("\n" + "=" * 80)
         print("TPC-DS Q24a CORRECTNESS TEST")
         print("=" * 80)
@@ -840,19 +841,20 @@ class TestTPCDSBatch1:
         assert len(td_rows) == len(ref_rows)
         print(f"\n✓ Row counts match: {len(td_rows)}")
 
-        mismatches = []
-        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
-            td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+        # Use order-independent comparison (ORDER BY has ties)
+        print("  Note: Using order-independent comparison (ORDER BY has ties)")
+        sorted_ref, sorted_td = self.compare_results_order_independent(ref_rows, td_rows)
 
+        mismatches = []
+        for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
             for col in ref_row.keys():
-                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                if not self.compare_values(ref_row[col], td_row.get(col)):
                     mismatches.append(
-                        f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+                        f"Row {i}, '{col}': {ref_row[col]} vs {td_row.get(col)}"
                     )
 
         assert len(mismatches) == 0, f"Mismatches: {mismatches[:5]}"
-        print(f"✓ All values match!")
+        print(f"✓ All values match (after stable sort)!")
         print(f"\n✅ TPC-DS Q24a CORRECTNESS VALIDATED")
 
     def test_tpcds_q24b_correctness(self, spark, tpcds_tables, load_tpcds_query):
@@ -1135,7 +1137,7 @@ class TestTPCDSBatch1:
         print(f"\n✅ TPC-DS Q33 CORRECTNESS VALIDATED")
 
     def test_tpcds_q34_correctness(self, spark, tpcds_tables, load_tpcds_query):
-        """TPC-DS Q34: Customer preferences validation"""
+        """TPC-DS Q34: Customer preferences validation (ORDER BY with ties)"""
         print("\n" + "=" * 80)
         print("TPC-DS Q34 CORRECTNESS TEST")
         print("=" * 80)
@@ -1150,19 +1152,20 @@ class TestTPCDSBatch1:
         assert len(td_rows) == len(ref_rows)
         print(f"\n✓ Row counts match: {len(td_rows)}")
 
-        mismatches = []
-        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
-            td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+        # Use order-independent comparison (ORDER BY has ties)
+        print("  Note: Using order-independent comparison (ORDER BY has ties)")
+        sorted_ref, sorted_td = self.compare_results_order_independent(ref_rows, td_rows)
 
+        mismatches = []
+        for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
             for col in ref_row.keys():
-                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                if not self.compare_values(ref_row[col], td_row.get(col)):
                     mismatches.append(
-                        f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+                        f"Row {i}, '{col}': {ref_row[col]} vs {td_row.get(col)}"
                     )
 
         assert len(mismatches) == 0, f"Mismatches: {mismatches[:5]}"
-        print(f"✓ All values match!")
+        print(f"✓ All values match (after stable sort)!")
         print(f"\n✅ TPC-DS Q34 CORRECTNESS VALIDATED")
 
     def test_tpcds_q36_correctness(self, spark, tpcds_tables, load_tpcds_query):
@@ -1228,7 +1231,7 @@ class TestTPCDSBatch1:
         print(f"\n✅ TPC-DS Q37 CORRECTNESS VALIDATED")
 
     def test_tpcds_q38_correctness(self, spark, tpcds_tables, load_tpcds_query):
-        """TPC-DS Q38: Customer count by demographics validation"""
+        """TPC-DS Q38: Customer count by demographics validation (ORDER BY with ties)"""
         print("\n" + "=" * 80)
         print("TPC-DS Q38 CORRECTNESS TEST")
         print("=" * 80)
@@ -1243,19 +1246,20 @@ class TestTPCDSBatch1:
         assert len(td_rows) == len(ref_rows)
         print(f"\n✓ Row counts match: {len(td_rows)}")
 
-        mismatches = []
-        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
-            td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+        # Use order-independent comparison (ORDER BY has ties)
+        print("  Note: Using order-independent comparison (ORDER BY has ties)")
+        sorted_ref, sorted_td = self.compare_results_order_independent(ref_rows, td_rows)
 
+        mismatches = []
+        for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
             for col in ref_row.keys():
-                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                if not self.compare_values(ref_row[col], td_row.get(col)):
                     mismatches.append(
-                        f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+                        f"Row {i}, '{col}': {ref_row[col]} vs {td_row.get(col)}"
                     )
 
         assert len(mismatches) == 0, f"Mismatches: {mismatches[:5]}"
-        print(f"✓ All values match!")
+        print(f"✓ All values match (after stable sort)!")
         print(f"\n✅ TPC-DS Q38 CORRECTNESS VALIDATED")
 
     def test_tpcds_q39a_correctness(self, spark, tpcds_tables, load_tpcds_query):
