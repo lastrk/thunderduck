@@ -253,6 +253,25 @@ public class ArrowInterchange {
             if (value instanceof java.sql.Date) {
                 long days = ((java.sql.Date) value).toLocalDate().toEpochDay();
                 ((DateDayVector) vector).setSafe(index, (int) days);
+            } else if (value instanceof java.time.LocalDate) {
+                long days = ((java.time.LocalDate) value).toEpochDay();
+                ((DateDayVector) vector).setSafe(index, (int) days);
+            } else if (value instanceof java.util.Date) {
+                long days = ((java.util.Date) value).toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate().toEpochDay();
+                ((DateDayVector) vector).setSafe(index, (int) days);
+            } else if (value instanceof Number) {
+                // Handle case where DATE is returned as integer (days since epoch)
+                ((DateDayVector) vector).setSafe(index, ((Number) value).intValue());
+            } else {
+                // Try to parse as string
+                try {
+                    java.time.LocalDate date = java.time.LocalDate.parse(value.toString());
+                    ((DateDayVector) vector).setSafe(index, (int) date.toEpochDay());
+                } catch (Exception e) {
+                    // Log and set null
+                    System.err.println("Failed to convert value to DATE: " + value + " (type: " + value.getClass() + ")");
+                    vector.setNull(index);
+                }
             }
         } else if (vector instanceof TimeStampMicroVector) {
             if (value instanceof java.sql.Timestamp) {

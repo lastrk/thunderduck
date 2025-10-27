@@ -241,15 +241,14 @@ class TestValueCorrectness:
         assert len(td_rows) == len(ref_rows)
         print(f"✓ Row counts match: {len(td_rows)}")
 
-        # Compare values
+        # Compare values using compare_values (handles int/float)
         for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
-            td_dict = td_row.asDict()
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
 
             for col in ref_row.keys():
-                ref_val = ref_row[col]
-                td_val = int(td_dict[col]) if isinstance(td_dict[col], int) else td_dict[col]
-                if ref_val != td_val:
-                    assert False, f"Row {i}, '{col}': {ref_val} vs {td_val}"
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': Spark={ref_row[col]} vs TD={td_dict.get(col)}"
 
         print(f"✓ All values match!")
         print(f"\n✅ Q12 CORRECTNESS VALIDATED")
