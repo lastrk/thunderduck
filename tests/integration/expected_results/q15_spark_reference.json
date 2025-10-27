@@ -1,0 +1,20 @@
+{
+  "query_num": 15,
+  "row_count": 1,
+  "columns": [
+    "s_suppkey",
+    "s_name",
+    "s_address",
+    "s_phone",
+    "total_revenue"
+  ],
+  "rows": [
+    {
+      "s_suppkey": 21,
+      "s_name": "Supplier#000000021",
+      "s_address": "TZoQwNFFO i,baXpbpin02,hvuhE,GRVIKm ",
+      "s_phone": "12-253-590-5816",
+      "total_revenue": 1161099.4636
+    }
+  ]
+}

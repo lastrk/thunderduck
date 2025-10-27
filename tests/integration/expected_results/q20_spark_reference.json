@@ -1,0 +1,14 @@
+{
+  "query_num": 20,
+  "row_count": 1,
+  "columns": [
+    "s_name",
+    "s_address"
+  ],
+  "rows": [
+    {
+      "s_name": "Supplier#000000013",
+      "s_address": "kgTZjbt4CAa4c3SlirlBLqIL41YbCj"
+    }
+  ]
+}

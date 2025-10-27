@@ -1,0 +1,1446 @@
+{
+  "query_num": 11,
+  "row_count": 359,
+  "columns": [
+    "ps_partkey",
+    "value"
+  ],
+  "rows": [
+    {
+      "ps_partkey": 1376,
+      "value": 13271249.89
+    },
+    {
+      "ps_partkey": 788,
+      "value": 9498648.06
+    },
+    {
+      "ps_partkey": 1071,
+      "value": 9388264.4
+    },
+    {
+      "ps_partkey": 1768,
+      "value": 9207199.75
+    },
+    {
+      "ps_partkey": 1168,
+      "value": 8881908.96
+    },
+    {
+      "ps_partkey": 1084,
+      "value": 8709494.16
+    },
+    {
+      "ps_partkey": 1415,
+      "value": 8471489.56
+    },
+    {
+      "ps_partkey": 1338,
+      "value": 8293841.12
+    },
+    {
+      "ps_partkey": 124,
+      "value": 8203209.3
+    },
+    {
+      "ps_partkey": 1232,
+      "value": 8111663.34
+    },
+    {
+      "ps_partkey": 1643,
+      "value": 7975862.75
+    },
+    {
+      "ps_partkey": 1952,
+      "value": 7936947.61
+    },
+    {
+      "ps_partkey": 1944,
+      "value": 7880018.6
+    },
+    {
+      "ps_partkey": 1884,
+      "value": 7513422.84
+    },
+    {
+      "ps_partkey": 942,
+      "value": 7511018.76
+    },
+    {
+      "ps_partkey": 670,
+      "value": 7299956.8
+    },
+    {
+      "ps_partkey": 1532,
+      "value": 7222347.2
+    },
+    {
+      "ps_partkey": 1052,
+      "value": 7158586.0
+    },
+    {
+      "ps_partkey": 455,
+      "value": 7064285.84
+    },
+    {
+      "ps_partkey": 1176,
+      "value": 7060670.89
+    },
+    {
+      "ps_partkey": 143,
+      "value": 7037648.64
+    },
+    {
+      "ps_partkey": 1653,
+      "value": 6949533.7
+    },
+    {
+      "ps_partkey": 1140,
+      "value": 6929464.08
+    },
+    {
+      "ps_partkey": 1076,
+      "value": 6877472.96
+    },
+    {
+      "ps_partkey": 2000,
+      "value": 6720009.38
+    },
+    {
+      "ps_partkey": 348,
+      "value": 6681307.34
+    },
+    {
+      "ps_partkey": 810,
+      "value": 6576640.95
+    },
+    {
+      "ps_partkey": 943,
+      "value": 6458641.7
+    },
+    {
+      "ps_partkey": 720,
+      "value": 6391330.27
+    },
+    {
+      "ps_partkey": 1748,
+      "value": 6341530.4
+    },
+    {
+      "ps_partkey": 1241,
+      "value": 6304944.66
+    },
+    {
+      "ps_partkey": 1384,
+      "value": 6279261.12
+    },
+    {
+      "ps_partkey": 1784,
+      "value": 6247863.25
+    },
+    {
+      "ps_partkey": 984,
+      "value": 6136927.0
+    },
+    {
+      "ps_partkey": 445,
+      "value": 6127784.28
+    },
+    {
+      "ps_partkey": 1976,
+      "value": 6079237.08
+    },
+    {
+      "ps_partkey": 1609,
+      "value": 6022720.8
+    },
+    {
+      "ps_partkey": 1563,
+      "value": 5978195.08
+    },
+    {
+      "ps_partkey": 452,
+      "value": 5838052.0
+    },
+    {
+      "ps_partkey": 222,
+      "value": 5737162.24
+    },
+    {
+      "ps_partkey": 1629,
+      "value": 5703117.12
+    },
+    {
+      "ps_partkey": 1454,
+      "value": 5694804.18
+    },
+    {
+      "ps_partkey": 1082,
+      "value": 5681981.25
+    },
+    {
+      "ps_partkey": 691,
+      "value": 5633589.72
+    },
+    {
+      "ps_partkey": 1474,
+      "value": 5614673.64
+    },
+    {
+      "ps_partkey": 1900,
+      "value": 5591905.36
+    },
+    {
+      "ps_partkey": 262,
+      "value": 5553285.32
+    },
+    {
+      "ps_partkey": 1876,
+      "value": 5517997.59
+    },
+    {
+      "ps_partkey": 1027,
+      "value": 5490916.0
+    },
+    {
+      "ps_partkey": 1833,
+      "value": 5451495.0
+    },
+    {
+      "ps_partkey": 513,
+      "value": 5374426.22
+    },
+    {
+      "ps_partkey": 752,
+      "value": 5358919.7
+    },
+    {
+      "ps_partkey": 1367,
+      "value": 5352773.25
+    },
+    {
+      "ps_partkey": 543,
+      "value": 5189101.68
+    },
+    {
+      "ps_partkey": 1144,
+      "value": 5174388.56
+    },
+    {
+      "ps_partkey": 403,
+      "value": 5126118.15
+    },
+    {
+      "ps_partkey": 1406,
+      "value": 5121886.44
+    },
+    {
+      "ps_partkey": 320,
+      "value": 5072099.76
+    },
+    {
+      "ps_partkey": 1940,
+      "value": 5069178.4
+    },
+    {
+      "ps_partkey": 1503,
+      "value": 5050895.5
+    },
+    {
+      "ps_partkey": 1437,
+      "value": 5039590.6
+    },
+    {
+      "ps_partkey": 743,
+      "value": 5039271.42
+    },
+    {
+      "ps_partkey": 82,
+      "value": 4995939.0
+    },
+    {
+      "ps_partkey": 916,
+      "value": 4994730.1
+    },
+    {
+      "ps_partkey": 732,
+      "value": 4932809.82
+    },
+    {
+      "ps_partkey": 356,
+      "value": 4879860.09
+    },
+    {
+      "ps_partkey": 1592,
+      "value": 4831242.6
+    },
+    {
+      "ps_partkey": 1043,
+      "value": 4825921.31
+    },
+    {
+      "ps_partkey": 132,
+      "value": 4781984.14
+    },
+    {
+      "ps_partkey": 1006,
+      "value": 4733954.64
+    },
+    {
+      "ps_partkey": 497,
+      "value": 4711173.6
+    },
+    {
+      "ps_partkey": 1008,
+      "value": 4565588.85
+    },
+    {
+      "ps_partkey": 1370,
+      "value": 4563830.1
+    },
+    {
+      "ps_partkey": 216,
+      "value": 4561143.8
+    },
+    {
+      "ps_partkey": 34,
+      "value": 4501982.71
+    },
+    {
+      "ps_partkey": 1908,
+      "value": 4417931.8
+    },
+    {
+      "ps_partkey": 982,
+      "value": 4391495.46
+    },
+    {
+      "ps_partkey": 1652,
+      "value": 4358793.14
+    },
+    {
+      "ps_partkey": 614,
+      "value": 4356657.45
+    },
+    {
+      "ps_partkey": 1552,
+      "value": 4355541.7
+    },
+    {
+      "ps_partkey": 359,
+      "value": 4353566.87
+    },
+    {
+      "ps_partkey": 1104,
+      "value": 4347515.9
+    },
+    {
+      "ps_partkey": 198,
+      "value": 4315049.0
+    },
+    {
+      "ps_partkey": 998,
+      "value": 4167784.88
+    },
+    {
+      "ps_partkey": 1543,
+      "value": 4159568.16
+    },
+    {
+      "ps_partkey": 1308,
+      "value": 4153124.95
+    },
+    {
+      "ps_partkey": 474,
+      "value": 4123819.2
+    },
+    {
+      "ps_partkey": 1394,
+      "value": 4122729.33
+    },
+    {
+      "ps_partkey": 271,
+      "value": 4095180.96
+    },
+    {
+      "ps_partkey": 908,
+      "value": 4088856.2
+    },
+    {
+      "ps_partkey": 1135,
+      "value": 4045014.13
+    },
+    {
+      "ps_partkey": 1632,
+      "value": 4010794.9
+    },
+    {
+      "ps_partkey": 1362,
+      "value": 3982060.16
+    },
+    {
+      "ps_partkey": 158,
+      "value": 3941881.65
+    },
+    {
+      "ps_partkey": 1852,
+      "value": 3923035.02
+    },
+    {
+      "ps_partkey": 1556,
+      "value": 3896709.54
+    },
+    {
+      "ps_partkey": 584,
+      "value": 3843848.3
+    },
+    {
+      "ps_partkey": 885,
+      "value": 3826021.16
+    },
+    {
+      "ps_partkey": 376,
+      "value": 3781201.96
+    },
+    {
+      "ps_partkey": 712,
+      "value": 3749696.8
+    },
+    {
+      "ps_partkey": 2,
+      "value": 3743241.43
+    },
+    {
+      "ps_partkey": 676,
+      "value": 3735715.2
+    },
+    {
+      "ps_partkey": 1832,
+      "value": 3709008.6
+    },
+    {
+      "ps_partkey": 1955,
+      "value": 3702794.7
+    },
+    {
+      "ps_partkey": 68,
+      "value": 3690702.41
+    },
+    {
+      "ps_partkey": 1435,
+      "value": 3659114.1
+    },
+    {
+      "ps_partkey": 1443,
+      "value": 3656762.84
+    },
+    {
+      "ps_partkey": 1278,
+      "value": 3653100.66
+    },
+    {
+      "ps_partkey": 1920,
+      "value": 3647892.54
+    },
+    {
+      "ps_partkey": 423,
+      "value": 3602031.8
+    },
+    {
+      "ps_partkey": 818,
+      "value": 3589047.6
+    },
+    {
+      "ps_partkey": 779,
+      "value": 3559597.53
+    },
+    {
+      "ps_partkey": 485,
+      "value": 3558511.44
+    },
+    {
+      "ps_partkey": 552,
+      "value": 3555470.1
+    },
+    {
+      "ps_partkey": 1269,
+      "value": 3510427.65
+    },
+    {
+      "ps_partkey": 1602,
+      "value": 3492117.7
+    },
+    {
+      "ps_partkey": 426,
+      "value": 3486888.02
+    },
+    {
+      "ps_partkey": 1452,
+      "value": 3480825.6
+    },
+    {
+      "ps_partkey": 756,
+      "value": 3469373.7
+    },
+    {
+      "ps_partkey": 832,
+      "value": 3447746.46
+    },
+    {
+      "ps_partkey": 1493,
+      "value": 3446867.4
+    },
+    {
+      "ps_partkey": 1650,
+      "value": 3417752.58
+    },
+    {
+      "ps_partkey": 205,
+      "value": 3403046.25
+    },
+    {
+      "ps_partkey": 93,
+      "value": 3361425.89
+    },
+    {
+      "ps_partkey": 76,
+      "value": 3342081.82
+    },
+    {
+      "ps_partkey": 1759,
+      "value": 3303050.4
+    },
+    {
+      "ps_partkey": 886,
+      "value": 3302180.7
+    },
+    {
+      "ps_partkey": 1544,
+      "value": 3288573.16
+    },
+    {
+      "ps_partkey": 1932,
+      "value": 3270900.4
+    },
+    {
+      "ps_partkey": 489,
+      "value": 3253368.3
+    },
+    {
+      "ps_partkey": 594,
+      "value": 3177408.57
+    },
+    {
+      "ps_partkey": 184,
+      "value": 3177162.05
+    },
+    {
+      "ps_partkey": 950,
+      "value": 3165213.01
+    },
+    {
+      "ps_partkey": 1124,
+      "value": 3143279.36
+    },
+    {
+      "ps_partkey": 106,
+      "value": 3099021.98
+    },
+    {
+      "ps_partkey": 1964,
+      "value": 3016553.1
+    },
+    {
+      "ps_partkey": 384,
+      "value": 2964262.77
+    },
+    {
+      "ps_partkey": 974,
+      "value": 2959497.1
+    },
+    {
+      "ps_partkey": 964,
+      "value": 2951329.45
+    },
+    {
+      "ps_partkey": 1984,
+      "value": 2907345.36
+    },
+    {
+      "ps_partkey": 200,
+      "value": 2895688.32
+    },
+    {
+      "ps_partkey": 683,
+      "value": 2829476.95
+    },
+    {
+      "ps_partkey": 1564,
+      "value": 2816506.56
+    },
+    {
+      "ps_partkey": 546,
+      "value": 2788059.64
+    },
+    {
+      "ps_partkey": 502,
+      "value": 2780828.64
+    },
+    {
+      "ps_partkey": 396,
+      "value": 2778421.39
+    },
+    {
+      "ps_partkey": 203,
+      "value": 2761439.88
+    },
+    {
+      "ps_partkey": 866,
+      "value": 2753031.2
+    },
+    {
+      "ps_partkey": 1743,
+      "value": 2743889.49
+    },
+    {
+      "ps_partkey": 1041,
+      "value": 2738083.92
+    },
+    {
+      "ps_partkey": 1432,
+      "value": 2713412.16
+    },
+    {
+      "ps_partkey": 43,
+      "value": 2587359.58
+    },
+    {
+      "ps_partkey": 941,
+      "value": 2587091.52
+    },
+    {
+      "ps_partkey": 1890,
+      "value": 2558739.69
+    },
+    {
+      "ps_partkey": 1866,
+      "value": 2545838.4
+    },
+    {
+      "ps_partkey": 747,
+      "value": 2511745.32
+    },
+    {
+      "ps_partkey": 776,
+      "value": 2506489.89
+    },
+    {
+      "ps_partkey": 554,
+      "value": 2505417.25
+    },
+    {
+      "ps_partkey": 1210,
+      "value": 2490820.92
+    },
+    {
+      "ps_partkey": 1239,
+      "value": 2405206.3
+    },
+    {
+      "ps_partkey": 443,
+      "value": 2382150.05
+    },
+    {
+      "ps_partkey": 1661,
+      "value": 2370574.16
+    },
+    {
+      "ps_partkey": 1079,
+      "value": 2363505.11
+    },
+    {
+      "ps_partkey": 1329,
+      "value": 2305870.42
+    },
+    {
+      "ps_partkey": 1691,
+      "value": 2261159.92
+    },
+    {
+      "ps_partkey": 1247,
+      "value": 2239553.28
+    },
+    {
+      "ps_partkey": 1752,
+      "value": 2230055.76
+    },
+    {
+      "ps_partkey": 150,
+      "value": 2217043.59
+    },
+    {
+      "ps_partkey": 1814,
+      "value": 2213635.2
+    },
+    {
+      "ps_partkey": 289,
+      "value": 2187160.45
+    },
+    {
+      "ps_partkey": 1400,
+      "value": 2139845.1
+    },
+    {
+      "ps_partkey": 1898,
+      "value": 2130114.96
+    },
+    {
+      "ps_partkey": 1809,
+      "value": 2122758.72
+    },
+    {
+      "ps_partkey": 884,
+      "value": 2107479.56
+    },
+    {
+      "ps_partkey": 1038,
+      "value": 2096868.97
+    },
+    {
+      "ps_partkey": 1318,
+      "value": 2051302.44
+    },
+    {
+      "ps_partkey": 524,
+      "value": 2035262.22
+    },
+    {
+      "ps_partkey": 414,
+      "value": 2029692.45
+    },
+    {
+      "ps_partkey": 298,
+      "value": 2026981.74
+    },
+    {
+      "ps_partkey": 1996,
+      "value": 2020953.54
+    },
+    {
+      "ps_partkey": 1742,
+      "value": 2019190.8
+    },
+    {
+      "ps_partkey": 1620,
+      "value": 2010112.0
+    },
+    {
+      "ps_partkey": 877,
+      "value": 1956429.18
+    },
+    {
+      "ps_partkey": 1332,
+      "value": 1919029.56
+    },
+    {
+      "ps_partkey": 1536,
+      "value": 1859318.15
+    },
+    {
+      "ps_partkey": 1116,
+      "value": 1852588.28
+    },
+    {
+      "ps_partkey": 447,
+      "value": 1817951.32
+    },
+    {
+      "ps_partkey": 1676,
+      "value": 1802306.08
+    },
+    {
+      "ps_partkey": 1911,
+      "value": 1779646.44
+    },
+    {
+      "ps_partkey": 1459,
+      "value": 1767602.3
+    },
+    {
+      "ps_partkey": 576,
+      "value": 1761838.75
+    },
+    {
+      "ps_partkey": 1273,
+      "value": 1754235.01
+    },
+    {
+      "ps_partkey": 583,
+      "value": 1725649.92
+    },
+    {
+      "ps_partkey": 532,
+      "value": 1682311.48
+    },
+    {
+      "ps_partkey": 1732,
+      "value": 1652831.2
+    },
+    {
+      "ps_partkey": 1572,
+      "value": 1650953.52
+    },
+    {
+      "ps_partkey": 1889,
+      "value": 1638443.72
+    },
+    {
+      "ps_partkey": 476,
+      "value": 1631154.06
+    },
+    {
+      "ps_partkey": 1221,
+      "value": 1629883.46
+    },
+    {
+      "ps_partkey": 1792,
+      "value": 1606346.1
+    },
+    {
+      "ps_partkey": 243,
+      "value": 1603235.16
+    },
+    {
+      "ps_partkey": 328,
+      "value": 1569826.72
+    },
+    {
+      "ps_partkey": 1999,
+      "value": 1553706.0
+    },
+    {
+      "ps_partkey": 1611,
+      "value": 1529857.01
+    },
+    {
+      "ps_partkey": 643,
+      "value": 1512838.8
+    },
+    {
+      "ps_partkey": 1276,
+      "value": 1467567.28
+    },
+    {
+      "ps_partkey": 1823,
+      "value": 1462293.0
+    },
+    {
+      "ps_partkey": 1,
+      "value": 1456050.96
+    },
+    {
+      "ps_partkey": 27,
+      "value": 1425832.4
+    },
+    {
+      "ps_partkey": 632,
+      "value": 1408087.26
+    },
+    {
+      "ps_partkey": 1184,
+      "value": 1406101.78
+    },
+    {
+      "ps_partkey": 252,
+      "value": 1379186.35
+    },
+    {
+      "ps_partkey": 392,
+      "value": 1354813.18
+    },
+    {
+      "ps_partkey": 1215,
+      "value": 1344383.2
+    },
+    {
+      "ps_partkey": 26,
+      "value": 1337002.89
+    },
+    {
+      "ps_partkey": 84,
+      "value": 1334146.71
+    },
+    {
+      "ps_partkey": 784,
+      "value": 1327297.01
+    },
+    {
+      "ps_partkey": 1803,
+      "value": 1327045.06
+    },
+    {
+      "ps_partkey": 352,
+      "value": 1326102.34
+    },
+    {
+      "ps_partkey": 165,
+      "value": 1289075.76
+    },
+    {
+      "ps_partkey": 176,
+      "value": 1285866.2
+    },
+    {
+      "ps_partkey": 1314,
+      "value": 1244173.26
+    },
+    {
+      "ps_partkey": 1701,
+      "value": 1239095.44
+    },
+    {
+      "ps_partkey": 844,
+      "value": 1225696.05
+    },
+    {
+      "ps_partkey": 1988,
+      "value": 1216798.33
+    },
+    {
+      "ps_partkey": 1847,
+      "value": 1202012.13
+    },
+    {
+      "ps_partkey": 1706,
+      "value": 1184125.1
+    },
+    {
+      "ps_partkey": 744,
+      "value": 1182820.8
+    },
+    {
+      "ps_partkey": 230,
+      "value": 1165932.3
+    },
+    {
+      "ps_partkey": 418,
+      "value": 1078321.44
+    },
+    {
+      "ps_partkey": 174,
+      "value": 1060584.8
+    },
+    {
+      "ps_partkey": 1073,
+      "value": 1028449.89
+    },
+    {
+      "ps_partkey": 1726,
+      "value": 1018673.04
+    },
+    {
+      "ps_partkey": 1206,
+      "value": 1002319.49
+    },
+    {
+      "ps_partkey": 1343,
+      "value": 998105.76
+    },
+    {
+      "ps_partkey": 952,
+      "value": 997684.24
+    },
+    {
+      "ps_partkey": 484,
+      "value": 991530.93
+    },
+    {
+      "ps_partkey": 932,
+      "value": 980620.68
+    },
+    {
+      "ps_partkey": 843,
+      "value": 978862.92
+    },
+    {
+      "ps_partkey": 1841,
+      "value": 962131.86
+    },
+    {
+      "ps_partkey": 494,
+      "value": 957575.34
+    },
+    {
+      "ps_partkey": 659,
+      "value": 954291.05
+    },
+    {
+      "ps_partkey": 251,
+      "value": 939764.7
+    },
+    {
+      "ps_partkey": 1413,
+      "value": 936951.94
+    },
+    {
+      "ps_partkey": 572,
+      "value": 906111.99
+    },
+    {
+      "ps_partkey": 32,
+      "value": 894484.09
+    },
+    {
+      "ps_partkey": 9,
+      "value": 893905.92
+    },
+    {
+      "ps_partkey": 1498,
+      "value": 890887.85
+    },
+    {
+      "ps_partkey": 1790,
+      "value": 878923.64
+    },
+    {
+      "ps_partkey": 1670,
+      "value": 854046.43
+    },
+    {
+      "ps_partkey": 876,
+      "value": 842245.67
+    },
+    {
+      "ps_partkey": 1758,
+      "value": 841275.42
+    },
+    {
+      "ps_partkey": 930,
+      "value": 832963.68
+    },
+    {
+      "ps_partkey": 284,
+      "value": 826642.6
+    },
+    {
+      "ps_partkey": 1710,
+      "value": 811504.38
+    },
+    {
+      "ps_partkey": 1047,
+      "value": 791214.45
+    },
+    {
+      "ps_partkey": 653,
+      "value": 788974.21
+    },
+    {
+      "ps_partkey": 315,
+      "value": 770526.05
+    },
+    {
+      "ps_partkey": 1734,
+      "value": 763569.4
+    },
+    {
+      "ps_partkey": 1017,
+      "value": 715302.72
+    },
+    {
+      "ps_partkey": 1305,
+      "value": 713351.43
+    },
+    {
+      "ps_partkey": 77,
+      "value": 688865.82
+    },
+    {
+      "ps_partkey": 1512,
+      "value": 682434.15
+    },
+    {
+      "ps_partkey": 276,
+      "value": 680239.04
+    },
+    {
+      "ps_partkey": 1284,
+      "value": 671225.94
+    },
+    {
+      "ps_partkey": 1356,
+      "value": 665716.83
+    },
+    {
+      "ps_partkey": 800,
+      "value": 663414.65
+    },
+    {
+      "ps_partkey": 117,
+      "value": 639650.88
+    },
+    {
+      "ps_partkey": 652,
+      "value": 635629.28
+    },
+    {
+      "ps_partkey": 57,
+      "value": 630987.44
+    },
+    {
+      "ps_partkey": 1426,
+      "value": 628241.25
+    },
+    {
+      "ps_partkey": 1196,
+      "value": 622427.16
+    },
+    {
+      "ps_partkey": 51,
+      "value": 622249.54
+    },
+    {
+      "ps_partkey": 1846,
+      "value": 621068.8
+    },
+    {
+      "ps_partkey": 601,
+      "value": 615942.6
+    },
+    {
+      "ps_partkey": 645,
+      "value": 607985.84
+    },
+    {
+      "ps_partkey": 684,
+      "value": 571490.7
+    },
+    {
+      "ps_partkey": 465,
+      "value": 570337.4
+    },
+    {
+      "ps_partkey": 562,
+      "value": 567651.24
+    },
+    {
+      "ps_partkey": 387,
+      "value": 556634.76
+    },
+    {
+      "ps_partkey": 1152,
+      "value": 555989.28
+    },
+    {
+      "ps_partkey": 1202,
+      "value": 553818.18
+    },
+    {
+      "ps_partkey": 1112,
+      "value": 552658.68
+    },
+    {
+      "ps_partkey": 304,
+      "value": 535868.16
+    },
+    {
+      "ps_partkey": 368,
+      "value": 526995.84
+    },
+    {
+      "ps_partkey": 1800,
+      "value": 526711.11
+    },
+    {
+      "ps_partkey": 1148,
+      "value": 515702.16
+    },
+    {
+      "ps_partkey": 225,
+      "value": 513587.57
+    },
+    {
+      "ps_partkey": 324,
+      "value": 500954.58
+    },
+    {
+      "ps_partkey": 586,
+      "value": 499475.58
+    },
+    {
+      "ps_partkey": 1576,
+      "value": 494401.05
+    },
+    {
+      "ps_partkey": 1484,
+      "value": 462396.27
+    },
+    {
+      "ps_partkey": 126,
+      "value": 461263.74
+    },
+    {
+      "ps_partkey": 1132,
+      "value": 455492.24
+    },
+    {
+      "ps_partkey": 622,
+      "value": 449685.6
+    },
+    {
+      "ps_partkey": 1160,
+      "value": 448183.06
+    },
+    {
+      "ps_partkey": 1352,
+      "value": 439967.04
+    },
+    {
+      "ps_partkey": 18,
+      "value": 426442.08
+    },
+    {
+      "ps_partkey": 7,
+      "value": 414558.2
+    },
+    {
+      "ps_partkey": 833,
+      "value": 398540.87
+    },
+    {
+      "ps_partkey": 1694,
+      "value": 376443.98
+    },
+    {
+      "ps_partkey": 650,
+      "value": 370900.99
+    },
+    {
+      "ps_partkey": 1504,
+      "value": 370815.9
+    },
+    {
+      "ps_partkey": 432,
+      "value": 370528.52
+    },
+    {
+      "ps_partkey": 612,
+      "value": 367894.5
+    },
+    {
+      "ps_partkey": 542,
+      "value": 367653.66
+    },
+    {
+      "ps_partkey": 456,
+      "value": 360911.32
+    },
+    {
+      "ps_partkey": 52,
+      "value": 358792.36
+    },
+    {
+      "ps_partkey": 1346,
+      "value": 350637.43
+    },
+    {
+      "ps_partkey": 59,
+      "value": 342221.48
+    },
+    {
+      "ps_partkey": 1107,
+      "value": 341805.2
+    },
+    {
+      "ps_partkey": 1171,
+      "value": 334938.04
+    },
+    {
+      "ps_partkey": 1062,
+      "value": 326445.9
+    },
+    {
+      "ps_partkey": 592,
+      "value": 313081.75
+    },
+    {
+      "ps_partkey": 1750,
+      "value": 312229.33
+    },
+    {
+      "ps_partkey": 1843,
+      "value": 309456.95
+    },
+    {
+      "ps_partkey": 180,
+      "value": 308539.84
+    },
+    {
+      "ps_partkey": 899,
+      "value": 301989.5
+    },
+    {
+      "ps_partkey": 1180,
+      "value": 293452.5
+    },
+    {
+      "ps_partkey": 522,
+      "value": 291601.75
+    },
+    {
+      "ps_partkey": 249,
+      "value": 282520.32
+    },
+    {
+      "ps_partkey": 1584,
+      "value": 278559.38
+    },
+    {
+      "ps_partkey": 1404,
+      "value": 276057.9
+    },
+    {
+      "ps_partkey": 1265,
+      "value": 271079.76
+    },
+    {
+      "ps_partkey": 154,
+      "value": 269641.42
+    },
+    {
+      "ps_partkey": 1295,
+      "value": 265566.56
+    },
+    {
+      "ps_partkey": 1523,
+      "value": 263158.9
+    },
+    {
+      "ps_partkey": 1635,
+      "value": 254834.56
+    },
+    {
+      "ps_partkey": 1776,
+      "value": 234181.2
+    },
+    {
+      "ps_partkey": 1097,
+      "value": 234113.55
+    },
+    {
+      "ps_partkey": 1258,
+      "value": 233500.61
+    },
+    {
+      "ps_partkey": 621,
+      "value": 233431.3
+    },
+    {
+      "ps_partkey": 152,
+      "value": 229781.6
+    },
+    {
+      "ps_partkey": 278,
+      "value": 216372.84
+    },
+    {
+      "ps_partkey": 232,
+      "value": 211879.92
+    },
+    {
+      "ps_partkey": 1684,
+      "value": 201386.22
+    },
+    {
+      "ps_partkey": 1243,
+      "value": 199587.54
+    },
+    {
+      "ps_partkey": 976,
+      "value": 197432.1
+    },
+    {
+      "ps_partkey": 819,
+      "value": 191475.9
+    },
+    {
+      "ps_partkey": 1943,
+      "value": 191247.76
+    },
+    {
+      "ps_partkey": 853,
+      "value": 189232.64
+    },
+    {
+      "ps_partkey": 400,
+      "value": 188941.2
+    },
+    {
+      "ps_partkey": 639,
+      "value": 186533.28
+    },
+    {
+      "ps_partkey": 851,
+      "value": 184103.16
+    },
+    {
+      "ps_partkey": 909,
+      "value": 175099.0
+    },
+    {
+      "ps_partkey": 257,
+      "value": 169033.44
+    },
+    {
+      "ps_partkey": 1445,
+      "value": 164888.68
+    },
+    {
+      "ps_partkey": 1855,
+      "value": 164614.81
+    },
+    {
+      "ps_partkey": 1252,
+      "value": 158680.9
+    },
+    {
+      "ps_partkey": 1014,
+      "value": 156465.82
+    },
+    {
+      "ps_partkey": 1717,
+      "value": 148325.75
+    },
+    {
+      "ps_partkey": 1032,
+      "value": 146408.4
+    },
+    {
+      "ps_partkey": 780,
+      "value": 136296.26
+    },
+    {
+      "ps_partkey": 918,
+      "value": 135268.32
+    },
+    {
+      "ps_partkey": 690,
+      "value": 133826.88
+    },
+    {
+      "ps_partkey": 711,
+      "value": 113268.84
+    },
+    {
+      "ps_partkey": 332,
+      "value": 112181.3
+    },
+    {
+      "ps_partkey": 1596,
+      "value": 110565.0
+    },
+    {
+      "ps_partkey": 295,
+      "value": 97604.25
+    }
+  ]
+}

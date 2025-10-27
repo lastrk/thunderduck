@@ -1,0 +1,12 @@
+{
+  "query_num": 14,
+  "row_count": 1,
+  "columns": [
+    "promo_revenue"
+  ],
+  "rows": [
+    {
+      "promo_revenue": 15.486546
+    }
+  ]
+}

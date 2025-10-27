@@ -1,0 +1,36 @@
+{
+  "query_num": 7,
+  "row_count": 4,
+  "columns": [
+    "supp_nation",
+    "cust_nation",
+    "l_year",
+    "revenue"
+  ],
+  "rows": [
+    {
+      "supp_nation": "FRANCE",
+      "cust_nation": "GERMANY",
+      "l_year": 1995,
+      "revenue": 268068.5774
+    },
+    {
+      "supp_nation": "FRANCE",
+      "cust_nation": "GERMANY",
+      "l_year": 1996,
+      "revenue": 303862.298
+    },
+    {
+      "supp_nation": "GERMANY",
+      "cust_nation": "FRANCE",
+      "l_year": 1995,
+      "revenue": 621159.4882
+    },
+    {
+      "supp_nation": "GERMANY",
+      "cust_nation": "FRANCE",
+      "l_year": 1996,
+      "revenue": 379095.8854
+    }
+  ]
+}

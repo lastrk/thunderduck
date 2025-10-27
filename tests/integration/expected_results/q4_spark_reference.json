@@ -1,0 +1,30 @@
+{
+  "query_num": 4,
+  "row_count": 5,
+  "columns": [
+    "o_orderpriority",
+    "order_count"
+  ],
+  "rows": [
+    {
+      "o_orderpriority": "1-URGENT",
+      "order_count": 93
+    },
+    {
+      "o_orderpriority": "2-HIGH",
+      "order_count": 103
+    },
+    {
+      "o_orderpriority": "3-MEDIUM",
+      "order_count": 109
+    },
+    {
+      "o_orderpriority": "4-NOT SPECIFIED",
+      "order_count": 102
+    },
+    {
+      "o_orderpriority": "5-LOW",
+      "order_count": 128
+    }
+  ]
+}

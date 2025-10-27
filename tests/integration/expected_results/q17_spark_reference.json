@@ -1,0 +1,12 @@
+{
+  "query_num": 17,
+  "row_count": 1,
+  "columns": [
+    "avg_yearly"
+  ],
+  "rows": [
+    {
+      "avg_yearly": null
+    }
+  ]
+}

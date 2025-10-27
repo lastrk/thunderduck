@@ -280,3 +280,395 @@ class TestValueCorrectness:
 
         print(f"✓ All values match!")
         print(f"\n✅ Q18 CORRECTNESS VALIDATED")
+
+    def test_q2_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q2: Validate minimum cost supplier query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q2 - Minimum Cost Supplier")
+        print("=" * 80)
+
+        reference = self.load_reference(2)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(2)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q2 CORRECTNESS VALIDATED")
+
+    def test_q4_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q4: Validate order priority query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q4 - Order Priority")
+        print("=" * 80)
+
+        reference = self.load_reference(4)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(4)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q4 CORRECTNESS VALIDATED")
+
+    def test_q7_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q7: Validate volume shipping query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q7 - Volume Shipping")
+        print("=" * 80)
+
+        reference = self.load_reference(7)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(7)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q7 CORRECTNESS VALIDATED")
+
+    def test_q8_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q8: Validate national market share query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q8 - National Market Share")
+        print("=" * 80)
+
+        reference = self.load_reference(8)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(8)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q8 CORRECTNESS VALIDATED")
+
+    def test_q9_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q9: Validate product type profit query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q9 - Product Type Profit")
+        print("=" * 80)
+
+        reference = self.load_reference(9)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(9)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q9 CORRECTNESS VALIDATED")
+
+    def test_q11_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q11: Validate important stock identification query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q11 - Important Stock Identification")
+        print("=" * 80)
+
+        reference = self.load_reference(11)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(11)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q11 CORRECTNESS VALIDATED")
+
+    def test_q14_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q14: Validate promotion effect query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q14 - Promotion Effect")
+        print("=" * 80)
+
+        reference = self.load_reference(14)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(14)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q14 CORRECTNESS VALIDATED")
+
+    def test_q15_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q15: Validate top supplier query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q15 - Top Supplier")
+        print("=" * 80)
+
+        reference = self.load_reference(15)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(15)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q15 CORRECTNESS VALIDATED")
+
+    def test_q16_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q16: Validate parts/supplier relationship query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q16 - Parts/Supplier Relationship")
+        print("=" * 80)
+
+        reference = self.load_reference(16)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(16)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q16 CORRECTNESS VALIDATED")
+
+    def test_q17_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q17: Validate small-quantity order revenue query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q17 - Small-Quantity Order Revenue")
+        print("=" * 80)
+
+        reference = self.load_reference(17)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(17)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q17 CORRECTNESS VALIDATED")
+
+    def test_q19_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q19: Validate discounted revenue query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q19 - Discounted Revenue")
+        print("=" * 80)
+
+        reference = self.load_reference(19)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(19)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q19 CORRECTNESS VALIDATED")
+
+    def test_q20_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q20: Validate potential part promotion query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q20 - Potential Part Promotion")
+        print("=" * 80)
+
+        reference = self.load_reference(20)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(20)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q20 CORRECTNESS VALIDATED")
+
+    def test_q21_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q21: Validate suppliers who kept orders waiting query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q21 - Suppliers Who Kept Orders Waiting")
+        print("=" * 80)
+
+        reference = self.load_reference(21)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(21)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q21 CORRECTNESS VALIDATED")
+
+    def test_q22_correctness(self, spark, tpch_tables, load_tpch_query):
+        """Q22: Validate global sales opportunity query"""
+        print("\n" + "=" * 80)
+        print("CORRECTNESS TEST: Q22 - Global Sales Opportunity")
+        print("=" * 80)
+
+        reference = self.load_reference(22)
+        ref_rows = reference['rows']
+
+        query = load_tpch_query(22)
+        result = spark.sql(query)
+        td_rows = result.collect()
+
+        assert len(td_rows) == len(ref_rows)
+        print(f"✓ Row counts match: {len(td_rows)}")
+
+        # Compare values
+        for i, (ref_row, td_row) in enumerate(zip(ref_rows, td_rows)):
+            td_dict = {k: float(v) if hasattr(v, '__float__') else v
+                      for k, v in td_row.asDict().items()}
+
+            for col in ref_row.keys():
+                if not self.compare_values(ref_row[col], td_dict.get(col)):
+                    assert False, f"Row {i}, '{col}': {ref_row[col]} vs {td_dict.get(col)}"
+
+        print(f"✓ All values match!")
+        print(f"\n✅ Q22 CORRECTNESS VALIDATED")

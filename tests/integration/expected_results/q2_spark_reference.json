@@ -1,0 +1,56 @@
+{
+  "query_num": 2,
+  "row_count": 4,
+  "columns": [
+    "s_acctbal",
+    "s_name",
+    "n_name",
+    "p_partkey",
+    "p_mfgr",
+    "s_address",
+    "s_phone",
+    "s_comment"
+  ],
+  "rows": [
+    {
+      "s_acctbal": 4186.95,
+      "s_name": "Supplier#000000077",
+      "n_name": "GERMANY",
+      "p_partkey": 249,
+      "p_mfgr": "Manufacturer#4",
+      "s_address": "w5yO 0yjXou 8I4ffzADq,R8tD06x1vbeMpLJF2",
+      "s_phone": "17-281-345-4863",
+      "s_comment": "ainst the blithely ironic packages poach at the regul"
+    },
+    {
+      "s_acctbal": 1883.37,
+      "s_name": "Supplier#000000086",
+      "n_name": "ROMANIA",
+      "p_partkey": 1015,
+      "p_mfgr": "Manufacturer#4",
+      "s_address": "iZLKKWaQADe",
+      "s_phone": "29-903-665-7065",
+      "s_comment": " foxes boost after the carefully silent asymptotes. slyl"
+    },
+    {
+      "s_acctbal": 1687.81,
+      "s_name": "Supplier#000000017",
+      "n_name": "ROMANIA",
+      "p_partkey": 1634,
+      "p_mfgr": "Manufacturer#2",
+      "s_address": "PYN0m9j98GhX42DvBKvURcAd,B",
+      "s_phone": "29-601-884-9219",
+      "s_comment": "se slyly furiously even notornis. furiously regular packa"
+    },
+    {
+      "s_acctbal": 287.16,
+      "s_name": "Supplier#000000052",
+      "n_name": "ROMANIA",
+      "p_partkey": 323,
+      "p_mfgr": "Manufacturer#4",
+      "s_address": "5oGr3pj2sprZNwho8CFW2haaObd0",
+      "s_phone": "29-974-934-4713",
+      "s_comment": "arefully silent pinto beans use furiously furiously even deposits. regular packages are furious"
+    }
+  ]
+}

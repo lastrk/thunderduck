@@ -1,0 +1,14 @@
+{
+  "query_num": 21,
+  "row_count": 1,
+  "columns": [
+    "s_name",
+    "numwait"
+  ],
+  "rows": [
+    {
+      "s_name": "Supplier#000000074",
+      "numwait": 9
+    }
+  ]
+}
