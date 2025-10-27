@@ -319,8 +319,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -385,8 +386,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -513,8 +515,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -548,8 +551,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -832,8 +836,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -867,8 +872,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -1680,8 +1686,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -1839,8 +1846,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -1905,8 +1913,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -2157,8 +2166,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -2347,8 +2357,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -2382,8 +2393,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -2417,8 +2429,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -2483,8 +2496,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -2518,8 +2532,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -2553,8 +2568,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -2619,8 +2635,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -2778,8 +2795,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -2906,8 +2924,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -2972,8 +2991,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):
@@ -3162,8 +3182,9 @@ class TestTPCDSBatch1:
 
         mismatches = []
         for i, (ref_row, td_row) in enumerate(zip(sorted_ref, sorted_td)):
+            # td_row is already a dict from compare_results_order_independent
             td_dict = {k: float(v) if hasattr(v, '__float__') else v
-                      for k, v in td_row.asDict().items()}
+                      for k, v in td_row.items()}
 
             for col in ref_row.keys():
                 if not self.compare_values(ref_row[col], td_dict.get(col)):

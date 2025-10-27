@@ -145,8 +145,11 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
                 // Fix count(*) column naming to match Spark (only if not already aliased)
                 // Spark names count(*) as "count(1)", DuckDB names it "count_star()"
-                // Pattern: count(*) NOT followed by AS (negative lookahead)
-                sql = sql.replaceAll("(?i)count\\s*\\(\\s*\\*\\s*\\)(?!\\s+as\\s)", "count(*) AS \"count(1)\"");
+                // Only add alias when COUNT(*) appears in SELECT and is not:
+                // 1. Already aliased (followed by AS or an identifier)
+                // 2. Part of a comparison (followed by >, <, =, etc.)
+                // This avoids breaking HAVING clauses like: having count(*) > 10
+                sql = sql.replaceAll("(?i)count\\s*\\(\\s*\\*\\s*\\)(?!\\s+(as\\s+)?\\w)(?!\\s*[><=!])", "count(*) AS \"count(1)\"");
 
                 logger.info("Executing SQL: {}", sql);
 
