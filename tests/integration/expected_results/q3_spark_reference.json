@@ -9,64 +9,64 @@
   ],
   "rows": [
     {
-      "l_orderkey": 47714.0,
+      "l_orderkey": 47714,
       "revenue": 267010.5894,
       "o_orderdate": "1995-03-11",
-      "o_shippriority": 0.0
+      "o_shippriority": 0
     },
     {
-      "l_orderkey": 22276.0,
+      "l_orderkey": 22276,
       "revenue": 266351.5562,
       "o_orderdate": "1995-01-29",
-      "o_shippriority": 0.0
+      "o_shippriority": 0
     },
     {
-      "l_orderkey": 32965.0,
+      "l_orderkey": 32965,
       "revenue": 263768.3414,
       "o_orderdate": "1995-02-25",
-      "o_shippriority": 0.0
+      "o_shippriority": 0
     },
     {
-      "l_orderkey": 21956.0,
+      "l_orderkey": 21956,
       "revenue": 254541.1285,
       "o_orderdate": "1995-02-02",
-      "o_shippriority": 0.0
+      "o_shippriority": 0
     },
     {
-      "l_orderkey": 1637.0,
+      "l_orderkey": 1637,
       "revenue": 243512.7981,
       "o_orderdate": "1995-02-08",
-      "o_shippriority": 0.0
+      "o_shippriority": 0
     },
     {
-      "l_orderkey": 10916.0,
+      "l_orderkey": 10916,
       "revenue": 241320.0814,
       "o_orderdate": "1995-03-11",
-      "o_shippriority": 0.0
+      "o_shippriority": 0
     },
     {
-      "l_orderkey": 30497.0,
+      "l_orderkey": 30497,
       "revenue": 208566.6969,
       "o_orderdate": "1995-02-07",
-      "o_shippriority": 0.0
+      "o_shippriority": 0
     },
     {
-      "l_orderkey": 450.0,
+      "l_orderkey": 450,
       "revenue": 205447.4232,
       "o_orderdate": "1995-03-05",
-      "o_shippriority": 0.0
+      "o_shippriority": 0
     },
     {
-      "l_orderkey": 47204.0,
+      "l_orderkey": 47204,
       "revenue": 204478.5213,
       "o_orderdate": "1995-03-13",
-      "o_shippriority": 0.0
+      "o_shippriority": 0
     },
     {
-      "l_orderkey": 9696.0,
+      "l_orderkey": 9696,
       "revenue": 201502.2188,
       "o_orderdate": "1995-02-20",
-      "o_shippriority": 0.0
+      "o_shippriority": 0
     }
   ]
 }

@@ -61,7 +61,17 @@ def generate_reference_results():
                 for k, v in row_dict.items():
                     if v is None:
                         converted[k] = None
-                    elif hasattr(v, '__float__'):  # Decimal, etc.
+                    elif isinstance(v, bool):
+                        # Handle bool before int (bool is subclass of int)
+                        converted[k] = v
+                    elif isinstance(v, int):
+                        # Keep integers as integers (don't convert to float!)
+                        converted[k] = v
+                    elif isinstance(v, float):
+                        # Keep floats as floats
+                        converted[k] = v
+                    elif hasattr(v, '__float__'):  # Decimal only
+                        # Only convert Decimal to float, not int
                         converted[k] = float(v)
                     elif hasattr(v, 'isoformat'):  # date, datetime
                         converted[k] = v.isoformat()

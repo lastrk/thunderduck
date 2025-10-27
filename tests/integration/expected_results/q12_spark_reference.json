@@ -9,13 +9,13 @@
   "rows": [
     {
       "l_shipmode": "MAIL",
-      "high_line_count": 64.0,
-      "low_line_count": 86.0
+      "high_line_count": 64,
+      "low_line_count": 86
     },
     {
       "l_shipmode": "SHIP",
-      "high_line_count": 61.0,
-      "low_line_count": 96.0
+      "high_line_count": 61,
+      "low_line_count": 96
     }
   ]
 }

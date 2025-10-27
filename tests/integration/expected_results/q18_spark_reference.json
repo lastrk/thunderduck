@@ -12,16 +12,16 @@
   "rows": [
     {
       "c_name": "Customer#000000667",
-      "c_custkey": 667.0,
-      "o_orderkey": 29158.0,
+      "c_custkey": 667,
+      "o_orderkey": 29158,
       "o_orderdate": "1995-10-21",
       "o_totalprice": 439687.23,
       "sum(l_quantity)": 305.0
     },
     {
       "c_name": "Customer#000000178",
-      "c_custkey": 178.0,
-      "o_orderkey": 6882.0,
+      "c_custkey": 178,
+      "o_orderkey": 6882,
       "o_orderdate": "1997-04-09",
       "o_totalprice": 422359.65,
       "sum(l_quantity)": 303.0

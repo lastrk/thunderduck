@@ -13,7 +13,7 @@
   ],
   "rows": [
     {
-      "c_custkey": 679.0,
+      "c_custkey": 679,
       "c_name": "Customer#000000679",
       "revenue": 378211.3252,
       "c_acctbal": 1394.44,
@@ -23,7 +23,7 @@
       "c_comment": "oys. furiously silent pinto beans"
     },
     {
-      "c_custkey": 1201.0,
+      "c_custkey": 1201,
       "c_name": "Customer#000001201",
       "revenue": 374331.534,
       "c_acctbal": 5165.39,
@@ -33,7 +33,7 @@
       "c_comment": "r foxes boost blithely final accounts. furiously silent ideas unwind. blithely even dependencies wake slyly; sly"
     },
     {
-      "c_custkey": 422.0,
+      "c_custkey": 422,
       "c_name": "Customer#000000422",
       "revenue": 366451.0126,
       "c_acctbal": -272.14,
@@ -43,7 +43,7 @@
       "c_comment": " are carefully. slyly regular requests hag"
     },
     {
-      "c_custkey": 334.0,
+      "c_custkey": 334,
       "c_name": "Customer#000000334",
       "revenue": 360370.755,
       "c_acctbal": -405.91,
@@ -53,7 +53,7 @@
       "c_comment": "r, bold pinto beans according to the blithely final theodolites can snooze slyly even packages. carefully ironic acc"
     },
     {
-      "c_custkey": 805.0,
+      "c_custkey": 805,
       "c_name": "Customer#000000805",
       "revenue": 359448.9036,
       "c_acctbal": 511.69,
@@ -63,7 +63,7 @@
       "c_comment": " quickly unusual accounts haggle carefully after the even accounts. deposits cajole carefully bravely spec"
     },
     {
-      "c_custkey": 932.0,
+      "c_custkey": 932,
       "c_name": "Customer#000000932",
       "revenue": 341608.2753,
       "c_acctbal": 6553.37,
@@ -73,7 +73,7 @@
       "c_comment": "ound the regular accounts. quickly ironic requests try to "
     },
     {
-      "c_custkey": 853.0,
+      "c_custkey": 853,
       "c_name": "Customer#000000853",
       "revenue": 341236.6246,
       "c_acctbal": -444.73,
@@ -83,7 +83,7 @@
       "c_comment": "l foxes affix. furiously regular foxes"
     },
     {
-      "c_custkey": 872.0,
+      "c_custkey": 872,
       "c_name": "Customer#000000872",
       "revenue": 338328.7808,
       "c_acctbal": -858.61,
@@ -93,7 +93,7 @@
       "c_comment": "unts believe across the ironic instructions. packages nag re"
     },
     {
-      "c_custkey": 737.0,
+      "c_custkey": 737,
       "c_name": "Customer#000000737",
       "revenue": 338185.3365,
       "c_acctbal": 2501.74,
@@ -103,7 +103,7 @@
       "c_comment": "ackages. blithely daring packages detect slyly around the carefully busy excuses. f"
     },
     {
-      "c_custkey": 1118.0,
+      "c_custkey": 1118,
       "c_name": "Customer#000001118",
       "revenue": 319875.728,
       "c_acctbal": 4130.18,
@@ -113,7 +113,7 @@
       "c_comment": "ecial sentiments. express deposits across the blithely express packages wake quickly across the attainments. platele"
     },
     {
-      "c_custkey": 223.0,
+      "c_custkey": 223,
       "c_name": "Customer#000000223",
       "revenue": 319564.275,
       "c_acctbal": 7476.2,
@@ -123,7 +123,7 @@
       "c_comment": "xcuses. silent theodolites across the carefully bold excuses sleep ironic, final courts. regular excuses"
     },
     {
-      "c_custkey": 808.0,
+      "c_custkey": 808,
       "c_name": "Customer#000000808",
       "revenue": 314774.6167,
       "c_acctbal": 5561.93,
@@ -133,7 +133,7 @@
       "c_comment": "usual pinto beans use carefully. express ideas boost. ironic, ironic Tir"
     },
     {
-      "c_custkey": 478.0,
+      "c_custkey": 478,
       "c_name": "Customer#000000478",
       "revenue": 299651.8026,
       "c_acctbal": -210.4,
@@ -143,7 +143,7 @@
       "c_comment": "even asymptotes haggle carefully slyl"
     },
     {
-      "c_custkey": 1441.0,
+      "c_custkey": 1441,
       "c_name": "Customer#000001441",
       "revenue": 294705.3935,
       "c_acctbal": 9465.15,
@@ -153,7 +153,7 @@
       "c_comment": "ccounts are furiously above the slyly even foxes. furiously even requests hagg"
     },
     {
-      "c_custkey": 1478.0,
+      "c_custkey": 1478,
       "c_name": "Customer#000001478",
       "revenue": 294431.9178,
       "c_acctbal": 9701.54,
@@ -163,7 +163,7 @@
       "c_comment": "nal instructions. quickly regular excuses haggle after the sl"
     },
     {
-      "c_custkey": 211.0,
+      "c_custkey": 211,
       "c_name": "Customer#000000211",
       "revenue": 287905.6368,
       "c_acctbal": 4198.72,
@@ -173,7 +173,7 @@
       "c_comment": "unusual requests haggle after the unusual, ironic ideas. ironic orbits hinder carefully quickly final p"
     },
     {
-      "c_custkey": 197.0,
+      "c_custkey": 197,
       "c_name": "Customer#000000197",
       "revenue": 283190.4807,
       "c_acctbal": 9860.22,
@@ -183,7 +183,7 @@
       "c_comment": "latelets doze fluffily blithely final dep"
     },
     {
-      "c_custkey": 1030.0,
+      "c_custkey": 1030,
       "c_name": "Customer#000001030",
       "revenue": 282557.3566,
       "c_acctbal": 6359.27,
@@ -193,7 +193,7 @@
       "c_comment": " the final accounts. quick platelets are carefully. instructions a"
     },
     {
-      "c_custkey": 1049.0,
+      "c_custkey": 1049,
       "c_name": "Customer#000001049",
       "revenue": 281134.1117,
       "c_acctbal": 8747.99,
@@ -203,7 +203,7 @@
       "c_comment": "sleep carefully final deposits. furiously bold depo"
     },
     {
-      "c_custkey": 1094.0,
+      "c_custkey": 1094,
       "c_name": "Customer#000001094",
       "revenue": 274877.444,
       "c_acctbal": 2544.49,

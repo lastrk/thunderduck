@@ -24,7 +24,7 @@
       "avg_qty": 25.575155,
       "avg_price": 35785.709307,
       "avg_disc": 0.050081,
-      "count_order": 14876.0
+      "count_order": 14876
     },
     {
       "l_returnflag": "N",
@@ -36,7 +36,7 @@
       "avg_qty": 25.778736,
       "avg_price": 35588.509684,
       "avg_disc": 0.047759,
-      "count_order": 348.0
+      "count_order": 348
     },
     {
       "l_returnflag": "N",
@@ -48,7 +48,7 @@
       "avg_qty": 25.466771,
       "avg_price": 35703.760594,
       "avg_disc": 0.049931,
-      "count_order": 30049.0
+      "count_order": 30049
     },
     {
       "l_returnflag": "R",
@@ -60,7 +60,7 @@
       "avg_qty": 25.597168,
       "avg_price": 35874.006533,
       "avg_disc": 0.049828,
-      "count_order": 14902.0
+      "count_order": 14902
     }
   ]
 }
