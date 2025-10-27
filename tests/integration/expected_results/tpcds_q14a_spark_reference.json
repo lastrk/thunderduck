@@ -1,0 +1,814 @@
+{
+  "query_num": "14a",
+  "row_count": 100,
+  "columns": [
+    "channel",
+    "i_brand_id",
+    "i_class_id",
+    "i_category_id",
+    "sum(sales)",
+    "sum(number_sales)"
+  ],
+  "rows": [
+    {
+      "channel": null,
+      "i_brand_id": null,
+      "i_class_id": null,
+      "i_category_id": null,
+      "sum(sales)": 673409655.64,
+      "sum(number_sales)": 155567
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": null,
+      "i_class_id": null,
+      "i_category_id": null,
+      "sum(sales)": 234830325.53,
+      "sum(number_sales)": 46359
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": null,
+      "i_category_id": null,
+      "sum(sales)": 1549222.39,
+      "sum(number_sales)": 341
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 1,
+      "i_category_id": null,
+      "sum(sales)": 742922.27,
+      "sum(number_sales)": 162
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 1,
+      "i_category_id": 1,
+      "sum(sales)": 87409.2,
+      "sum(number_sales)": 20
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 1,
+      "i_category_id": 2,
+      "sum(sales)": 113268.88,
+      "sum(number_sales)": 27
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 1,
+      "i_category_id": 3,
+      "sum(sales)": 6935.2,
+      "sum(number_sales)": 3
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 1,
+      "i_category_id": 4,
+      "sum(sales)": 113197.13,
+      "sum(number_sales)": 21
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 1,
+      "i_category_id": 5,
+      "sum(sales)": 110056.38,
+      "sum(number_sales)": 25
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 1,
+      "i_category_id": 6,
+      "sum(sales)": 5287.1,
+      "sum(number_sales)": 3
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 1,
+      "i_category_id": 7,
+      "sum(sales)": 45463.7,
+      "sum(number_sales)": 9
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 1,
+      "i_category_id": 8,
+      "sum(sales)": 71604.48,
+      "sum(number_sales)": 13
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 1,
+      "i_category_id": 9,
+      "sum(sales)": 102581.95,
+      "sum(number_sales)": 19
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 1,
+      "i_category_id": 10,
+      "sum(sales)": 87118.25,
+      "sum(number_sales)": 22
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 2,
+      "i_category_id": null,
+      "sum(sales)": 154947.75,
+      "sum(number_sales)": 25
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 2,
+      "i_category_id": 2,
+      "sum(sales)": 34372.05,
+      "sum(number_sales)": 7
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 2,
+      "i_category_id": 3,
+      "sum(sales)": 112922.23,
+      "sum(number_sales)": 15
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 2,
+      "i_category_id": 5,
+      "sum(sales)": 7653.47,
+      "sum(number_sales)": 3
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 3,
+      "i_category_id": null,
+      "sum(sales)": 215111.47,
+      "sum(number_sales)": 44
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 3,
+      "i_category_id": 1,
+      "sum(sales)": 11709.15,
+      "sum(number_sales)": 5
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 3,
+      "i_category_id": 2,
+      "sum(sales)": 45960.66,
+      "sum(number_sales)": 14
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 3,
+      "i_category_id": 4,
+      "sum(sales)": 16908.15,
+      "sum(number_sales)": 4
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 3,
+      "i_category_id": 5,
+      "sum(sales)": 6350.4,
+      "sum(number_sales)": 1
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 3,
+      "i_category_id": 6,
+      "sum(sales)": 34078.56,
+      "sum(number_sales)": 7
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 3,
+      "i_category_id": 7,
+      "sum(sales)": 56235.04,
+      "sum(number_sales)": 7
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 3,
+      "i_category_id": 8,
+      "sum(sales)": 27860.06,
+      "sum(number_sales)": 3
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 3,
+      "i_category_id": 9,
+      "sum(sales)": 16009.45,
+      "sum(number_sales)": 3
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 4,
+      "i_category_id": null,
+      "sum(sales)": 102603.29,
+      "sum(number_sales)": 31
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 4,
+      "i_category_id": 2,
+      "sum(sales)": 54331.89,
+      "sum(number_sales)": 13
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 4,
+      "i_category_id": 3,
+      "sum(sales)": 18531.86,
+      "sum(number_sales)": 8
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 4,
+      "i_category_id": 4,
+      "sum(sales)": 29739.54,
+      "sum(number_sales)": 10
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 5,
+      "i_category_id": null,
+      "sum(sales)": 83898.15,
+      "sum(number_sales)": 17
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 5,
+      "i_category_id": 9,
+      "sum(sales)": 55551.25,
+      "sum(number_sales)": 12
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 5,
+      "i_category_id": 10,
+      "sum(sales)": 28346.9,
+      "sum(number_sales)": 5
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 7,
+      "i_category_id": null,
+      "sum(sales)": 6280.13,
+      "sum(number_sales)": 3
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 7,
+      "i_category_id": 7,
+      "sum(sales)": 6280.13,
+      "sum(number_sales)": 3
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 8,
+      "i_category_id": null,
+      "sum(sales)": 49369.07,
+      "sum(number_sales)": 13
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 8,
+      "i_category_id": 7,
+      "sum(sales)": 18945.08,
+      "sum(number_sales)": 7
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 8,
+      "i_category_id": 10,
+      "sum(sales)": 30423.99,
+      "sum(number_sales)": 6
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 9,
+      "i_category_id": null,
+      "sum(sales)": 28471.93,
+      "sum(number_sales)": 5
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 9,
+      "i_category_id": 6,
+      "sum(sales)": 28471.93,
+      "sum(number_sales)": 5
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 11,
+      "i_category_id": null,
+      "sum(sales)": 66385.05,
+      "sum(number_sales)": 12
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 11,
+      "i_category_id": 9,
+      "sum(sales)": 66385.05,
+      "sum(number_sales)": 12
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 12,
+      "i_category_id": null,
+      "sum(sales)": 28974.04,
+      "sum(number_sales)": 9
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 12,
+      "i_category_id": 10,
+      "sum(sales)": 28974.04,
+      "sum(number_sales)": 9
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 15,
+      "i_category_id": null,
+      "sum(sales)": 70259.24,
+      "sum(number_sales)": 20
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 15,
+      "i_category_id": 9,
+      "sum(sales)": 32114.31,
+      "sum(number_sales)": 7
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001001,
+      "i_class_id": 15,
+      "i_category_id": 10,
+      "sum(sales)": 38144.93,
+      "sum(number_sales)": 13
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": null,
+      "i_category_id": null,
+      "sum(sales)": 3400363.47,
+      "sum(number_sales)": 707
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 1,
+      "i_category_id": null,
+      "sum(sales)": 2505155.72,
+      "sum(number_sales)": 530
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 1,
+      "i_category_id": 1,
+      "sum(sales)": 2505155.72,
+      "sum(number_sales)": 530
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 2,
+      "i_category_id": null,
+      "sum(sales)": 127986.12,
+      "sum(number_sales)": 28
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 2,
+      "i_category_id": 1,
+      "sum(sales)": 127986.12,
+      "sum(number_sales)": 28
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 3,
+      "i_category_id": null,
+      "sum(sales)": 400367.71,
+      "sum(number_sales)": 68
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 3,
+      "i_category_id": 1,
+      "sum(sales)": 400367.71,
+      "sum(number_sales)": 68
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 4,
+      "i_category_id": null,
+      "sum(sales)": 95897.0,
+      "sum(number_sales)": 21
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 4,
+      "i_category_id": 1,
+      "sum(sales)": 95897.0,
+      "sum(number_sales)": 21
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 5,
+      "i_category_id": null,
+      "sum(sales)": 40328.27,
+      "sum(number_sales)": 9
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 5,
+      "i_category_id": 1,
+      "sum(sales)": 40328.27,
+      "sum(number_sales)": 9
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 6,
+      "i_category_id": null,
+      "sum(sales)": 8077.53,
+      "sum(number_sales)": 4
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 6,
+      "i_category_id": 1,
+      "sum(sales)": 8077.53,
+      "sum(number_sales)": 4
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 7,
+      "i_category_id": null,
+      "sum(sales)": 38219.57,
+      "sum(number_sales)": 9
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 7,
+      "i_category_id": 1,
+      "sum(sales)": 38219.57,
+      "sum(number_sales)": 9
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 8,
+      "i_category_id": null,
+      "sum(sales)": 53810.09,
+      "sum(number_sales)": 13
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 8,
+      "i_category_id": 1,
+      "sum(sales)": 53810.09,
+      "sum(number_sales)": 13
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 9,
+      "i_category_id": null,
+      "sum(sales)": 15286.32,
+      "sum(number_sales)": 4
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 9,
+      "i_category_id": 1,
+      "sum(sales)": 15286.32,
+      "sum(number_sales)": 4
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 12,
+      "i_category_id": null,
+      "sum(sales)": 51234.16,
+      "sum(number_sales)": 7
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 12,
+      "i_category_id": 1,
+      "sum(sales)": 51234.16,
+      "sum(number_sales)": 7
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 15,
+      "i_category_id": null,
+      "sum(sales)": 23875.69,
+      "sum(number_sales)": 6
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 15,
+      "i_category_id": 1,
+      "sum(sales)": 23875.69,
+      "sum(number_sales)": 6
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 16,
+      "i_category_id": null,
+      "sum(sales)": 40125.29,
+      "sum(number_sales)": 8
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1001002,
+      "i_class_id": 16,
+      "i_category_id": 1,
+      "sum(sales)": 40125.29,
+      "sum(number_sales)": 8
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": null,
+      "i_category_id": null,
+      "sum(sales)": 1931194.62,
+      "sum(number_sales)": 385
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 1,
+      "i_category_id": null,
+      "sum(sales)": 316195.08,
+      "sum(number_sales)": 55
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 1,
+      "i_category_id": 1,
+      "sum(sales)": 49438.18,
+      "sum(number_sales)": 14
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 1,
+      "i_category_id": 2,
+      "sum(sales)": 121827.97,
+      "sum(number_sales)": 21
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 1,
+      "i_category_id": 4,
+      "sum(sales)": 44364.75,
+      "sum(number_sales)": 5
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 1,
+      "i_category_id": 5,
+      "sum(sales)": 15719.45,
+      "sum(number_sales)": 4
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 1,
+      "i_category_id": 6,
+      "sum(sales)": 26236.12,
+      "sum(number_sales)": 3
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 1,
+      "i_category_id": 9,
+      "sum(sales)": 29896.16,
+      "sum(number_sales)": 4
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 1,
+      "i_category_id": 10,
+      "sum(sales)": 28712.45,
+      "sum(number_sales)": 4
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 2,
+      "i_category_id": null,
+      "sum(sales)": 1142176.09,
+      "sum(number_sales)": 225
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 2,
+      "i_category_id": 1,
+      "sum(sales)": 254305.43,
+      "sum(number_sales)": 51
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 2,
+      "i_category_id": 2,
+      "sum(sales)": 151448.6,
+      "sum(number_sales)": 26
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 2,
+      "i_category_id": 3,
+      "sum(sales)": 84587.9,
+      "sum(number_sales)": 17
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 2,
+      "i_category_id": 4,
+      "sum(sales)": 48190.87,
+      "sum(number_sales)": 13
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 2,
+      "i_category_id": 5,
+      "sum(sales)": 59557.01,
+      "sum(number_sales)": 10
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 2,
+      "i_category_id": 6,
+      "sum(sales)": 139940.8,
+      "sum(number_sales)": 20
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 2,
+      "i_category_id": 7,
+      "sum(sales)": 73784.66,
+      "sum(number_sales)": 16
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 2,
+      "i_category_id": 8,
+      "sum(sales)": 117523.79,
+      "sum(number_sales)": 24
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 2,
+      "i_category_id": 9,
+      "sum(sales)": 196674.68,
+      "sum(number_sales)": 38
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 2,
+      "i_category_id": 10,
+      "sum(sales)": 16162.35,
+      "sum(number_sales)": 10
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 3,
+      "i_category_id": null,
+      "sum(sales)": 71456.22,
+      "sum(number_sales)": 17
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 3,
+      "i_category_id": 2,
+      "sum(sales)": 19297.94,
+      "sum(number_sales)": 6
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 3,
+      "i_category_id": 7,
+      "sum(sales)": 10329.6,
+      "sum(number_sales)": 3
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 3,
+      "i_category_id": 8,
+      "sum(sales)": 41828.68,
+      "sum(number_sales)": 8
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 4,
+      "i_category_id": null,
+      "sum(sales)": 178520.43,
+      "sum(number_sales)": 37
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 4,
+      "i_category_id": 1,
+      "sum(sales)": 94215.49,
+      "sum(number_sales)": 15
+    },
+    {
+      "channel": "catalog",
+      "i_brand_id": 1002001,
+      "i_class_id": 4,
+      "i_category_id": 3,
+      "sum(sales)": 23863.1,
+      "sum(number_sales)": 7
+    }
+  ]
+}

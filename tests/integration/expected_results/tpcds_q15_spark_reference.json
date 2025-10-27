@@ -1,0 +1,410 @@
+{
+  "query_num": "15",
+  "row_count": 100,
+  "columns": [
+    "ca_zip",
+    "sum(cs_sales_price)"
+  ],
+  "rows": [
+    {
+      "ca_zip": null,
+      "sum(cs_sales_price)": 3808.17
+    },
+    {
+      "ca_zip": "30059",
+      "sum(cs_sales_price)": 629.58
+    },
+    {
+      "ca_zip": "30069",
+      "sum(cs_sales_price)": 542.7
+    },
+    {
+      "ca_zip": "30150",
+      "sum(cs_sales_price)": 593.88
+    },
+    {
+      "ca_zip": "30162",
+      "sum(cs_sales_price)": 1942.92
+    },
+    {
+      "ca_zip": "30169",
+      "sum(cs_sales_price)": 1364.41
+    },
+    {
+      "ca_zip": "30191",
+      "sum(cs_sales_price)": 355.63
+    },
+    {
+      "ca_zip": "30194",
+      "sum(cs_sales_price)": 151.28
+    },
+    {
+      "ca_zip": "30309",
+      "sum(cs_sales_price)": 148.26
+    },
+    {
+      "ca_zip": "30330",
+      "sum(cs_sales_price)": 507.01
+    },
+    {
+      "ca_zip": "30399",
+      "sum(cs_sales_price)": 209.99
+    },
+    {
+      "ca_zip": "30411",
+      "sum(cs_sales_price)": 601.45
+    },
+    {
+      "ca_zip": "30492",
+      "sum(cs_sales_price)": 230.45
+    },
+    {
+      "ca_zip": "30499",
+      "sum(cs_sales_price)": 1229.0
+    },
+    {
+      "ca_zip": "30525",
+      "sum(cs_sales_price)": 317.77
+    },
+    {
+      "ca_zip": "30534",
+      "sum(cs_sales_price)": 1404.16
+    },
+    {
+      "ca_zip": "30587",
+      "sum(cs_sales_price)": 150.75
+    },
+    {
+      "ca_zip": "31087",
+      "sum(cs_sales_price)": 215.97
+    },
+    {
+      "ca_zip": "31289",
+      "sum(cs_sales_price)": 625.91
+    },
+    {
+      "ca_zip": "31387",
+      "sum(cs_sales_price)": 1565.54
+    },
+    {
+      "ca_zip": "31675",
+      "sum(cs_sales_price)": 282.77
+    },
+    {
+      "ca_zip": "31692",
+      "sum(cs_sales_price)": 230.63
+    },
+    {
+      "ca_zip": "31749",
+      "sum(cs_sales_price)": 362.62
+    },
+    {
+      "ca_zip": "31757",
+      "sum(cs_sales_price)": 1845.67
+    },
+    {
+      "ca_zip": "31838",
+      "sum(cs_sales_price)": 885.98
+    },
+    {
+      "ca_zip": "31952",
+      "sum(cs_sales_price)": 1019.36
+    },
+    {
+      "ca_zip": "32219",
+      "sum(cs_sales_price)": 907.8
+    },
+    {
+      "ca_zip": "32293",
+      "sum(cs_sales_price)": 606.0
+    },
+    {
+      "ca_zip": "32477",
+      "sum(cs_sales_price)": 325.8
+    },
+    {
+      "ca_zip": "32565",
+      "sum(cs_sales_price)": 284.81
+    },
+    {
+      "ca_zip": "32724",
+      "sum(cs_sales_price)": 297.51
+    },
+    {
+      "ca_zip": "32739",
+      "sum(cs_sales_price)": 976.6
+    },
+    {
+      "ca_zip": "32812",
+      "sum(cs_sales_price)": 1567.58
+    },
+    {
+      "ca_zip": "32898",
+      "sum(cs_sales_price)": 1081.14
+    },
+    {
+      "ca_zip": "33003",
+      "sum(cs_sales_price)": 457.44
+    },
+    {
+      "ca_zip": "33075",
+      "sum(cs_sales_price)": 201.49
+    },
+    {
+      "ca_zip": "33394",
+      "sum(cs_sales_price)": 211.08
+    },
+    {
+      "ca_zip": "33451",
+      "sum(cs_sales_price)": 1656.55
+    },
+    {
+      "ca_zip": "33511",
+      "sum(cs_sales_price)": 384.88
+    },
+    {
+      "ca_zip": "33604",
+      "sum(cs_sales_price)": 2229.05
+    },
+    {
+      "ca_zip": "33683",
+      "sum(cs_sales_price)": 561.92
+    },
+    {
+      "ca_zip": "33951",
+      "sum(cs_sales_price)": 1054.35
+    },
+    {
+      "ca_zip": "34027",
+      "sum(cs_sales_price)": 785.92
+    },
+    {
+      "ca_zip": "34062",
+      "sum(cs_sales_price)": 515.76
+    },
+    {
+      "ca_zip": "34092",
+      "sum(cs_sales_price)": 554.13
+    },
+    {
+      "ca_zip": "34098",
+      "sum(cs_sales_price)": 359.4
+    },
+    {
+      "ca_zip": "34107",
+      "sum(cs_sales_price)": 1718.39
+    },
+    {
+      "ca_zip": "34136",
+      "sum(cs_sales_price)": 398.47
+    },
+    {
+      "ca_zip": "34190",
+      "sum(cs_sales_price)": 219.63
+    },
+    {
+      "ca_zip": "34244",
+      "sum(cs_sales_price)": 1147.34
+    },
+    {
+      "ca_zip": "34289",
+      "sum(cs_sales_price)": 684.5
+    },
+    {
+      "ca_zip": "34338",
+      "sum(cs_sales_price)": 1406.56
+    },
+    {
+      "ca_zip": "34466",
+      "sum(cs_sales_price)": 2017.42
+    },
+    {
+      "ca_zip": "34536",
+      "sum(cs_sales_price)": 373.57
+    },
+    {
+      "ca_zip": "34593",
+      "sum(cs_sales_price)": 950.67
+    },
+    {
+      "ca_zip": "34854",
+      "sum(cs_sales_price)": 706.14
+    },
+    {
+      "ca_zip": "34975",
+      "sum(cs_sales_price)": 420.61
+    },
+    {
+      "ca_zip": "35038",
+      "sum(cs_sales_price)": 348.73
+    },
+    {
+      "ca_zip": "35115",
+      "sum(cs_sales_price)": 391.48
+    },
+    {
+      "ca_zip": "35124",
+      "sum(cs_sales_price)": 1205.24
+    },
+    {
+      "ca_zip": "35281",
+      "sum(cs_sales_price)": 495.07
+    },
+    {
+      "ca_zip": "35413",
+      "sum(cs_sales_price)": 293.5
+    },
+    {
+      "ca_zip": "35508",
+      "sum(cs_sales_price)": 342.05
+    },
+    {
+      "ca_zip": "35709",
+      "sum(cs_sales_price)": 278.63
+    },
+    {
+      "ca_zip": "35752",
+      "sum(cs_sales_price)": 456.32
+    },
+    {
+      "ca_zip": "35804",
+      "sum(cs_sales_price)": 957.3
+    },
+    {
+      "ca_zip": "35817",
+      "sum(cs_sales_price)": 2321.38
+    },
+    {
+      "ca_zip": "35867",
+      "sum(cs_sales_price)": 633.77
+    },
+    {
+      "ca_zip": "36060",
+      "sum(cs_sales_price)": 77.57
+    },
+    {
+      "ca_zip": "36074",
+      "sum(cs_sales_price)": 227.99
+    },
+    {
+      "ca_zip": "36098",
+      "sum(cs_sales_price)": 707.28
+    },
+    {
+      "ca_zip": "36115",
+      "sum(cs_sales_price)": 586.16
+    },
+    {
+      "ca_zip": "36192",
+      "sum(cs_sales_price)": 854.04
+    },
+    {
+      "ca_zip": "36523",
+      "sum(cs_sales_price)": 381.53
+    },
+    {
+      "ca_zip": "36534",
+      "sum(cs_sales_price)": 1842.41
+    },
+    {
+      "ca_zip": "36557",
+      "sum(cs_sales_price)": 1758.07
+    },
+    {
+      "ca_zip": "36614",
+      "sum(cs_sales_price)": 1390.67
+    },
+    {
+      "ca_zip": "36668",
+      "sum(cs_sales_price)": 578.39
+    },
+    {
+      "ca_zip": "36719",
+      "sum(cs_sales_price)": 973.96
+    },
+    {
+      "ca_zip": "36787",
+      "sum(cs_sales_price)": 417.77
+    },
+    {
+      "ca_zip": "36867",
+      "sum(cs_sales_price)": 950.64
+    },
+    {
+      "ca_zip": "36871",
+      "sum(cs_sales_price)": 780.24
+    },
+    {
+      "ca_zip": "36971",
+      "sum(cs_sales_price)": 853.07
+    },
+    {
+      "ca_zip": "37057",
+      "sum(cs_sales_price)": 2554.08
+    },
+    {
+      "ca_zip": "37683",
+      "sum(cs_sales_price)": 786.39
+    },
+    {
+      "ca_zip": "37746",
+      "sum(cs_sales_price)": 2115.63
+    },
+    {
+      "ca_zip": "37838",
+      "sum(cs_sales_price)": 841.27
+    },
+    {
+      "ca_zip": "38014",
+      "sum(cs_sales_price)": 308.95
+    },
+    {
+      "ca_zip": "38048",
+      "sum(cs_sales_price)": 1202.38
+    },
+    {
+      "ca_zip": "38054",
+      "sum(cs_sales_price)": 1385.96
+    },
+    {
+      "ca_zip": "38075",
+      "sum(cs_sales_price)": 890.35
+    },
+    {
+      "ca_zip": "38119",
+      "sum(cs_sales_price)": 196.75
+    },
+    {
+      "ca_zip": "38222",
+      "sum(cs_sales_price)": 2628.49
+    },
+    {
+      "ca_zip": "38354",
+      "sum(cs_sales_price)": 2902.8
+    },
+    {
+      "ca_zip": "38370",
+      "sum(cs_sales_price)": 1656.08
+    },
+    {
+      "ca_zip": "38371",
+      "sum(cs_sales_price)": 528.33
+    },
+    {
+      "ca_zip": "38579",
+      "sum(cs_sales_price)": 541.48
+    },
+    {
+      "ca_zip": "38605",
+      "sum(cs_sales_price)": 247.85
+    },
+    {
+      "ca_zip": "38721",
+      "sum(cs_sales_price)": 2315.94
+    },
+    {
+      "ca_zip": "38828",
+      "sum(cs_sales_price)": 298.6
+    }
+  ]
+}

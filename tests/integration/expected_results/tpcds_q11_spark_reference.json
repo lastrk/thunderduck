@@ -1,0 +1,552 @@
+{
+  "query_num": "11",
+  "row_count": 90,
+  "columns": [
+    "customer_id",
+    "customer_first_name",
+    "customer_last_name",
+    "customer_preferred_cust_flag"
+  ],
+  "rows": [
+    {
+      "customer_id": "AAAAAAAAAMGDAAAA",
+      "customer_first_name": "Kenneth",
+      "customer_last_name": "Harlan",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAAOPFBAAA",
+      "customer_first_name": "Jerry",
+      "customer_last_name": "Fields",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAABIJBAAAA",
+      "customer_first_name": "James",
+      "customer_last_name": "White",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAABKOPAAAA",
+      "customer_first_name": "Gary",
+      "customer_last_name": null,
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAABNBBAAAA",
+      "customer_first_name": "Irma",
+      "customer_last_name": "Smith",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAACADPAAAA",
+      "customer_first_name": "Cristobal",
+      "customer_last_name": "Thomas",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAACCDEAAAA",
+      "customer_first_name": "Samantha",
+      "customer_last_name": "Paul",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAACFCGBAAA",
+      "customer_first_name": "Marcus",
+      "customer_last_name": "Sanders",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAACFEEAAAA",
+      "customer_first_name": "Linda",
+      "customer_last_name": "Hollis",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAACFENAAAA",
+      "customer_first_name": "Christopher",
+      "customer_last_name": "Dawson",
+      "customer_preferred_cust_flag": null
+    },
+    {
+      "customer_id": "AAAAAAAACHLMAAAA",
+      "customer_first_name": "Jenny",
+      "customer_last_name": "Dukes",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAACIJMAAAA",
+      "customer_first_name": "Elizabeth",
+      "customer_last_name": "Thomas",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAACJBLAAAA",
+      "customer_first_name": "Janie",
+      "customer_last_name": "Guzman",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAACJDIAAAA",
+      "customer_first_name": "James",
+      "customer_last_name": "Kerr",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAACKAJAAAA",
+      "customer_first_name": "Rose",
+      "customer_last_name": "Olsen",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAACNAGBAAA",
+      "customer_first_name": "Virginia",
+      "customer_last_name": "May",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAADAEDAAAA",
+      "customer_first_name": "Bernice",
+      "customer_last_name": "Pearson",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAADBEFBAAA",
+      "customer_first_name": "Bennie",
+      "customer_last_name": "Bowers",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAADCKOAAAA",
+      "customer_first_name": "Robert",
+      "customer_last_name": "Gonzalez",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAADFIEBAAA",
+      "customer_first_name": "John",
+      "customer_last_name": "Gray",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAADFKABAAA",
+      "customer_first_name": "Latoya",
+      "customer_last_name": "Craft",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAADHOCAAAA",
+      "customer_first_name": "Lisa",
+      "customer_last_name": "East",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAADIIOAAAA",
+      "customer_first_name": "David",
+      "customer_last_name": "Carroll",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAADIJGBAAA",
+      "customer_first_name": "Ruth",
+      "customer_last_name": "Sanders",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAEADJAAAA",
+      "customer_first_name": "Ruth",
+      "customer_last_name": "Carroll",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAEDIABAAA",
+      "customer_first_name": "Robert",
+      "customer_last_name": "Wall",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAEJDLAAAA",
+      "customer_first_name": "Alice",
+      "customer_last_name": "Wright",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAEKFPAAAA",
+      "customer_first_name": "Annika",
+      "customer_last_name": "Chin",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAEKJLAAAA",
+      "customer_first_name": "Aisha",
+      "customer_last_name": "Carlson",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAEOAKAAAA",
+      "customer_first_name": "Molly",
+      "customer_last_name": "Benjamin",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAFBAHAAAA",
+      "customer_first_name": "Michael",
+      "customer_last_name": "Williams",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAFGIGAAAA",
+      "customer_first_name": "Eduardo",
+      "customer_last_name": "Miller",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAFHACBAAA",
+      "customer_first_name": null,
+      "customer_last_name": null,
+      "customer_preferred_cust_flag": null
+    },
+    {
+      "customer_id": "AAAAAAAAFJHFAAAA",
+      "customer_first_name": "Larissa",
+      "customer_last_name": "Roy",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAFMGHAAAA",
+      "customer_first_name": "Patsy",
+      "customer_last_name": "Holmes",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAFMHIAAAA",
+      "customer_first_name": "Emilio",
+      "customer_last_name": "Darling",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAFOGIAAAA",
+      "customer_first_name": "Michelle",
+      "customer_last_name": "Greene",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAFOJAAAAA",
+      "customer_first_name": "Don",
+      "customer_last_name": "Castillo",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAGAACAAAA",
+      "customer_first_name": "David",
+      "customer_last_name": "Haskins",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAGFMDBAAA",
+      "customer_first_name": "Kathleen",
+      "customer_last_name": "Gibson",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAHAKJAAAA",
+      "customer_first_name": "Lawrence",
+      "customer_last_name": "Matteson",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAHGOABAAA",
+      "customer_first_name": "Sonia",
+      "customer_last_name": "White",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAHHCABAAA",
+      "customer_first_name": "William",
+      "customer_last_name": "Stewart",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAHMJNAAAA",
+      "customer_first_name": "Ryan",
+      "customer_last_name": "Baptiste",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAHNFHAAAA",
+      "customer_first_name": "Rebecca",
+      "customer_last_name": "Wilson",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAIADEBAAA",
+      "customer_first_name": "Diane",
+      "customer_last_name": "Aldridge",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAIBAEBAAA",
+      "customer_first_name": "Sandra",
+      "customer_last_name": "Wilson",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAIBFCBAAA",
+      "customer_first_name": "Ruth",
+      "customer_last_name": "Grantham",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAIBHHAAAA",
+      "customer_first_name": "Jennifer",
+      "customer_last_name": "Ballard",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAICHFAAAA",
+      "customer_first_name": "Linda",
+      "customer_last_name": "Mccoy",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAIDKFAAAA",
+      "customer_first_name": "Michael",
+      "customer_last_name": "Mack",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAIJCIBAAA",
+      "customer_first_name": "Thomas",
+      "customer_last_name": "Oneal",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAIJEMAAAA",
+      "customer_first_name": "Charlie",
+      "customer_last_name": "Cummings",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAIMHBAAAA",
+      "customer_first_name": "Kathy",
+      "customer_last_name": "Knowles",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAJAIMAAAA",
+      "customer_first_name": "Geraldine",
+      "customer_last_name": "German",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAJDBLAAAA",
+      "customer_first_name": "Melvin",
+      "customer_last_name": "Taylor",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAJGMMAAAA",
+      "customer_first_name": "Richard",
+      "customer_last_name": "Larson",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAJIALAAAA",
+      "customer_first_name": "Santos",
+      "customer_last_name": "Gutierrez",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAJKBNAAAA",
+      "customer_first_name": "Julie",
+      "customer_last_name": "Kern",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAJMHLAAAA",
+      "customer_first_name": "Wanda",
+      "customer_last_name": "Ryan",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAJNALAAAA",
+      "customer_first_name": "Kathy",
+      "customer_last_name": "Vazquez",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAJPINAAAA",
+      "customer_first_name": "Rose",
+      "customer_last_name": "Waite",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAKAECAAAA",
+      "customer_first_name": "Milton",
+      "customer_last_name": "Mackey",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAKBCABAAA",
+      "customer_first_name": "Debra",
+      "customer_last_name": "Bell",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAKJBKAAAA",
+      "customer_first_name": "Georgia",
+      "customer_last_name": "Scott",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAKJBLAAAA",
+      "customer_first_name": "Kerry",
+      "customer_last_name": "Davis",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAKLHHBAAA",
+      "customer_first_name": "Manuel",
+      "customer_last_name": "Castaneda",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAALFKKAAAA",
+      "customer_first_name": "Ignacio",
+      "customer_last_name": "Miller",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAALHMCAAAA",
+      "customer_first_name": "Brooke",
+      "customer_last_name": "Nelson",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAALINNAAAA",
+      "customer_first_name": null,
+      "customer_last_name": "Buckley",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAALIOPAAAA",
+      "customer_first_name": "Derek",
+      "customer_last_name": "Allen",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAALOCIBAAA",
+      "customer_first_name": "Elaine",
+      "customer_last_name": "Walden",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAMFPFBAAA",
+      "customer_first_name": "Jamie",
+      "customer_last_name": "Woods",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAMMOBBAAA",
+      "customer_first_name": "Margaret",
+      "customer_last_name": "Smith",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAMPDGBAAA",
+      "customer_first_name": "Theodore",
+      "customer_last_name": "Hiller",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAANGDBBAAA",
+      "customer_first_name": "Carlos",
+      "customer_last_name": "Jewell",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAANJAMAAAA",
+      "customer_first_name": "Thaddeus",
+      "customer_last_name": "Griffin",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAANJHCBAAA",
+      "customer_first_name": "Christopher",
+      "customer_last_name": "Schreiber",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAANJOLAAAA",
+      "customer_first_name": "Debra",
+      "customer_last_name": "Underwood",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAOBADBAAA",
+      "customer_first_name": "Elizabeth",
+      "customer_last_name": "Burnham",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAOBLPAAAA",
+      "customer_first_name": "Willie",
+      "customer_last_name": "Mckeown",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAOCAJAAAA",
+      "customer_first_name": "Jenna",
+      "customer_last_name": "Staton",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAOFLCAAAA",
+      "customer_first_name": "James",
+      "customer_last_name": "Taylor",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAOPDLAAAA",
+      "customer_first_name": "Ann",
+      "customer_last_name": "Pence",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAPDFBAAAA",
+      "customer_first_name": "Terrance",
+      "customer_last_name": "Banks",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAPEPCBAAA",
+      "customer_first_name": "Amanda",
+      "customer_last_name": "Tillman",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAPJENAAAA",
+      "customer_first_name": "Ashley",
+      "customer_last_name": "Norton",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAPJOIAAAA",
+      "customer_first_name": "Beverly",
+      "customer_last_name": "Hart",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAPKBCBAAA",
+      "customer_first_name": "Andrea",
+      "customer_last_name": "White",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAPKIKAAAA",
+      "customer_first_name": "Wendy",
+      "customer_last_name": "Horvath",
+      "customer_preferred_cust_flag": "N"
+    }
+  ]
+}

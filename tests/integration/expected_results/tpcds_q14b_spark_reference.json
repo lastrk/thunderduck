@@ -1,0 +1,820 @@
+{
+  "query_num": "14b",
+  "row_count": 100,
+  "columns": [
+    "channel",
+    "i_brand_id",
+    "i_class_id",
+    "i_category_id",
+    "sales",
+    "number_sales",
+    "channel",
+    "i_brand_id",
+    "i_class_id",
+    "i_category_id",
+    "sales",
+    "number_sales"
+  ],
+  "rows": [
+    {
+      "channel": "store",
+      "i_brand_id": 1001001,
+      "i_class_id": 1,
+      "i_category_id": 1,
+      "sales": 1265423.98,
+      "number_sales": 338
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 1001002,
+      "i_class_id": 1,
+      "i_category_id": 1,
+      "sales": 644544.23,
+      "number_sales": 191
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 1002001,
+      "i_class_id": 2,
+      "i_category_id": 1,
+      "sales": 1204082.99,
+      "number_sales": 344
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 1002002,
+      "i_class_id": 2,
+      "i_category_id": 1,
+      "sales": 624005.54,
+      "number_sales": 164
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 1003001,
+      "i_class_id": 3,
+      "i_category_id": 1,
+      "sales": 1267988.11,
+      "number_sales": 352
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 1003002,
+      "i_class_id": 3,
+      "i_category_id": 1,
+      "sales": 597263.1,
+      "number_sales": 158
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 1004001,
+      "i_class_id": 4,
+      "i_category_id": 1,
+      "sales": 1098452.25,
+      "number_sales": 308
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 1004002,
+      "i_class_id": 4,
+      "i_category_id": 1,
+      "sales": 736460.3,
+      "number_sales": 183
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 2001001,
+      "i_class_id": 1,
+      "i_category_id": 2,
+      "sales": 1325051.22,
+      "number_sales": 368
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 2001002,
+      "i_class_id": 1,
+      "i_category_id": 2,
+      "sales": 564858.66,
+      "number_sales": 158
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 2002001,
+      "i_class_id": 2,
+      "i_category_id": 2,
+      "sales": 1478024.2,
+      "number_sales": 392
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 2002002,
+      "i_class_id": 2,
+      "i_category_id": 2,
+      "sales": 612737.68,
+      "number_sales": 159
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 2003001,
+      "i_class_id": 3,
+      "i_category_id": 2,
+      "sales": 1035686.57,
+      "number_sales": 296
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 2003002,
+      "i_class_id": 3,
+      "i_category_id": 2,
+      "sales": 608637.84,
+      "number_sales": 170
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 2004001,
+      "i_class_id": 4,
+      "i_category_id": 2,
+      "sales": 1274865.98,
+      "number_sales": 365
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 2004002,
+      "i_class_id": 4,
+      "i_category_id": 2,
+      "sales": 781057.92,
+      "number_sales": 182
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 3001001,
+      "i_class_id": 1,
+      "i_category_id": 3,
+      "sales": 1150910.91,
+      "number_sales": 310
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 3001002,
+      "i_class_id": 1,
+      "i_category_id": 3,
+      "sales": 510558.84,
+      "number_sales": 142
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 3002001,
+      "i_class_id": 2,
+      "i_category_id": 3,
+      "sales": 1289674.3,
+      "number_sales": 379
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 3002002,
+      "i_class_id": 2,
+      "i_category_id": 3,
+      "sales": 657907.39,
+      "number_sales": 182
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 3003001,
+      "i_class_id": 3,
+      "i_category_id": 3,
+      "sales": 1330622.27,
+      "number_sales": 376
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 3003002,
+      "i_class_id": 3,
+      "i_category_id": 3,
+      "sales": 638595.55,
+      "number_sales": 166
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 3004001,
+      "i_class_id": 4,
+      "i_category_id": 3,
+      "sales": 1051809.89,
+      "number_sales": 293
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 3004002,
+      "i_class_id": 4,
+      "i_category_id": 3,
+      "sales": 598657.38,
+      "number_sales": 174
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 4001001,
+      "i_class_id": 1,
+      "i_category_id": 4,
+      "sales": 1251551.31,
+      "number_sales": 342
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 4001002,
+      "i_class_id": 1,
+      "i_category_id": 4,
+      "sales": 617338.29,
+      "number_sales": 146
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 4002001,
+      "i_class_id": 2,
+      "i_category_id": 4,
+      "sales": 1283296.49,
+      "number_sales": 362
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 4002002,
+      "i_class_id": 2,
+      "i_category_id": 4,
+      "sales": 677916.72,
+      "number_sales": 202
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 4003001,
+      "i_class_id": 3,
+      "i_category_id": 4,
+      "sales": 1060608.09,
+      "number_sales": 311
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 4003002,
+      "i_class_id": 3,
+      "i_category_id": 4,
+      "sales": 535858.47,
+      "number_sales": 162
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 4004001,
+      "i_class_id": 4,
+      "i_category_id": 4,
+      "sales": 1307726.39,
+      "number_sales": 334
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 4004002,
+      "i_class_id": 4,
+      "i_category_id": 4,
+      "sales": 614390.3,
+      "number_sales": 171
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 5001001,
+      "i_class_id": 1,
+      "i_category_id": 5,
+      "sales": 1084771.96,
+      "number_sales": 343
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 5001002,
+      "i_class_id": 1,
+      "i_category_id": 5,
+      "sales": 629812.4,
+      "number_sales": 170
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 5002001,
+      "i_class_id": 2,
+      "i_category_id": 5,
+      "sales": 1042486.19,
+      "number_sales": 301
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 5002002,
+      "i_class_id": 2,
+      "i_category_id": 5,
+      "sales": 816764.53,
+      "number_sales": 187
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 5003001,
+      "i_class_id": 3,
+      "i_category_id": 5,
+      "sales": 1373938.84,
+      "number_sales": 377
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 5003002,
+      "i_class_id": 3,
+      "i_category_id": 5,
+      "sales": 672729.79,
+      "number_sales": 184
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 5004001,
+      "i_class_id": 4,
+      "i_category_id": 5,
+      "sales": 1387461.66,
+      "number_sales": 379
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 5004002,
+      "i_class_id": 4,
+      "i_category_id": 5,
+      "sales": 789675.6,
+      "number_sales": 203
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6001001,
+      "i_class_id": 1,
+      "i_category_id": 6,
+      "sales": 37632.96,
+      "number_sales": 14
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6001002,
+      "i_class_id": 1,
+      "i_category_id": 6,
+      "sales": 28335.86,
+      "number_sales": 10
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6001003,
+      "i_class_id": 1,
+      "i_category_id": 6,
+      "sales": 27996.72,
+      "number_sales": 10
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6001004,
+      "i_class_id": 1,
+      "i_category_id": 6,
+      "sales": 17543.14,
+      "number_sales": 7
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6001005,
+      "i_class_id": 1,
+      "i_category_id": 6,
+      "sales": 48960.68,
+      "number_sales": 13
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6001006,
+      "i_class_id": 1,
+      "i_category_id": 6,
+      "sales": 8615.45,
+      "number_sales": 5
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6001007,
+      "i_class_id": 1,
+      "i_category_id": 6,
+      "sales": 49835.48,
+      "number_sales": 13
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6001008,
+      "i_class_id": 1,
+      "i_category_id": 6,
+      "sales": 155672.01,
+      "number_sales": 32
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6002001,
+      "i_class_id": 2,
+      "i_category_id": 6,
+      "sales": 66145.82,
+      "number_sales": 19
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6002002,
+      "i_class_id": 2,
+      "i_category_id": 6,
+      "sales": 47859.39,
+      "number_sales": 18
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6002004,
+      "i_class_id": 2,
+      "i_category_id": 6,
+      "sales": 11609.52,
+      "number_sales": 5
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6002005,
+      "i_class_id": 2,
+      "i_category_id": 6,
+      "sales": 29865.87,
+      "number_sales": 14
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6002006,
+      "i_class_id": 2,
+      "i_category_id": 6,
+      "sales": 23517.9,
+      "number_sales": 6
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6002007,
+      "i_class_id": 2,
+      "i_category_id": 6,
+      "sales": 57947.18,
+      "number_sales": 16
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6002008,
+      "i_class_id": 2,
+      "i_category_id": 6,
+      "sales": 45381.29,
+      "number_sales": 11
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6003001,
+      "i_class_id": 3,
+      "i_category_id": 6,
+      "sales": 89639.6,
+      "number_sales": 19
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6003002,
+      "i_class_id": 3,
+      "i_category_id": 6,
+      "sales": 59068.99,
+      "number_sales": 17
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6003003,
+      "i_class_id": 3,
+      "i_category_id": 6,
+      "sales": 52228.63,
+      "number_sales": 20
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6003004,
+      "i_class_id": 3,
+      "i_category_id": 6,
+      "sales": 34055.54,
+      "number_sales": 8
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6003005,
+      "i_class_id": 3,
+      "i_category_id": 6,
+      "sales": 118503.09,
+      "number_sales": 31
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6003006,
+      "i_class_id": 3,
+      "i_category_id": 6,
+      "sales": 14038.92,
+      "number_sales": 3
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6003007,
+      "i_class_id": 3,
+      "i_category_id": 6,
+      "sales": 104598.75,
+      "number_sales": 32
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6003008,
+      "i_class_id": 3,
+      "i_category_id": 6,
+      "sales": 80125.31,
+      "number_sales": 19
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6004001,
+      "i_class_id": 4,
+      "i_category_id": 6,
+      "sales": 53986.63,
+      "number_sales": 15
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6004002,
+      "i_class_id": 4,
+      "i_category_id": 6,
+      "sales": 22715.82,
+      "number_sales": 10
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6004003,
+      "i_class_id": 4,
+      "i_category_id": 6,
+      "sales": 103037.79,
+      "number_sales": 21
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6004004,
+      "i_class_id": 4,
+      "i_category_id": 6,
+      "sales": 23332.26,
+      "number_sales": 6
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6004005,
+      "i_class_id": 4,
+      "i_category_id": 6,
+      "sales": 52800.88,
+      "number_sales": 14
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6004006,
+      "i_class_id": 4,
+      "i_category_id": 6,
+      "sales": 35067.52,
+      "number_sales": 10
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6004007,
+      "i_class_id": 4,
+      "i_category_id": 6,
+      "sales": 39083.89,
+      "number_sales": 13
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6004008,
+      "i_class_id": 4,
+      "i_category_id": 6,
+      "sales": 26334.79,
+      "number_sales": 6
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6005001,
+      "i_class_id": 5,
+      "i_category_id": 6,
+      "sales": 104915.35,
+      "number_sales": 39
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6005002,
+      "i_class_id": 5,
+      "i_category_id": 6,
+      "sales": 72921.67,
+      "number_sales": 12
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6005003,
+      "i_class_id": 5,
+      "i_category_id": 6,
+      "sales": 51868.15,
+      "number_sales": 15
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6005004,
+      "i_class_id": 5,
+      "i_category_id": 6,
+      "sales": 9515.95,
+      "number_sales": 2
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6005005,
+      "i_class_id": 5,
+      "i_category_id": 6,
+      "sales": 41887.89,
+      "number_sales": 16
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6005006,
+      "i_class_id": 5,
+      "i_category_id": 6,
+      "sales": 45324.48,
+      "number_sales": 11
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6005007,
+      "i_class_id": 5,
+      "i_category_id": 6,
+      "sales": 40996.33,
+      "number_sales": 17
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6005008,
+      "i_class_id": 5,
+      "i_category_id": 6,
+      "sales": 32457.82,
+      "number_sales": 8
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6006001,
+      "i_class_id": 6,
+      "i_category_id": 6,
+      "sales": 66209.62,
+      "number_sales": 23
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6006002,
+      "i_class_id": 6,
+      "i_category_id": 6,
+      "sales": 88048.56,
+      "number_sales": 21
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6006003,
+      "i_class_id": 6,
+      "i_category_id": 6,
+      "sales": 106813.67,
+      "number_sales": 28
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6006004,
+      "i_class_id": 6,
+      "i_category_id": 6,
+      "sales": 5032.67,
+      "number_sales": 3
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6006005,
+      "i_class_id": 6,
+      "i_category_id": 6,
+      "sales": 95251.85,
+      "number_sales": 19
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6006006,
+      "i_class_id": 6,
+      "i_category_id": 6,
+      "sales": 15015.74,
+      "number_sales": 6
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6006007,
+      "i_class_id": 6,
+      "i_category_id": 6,
+      "sales": 119766.21,
+      "number_sales": 30
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6006008,
+      "i_class_id": 6,
+      "i_category_id": 6,
+      "sales": 27889.69,
+      "number_sales": 14
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6007001,
+      "i_class_id": 7,
+      "i_category_id": 6,
+      "sales": 9537.03,
+      "number_sales": 6
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6007002,
+      "i_class_id": 7,
+      "i_category_id": 6,
+      "sales": 37093.49,
+      "number_sales": 12
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6007003,
+      "i_class_id": 7,
+      "i_category_id": 6,
+      "sales": 103329.46,
+      "number_sales": 39
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6007004,
+      "i_class_id": 7,
+      "i_category_id": 6,
+      "sales": 48169.74,
+      "number_sales": 16
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6007005,
+      "i_class_id": 7,
+      "i_category_id": 6,
+      "sales": 49074.2,
+      "number_sales": 15
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6007006,
+      "i_class_id": 7,
+      "i_category_id": 6,
+      "sales": 77631.08,
+      "number_sales": 23
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6007007,
+      "i_class_id": 7,
+      "i_category_id": 6,
+      "sales": 120263.14,
+      "number_sales": 29
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6007008,
+      "i_class_id": 7,
+      "i_category_id": 6,
+      "sales": 52321.44,
+      "number_sales": 16
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6008001,
+      "i_class_id": 8,
+      "i_category_id": 6,
+      "sales": 125724.84,
+      "number_sales": 24
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6008002,
+      "i_class_id": 8,
+      "i_category_id": 6,
+      "sales": 37376.78,
+      "number_sales": 14
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6008003,
+      "i_class_id": 8,
+      "i_category_id": 6,
+      "sales": 70867.84,
+      "number_sales": 19
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6008004,
+      "i_class_id": 8,
+      "i_category_id": 6,
+      "sales": 44115.66,
+      "number_sales": 9
+    },
+    {
+      "channel": "store",
+      "i_brand_id": 6008005,
+      "i_class_id": 8,
+      "i_category_id": 6,
+      "sales": 90421.52,
+      "number_sales": 27
+    }
+  ]
+}

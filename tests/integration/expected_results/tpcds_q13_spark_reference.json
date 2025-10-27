@@ -1,0 +1,18 @@
+{
+  "query_num": "13",
+  "row_count": 1,
+  "columns": [
+    "avg(ss_quantity)",
+    "avg(ss_ext_sales_price)",
+    "avg(ss_ext_wholesale_cost)",
+    "sum(ss_ext_wholesale_cost)"
+  ],
+  "rows": [
+    {
+      "avg(ss_quantity)": 7.75,
+      "avg(ss_ext_sales_price)": 516.3425,
+      "avg(ss_ext_wholesale_cost)": 366.855,
+      "sum(ss_ext_wholesale_cost)": 1467.42
+    }
+  ]
+}
