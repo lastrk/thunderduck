@@ -1,0 +1,251 @@
+{
+  "query_num": 49,
+  "row_count": 34,
+  "columns": [
+    "channel",
+    "item",
+    "return_ratio",
+    "return_rank",
+    "currency_rank"
+  ],
+  "rows": [
+    {
+      "channel": "catalog",
+      "item": 6039,
+      "return_ratio": 0.5851063829787234,
+      "return_rank": 1,
+      "currency_rank": 1
+    },
+    {
+      "channel": "catalog",
+      "item": 12485,
+      "return_ratio": 0.6388888888888888,
+      "return_rank": 2,
+      "currency_rank": 2
+    },
+    {
+      "channel": "catalog",
+      "item": 9699,
+      "return_ratio": 0.6438356164383562,
+      "return_rank": 3,
+      "currency_rank": 3
+    },
+    {
+      "channel": "catalog",
+      "item": 121,
+      "return_ratio": 0.6538461538461539,
+      "return_rank": 4,
+      "currency_rank": 4
+    },
+    {
+      "channel": "catalog",
+      "item": 8009,
+      "return_ratio": 0.65625,
+      "return_rank": 5,
+      "currency_rank": 29
+    },
+    {
+      "channel": "catalog",
+      "item": 16349,
+      "return_ratio": 0.6632653061224489,
+      "return_rank": 6,
+      "currency_rank": 5
+    },
+    {
+      "channel": "catalog",
+      "item": 13559,
+      "return_ratio": 0.6986301369863014,
+      "return_rank": 7,
+      "currency_rank": 6
+    },
+    {
+      "channel": "catalog",
+      "item": 3001,
+      "return_ratio": 0.7,
+      "return_rank": 8,
+      "currency_rank": 7
+    },
+    {
+      "channel": "catalog",
+      "item": 3031,
+      "return_ratio": 0.7070707070707071,
+      "return_rank": 9,
+      "currency_rank": 8
+    },
+    {
+      "channel": "catalog",
+      "item": 16781,
+      "return_ratio": 0.7176470588235294,
+      "return_rank": 10,
+      "currency_rank": 30
+    },
+    {
+      "channel": "catalog",
+      "item": 2473,
+      "return_ratio": 0.7191011235955056,
+      "return_rank": 11,
+      "currency_rank": 9
+    },
+    {
+      "channel": "catalog",
+      "item": 9871,
+      "return_ratio": 0.7195121951219512,
+      "return_rank": 12,
+      "currency_rank": 10
+    },
+    {
+      "channel": "store",
+      "item": 5721,
+      "return_ratio": 0.81,
+      "return_rank": 1,
+      "currency_rank": 1
+    },
+    {
+      "channel": "store",
+      "item": 14487,
+      "return_ratio": 0.8369565217391305,
+      "return_rank": 2,
+      "currency_rank": 2
+    },
+    {
+      "channel": "store",
+      "item": 31,
+      "return_ratio": 0.8607594936708861,
+      "return_rank": 3,
+      "currency_rank": 3
+    },
+    {
+      "channel": "store",
+      "item": 5283,
+      "return_ratio": 0.8829787234042553,
+      "return_rank": 4,
+      "currency_rank": 4
+    },
+    {
+      "channel": "store",
+      "item": 9191,
+      "return_ratio": 0.9111111111111111,
+      "return_rank": 5,
+      "currency_rank": 5
+    },
+    {
+      "channel": "store",
+      "item": 4487,
+      "return_ratio": 0.9180327868852459,
+      "return_rank": 6,
+      "currency_rank": 6
+    },
+    {
+      "channel": "store",
+      "item": 5737,
+      "return_ratio": 0.946236559139785,
+      "return_rank": 7,
+      "currency_rank": 7
+    },
+    {
+      "channel": "store",
+      "item": 2963,
+      "return_ratio": 0.9494949494949495,
+      "return_rank": 8,
+      "currency_rank": 8
+    },
+    {
+      "channel": "store",
+      "item": 3755,
+      "return_ratio": 0.95,
+      "return_rank": 9,
+      "currency_rank": 9
+    },
+    {
+      "channel": "store",
+      "item": 14383,
+      "return_ratio": 0.96,
+      "return_rank": 10,
+      "currency_rank": 10
+    },
+    {
+      "channel": "web",
+      "item": 15179,
+      "return_ratio": 0.6,
+      "return_rank": 1,
+      "currency_rank": 1
+    },
+    {
+      "channel": "web",
+      "item": 103,
+      "return_ratio": 0.6129032258064516,
+      "return_rank": 2,
+      "currency_rank": 2
+    },
+    {
+      "channel": "web",
+      "item": 17409,
+      "return_ratio": 0.6538461538461539,
+      "return_rank": 3,
+      "currency_rank": 3
+    },
+    {
+      "channel": "web",
+      "item": 7499,
+      "return_ratio": 0.75,
+      "return_rank": 4,
+      "currency_rank": 16
+    },
+    {
+      "channel": "web",
+      "item": 11209,
+      "return_ratio": 0.7528089887640449,
+      "return_rank": 5,
+      "currency_rank": 15
+    },
+    {
+      "channel": "web",
+      "item": 11003,
+      "return_ratio": 0.7948717948717948,
+      "return_rank": 6,
+      "currency_rank": 4
+    },
+    {
+      "channel": "web",
+      "item": 15991,
+      "return_ratio": 0.8085106382978723,
+      "return_rank": 7,
+      "currency_rank": 5
+    },
+    {
+      "channel": "web",
+      "item": 14091,
+      "return_ratio": 0.8202247191011236,
+      "return_rank": 8,
+      "currency_rank": 6
+    },
+    {
+      "channel": "web",
+      "item": 17151,
+      "return_ratio": 0.835820895522388,
+      "return_rank": 9,
+      "currency_rank": 7
+    },
+    {
+      "channel": "web",
+      "item": 2863,
+      "return_ratio": 0.8552631578947368,
+      "return_rank": 10,
+      "currency_rank": 8
+    },
+    {
+      "channel": "web",
+      "item": 15043,
+      "return_ratio": 0.8888888888888888,
+      "return_rank": 11,
+      "currency_rank": 9
+    },
+    {
+      "channel": "web",
+      "item": 9589,
+      "return_ratio": 0.8888888888888888,
+      "return_rank": 11,
+      "currency_rank": 9
+    }
+  ]
+}

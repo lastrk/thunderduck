@@ -1,0 +1,915 @@
+{
+  "query_num": 46,
+  "row_count": 100,
+  "columns": [
+    "c_last_name",
+    "c_first_name",
+    "ca_city",
+    "bought_city",
+    "ss_ticket_number",
+    "amt",
+    "profit"
+  ],
+  "rows": [
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Antioch",
+      "bought_city": "Belmont",
+      "ss_ticket_number": 149232,
+      "amt": 2866.05,
+      "profit": -12526.96
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Ashland",
+      "bought_city": "Philadelphia",
+      "ss_ticket_number": 155902,
+      "amt": 3488.72,
+      "profit": -10012.54
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Bayview",
+      "bought_city": "Springdale",
+      "ss_ticket_number": 162862,
+      "amt": 3484.09,
+      "profit": -18573.24
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Belleview",
+      "bought_city": "Nichols",
+      "ss_ticket_number": 59976,
+      "amt": 11312.97,
+      "profit": -15948.66
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Blair",
+      "bought_city": "Hamilton",
+      "ss_ticket_number": 206536,
+      "amt": 0.0,
+      "profit": -5402.2
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Brownsville",
+      "bought_city": "Bunker Hill",
+      "ss_ticket_number": 159429,
+      "amt": 580.7,
+      "profit": -7276.98
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Brownsville",
+      "bought_city": "Mechanicsburg",
+      "ss_ticket_number": 60829,
+      "amt": 0.0,
+      "profit": -15113.17
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Brunswick",
+      "bought_city": "Mountain View",
+      "ss_ticket_number": 123733,
+      "amt": 1221.12,
+      "profit": -12504.3
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Buckingham",
+      "bought_city": "Siloam",
+      "ss_ticket_number": 93903,
+      "amt": 391.95,
+      "profit": -1524.54
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Bunker Hill",
+      "bought_city": "Antioch",
+      "ss_ticket_number": 199878,
+      "amt": 420.25,
+      "profit": -6547.77
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Bunker Hill",
+      "bought_city": "Greenfield",
+      "ss_ticket_number": 127182,
+      "amt": 157.73,
+      "profit": 2349.56
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Bunker Hill",
+      "bought_city": "Hopewell",
+      "ss_ticket_number": 53497,
+      "amt": 5228.38,
+      "profit": -1206.03
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Cedar Grove",
+      "bought_city": "Jackson",
+      "ss_ticket_number": 81259,
+      "amt": 82.34,
+      "profit": -7526.45
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Centerville",
+      "bought_city": "Bethel",
+      "ss_ticket_number": 210801,
+      "amt": 0.0,
+      "profit": -13358.77
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Centerville",
+      "bought_city": "Mount Olive",
+      "ss_ticket_number": 66053,
+      "amt": 977.46,
+      "profit": -5915.5
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Centerville",
+      "bought_city": "Mount Zion",
+      "ss_ticket_number": 83650,
+      "amt": 4983.66,
+      "profit": -6892.67
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Centerville",
+      "bought_city": "Providence",
+      "ss_ticket_number": 62604,
+      "amt": 3314.18,
+      "profit": -7542.6
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Clifton",
+      "bought_city": "Mount Vernon",
+      "ss_ticket_number": 95501,
+      "amt": 2510.2,
+      "profit": -12723.39
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Concord",
+      "bought_city": "Stringtown",
+      "ss_ticket_number": 97052,
+      "amt": 1531.39,
+      "profit": -5782.82
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Cordova",
+      "bought_city": "Crossroads",
+      "ss_ticket_number": 85385,
+      "amt": 1071.51,
+      "profit": -12566.8
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Crossroads",
+      "bought_city": "Buena Vista",
+      "ss_ticket_number": 221999,
+      "amt": 1100.11,
+      "profit": -11773.77
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Crossroads",
+      "bought_city": "Unionville",
+      "ss_ticket_number": 58203,
+      "amt": 1676.0,
+      "profit": -4346.63
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Deerfield",
+      "bought_city": "Riverside",
+      "ss_ticket_number": 226924,
+      "amt": 4999.94,
+      "profit": -16878.7
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Derby",
+      "bought_city": "Riverdale",
+      "ss_ticket_number": 140237,
+      "amt": 1791.57,
+      "profit": -4612.27
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Edgewood",
+      "bought_city": "Hopewell",
+      "ss_ticket_number": 167421,
+      "amt": 3236.58,
+      "profit": -15584.0
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Empire",
+      "bought_city": "Five Forks",
+      "ss_ticket_number": 43396,
+      "amt": 602.35,
+      "profit": -16499.02
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Empire",
+      "bought_city": "Midway",
+      "ss_ticket_number": 165554,
+      "amt": 3328.93,
+      "profit": -14501.15
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Enterprise",
+      "bought_city": "Highland Park",
+      "ss_ticket_number": 147688,
+      "amt": 2717.01,
+      "profit": -13093.44
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Enterprise",
+      "bought_city": "Red Hill",
+      "ss_ticket_number": 115200,
+      "amt": 2273.67,
+      "profit": -15393.78
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Fairfield",
+      "bought_city": "Bridgeport",
+      "ss_ticket_number": 13112,
+      "amt": 4998.26,
+      "profit": -12810.23
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Fairfield",
+      "bought_city": "Midway",
+      "ss_ticket_number": 671,
+      "amt": 1995.34,
+      "profit": -1564.3
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Fairfield",
+      "bought_city": "Shiloh",
+      "ss_ticket_number": 149867,
+      "amt": 5899.47,
+      "profit": -7315.44
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Fairfield",
+      "bought_city": "Springdale",
+      "ss_ticket_number": 66752,
+      "amt": 698.19,
+      "profit": -7684.93
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Fairview",
+      "bought_city": "Florence",
+      "ss_ticket_number": 90439,
+      "amt": 0.0,
+      "profit": -9254.65
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Five Forks",
+      "bought_city": "Lakewood",
+      "ss_ticket_number": 186991,
+      "amt": 2.24,
+      "profit": -1167.3
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Five Forks",
+      "bought_city": "Shady Grove",
+      "ss_ticket_number": 239479,
+      "amt": 2982.12,
+      "profit": -12055.22
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Five Points",
+      "bought_city": "Union Hill",
+      "ss_ticket_number": 57715,
+      "amt": 4118.88,
+      "profit": -4937.15
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Florence",
+      "bought_city": "Edgewood",
+      "ss_ticket_number": 110370,
+      "amt": 1155.72,
+      "profit": -5928.71
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Florence",
+      "bought_city": "Oak Ridge",
+      "ss_ticket_number": 45989,
+      "amt": 1343.95,
+      "profit": -10988.74
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Florence",
+      "bought_city": "Spring Hill",
+      "ss_ticket_number": 104935,
+      "amt": 5.84,
+      "profit": -7083.45
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Forest Hills",
+      "bought_city": "Argyle",
+      "ss_ticket_number": 139387,
+      "amt": 10462.95,
+      "profit": -13111.65
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Forest Hills",
+      "bought_city": "Ashland",
+      "ss_ticket_number": 214771,
+      "amt": 2327.02,
+      "profit": -8929.21
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Forest Hills",
+      "bought_city": "Riverside",
+      "ss_ticket_number": 184229,
+      "amt": 1869.18,
+      "profit": -14374.57
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Franklin",
+      "bought_city": "Floyd",
+      "ss_ticket_number": 230648,
+      "amt": 923.59,
+      "profit": -3724.4
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Friendship",
+      "bought_city": "Ashland",
+      "ss_ticket_number": 11043,
+      "amt": 930.4,
+      "profit": -10220.99
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Georgetown",
+      "bought_city": "Clifton",
+      "ss_ticket_number": 123750,
+      "amt": 3212.86,
+      "profit": -4868.76
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Georgetown",
+      "bought_city": "Glendale",
+      "ss_ticket_number": 27617,
+      "amt": 2497.96,
+      "profit": -15755.51
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Georgetown",
+      "bought_city": "Red Hill",
+      "ss_ticket_number": 234956,
+      "amt": 1017.99,
+      "profit": -579.54
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Georgetown",
+      "bought_city": "Summit",
+      "ss_ticket_number": 120620,
+      "amt": 14294.92,
+      "profit": -21696.89
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Gladstone",
+      "bought_city": "Hopewell",
+      "ss_ticket_number": 229820,
+      "amt": 480.35,
+      "profit": -14794.62
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Glendale",
+      "bought_city": "Four Points",
+      "ss_ticket_number": 167992,
+      "amt": 249.48,
+      "profit": -6209.49
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Glendale",
+      "bought_city": "Indian Village",
+      "ss_ticket_number": 203729,
+      "amt": 9227.39,
+      "profit": -14765.78
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Glendale",
+      "bought_city": "Marion",
+      "ss_ticket_number": 51036,
+      "amt": 1384.9,
+      "profit": -14384.59
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Glendale",
+      "bought_city": "Mount Pleasant",
+      "ss_ticket_number": 159389,
+      "amt": 941.56,
+      "profit": -895.78
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Glendale",
+      "bought_city": "West Liberty",
+      "ss_ticket_number": 5509,
+      "amt": 713.38,
+      "profit": -12266.91
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Glenwood",
+      "bought_city": "Antioch",
+      "ss_ticket_number": 86386,
+      "amt": 7755.02,
+      "profit": -18376.87
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Glenwood",
+      "bought_city": "Clinton",
+      "ss_ticket_number": 4460,
+      "amt": 90.56,
+      "profit": -9695.86
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Glenwood",
+      "bought_city": "Clinton",
+      "ss_ticket_number": 90728,
+      "amt": 0.0,
+      "profit": -8126.9
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Granite",
+      "bought_city": "Clinton",
+      "ss_ticket_number": 211465,
+      "amt": 2712.83,
+      "profit": -8507.32
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Green Acres",
+      "bought_city": "Avery",
+      "ss_ticket_number": 191571,
+      "amt": 2250.07,
+      "profit": -18506.07
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Greenfield",
+      "bought_city": "Edgewood",
+      "ss_ticket_number": 69782,
+      "amt": 5731.69,
+      "profit": -7222.87
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Greenfield",
+      "bought_city": "Red Oak",
+      "ss_ticket_number": 214549,
+      "amt": 2517.22,
+      "profit": -1154.4
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Greenfield",
+      "bought_city": "Riverdale",
+      "ss_ticket_number": 133538,
+      "amt": 0.0,
+      "profit": -11056.38
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Greenville",
+      "bought_city": "Mountain View",
+      "ss_ticket_number": 103238,
+      "amt": 66.67,
+      "profit": -8751.41
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Greenville",
+      "bought_city": "Shiloh",
+      "ss_ticket_number": 155915,
+      "amt": 257.7,
+      "profit": -7353.95
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Greenwood",
+      "bought_city": "Bridgeport",
+      "ss_ticket_number": 228626,
+      "amt": 12.58,
+      "profit": -6138.04
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Greenwood",
+      "bought_city": "Lakeside",
+      "ss_ticket_number": 37922,
+      "amt": 3293.24,
+      "profit": -6506.2
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Greenwood",
+      "bought_city": "Macedonia",
+      "ss_ticket_number": 133102,
+      "amt": 0.0,
+      "profit": -13055.32
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Hamilton",
+      "bought_city": "Cedar",
+      "ss_ticket_number": 112720,
+      "amt": 4413.5,
+      "profit": -9380.63
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Hamilton",
+      "bought_city": "Liberty",
+      "ss_ticket_number": 121398,
+      "amt": 4443.17,
+      "profit": -7515.51
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Hamilton",
+      "bought_city": "Valley View",
+      "ss_ticket_number": 161021,
+      "amt": 6448.31,
+      "profit": -13448.86
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Hardy",
+      "bought_city": "Unionville",
+      "ss_ticket_number": 193341,
+      "amt": 7717.72,
+      "profit": -5748.4
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Harmony",
+      "bought_city": "Bethel",
+      "ss_ticket_number": 77060,
+      "amt": 334.07,
+      "profit": -8116.59
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Highland Park",
+      "bought_city": "Salem",
+      "ss_ticket_number": 69302,
+      "amt": 333.86,
+      "profit": -5029.77
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Hillcrest",
+      "bought_city": "Valley View",
+      "ss_ticket_number": 218569,
+      "amt": 1581.56,
+      "profit": -10918.77
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Hopewell",
+      "bought_city": "Centerville",
+      "ss_ticket_number": 17403,
+      "amt": 0.0,
+      "profit": -8019.41
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Jackson",
+      "bought_city": "Springdale",
+      "ss_ticket_number": 72874,
+      "amt": 1337.98,
+      "profit": -2963.84
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Jackson",
+      "bought_city": "Union Hill",
+      "ss_ticket_number": 114590,
+      "amt": 120.76,
+      "profit": -12855.18
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Jackson",
+      "bought_city": "Union Hill",
+      "ss_ticket_number": 181398,
+      "amt": 196.44,
+      "profit": -8417.89
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Kingston",
+      "bought_city": "Clinton",
+      "ss_ticket_number": 169584,
+      "amt": 4616.77,
+      "profit": -5452.9
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Lakeview",
+      "bought_city": "Richville",
+      "ss_ticket_number": 165849,
+      "amt": 779.84,
+      "profit": -13062.92
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Lakewood",
+      "bought_city": "Arlington",
+      "ss_ticket_number": 113298,
+      "amt": 1470.87,
+      "profit": -14611.78
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Lakewood",
+      "bought_city": "Bridgeport",
+      "ss_ticket_number": 169124,
+      "amt": 1888.55,
+      "profit": -15265.19
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Lakewood",
+      "bought_city": "Spring Hill",
+      "ss_ticket_number": 144979,
+      "amt": 9.58,
+      "profit": -7588.74
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Lawrenceville",
+      "bought_city": "Bunker Hill",
+      "ss_ticket_number": 237291,
+      "amt": 2165.83,
+      "profit": -18894.49
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Lebanon",
+      "bought_city": "Pomona",
+      "ss_ticket_number": 55371,
+      "amt": 3830.3,
+      "profit": -7000.29
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Lewis",
+      "bought_city": "Red Hill",
+      "ss_ticket_number": 43196,
+      "amt": 6623.3,
+      "profit": -10024.4
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Liberty",
+      "bought_city": "Spring Hill",
+      "ss_ticket_number": 95200,
+      "amt": 2575.19,
+      "profit": -11737.36
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Lincoln",
+      "bought_city": "Mount Olive",
+      "ss_ticket_number": 148878,
+      "amt": 137.63,
+      "profit": -9346.5
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Lincoln",
+      "bought_city": "Shiloh",
+      "ss_ticket_number": 152927,
+      "amt": 2595.36,
+      "profit": -1860.02
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Ludlow",
+      "bought_city": "Shiloh",
+      "ss_ticket_number": 150308,
+      "amt": 9175.65,
+      "profit": -13917.97
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Macedonia",
+      "bought_city": "Summerville",
+      "ss_ticket_number": 96898,
+      "amt": 749.57,
+      "profit": -8519.39
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Maple Grove",
+      "bought_city": "Hardy",
+      "ss_ticket_number": 94091,
+      "amt": 1913.92,
+      "profit": -14141.45
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Maple Grove",
+      "bought_city": "Waterloo",
+      "ss_ticket_number": 225826,
+      "amt": 2811.47,
+      "profit": -12601.26
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Marion",
+      "bought_city": "White Oak",
+      "ss_ticket_number": 8347,
+      "amt": 35.04,
+      "profit": -4761.45
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Midway",
+      "bought_city": "Jackson",
+      "ss_ticket_number": 99981,
+      "amt": 242.07,
+      "profit": -11290.96
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Midway",
+      "bought_city": "Oakwood",
+      "ss_ticket_number": 11488,
+      "amt": 248.69,
+      "profit": -2720.57
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Milan",
+      "bought_city": "Woodland",
+      "ss_ticket_number": 226048,
+      "amt": 2893.22,
+      "profit": -4794.42
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Mount Pleasant",
+      "bought_city": "Clifton",
+      "ss_ticket_number": 33934,
+      "amt": 657.73,
+      "profit": -3334.14
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Mount Pleasant",
+      "bought_city": "Union",
+      "ss_ticket_number": 157956,
+      "amt": 2823.9,
+      "profit": -7285.54
+    }
+  ]
+}

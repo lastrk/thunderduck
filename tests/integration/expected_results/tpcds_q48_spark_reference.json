@@ -1,0 +1,12 @@
+{
+  "query_num": 48,
+  "row_count": 1,
+  "columns": [
+    "sum(ss_quantity)"
+  ],
+  "rows": [
+    {
+      "sum(ss_quantity)": 26201
+    }
+  ]
+}
