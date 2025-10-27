@@ -149,7 +149,28 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 // 1. Already has AS keyword
                 // 2. Part of a comparison/HAVING clause
                 // 3. Followed by a direct alias (identifier that's not a SQL keyword)
-                sql = sql.replaceAll("(?i)count\\s*\\(\\s*\\*\\s*\\)(?!\\s+as\\s+|\\s*[><=!]|\\s+(?!(?i)from|where|group|order|having|limit|union|intersect|except|join|on|and|or|into|by|desc|asc|with|select)(?-i)[a-z_][a-z0-9_]*)", "count(*) AS \"count(1)\"");
+                // 4. In ORDER BY context
+                // To avoid ORDER BY issues, we check if preceding context contains ORDER BY
+                String sqlLower = sql.toLowerCase();
+                if (!sqlLower.contains("order by")) {
+                    // Simple case: no ORDER BY in the query
+                    sql = sql.replaceAll("(?i)count\\s*\\(\\s*\\*\\s*\\)(?!\\s+as\\s+|\\s*[><=!]|\\s+(?!(?i)from|where|group|order|having|limit|union|intersect|except|join|on|and|or|into|by|desc|asc|with|select)(?-i)[a-z_][a-z0-9_]*)", "count(*) AS \"count(1)\"");
+                } else {
+                    // Complex case: need to avoid ORDER BY context
+                    // Split by ORDER BY and only process the SELECT part
+                    int orderByIndex = sqlLower.lastIndexOf("order by");
+                    String beforeOrderBy = sql.substring(0, orderByIndex);
+                    String orderByClause = sql.substring(orderByIndex);
+
+                    beforeOrderBy = beforeOrderBy.replaceAll("(?i)count\\s*\\(\\s*\\*\\s*\\)(?!\\s+as\\s+|\\s*[><=!]|\\s+(?!(?i)from|where|group|order|having|limit|union|intersect|except|join|on|and|or|into|by|desc|asc|with|select)(?-i)[a-z_][a-z0-9_]*)", "count(*) AS \"count(1)\"");
+                    sql = beforeOrderBy + orderByClause;
+                }
+
+                // Fix "returns" keyword used as alias without AS
+                // DuckDB treats "returns" as a reserved keyword, so we need to add AS when it's used as an alias
+                // Pattern: any expression (function call or column) followed by " returns" (case insensitive)
+                // Example: "coalesce(returns, 0) returns" -> "coalesce(returns, 0) AS returns"
+                sql = sql.replaceAll("(\\)\\s+)(?i)returns(?=\\s*,|\\s*\\)|\\s+from|\\s*$)", "$1AS returns");
 
                 logger.info("Executing SQL: {}", sql);
 
