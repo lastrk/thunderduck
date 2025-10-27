@@ -100,7 +100,22 @@ Differential tests must validate:
 - ✓ **Same column TYPES** (not just convertible types)
 - ✓ Same values (with appropriate epsilon for floats)
 - ✓ Same null handling
-- ✓ Same sort order
+- ✓ Same sort order (with exceptions noted below)
+
+### Sort Order and Tie-Breaking
+
+**Important**: When ORDER BY results in ties (multiple rows with equal sort keys), the order of tied rows is **non-deterministic** in SQL. This is expected behavior in both Spark and Thunderduck.
+
+**Examples**:
+- Query: `ORDER BY cnt` where multiple states have same count
+- Result: States with same count may appear in any order
+- Status: **CORRECT** - this is SQL standard behavior
+
+**Testing Approach**:
+When comparing results with potential ties:
+1. **Option A**: Sort both result sets by ALL columns before comparing (order-independent)
+2. **Option B**: Note that specific tie-breaking order doesn't matter (values are correct)
+3. **Option C**: Add secondary sort keys to make ORDER BY deterministic
 
 **Goal**: Drop-in replacement for Spark, not "Spark-like" behavior.
 

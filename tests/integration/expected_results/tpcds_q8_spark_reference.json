@@ -1,0 +1,30 @@
+{
+  "query_num": 8,
+  "row_count": 5,
+  "columns": [
+    "s_store_name",
+    "sum(ss_net_profit)"
+  ],
+  "rows": [
+    {
+      "s_store_name": "able",
+      "sum(ss_net_profit)": -10354620.18
+    },
+    {
+      "s_store_name": "ation",
+      "sum(ss_net_profit)": -10576395.52
+    },
+    {
+      "s_store_name": "bar",
+      "sum(ss_net_profit)": -10625236.01
+    },
+    {
+      "s_store_name": "ese",
+      "sum(ss_net_profit)": -10076698.16
+    },
+    {
+      "s_store_name": "ought",
+      "sum(ss_net_profit)": -10994052.78
+    }
+  ]
+}

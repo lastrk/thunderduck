@@ -1,0 +1,20 @@
+{
+  "query_num": 9,
+  "row_count": 1,
+  "columns": [
+    "bucket1",
+    "bucket2",
+    "bucket3",
+    "bucket4",
+    "bucket5"
+  ],
+  "rows": [
+    {
+      "bucket1": 39.586662,
+      "bucket2": 116.114976,
+      "bucket3": 192.439186,
+      "bucket4": 267.187662,
+      "bucket5": 342.966759
+    }
+  ]
+}

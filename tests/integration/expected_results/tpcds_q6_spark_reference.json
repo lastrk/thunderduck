@@ -1,0 +1,194 @@
+{
+  "query_num": 6,
+  "row_count": 46,
+  "columns": [
+    "state",
+    "cnt"
+  ],
+  "rows": [
+    {
+      "state": "WY",
+      "cnt": 11
+    },
+    {
+      "state": "VT",
+      "cnt": 16
+    },
+    {
+      "state": "ME",
+      "cnt": 17
+    },
+    {
+      "state": "NJ",
+      "cnt": 19
+    },
+    {
+      "state": "MD",
+      "cnt": 19
+    },
+    {
+      "state": "NH",
+      "cnt": 22
+    },
+    {
+      "state": "AK",
+      "cnt": 22
+    },
+    {
+      "state": "OR",
+      "cnt": 23
+    },
+    {
+      "state": "MA",
+      "cnt": 23
+    },
+    {
+      "state": "NV",
+      "cnt": 26
+    },
+    {
+      "state": "ND",
+      "cnt": 29
+    },
+    {
+      "state": "NM",
+      "cnt": 29
+    },
+    {
+      "state": "UT",
+      "cnt": 29
+    },
+    {
+      "state": "SD",
+      "cnt": 33
+    },
+    {
+      "state": "ID",
+      "cnt": 37
+    },
+    {
+      "state": "WV",
+      "cnt": 43
+    },
+    {
+      "state": "AL",
+      "cnt": 47
+    },
+    {
+      "state": "CO",
+      "cnt": 47
+    },
+    {
+      "state": "SC",
+      "cnt": 49
+    },
+    {
+      "state": "LA",
+      "cnt": 50
+    },
+    {
+      "state": "NY",
+      "cnt": 50
+    },
+    {
+      "state": "FL",
+      "cnt": 50
+    },
+    {
+      "state": "WI",
+      "cnt": 52
+    },
+    {
+      "state": "WA",
+      "cnt": 52
+    },
+    {
+      "state": "PA",
+      "cnt": 52
+    },
+    {
+      "state": "OK",
+      "cnt": 53
+    },
+    {
+      "state": "CA",
+      "cnt": 55
+    },
+    {
+      "state": "MT",
+      "cnt": 55
+    },
+    {
+      "state": null,
+      "cnt": 71
+    },
+    {
+      "state": "MS",
+      "cnt": 72
+    },
+    {
+      "state": "TN",
+      "cnt": 72
+    },
+    {
+      "state": "AR",
+      "cnt": 73
+    },
+    {
+      "state": "IN",
+      "cnt": 78
+    },
+    {
+      "state": "MN",
+      "cnt": 79
+    },
+    {
+      "state": "KS",
+      "cnt": 81
+    },
+    {
+      "state": "MO",
+      "cnt": 85
+    },
+    {
+      "state": "NE",
+      "cnt": 88
+    },
+    {
+      "state": "MI",
+      "cnt": 90
+    },
+    {
+      "state": "IA",
+      "cnt": 93
+    },
+    {
+      "state": "NC",
+      "cnt": 103
+    },
+    {
+      "state": "OH",
+      "cnt": 104
+    },
+    {
+      "state": "KY",
+      "cnt": 106
+    },
+    {
+      "state": "IL",
+      "cnt": 113
+    },
+    {
+      "state": "VA",
+      "cnt": 135
+    },
+    {
+      "state": "GA",
+      "cnt": 144
+    },
+    {
+      "state": "TX",
+      "cnt": 228
+    }
+  ]
+}
