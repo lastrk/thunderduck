@@ -1,0 +1,22 @@
+{
+  "query_num": 73,
+  "row_count": 1,
+  "columns": [
+    "c_last_name",
+    "c_first_name",
+    "c_salutation",
+    "c_preferred_cust_flag",
+    "ss_ticket_number",
+    "cnt"
+  ],
+  "rows": [
+    {
+      "c_last_name": "Robinson",
+      "c_first_name": "Maribel",
+      "c_salutation": "Miss",
+      "c_preferred_cust_flag": "N",
+      "ss_ticket_number": 153104,
+      "cnt": 5
+    }
+  ]
+}

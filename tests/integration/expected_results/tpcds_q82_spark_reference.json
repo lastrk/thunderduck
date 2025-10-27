@@ -1,0 +1,21 @@
+{
+  "query_num": 82,
+  "row_count": 2,
+  "columns": [
+    "i_item_id",
+    "i_item_desc",
+    "i_current_price"
+  ],
+  "rows": [
+    {
+      "i_item_id": "AAAAAAAAECMCAAAA",
+      "i_item_desc": "Arab, financial pol",
+      "i_current_price": 67.28
+    },
+    {
+      "i_item_id": "AAAAAAAALIHCAAAA",
+      "i_item_desc": "Clinical, labour aspects might sit enough like a problems. Remarkably mysterious experts shall learn to th",
+      "i_current_price": 86.9
+    }
+  ]
+}

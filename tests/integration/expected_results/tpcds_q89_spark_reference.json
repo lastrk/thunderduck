@@ -1,0 +1,1016 @@
+{
+  "query_num": 89,
+  "row_count": 100,
+  "columns": [
+    "i_category",
+    "i_class",
+    "i_brand",
+    "s_store_name",
+    "s_company_name",
+    "d_moy",
+    "sum_sales",
+    "avg_monthly_sales"
+  ],
+  "rows": [
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 1772.88,
+      "avg_monthly_sales": 5093.895
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 2070.55,
+      "avg_monthly_sales": 5324.985
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 2008.09,
+      "avg_monthly_sales": 5231.450833
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ation",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 2155.81,
+      "avg_monthly_sales": 5357.399167
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ation",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 2279.03,
+      "avg_monthly_sales": 5357.399167
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 1790.23,
+      "avg_monthly_sales": 4807.805
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 2003.37,
+      "avg_monthly_sales": 4757.896667
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 1975.8,
+      "avg_monthly_sales": 4709.449167
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 2519.47,
+      "avg_monthly_sales": 5231.450833
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 4,
+      "sum_sales": 2435.18,
+      "avg_monthly_sales": 5093.895
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 2616.86,
+      "avg_monthly_sales": 5231.450833
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 4,
+      "sum_sales": 2146.65,
+      "avg_monthly_sales": 4757.896667
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 2523.05,
+      "avg_monthly_sales": 5093.895
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 2230.87,
+      "avg_monthly_sales": 4784.775
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ation",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 2196.49,
+      "avg_monthly_sales": 4744.3175
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 2015.05,
+      "avg_monthly_sales": 4551.636667
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 2796.9,
+      "avg_monthly_sales": 5324.985
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ation",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 2861.47,
+      "avg_monthly_sales": 5357.399167
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 2296.93,
+      "avg_monthly_sales": 4784.775
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 2374.44,
+      "avg_monthly_sales": 4834.126667
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ation",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 2920.44,
+      "avg_monthly_sales": 5357.399167
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 2403.11,
+      "avg_monthly_sales": 4757.896667
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 2766.39,
+      "avg_monthly_sales": 5093.895
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 4,
+      "sum_sales": 2997.82,
+      "avg_monthly_sales": 5324.985
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ation",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 3041.18,
+      "avg_monthly_sales": 5357.399167
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 2518.6,
+      "avg_monthly_sales": 4834.126667
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 2512.18,
+      "avg_monthly_sales": 4807.805
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 3034.74,
+      "avg_monthly_sales": 5324.985
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ation",
+      "s_company_name": "Unknown",
+      "d_moy": 4,
+      "sum_sales": 3082.54,
+      "avg_monthly_sales": 5357.399167
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 2514.78,
+      "avg_monthly_sales": 4784.775
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 2566.11,
+      "avg_monthly_sales": 4834.126667
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 4,
+      "sum_sales": 2612.5,
+      "avg_monthly_sales": 4807.805
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 4,
+      "sum_sales": 3047.3,
+      "avg_monthly_sales": 5231.450833
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ation",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 2562.17,
+      "avg_monthly_sales": 4744.3175
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 2590.08,
+      "avg_monthly_sales": 4757.896667
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 2823.04,
+      "avg_monthly_sales": 4989.1125
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 1,
+      "sum_sales": 2557.82,
+      "avg_monthly_sales": 4709.449167
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ation",
+      "s_company_name": "Unknown",
+      "d_moy": 4,
+      "sum_sales": 2594.68,
+      "avg_monthly_sales": 4744.3175
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 4,
+      "sum_sales": 2686.59,
+      "avg_monthly_sales": 4834.126667
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 2648.7,
+      "avg_monthly_sales": 4784.775
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 2678.38,
+      "avg_monthly_sales": 4807.805
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 4,
+      "sum_sales": 2587.52,
+      "avg_monthly_sales": 4709.449167
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 2874.47,
+      "avg_monthly_sales": 4989.1125
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 2447.65,
+      "avg_monthly_sales": 4551.636667
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 3259.37,
+      "avg_monthly_sales": 5324.985
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 2662.46,
+      "avg_monthly_sales": 4709.449167
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 2507.85,
+      "avg_monthly_sales": 4551.636667
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ation",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 2701.26,
+      "avg_monthly_sales": 4744.3175
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 2776.98,
+      "avg_monthly_sales": 4807.805
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 2838.84,
+      "avg_monthly_sales": 4834.126667
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 1,
+      "sum_sales": 3116.2,
+      "avg_monthly_sales": 5093.895
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 2848.66,
+      "avg_monthly_sales": 4784.775
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ation",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 2808.59,
+      "avg_monthly_sales": 4744.3175
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 2843.71,
+      "avg_monthly_sales": 4757.896667
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 3451.18,
+      "avg_monthly_sales": 5324.985
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 3138.26,
+      "avg_monthly_sales": 4989.1125
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 3266.72,
+      "avg_monthly_sales": 5093.895
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 2749.45,
+      "avg_monthly_sales": 4551.636667
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 4,
+      "sum_sales": 2764.37,
+      "avg_monthly_sales": 4551.636667
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 3212.38,
+      "avg_monthly_sales": 4989.1125
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 2813.15,
+      "avg_monthly_sales": 4551.636667
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 1,
+      "sum_sales": 2826.61,
+      "avg_monthly_sales": 4551.636667
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 3414.26,
+      "avg_monthly_sales": 5093.895
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 4,
+      "sum_sales": 3314.73,
+      "avg_monthly_sales": 4989.1125
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 1,
+      "sum_sales": 3343.41,
+      "avg_monthly_sales": 4989.1125
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 1,
+      "sum_sales": 3194.33,
+      "avg_monthly_sales": 4834.126667
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #2",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 928.51,
+      "avg_monthly_sales": 2516.759167
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 1,
+      "sum_sales": 3174.19,
+      "avg_monthly_sales": 4757.896667
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #2",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 951.26,
+      "avg_monthly_sales": 2516.759167
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 1,
+      "sum_sales": 3771.53,
+      "avg_monthly_sales": 5324.985
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #2",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 996.64,
+      "avg_monthly_sales": 2544.8925
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ation",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 3199.44,
+      "avg_monthly_sales": 4744.3175
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 3180.46,
+      "avg_monthly_sales": 4709.449167
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #2",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 877.78,
+      "avg_monthly_sales": 2398.304167
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #2",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 793.38,
+      "avg_monthly_sales": 2296.6725
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #2",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 550.88,
+      "avg_monthly_sales": 2052.5625
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 3257.38,
+      "avg_monthly_sales": 4757.896667
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #2",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 1047.53,
+      "avg_monthly_sales": 2516.759167
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 3523.63,
+      "avg_monthly_sales": 4989.1125
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ation",
+      "s_company_name": "Unknown",
+      "d_moy": 1,
+      "sum_sales": 3937.76,
+      "avg_monthly_sales": 5357.399167
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #2",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 1097.31,
+      "avg_monthly_sales": 2516.759167
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #2",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 1171.64,
+      "avg_monthly_sales": 2544.8925
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #2",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 1034.02,
+      "avg_monthly_sales": 2398.304167
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 3875.56,
+      "avg_monthly_sales": 5231.450833
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #2",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 956.76,
+      "avg_monthly_sales": 2299.8775
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #2",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 4,
+      "sum_sales": 1168.73,
+      "avg_monthly_sales": 2500.8325
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 3399.87,
+      "avg_monthly_sales": 4709.449167
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #2",
+      "s_store_name": "bar",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 991.91,
+      "avg_monthly_sales": 2296.6725
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #2",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 1101.78,
+      "avg_monthly_sales": 2398.304167
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #2",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 759.74,
+      "avg_monthly_sales": 2039.594167
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ese",
+      "s_company_name": "Unknown",
+      "d_moy": 4,
+      "sum_sales": 3506.84,
+      "avg_monthly_sales": 4784.775
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #2",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 1228.76,
+      "avg_monthly_sales": 2500.8325
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 3963.99,
+      "avg_monthly_sales": 5231.450833
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #1",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 5,
+      "sum_sales": 3452.19,
+      "avg_monthly_sales": 4709.449167
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #2",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 1043.57,
+      "avg_monthly_sales": 2299.8775
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 1,
+      "sum_sales": 3990.8,
+      "avg_monthly_sales": 5231.450833
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #2",
+      "s_store_name": "eing",
+      "s_company_name": "Unknown",
+      "d_moy": 7,
+      "sum_sales": 1311.13,
+      "avg_monthly_sales": 2544.8925
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #2",
+      "s_store_name": "able",
+      "s_company_name": "Unknown",
+      "d_moy": 2,
+      "sum_sales": 1079.4,
+      "avg_monthly_sales": 2299.8775
+    },
+    {
+      "i_category": "Women",
+      "i_class": "dresses",
+      "i_brand": "amalgamalg #2",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 6,
+      "sum_sales": 1221.82,
+      "avg_monthly_sales": 2398.304167
+    },
+    {
+      "i_category": "Men",
+      "i_class": "shirts",
+      "i_brand": "importoimporto #1",
+      "s_store_name": "ought",
+      "s_company_name": "Unknown",
+      "d_moy": 3,
+      "sum_sales": 3634.76,
+      "avg_monthly_sales": 4807.805
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "query_num": 94,
+  "row_count": 1,
+  "columns": [
+    "order count",
+    "total shipping cost",
+    "total net profit"
+  ],
+  "rows": [
+    {
+      "order count": 32,
+      "total shipping cost": 65144.28,
+      "total net profit": -19548.52
+    }
+  ]
+}

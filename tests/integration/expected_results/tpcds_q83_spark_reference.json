@@ -1,0 +1,256 @@
+{
+  "query_num": 83,
+  "row_count": 24,
+  "columns": [
+    "item_id",
+    "sr_item_qty",
+    "sr_dev",
+    "cr_item_qty",
+    "cr_dev",
+    "wr_item_qty",
+    "wr_dev",
+    "average"
+  ],
+  "rows": [
+    {
+      "item_id": "AAAAAAAAAHFBAAAA",
+      "sr_item_qty": 75,
+      "sr_dev": 17.24137931034483,
+      "cr_item_qty": 69,
+      "cr_dev": 15.862068965517242,
+      "wr_item_qty": 1,
+      "wr_dev": 0.22988505747126436,
+      "average": 48.333333
+    },
+    {
+      "item_id": "AAAAAAAACLJBAAAA",
+      "sr_item_qty": 51,
+      "sr_dev": 25.0,
+      "cr_item_qty": 14,
+      "cr_dev": 6.862745098039215,
+      "wr_item_qty": 3,
+      "wr_dev": 1.4705882352941178,
+      "average": 22.666667
+    },
+    {
+      "item_id": "AAAAAAAACOPBAAAA",
+      "sr_item_qty": 11,
+      "sr_dev": 5.913978494623656,
+      "cr_item_qty": 25,
+      "cr_dev": 13.440860215053762,
+      "wr_item_qty": 26,
+      "wr_dev": 13.978494623655916,
+      "average": 20.666667
+    },
+    {
+      "item_id": "AAAAAAAADJABAAAA",
+      "sr_item_qty": 71,
+      "sr_dev": 27.84313725490196,
+      "cr_item_qty": 5,
+      "cr_dev": 1.9607843137254901,
+      "wr_item_qty": 9,
+      "wr_dev": 3.5294117647058822,
+      "average": 28.333333
+    },
+    {
+      "item_id": "AAAAAAAADLOAAAAA",
+      "sr_item_qty": 94,
+      "sr_dev": 30.42071197411003,
+      "cr_item_qty": 2,
+      "cr_dev": 0.6472491909385113,
+      "wr_item_qty": 7,
+      "wr_dev": 2.2653721682847894,
+      "average": 34.333333
+    },
+    {
+      "item_id": "AAAAAAAAEFKAAAAA",
+      "sr_item_qty": 82,
+      "sr_dev": 18.46846846846847,
+      "cr_item_qty": 23,
+      "cr_dev": 5.18018018018018,
+      "wr_item_qty": 43,
+      "wr_dev": 9.684684684684685,
+      "average": 49.333333
+    },
+    {
+      "item_id": "AAAAAAAAEINBAAAA",
+      "sr_item_qty": 32,
+      "sr_dev": 23.18840579710145,
+      "cr_item_qty": 7,
+      "cr_dev": 5.072463768115942,
+      "wr_item_qty": 7,
+      "wr_dev": 5.072463768115942,
+      "average": 15.333333
+    },
+    {
+      "item_id": "AAAAAAAAFDPCAAAA",
+      "sr_item_qty": 32,
+      "sr_dev": 10.35598705501618,
+      "cr_item_qty": 50,
+      "cr_dev": 16.181229773462782,
+      "wr_item_qty": 21,
+      "wr_dev": 6.796116504854369,
+      "average": 34.333333
+    },
+    {
+      "item_id": "AAAAAAAAGJMBAAAA",
+      "sr_item_qty": 73,
+      "sr_dev": null,
+      "cr_item_qty": null,
+      "cr_dev": null,
+      "wr_item_qty": 10,
+      "wr_dev": null,
+      "average": null
+    },
+    {
+      "item_id": "AAAAAAAAGLBBAAAA",
+      "sr_item_qty": 43,
+      "sr_dev": 9.129511677282377,
+      "cr_item_qty": 61,
+      "cr_dev": 12.951167728237792,
+      "wr_item_qty": 53,
+      "wr_dev": 11.252653927813162,
+      "average": 52.333333
+    },
+    {
+      "item_id": "AAAAAAAAGLJDAAAA",
+      "sr_item_qty": 14,
+      "sr_dev": 21.21212121212121,
+      "cr_item_qty": 4,
+      "cr_dev": 6.0606060606060606,
+      "wr_item_qty": 4,
+      "wr_dev": 6.0606060606060606,
+      "average": 7.333333
+    },
+    {
+      "item_id": "AAAAAAAAGMFAAAAA",
+      "sr_item_qty": 21,
+      "sr_dev": 11.11111111111111,
+      "cr_item_qty": 12,
+      "cr_dev": 6.349206349206349,
+      "wr_item_qty": 30,
+      "wr_dev": 15.873015873015872,
+      "average": 21.0
+    },
+    {
+      "item_id": "AAAAAAAAGNHDAAAA",
+      "sr_item_qty": 36,
+      "sr_dev": 14.814814814814813,
+      "cr_item_qty": 31,
+      "cr_dev": 12.757201646090536,
+      "wr_item_qty": 14,
+      "wr_dev": 5.761316872427983,
+      "average": 27.0
+    },
+    {
+      "item_id": "AAAAAAAAIPHCAAAA",
+      "sr_item_qty": 73,
+      "sr_dev": 22.955974842767294,
+      "cr_item_qty": 21,
+      "cr_dev": 6.60377358490566,
+      "wr_item_qty": 12,
+      "wr_dev": 3.7735849056603774,
+      "average": 35.333333
+    },
+    {
+      "item_id": "AAAAAAAAJECEAAAA",
+      "sr_item_qty": 70,
+      "sr_dev": 19.943019943019944,
+      "cr_item_qty": 37,
+      "cr_dev": 10.54131054131054,
+      "wr_item_qty": 10,
+      "wr_dev": 2.849002849002849,
+      "average": 39.0
+    },
+    {
+      "item_id": "AAAAAAAAJGPBAAAA",
+      "sr_item_qty": 7,
+      "sr_dev": 4.666666666666667,
+      "cr_item_qty": 16,
+      "cr_dev": 10.666666666666668,
+      "wr_item_qty": 27,
+      "wr_dev": 18.000000000000004,
+      "average": 16.666667
+    },
+    {
+      "item_id": "AAAAAAAAJPHDAAAA",
+      "sr_item_qty": 11,
+      "sr_dev": 5.392156862745098,
+      "cr_item_qty": 39,
+      "cr_dev": 19.11764705882353,
+      "wr_item_qty": 18,
+      "wr_dev": 8.823529411764707,
+      "average": 22.666667
+    },
+    {
+      "item_id": "AAAAAAAAKEPCAAAA",
+      "sr_item_qty": 69,
+      "sr_dev": 12.921348314606742,
+      "cr_item_qty": 83,
+      "cr_dev": 15.543071161048688,
+      "wr_item_qty": 26,
+      "wr_dev": 4.868913857677903,
+      "average": 59.333333
+    },
+    {
+      "item_id": "AAAAAAAAKIMCAAAA",
+      "sr_item_qty": 35,
+      "sr_dev": 11.0062893081761,
+      "cr_item_qty": 57,
+      "cr_dev": 17.92452830188679,
+      "wr_item_qty": 14,
+      "wr_dev": 4.40251572327044,
+      "average": 35.333333
+    },
+    {
+      "item_id": "AAAAAAAAKPOCAAAA",
+      "sr_item_qty": 56,
+      "sr_dev": 16.231884057971016,
+      "cr_item_qty": 40,
+      "cr_dev": 11.594202898550725,
+      "wr_item_qty": 19,
+      "wr_dev": 5.507246376811594,
+      "average": 38.333333
+    },
+    {
+      "item_id": "AAAAAAAAMLFEAAAA",
+      "sr_item_qty": 62,
+      "sr_dev": 19.682539682539684,
+      "cr_item_qty": 23,
+      "cr_dev": 7.301587301587302,
+      "wr_item_qty": 20,
+      "wr_dev": 6.349206349206349,
+      "average": 35.0
+    },
+    {
+      "item_id": "AAAAAAAAOMPAAAAA",
+      "sr_item_qty": 15,
+      "sr_dev": 8.771929824561402,
+      "cr_item_qty": 7,
+      "cr_dev": 4.093567251461988,
+      "wr_item_qty": 35,
+      "wr_dev": 20.467836257309944,
+      "average": 19.0
+    },
+    {
+      "item_id": "AAAAAAAAPDEAAAAA",
+      "sr_item_qty": 1,
+      "sr_dev": 2.2222222222222223,
+      "cr_item_qty": 12,
+      "cr_dev": 26.666666666666668,
+      "wr_item_qty": 2,
+      "wr_dev": 4.444444444444445,
+      "average": 5.0
+    },
+    {
+      "item_id": "AAAAAAAAPELBAAAA",
+      "sr_item_qty": 28,
+      "sr_dev": 16.96969696969697,
+      "cr_item_qty": 1,
+      "cr_dev": 0.6060606060606061,
+      "wr_item_qty": 26,
+      "wr_dev": 15.757575757575756,
+      "average": 18.333333
+    }
+  ]
+}

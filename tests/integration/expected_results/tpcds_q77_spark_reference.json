@@ -1,0 +1,321 @@
+{
+  "query_num": 77,
+  "row_count": 44,
+  "columns": [
+    "channel",
+    "id",
+    "sales",
+    "returns",
+    "profit"
+  ],
+  "rows": [
+    {
+      "channel": null,
+      "id": null,
+      "sales": 557191426.37,
+      "returns": 12403336.49,
+      "profit": -101829695.15
+    },
+    {
+      "channel": "catalog channel",
+      "id": null,
+      "sales": 399769334.4,
+      "returns": 8033315.56,
+      "profit": -44361022.55
+    },
+    {
+      "channel": "catalog channel",
+      "id": null,
+      "sales": 379488.65,
+      "returns": 2008328.89,
+      "profit": -1262553.25
+    },
+    {
+      "channel": "catalog channel",
+      "id": 1,
+      "sales": 131267647.1,
+      "returns": 2008328.89,
+      "profit": -15825538.05
+    },
+    {
+      "channel": "catalog channel",
+      "id": 2,
+      "sales": 139389660.25,
+      "returns": 2008328.89,
+      "profit": -14812307.25
+    },
+    {
+      "channel": "catalog channel",
+      "id": 5,
+      "sales": 128732538.4,
+      "returns": 2008328.89,
+      "profit": -12460624.0
+    },
+    {
+      "channel": "store channel",
+      "id": null,
+      "sales": 116125844.3,
+      "returns": 3303101.42,
+      "profit": -52490318.19
+    },
+    {
+      "channel": "store channel",
+      "id": 1,
+      "sales": 20273828.04,
+      "returns": 541009.45,
+      "profit": -8892473.64
+    },
+    {
+      "channel": "store channel",
+      "id": 2,
+      "sales": 19832563.17,
+      "returns": 611698.8,
+      "profit": -8682366.36
+    },
+    {
+      "channel": "store channel",
+      "id": 4,
+      "sales": 19197401.81,
+      "returns": 480028.95,
+      "profit": -8616925.13
+    },
+    {
+      "channel": "store channel",
+      "id": 7,
+      "sales": 19692745.14,
+      "returns": 508462.05,
+      "profit": -8694362.39
+    },
+    {
+      "channel": "store channel",
+      "id": 8,
+      "sales": 18011555.6,
+      "returns": 604479.02,
+      "profit": -8593997.43
+    },
+    {
+      "channel": "store channel",
+      "id": 10,
+      "sales": 19117750.54,
+      "returns": 557423.15,
+      "profit": -9010193.24
+    },
+    {
+      "channel": "web channel",
+      "id": null,
+      "sales": 41296247.67,
+      "returns": 1066919.51,
+      "profit": -4978354.41
+    },
+    {
+      "channel": "web channel",
+      "id": 1,
+      "sales": 1322523.33,
+      "returns": 41774.54,
+      "profit": -201946.42
+    },
+    {
+      "channel": "web channel",
+      "id": 2,
+      "sales": 1499012.97,
+      "returns": 45226.53,
+      "profit": -86250.45
+    },
+    {
+      "channel": "web channel",
+      "id": 5,
+      "sales": 1263122.91,
+      "returns": 27856.32,
+      "profit": -226079.93
+    },
+    {
+      "channel": "web channel",
+      "id": 7,
+      "sales": 1362049.48,
+      "returns": 50012.54,
+      "profit": -280723.18
+    },
+    {
+      "channel": "web channel",
+      "id": 8,
+      "sales": 1348173.98,
+      "returns": 45184.11,
+      "profit": -128001.26
+    },
+    {
+      "channel": "web channel",
+      "id": 11,
+      "sales": 1330875.21,
+      "returns": 36116.2,
+      "profit": -110906.68
+    },
+    {
+      "channel": "web channel",
+      "id": 13,
+      "sales": 1401291.5,
+      "returns": 42705.89,
+      "profit": -154830.17
+    },
+    {
+      "channel": "web channel",
+      "id": 14,
+      "sales": 1372135.09,
+      "returns": 43119.23,
+      "profit": -217420.67
+    },
+    {
+      "channel": "web channel",
+      "id": 17,
+      "sales": 1463782.81,
+      "returns": 23572.4,
+      "profit": -178135.07
+    },
+    {
+      "channel": "web channel",
+      "id": 19,
+      "sales": 1375072.08,
+      "returns": 22005.93,
+      "profit": -121967.01
+    },
+    {
+      "channel": "web channel",
+      "id": 20,
+      "sales": 1367899.82,
+      "returns": 33367.51,
+      "profit": -49977.97
+    },
+    {
+      "channel": "web channel",
+      "id": 23,
+      "sales": 1444329.49,
+      "returns": 14720.39,
+      "profit": -118810.75
+    },
+    {
+      "channel": "web channel",
+      "id": 25,
+      "sales": 1432326.83,
+      "returns": 44045.72,
+      "profit": -178359.31
+    },
+    {
+      "channel": "web channel",
+      "id": 26,
+      "sales": 1346507.33,
+      "returns": 40751.69,
+      "profit": -264828.17
+    },
+    {
+      "channel": "web channel",
+      "id": 29,
+      "sales": 1580870.71,
+      "returns": 11400.08,
+      "profit": -66648.74
+    },
+    {
+      "channel": "web channel",
+      "id": 31,
+      "sales": 1435322.74,
+      "returns": 35261.32,
+      "profit": -117401.55
+    },
+    {
+      "channel": "web channel",
+      "id": 32,
+      "sales": 1474880.54,
+      "returns": 54435.16,
+      "profit": -136714.96
+    },
+    {
+      "channel": "web channel",
+      "id": 35,
+      "sales": 1316750.99,
+      "returns": 32894.38,
+      "profit": -184750.61
+    },
+    {
+      "channel": "web channel",
+      "id": 37,
+      "sales": 1259425.36,
+      "returns": 31013.01,
+      "profit": -176361.04
+    },
+    {
+      "channel": "web channel",
+      "id": 38,
+      "sales": 1384968.46,
+      "returns": 56353.52,
+      "profit": -152061.42
+    },
+    {
+      "channel": "web channel",
+      "id": 41,
+      "sales": 1342258.02,
+      "returns": 23587.49,
+      "profit": -163267.89
+    },
+    {
+      "channel": "web channel",
+      "id": 43,
+      "sales": 1269685.2,
+      "returns": 40560.65,
+      "profit": -160814.41
+    },
+    {
+      "channel": "web channel",
+      "id": 44,
+      "sales": 1408625.44,
+      "returns": 64796.06,
+      "profit": -236015.2
+    },
+    {
+      "channel": "web channel",
+      "id": 47,
+      "sales": 1340520.08,
+      "returns": 20145.06,
+      "profit": -168773.49
+    },
+    {
+      "channel": "web channel",
+      "id": 49,
+      "sales": 1405049.33,
+      "returns": 37226.6,
+      "profit": -272169.88
+    },
+    {
+      "channel": "web channel",
+      "id": 50,
+      "sales": 1433829.03,
+      "returns": 46537.88,
+      "profit": -70497.27
+    },
+    {
+      "channel": "web channel",
+      "id": 53,
+      "sales": 1284647.36,
+      "returns": 16319.65,
+      "profit": -231649.12
+    },
+    {
+      "channel": "web channel",
+      "id": 55,
+      "sales": 1256232.26,
+      "returns": 44757.42,
+      "profit": -254936.71
+    },
+    {
+      "channel": "web channel",
+      "id": 56,
+      "sales": 1388833.32,
+      "returns": 28855.73,
+      "profit": -95092.34
+    },
+    {
+      "channel": "web channel",
+      "id": 59,
+      "sales": 1385246.0,
+      "returns": 12316.5,
+      "profit": -172962.74
+    }
+  ]
+}

@@ -1,0 +1,915 @@
+{
+  "query_num": 76,
+  "row_count": 100,
+  "columns": [
+    "channel",
+    "col_name",
+    "d_year",
+    "d_qoy",
+    "i_category",
+    "sales_cnt",
+    "sales_amt"
+  ],
+  "rows": [
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 1,
+      "i_category": "Books",
+      "sales_cnt": 9,
+      "sales_amt": 13630.14
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 1,
+      "i_category": "Children",
+      "sales_cnt": 14,
+      "sales_amt": 36422.12
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 1,
+      "i_category": "Electronics",
+      "sales_cnt": 17,
+      "sales_amt": 18547.58
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 1,
+      "i_category": "Home",
+      "sales_cnt": 9,
+      "sales_amt": 17219.87
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 1,
+      "i_category": "Jewelry",
+      "sales_cnt": 11,
+      "sales_amt": 21296.55
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 1,
+      "i_category": "Men",
+      "sales_cnt": 12,
+      "sales_amt": 21133.19
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 1,
+      "i_category": "Music",
+      "sales_cnt": 14,
+      "sales_amt": 14202.49
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 1,
+      "i_category": "Shoes",
+      "sales_cnt": 13,
+      "sales_amt": 4629.07
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 1,
+      "i_category": "Sports",
+      "sales_cnt": 12,
+      "sales_amt": 9317.11
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 1,
+      "i_category": "Women",
+      "sales_cnt": 4,
+      "sales_amt": 20528.2
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 2,
+      "i_category": "Books",
+      "sales_cnt": 13,
+      "sales_amt": 31992.54
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 2,
+      "i_category": "Children",
+      "sales_cnt": 7,
+      "sales_amt": 3456.73
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 2,
+      "i_category": "Electronics",
+      "sales_cnt": 8,
+      "sales_amt": 9245.99
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 2,
+      "i_category": "Home",
+      "sales_cnt": 14,
+      "sales_amt": 36842.92
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 2,
+      "i_category": "Jewelry",
+      "sales_cnt": 6,
+      "sales_amt": 23087.63
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 2,
+      "i_category": "Men",
+      "sales_cnt": 5,
+      "sales_amt": 3774.75
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 2,
+      "i_category": "Music",
+      "sales_cnt": 13,
+      "sales_amt": 12383.53
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 2,
+      "i_category": "Shoes",
+      "sales_cnt": 11,
+      "sales_amt": 22099.94
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 2,
+      "i_category": "Sports",
+      "sales_cnt": 11,
+      "sales_amt": 8905.87
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 2,
+      "i_category": "Women",
+      "sales_cnt": 10,
+      "sales_amt": 20742.36
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 3,
+      "i_category": "Books",
+      "sales_cnt": 20,
+      "sales_amt": 38453.0
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 3,
+      "i_category": "Children",
+      "sales_cnt": 25,
+      "sales_amt": 29524.13
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 3,
+      "i_category": "Electronics",
+      "sales_cnt": 16,
+      "sales_amt": 39967.09
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 3,
+      "i_category": "Home",
+      "sales_cnt": 17,
+      "sales_amt": 30974.21
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 3,
+      "i_category": "Jewelry",
+      "sales_cnt": 22,
+      "sales_amt": 18798.91
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 3,
+      "i_category": "Men",
+      "sales_cnt": 13,
+      "sales_amt": 15757.18
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 3,
+      "i_category": "Music",
+      "sales_cnt": 14,
+      "sales_amt": 16594.5
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 3,
+      "i_category": "Shoes",
+      "sales_cnt": 20,
+      "sales_amt": 31879.44
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 3,
+      "i_category": "Sports",
+      "sales_cnt": 18,
+      "sales_amt": 23366.0
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 3,
+      "i_category": "Women",
+      "sales_cnt": 24,
+      "sales_amt": 22984.51
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 4,
+      "i_category": "Books",
+      "sales_cnt": 32,
+      "sales_amt": 62452.79
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 4,
+      "i_category": "Children",
+      "sales_cnt": 33,
+      "sales_amt": 34596.12
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 4,
+      "i_category": "Electronics",
+      "sales_cnt": 28,
+      "sales_amt": 50847.09
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 4,
+      "i_category": "Home",
+      "sales_cnt": 33,
+      "sales_amt": 15023.78
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 4,
+      "i_category": "Jewelry",
+      "sales_cnt": 22,
+      "sales_amt": 36047.54
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 4,
+      "i_category": "Men",
+      "sales_cnt": 26,
+      "sales_amt": 31782.09
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 4,
+      "i_category": "Music",
+      "sales_cnt": 39,
+      "sales_amt": 33776.35
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 4,
+      "i_category": "Shoes",
+      "sales_cnt": 33,
+      "sales_amt": 23780.71
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 4,
+      "i_category": "Sports",
+      "sales_cnt": 25,
+      "sales_amt": 44333.04
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1998,
+      "d_qoy": 4,
+      "i_category": "Women",
+      "sales_cnt": 46,
+      "sales_amt": 66573.64
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 1,
+      "i_category": "Books",
+      "sales_cnt": 10,
+      "sales_amt": 1743.0
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 1,
+      "i_category": "Children",
+      "sales_cnt": 9,
+      "sales_amt": 15579.72
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 1,
+      "i_category": "Electronics",
+      "sales_cnt": 16,
+      "sales_amt": 16830.07
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 1,
+      "i_category": "Home",
+      "sales_cnt": 4,
+      "sales_amt": 2720.94
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 1,
+      "i_category": "Jewelry",
+      "sales_cnt": 10,
+      "sales_amt": 10187.73
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 1,
+      "i_category": "Men",
+      "sales_cnt": 10,
+      "sales_amt": 4852.89
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 1,
+      "i_category": "Music",
+      "sales_cnt": 11,
+      "sales_amt": 17621.62
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 1,
+      "i_category": "Shoes",
+      "sales_cnt": 23,
+      "sales_amt": 44189.47
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 1,
+      "i_category": "Sports",
+      "sales_cnt": 9,
+      "sales_amt": 6378.11
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 1,
+      "i_category": "Women",
+      "sales_cnt": 11,
+      "sales_amt": 6084.37
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 2,
+      "i_category": "Books",
+      "sales_cnt": 9,
+      "sales_amt": 5334.82
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 2,
+      "i_category": "Children",
+      "sales_cnt": 10,
+      "sales_amt": 18322.87
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 2,
+      "i_category": "Electronics",
+      "sales_cnt": 14,
+      "sales_amt": 13713.65
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 2,
+      "i_category": "Home",
+      "sales_cnt": 7,
+      "sales_amt": 13795.83
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 2,
+      "i_category": "Jewelry",
+      "sales_cnt": 10,
+      "sales_amt": 3412.14
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 2,
+      "i_category": "Men",
+      "sales_cnt": 11,
+      "sales_amt": 4478.24
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 2,
+      "i_category": "Music",
+      "sales_cnt": 13,
+      "sales_amt": 14358.01
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 2,
+      "i_category": "Shoes",
+      "sales_cnt": 11,
+      "sales_amt": 17936.23
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 2,
+      "i_category": "Sports",
+      "sales_cnt": 6,
+      "sales_amt": 11933.96
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 2,
+      "i_category": "Women",
+      "sales_cnt": 16,
+      "sales_amt": 10976.08
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 3,
+      "i_category": "Books",
+      "sales_cnt": 23,
+      "sales_amt": 35706.59
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 3,
+      "i_category": "Children",
+      "sales_cnt": 11,
+      "sales_amt": 10501.63
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 3,
+      "i_category": "Electronics",
+      "sales_cnt": 17,
+      "sales_amt": 28513.24
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 3,
+      "i_category": "Home",
+      "sales_cnt": 21,
+      "sales_amt": 44765.02
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 3,
+      "i_category": "Jewelry",
+      "sales_cnt": 19,
+      "sales_amt": 34358.4
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 3,
+      "i_category": "Men",
+      "sales_cnt": 17,
+      "sales_amt": 20923.18
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 3,
+      "i_category": "Music",
+      "sales_cnt": 22,
+      "sales_amt": 20934.72
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 3,
+      "i_category": "Shoes",
+      "sales_cnt": 17,
+      "sales_amt": 62902.61
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 3,
+      "i_category": "Sports",
+      "sales_cnt": 20,
+      "sales_amt": 21168.5
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 3,
+      "i_category": "Women",
+      "sales_cnt": 24,
+      "sales_amt": 29081.98
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 4,
+      "i_category": "Books",
+      "sales_cnt": 28,
+      "sales_amt": 23653.67
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 4,
+      "i_category": "Children",
+      "sales_cnt": 30,
+      "sales_amt": 21224.48
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 4,
+      "i_category": "Electronics",
+      "sales_cnt": 34,
+      "sales_amt": 57571.59
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 4,
+      "i_category": "Home",
+      "sales_cnt": 21,
+      "sales_amt": 41264.77
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 4,
+      "i_category": "Jewelry",
+      "sales_cnt": 45,
+      "sales_amt": 36013.67
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 4,
+      "i_category": "Men",
+      "sales_cnt": 29,
+      "sales_amt": 39518.8
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 4,
+      "i_category": "Music",
+      "sales_cnt": 37,
+      "sales_amt": 48918.75
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 4,
+      "i_category": "Shoes",
+      "sales_cnt": 32,
+      "sales_amt": 28773.04
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 4,
+      "i_category": "Sports",
+      "sales_cnt": 28,
+      "sales_amt": 41313.81
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 1999,
+      "d_qoy": 4,
+      "i_category": "Women",
+      "sales_cnt": 27,
+      "sales_amt": 29527.31
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 1,
+      "i_category": "Books",
+      "sales_cnt": 13,
+      "sales_amt": 21779.99
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 1,
+      "i_category": "Children",
+      "sales_cnt": 10,
+      "sales_amt": 20359.6
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 1,
+      "i_category": "Electronics",
+      "sales_cnt": 9,
+      "sales_amt": 6052.69
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 1,
+      "i_category": "Home",
+      "sales_cnt": 13,
+      "sales_amt": 10651.74
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 1,
+      "i_category": "Jewelry",
+      "sales_cnt": 8,
+      "sales_amt": 6883.61
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 1,
+      "i_category": "Men",
+      "sales_cnt": 11,
+      "sales_amt": 26301.88
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 1,
+      "i_category": "Music",
+      "sales_cnt": 11,
+      "sales_amt": 1880.73
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 1,
+      "i_category": "Shoes",
+      "sales_cnt": 15,
+      "sales_amt": 8970.77
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 1,
+      "i_category": "Sports",
+      "sales_cnt": 7,
+      "sales_amt": 1211.13
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 1,
+      "i_category": "Women",
+      "sales_cnt": 6,
+      "sales_amt": 2995.16
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 2,
+      "i_category": "Books",
+      "sales_cnt": 13,
+      "sales_amt": 19685.21
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 2,
+      "i_category": "Children",
+      "sales_cnt": 6,
+      "sales_amt": 5188.24
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 2,
+      "i_category": "Electronics",
+      "sales_cnt": 11,
+      "sales_amt": 1159.76
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 2,
+      "i_category": "Home",
+      "sales_cnt": 14,
+      "sales_amt": 9432.75
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 2,
+      "i_category": "Jewelry",
+      "sales_cnt": 7,
+      "sales_amt": 29282.21
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 2,
+      "i_category": "Men",
+      "sales_cnt": 7,
+      "sales_amt": 1338.49
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 2,
+      "i_category": "Music",
+      "sales_cnt": 13,
+      "sales_amt": 32457.1
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 2,
+      "i_category": "Shoes",
+      "sales_cnt": 6,
+      "sales_amt": 4633.72
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 2,
+      "i_category": "Sports",
+      "sales_cnt": 11,
+      "sales_amt": 3106.71
+    },
+    {
+      "channel": "catalog",
+      "col_name": null,
+      "d_year": 2000,
+      "d_qoy": 2,
+      "i_category": "Women",
+      "sales_cnt": 9,
+      "sales_amt": 4527.15
+    }
+  ]
+}

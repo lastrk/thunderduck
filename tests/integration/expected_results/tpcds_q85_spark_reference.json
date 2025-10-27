@@ -1,0 +1,18 @@
+{
+  "query_num": 85,
+  "row_count": 1,
+  "columns": [
+    "substr(r_reason_desc, 1, 20)",
+    "avg(ws_quantity)",
+    "avg(wr_refunded_cash)",
+    "avg(wr_fee)"
+  ],
+  "rows": [
+    {
+      "substr(r_reason_desc, 1, 20)": "Did not like the col",
+      "avg(ws_quantity)": 94.0,
+      "avg(wr_refunded_cash)": 3078.98,
+      "avg(wr_fee)": 92.97
+    }
+  ]
+}

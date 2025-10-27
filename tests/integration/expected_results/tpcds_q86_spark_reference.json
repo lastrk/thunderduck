@@ -1,0 +1,713 @@
+{
+  "query_num": 86,
+  "row_count": 100,
+  "columns": [
+    "total_sum",
+    "i_category",
+    "i_class",
+    "lochierarchy",
+    "rank_within_parent"
+  ],
+  "rows": [
+    {
+      "total_sum": 325920362.16,
+      "i_category": null,
+      "i_class": null,
+      "lochierarchy": 2,
+      "rank_within_parent": 1
+    },
+    {
+      "total_sum": 33608039.99,
+      "i_category": "Music",
+      "i_class": null,
+      "lochierarchy": 1,
+      "rank_within_parent": 1
+    },
+    {
+      "total_sum": 33492896.89,
+      "i_category": "Shoes",
+      "i_class": null,
+      "lochierarchy": 1,
+      "rank_within_parent": 2
+    },
+    {
+      "total_sum": 33284844.68,
+      "i_category": "Books",
+      "i_class": null,
+      "lochierarchy": 1,
+      "rank_within_parent": 3
+    },
+    {
+      "total_sum": 32941025.31,
+      "i_category": "Men",
+      "i_class": null,
+      "lochierarchy": 1,
+      "rank_within_parent": 4
+    },
+    {
+      "total_sum": 32654038.46,
+      "i_category": "Women",
+      "i_class": null,
+      "lochierarchy": 1,
+      "rank_within_parent": 5
+    },
+    {
+      "total_sum": 32371205.72,
+      "i_category": "Children",
+      "i_class": null,
+      "lochierarchy": 1,
+      "rank_within_parent": 6
+    },
+    {
+      "total_sum": 31982069.42,
+      "i_category": "Electronics",
+      "i_class": null,
+      "lochierarchy": 1,
+      "rank_within_parent": 7
+    },
+    {
+      "total_sum": 31855938.24,
+      "i_category": "Sports",
+      "i_class": null,
+      "lochierarchy": 1,
+      "rank_within_parent": 8
+    },
+    {
+      "total_sum": 31765555.19,
+      "i_category": "Jewelry",
+      "i_class": null,
+      "lochierarchy": 1,
+      "rank_within_parent": 9
+    },
+    {
+      "total_sum": 31012655.42,
+      "i_category": "Home",
+      "i_class": null,
+      "lochierarchy": 1,
+      "rank_within_parent": 10
+    },
+    {
+      "total_sum": 952092.84,
+      "i_category": null,
+      "i_class": null,
+      "lochierarchy": 1,
+      "rank_within_parent": 11
+    },
+    {
+      "total_sum": 390148.41,
+      "i_category": null,
+      "i_class": null,
+      "lochierarchy": 0,
+      "rank_within_parent": 1
+    },
+    {
+      "total_sum": 90885.24,
+      "i_category": null,
+      "i_class": "womens",
+      "lochierarchy": 0,
+      "rank_within_parent": 2
+    },
+    {
+      "total_sum": 82082.16,
+      "i_category": null,
+      "i_class": "flatware",
+      "lochierarchy": 0,
+      "rank_within_parent": 3
+    },
+    {
+      "total_sum": 66727.43,
+      "i_category": null,
+      "i_class": "semi-precious",
+      "lochierarchy": 0,
+      "rank_within_parent": 4
+    },
+    {
+      "total_sum": 52847.72,
+      "i_category": null,
+      "i_class": "pants",
+      "lochierarchy": 0,
+      "rank_within_parent": 5
+    },
+    {
+      "total_sum": 48846.16,
+      "i_category": null,
+      "i_class": "dresses",
+      "lochierarchy": 0,
+      "rank_within_parent": 6
+    },
+    {
+      "total_sum": 44191.16,
+      "i_category": null,
+      "i_class": "baseball",
+      "lochierarchy": 0,
+      "rank_within_parent": 7
+    },
+    {
+      "total_sum": 39351.35,
+      "i_category": null,
+      "i_class": "swimwear",
+      "lochierarchy": 0,
+      "rank_within_parent": 8
+    },
+    {
+      "total_sum": 32078.23,
+      "i_category": null,
+      "i_class": "archery",
+      "lochierarchy": 0,
+      "rank_within_parent": 9
+    },
+    {
+      "total_sum": 29023.37,
+      "i_category": null,
+      "i_class": "glassware",
+      "lochierarchy": 0,
+      "rank_within_parent": 10
+    },
+    {
+      "total_sum": 26111.12,
+      "i_category": null,
+      "i_class": "tennis",
+      "lochierarchy": 0,
+      "rank_within_parent": 11
+    },
+    {
+      "total_sum": 20946.62,
+      "i_category": null,
+      "i_class": "outdoor",
+      "lochierarchy": 0,
+      "rank_within_parent": 12
+    },
+    {
+      "total_sum": 16115.39,
+      "i_category": null,
+      "i_class": "sports-apparel",
+      "lochierarchy": 0,
+      "rank_within_parent": 13
+    },
+    {
+      "total_sum": 12738.48,
+      "i_category": null,
+      "i_class": "scanners",
+      "lochierarchy": 0,
+      "rank_within_parent": 14
+    },
+    {
+      "total_sum": 2882037.01,
+      "i_category": "Books",
+      "i_class": "history",
+      "lochierarchy": 0,
+      "rank_within_parent": 1
+    },
+    {
+      "total_sum": 2650020.94,
+      "i_category": "Books",
+      "i_class": "computers",
+      "lochierarchy": 0,
+      "rank_within_parent": 2
+    },
+    {
+      "total_sum": 2626417.31,
+      "i_category": "Books",
+      "i_class": "romance",
+      "lochierarchy": 0,
+      "rank_within_parent": 3
+    },
+    {
+      "total_sum": 2399774.8,
+      "i_category": "Books",
+      "i_class": "fiction",
+      "lochierarchy": 0,
+      "rank_within_parent": 4
+    },
+    {
+      "total_sum": 2250839.91,
+      "i_category": "Books",
+      "i_class": "home repair",
+      "lochierarchy": 0,
+      "rank_within_parent": 5
+    },
+    {
+      "total_sum": 2157081.25,
+      "i_category": "Books",
+      "i_class": "self-help",
+      "lochierarchy": 0,
+      "rank_within_parent": 6
+    },
+    {
+      "total_sum": 2151972.85,
+      "i_category": "Books",
+      "i_class": "reference",
+      "lochierarchy": 0,
+      "rank_within_parent": 7
+    },
+    {
+      "total_sum": 2006410.77,
+      "i_category": "Books",
+      "i_class": "business",
+      "lochierarchy": 0,
+      "rank_within_parent": 8
+    },
+    {
+      "total_sum": 1947171.66,
+      "i_category": "Books",
+      "i_class": "travel",
+      "lochierarchy": 0,
+      "rank_within_parent": 9
+    },
+    {
+      "total_sum": 1910620.55,
+      "i_category": "Books",
+      "i_class": "parenting",
+      "lochierarchy": 0,
+      "rank_within_parent": 10
+    },
+    {
+      "total_sum": 1808478.89,
+      "i_category": "Books",
+      "i_class": "sports",
+      "lochierarchy": 0,
+      "rank_within_parent": 11
+    },
+    {
+      "total_sum": 1769089.18,
+      "i_category": "Books",
+      "i_class": "mystery",
+      "lochierarchy": 0,
+      "rank_within_parent": 12
+    },
+    {
+      "total_sum": 1760805.2,
+      "i_category": "Books",
+      "i_class": "science",
+      "lochierarchy": 0,
+      "rank_within_parent": 13
+    },
+    {
+      "total_sum": 1743716.57,
+      "i_category": "Books",
+      "i_class": "cooking",
+      "lochierarchy": 0,
+      "rank_within_parent": 14
+    },
+    {
+      "total_sum": 1700923.52,
+      "i_category": "Books",
+      "i_class": "entertainments",
+      "lochierarchy": 0,
+      "rank_within_parent": 15
+    },
+    {
+      "total_sum": 1449184.69,
+      "i_category": "Books",
+      "i_class": "arts",
+      "lochierarchy": 0,
+      "rank_within_parent": 16
+    },
+    {
+      "total_sum": 70299.58,
+      "i_category": "Books",
+      "i_class": null,
+      "lochierarchy": 0,
+      "rank_within_parent": 17
+    },
+    {
+      "total_sum": 8425408.07,
+      "i_category": "Children",
+      "i_class": "toddlers",
+      "lochierarchy": 0,
+      "rank_within_parent": 1
+    },
+    {
+      "total_sum": 8331035.84,
+      "i_category": "Children",
+      "i_class": "infants",
+      "lochierarchy": 0,
+      "rank_within_parent": 2
+    },
+    {
+      "total_sum": 7959551.19,
+      "i_category": "Children",
+      "i_class": "school-uniforms",
+      "lochierarchy": 0,
+      "rank_within_parent": 3
+    },
+    {
+      "total_sum": 7610257.06,
+      "i_category": "Children",
+      "i_class": "newborn",
+      "lochierarchy": 0,
+      "rank_within_parent": 4
+    },
+    {
+      "total_sum": 44953.56,
+      "i_category": "Children",
+      "i_class": null,
+      "lochierarchy": 0,
+      "rank_within_parent": 5
+    },
+    {
+      "total_sum": 2660757.44,
+      "i_category": "Electronics",
+      "i_class": "dvd/vcr players",
+      "lochierarchy": 0,
+      "rank_within_parent": 1
+    },
+    {
+      "total_sum": 2333359.95,
+      "i_category": "Electronics",
+      "i_class": "karoke",
+      "lochierarchy": 0,
+      "rank_within_parent": 2
+    },
+    {
+      "total_sum": 2328764.07,
+      "i_category": "Electronics",
+      "i_class": "televisions",
+      "lochierarchy": 0,
+      "rank_within_parent": 3
+    },
+    {
+      "total_sum": 2196899.2,
+      "i_category": "Electronics",
+      "i_class": "monitors",
+      "lochierarchy": 0,
+      "rank_within_parent": 4
+    },
+    {
+      "total_sum": 2189555.47,
+      "i_category": "Electronics",
+      "i_class": "scanners",
+      "lochierarchy": 0,
+      "rank_within_parent": 5
+    },
+    {
+      "total_sum": 2157738.08,
+      "i_category": "Electronics",
+      "i_class": "memory",
+      "lochierarchy": 0,
+      "rank_within_parent": 6
+    },
+    {
+      "total_sum": 2156218.45,
+      "i_category": "Electronics",
+      "i_class": "stereo",
+      "lochierarchy": 0,
+      "rank_within_parent": 7
+    },
+    {
+      "total_sum": 1972036.19,
+      "i_category": "Electronics",
+      "i_class": "disk drives",
+      "lochierarchy": 0,
+      "rank_within_parent": 8
+    },
+    {
+      "total_sum": 1948361.9,
+      "i_category": "Electronics",
+      "i_class": "camcorders",
+      "lochierarchy": 0,
+      "rank_within_parent": 9
+    },
+    {
+      "total_sum": 1797788.72,
+      "i_category": "Electronics",
+      "i_class": "cameras",
+      "lochierarchy": 0,
+      "rank_within_parent": 10
+    },
+    {
+      "total_sum": 1794191.17,
+      "i_category": "Electronics",
+      "i_class": "personal",
+      "lochierarchy": 0,
+      "rank_within_parent": 11
+    },
+    {
+      "total_sum": 1760807.72,
+      "i_category": "Electronics",
+      "i_class": "portable",
+      "lochierarchy": 0,
+      "rank_within_parent": 12
+    },
+    {
+      "total_sum": 1750484.46,
+      "i_category": "Electronics",
+      "i_class": "wireless",
+      "lochierarchy": 0,
+      "rank_within_parent": 13
+    },
+    {
+      "total_sum": 1701721.74,
+      "i_category": "Electronics",
+      "i_class": "automotive",
+      "lochierarchy": 0,
+      "rank_within_parent": 14
+    },
+    {
+      "total_sum": 1684629.72,
+      "i_category": "Electronics",
+      "i_class": "musical",
+      "lochierarchy": 0,
+      "rank_within_parent": 15
+    },
+    {
+      "total_sum": 1548755.14,
+      "i_category": "Electronics",
+      "i_class": "audio",
+      "lochierarchy": 0,
+      "rank_within_parent": 16
+    },
+    {
+      "total_sum": 2345219.9,
+      "i_category": "Home",
+      "i_class": "glassware",
+      "lochierarchy": 0,
+      "rank_within_parent": 1
+    },
+    {
+      "total_sum": 2311944.06,
+      "i_category": "Home",
+      "i_class": "curtains/drapes",
+      "lochierarchy": 0,
+      "rank_within_parent": 2
+    },
+    {
+      "total_sum": 2266039.93,
+      "i_category": "Home",
+      "i_class": "bedding",
+      "lochierarchy": 0,
+      "rank_within_parent": 3
+    },
+    {
+      "total_sum": 2177711.54,
+      "i_category": "Home",
+      "i_class": "paint",
+      "lochierarchy": 0,
+      "rank_within_parent": 4
+    },
+    {
+      "total_sum": 2092211.52,
+      "i_category": "Home",
+      "i_class": "lighting",
+      "lochierarchy": 0,
+      "rank_within_parent": 5
+    },
+    {
+      "total_sum": 2068099.19,
+      "i_category": "Home",
+      "i_class": "furniture",
+      "lochierarchy": 0,
+      "rank_within_parent": 6
+    },
+    {
+      "total_sum": 2016351.96,
+      "i_category": "Home",
+      "i_class": "flatware",
+      "lochierarchy": 0,
+      "rank_within_parent": 7
+    },
+    {
+      "total_sum": 1965501.5,
+      "i_category": "Home",
+      "i_class": "bathroom",
+      "lochierarchy": 0,
+      "rank_within_parent": 8
+    },
+    {
+      "total_sum": 1960285.18,
+      "i_category": "Home",
+      "i_class": "tables",
+      "lochierarchy": 0,
+      "rank_within_parent": 9
+    },
+    {
+      "total_sum": 1921050.52,
+      "i_category": "Home",
+      "i_class": "decor",
+      "lochierarchy": 0,
+      "rank_within_parent": 10
+    },
+    {
+      "total_sum": 1877323.08,
+      "i_category": "Home",
+      "i_class": "blinds/shades",
+      "lochierarchy": 0,
+      "rank_within_parent": 11
+    },
+    {
+      "total_sum": 1744650.34,
+      "i_category": "Home",
+      "i_class": "mattresses",
+      "lochierarchy": 0,
+      "rank_within_parent": 12
+    },
+    {
+      "total_sum": 1667750.91,
+      "i_category": "Home",
+      "i_class": "kids",
+      "lochierarchy": 0,
+      "rank_within_parent": 13
+    },
+    {
+      "total_sum": 1602793.04,
+      "i_category": "Home",
+      "i_class": "accent",
+      "lochierarchy": 0,
+      "rank_within_parent": 14
+    },
+    {
+      "total_sum": 1525365.53,
+      "i_category": "Home",
+      "i_class": "rugs",
+      "lochierarchy": 0,
+      "rank_within_parent": 15
+    },
+    {
+      "total_sum": 1435719.17,
+      "i_category": "Home",
+      "i_class": "wallpaper",
+      "lochierarchy": 0,
+      "rank_within_parent": 16
+    },
+    {
+      "total_sum": 34638.05,
+      "i_category": "Home",
+      "i_class": null,
+      "lochierarchy": 0,
+      "rank_within_parent": 17
+    },
+    {
+      "total_sum": 2911913.52,
+      "i_category": "Jewelry",
+      "i_class": "jewelry boxes",
+      "lochierarchy": 0,
+      "rank_within_parent": 1
+    },
+    {
+      "total_sum": 2256136.26,
+      "i_category": "Jewelry",
+      "i_class": "rings",
+      "lochierarchy": 0,
+      "rank_within_parent": 2
+    },
+    {
+      "total_sum": 2245181.13,
+      "i_category": "Jewelry",
+      "i_class": "custom",
+      "lochierarchy": 0,
+      "rank_within_parent": 3
+    },
+    {
+      "total_sum": 2224357.46,
+      "i_category": "Jewelry",
+      "i_class": "pendants",
+      "lochierarchy": 0,
+      "rank_within_parent": 4
+    },
+    {
+      "total_sum": 2184616.75,
+      "i_category": "Jewelry",
+      "i_class": "gold",
+      "lochierarchy": 0,
+      "rank_within_parent": 5
+    },
+    {
+      "total_sum": 2084029.71,
+      "i_category": "Jewelry",
+      "i_class": "estate",
+      "lochierarchy": 0,
+      "rank_within_parent": 6
+    },
+    {
+      "total_sum": 1987888.53,
+      "i_category": "Jewelry",
+      "i_class": "mens watch",
+      "lochierarchy": 0,
+      "rank_within_parent": 7
+    },
+    {
+      "total_sum": 1941005.12,
+      "i_category": "Jewelry",
+      "i_class": "womens watch",
+      "lochierarchy": 0,
+      "rank_within_parent": 8
+    },
+    {
+      "total_sum": 1909163.79,
+      "i_category": "Jewelry",
+      "i_class": "costume",
+      "lochierarchy": 0,
+      "rank_within_parent": 9
+    },
+    {
+      "total_sum": 1904656.09,
+      "i_category": "Jewelry",
+      "i_class": "birdal",
+      "lochierarchy": 0,
+      "rank_within_parent": 10
+    },
+    {
+      "total_sum": 1802883.93,
+      "i_category": "Jewelry",
+      "i_class": "loose stones",
+      "lochierarchy": 0,
+      "rank_within_parent": 11
+    },
+    {
+      "total_sum": 1775617.54,
+      "i_category": "Jewelry",
+      "i_class": "diamonds",
+      "lochierarchy": 0,
+      "rank_within_parent": 12
+    },
+    {
+      "total_sum": 1772293.77,
+      "i_category": "Jewelry",
+      "i_class": "earings",
+      "lochierarchy": 0,
+      "rank_within_parent": 13
+    },
+    {
+      "total_sum": 1638606.02,
+      "i_category": "Jewelry",
+      "i_class": "bracelets",
+      "lochierarchy": 0,
+      "rank_within_parent": 14
+    },
+    {
+      "total_sum": 1560951.42,
+      "i_category": "Jewelry",
+      "i_class": "consignment",
+      "lochierarchy": 0,
+      "rank_within_parent": 15
+    },
+    {
+      "total_sum": 1478488.94,
+      "i_category": "Jewelry",
+      "i_class": "semi-precious",
+      "lochierarchy": 0,
+      "rank_within_parent": 16
+    },
+    {
+      "total_sum": 87765.21,
+      "i_category": "Jewelry",
+      "i_class": null,
+      "lochierarchy": 0,
+      "rank_within_parent": 17
+    },
+    {
+      "total_sum": 8876049.06,
+      "i_category": "Men",
+      "i_class": "shirts",
+      "lochierarchy": 0,
+      "rank_within_parent": 1
+    },
+    {
+      "total_sum": 8617051.07,
+      "i_category": "Men",
+      "i_class": "sports-apparel",
+      "lochierarchy": 0,
+      "rank_within_parent": 2
+    }
+  ]
+}

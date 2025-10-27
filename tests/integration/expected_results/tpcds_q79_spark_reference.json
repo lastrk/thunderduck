@@ -1,0 +1,814 @@
+{
+  "query_num": 79,
+  "row_count": 100,
+  "columns": [
+    "c_last_name",
+    "c_first_name",
+    "substr(s_city, 1, 30)",
+    "ss_ticket_number",
+    "amt",
+    "profit"
+  ],
+  "rows": [
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 213610,
+      "amt": 3161.48,
+      "profit": -15790.23
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 167006,
+      "amt": 82.87,
+      "profit": -14576.82
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 191089,
+      "amt": 6766.29,
+      "profit": -13263.36
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 158139,
+      "amt": 4396.37,
+      "profit": -13020.45
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 7153,
+      "amt": 219.72,
+      "profit": -11749.39
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 125748,
+      "amt": 6517.12,
+      "profit": -11035.56
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 30114,
+      "amt": 1531.51,
+      "profit": -10152.5
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 66717,
+      "amt": 2535.13,
+      "profit": -9902.89
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 66813,
+      "amt": 272.03,
+      "profit": -8104.71
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 129036,
+      "amt": 600.01,
+      "profit": -6430.56
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 146799,
+      "amt": 1068.86,
+      "profit": -6405.03
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 228288,
+      "amt": 2615.94,
+      "profit": -5642.11
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 34621,
+      "amt": 704.6,
+      "profit": -5586.87
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 142379,
+      "amt": 0.0,
+      "profit": -4215.78
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 198542,
+      "amt": 1133.62,
+      "profit": -3800.52
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 163421,
+      "amt": 1374.1,
+      "profit": -3196.51
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 230904,
+      "amt": 0.0,
+      "profit": -1123.68
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Fairview",
+      "ss_ticket_number": 30114,
+      "amt": 0.0,
+      "profit": 2558.68
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 7696,
+      "amt": 0.0,
+      "profit": null
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 16363,
+      "amt": 0.0,
+      "profit": null
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 154925,
+      "amt": null,
+      "profit": null
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 117187,
+      "amt": 742.86,
+      "profit": -23401.99
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 56882,
+      "amt": 1160.0,
+      "profit": -23023.64
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 123717,
+      "amt": 564.68,
+      "profit": -20689.34
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 97953,
+      "amt": 1698.24,
+      "profit": -19708.36
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 218338,
+      "amt": 3475.13,
+      "profit": -18444.19
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 147740,
+      "amt": 500.31,
+      "profit": -17925.19
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 27979,
+      "amt": 331.84,
+      "profit": -17632.32
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 188806,
+      "amt": 32.83,
+      "profit": -17621.14
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 13073,
+      "amt": 3994.35,
+      "profit": -16930.15
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 157905,
+      "amt": 677.65,
+      "profit": -16379.19
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 22375,
+      "amt": 6085.26,
+      "profit": -16242.46
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 115373,
+      "amt": 419.52,
+      "profit": -15655.52
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 109831,
+      "amt": 4260.99,
+      "profit": -15635.94
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 118548,
+      "amt": 2366.6,
+      "profit": -15070.44
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 153601,
+      "amt": 317.11,
+      "profit": -14878.56
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 13424,
+      "amt": 2738.8,
+      "profit": -14444.89
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 59324,
+      "amt": 274.29,
+      "profit": -14226.91
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 2597,
+      "amt": 8245.52,
+      "profit": -14042.53
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 81127,
+      "amt": 1664.02,
+      "profit": -13988.83
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 102114,
+      "amt": 617.65,
+      "profit": -13888.54
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 152807,
+      "amt": 5397.19,
+      "profit": -13857.5
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 44330,
+      "amt": 920.61,
+      "profit": -13781.51
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 22249,
+      "amt": 6322.6,
+      "profit": -13598.81
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 216619,
+      "amt": 13337.96,
+      "profit": -13290.5
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 2018,
+      "amt": 1840.49,
+      "profit": -13243.3
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 217339,
+      "amt": 0.0,
+      "profit": -13182.41
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 177932,
+      "amt": 443.33,
+      "profit": -12481.29
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 72972,
+      "amt": 1672.32,
+      "profit": -12477.23
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 32870,
+      "amt": 6051.93,
+      "profit": -12466.81
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 88663,
+      "amt": 5035.89,
+      "profit": -11521.85
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 145180,
+      "amt": 5228.92,
+      "profit": -11472.84
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 144321,
+      "amt": 825.38,
+      "profit": -10916.07
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 178696,
+      "amt": 1001.5,
+      "profit": -10780.5
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 109728,
+      "amt": 8846.83,
+      "profit": -10736.19
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 24453,
+      "amt": 1620.4,
+      "profit": -10488.94
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 69241,
+      "amt": 609.04,
+      "profit": -9830.98
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 228411,
+      "amt": 165.94,
+      "profit": -9617.15
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 88444,
+      "amt": 5511.84,
+      "profit": -9553.76
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 31893,
+      "amt": 1350.64,
+      "profit": -9525.79
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 84155,
+      "amt": 1956.89,
+      "profit": -9444.35
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 229149,
+      "amt": 1165.26,
+      "profit": -9288.28
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 7696,
+      "amt": 2093.28,
+      "profit": -9202.28
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 103268,
+      "amt": 0.0,
+      "profit": -9160.35
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 153218,
+      "amt": 2845.69,
+      "profit": -9144.62
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 210261,
+      "amt": 5042.14,
+      "profit": -9085.67
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 77368,
+      "amt": 2359.76,
+      "profit": -9059.58
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 22110,
+      "amt": 904.17,
+      "profit": -8859.11
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 164719,
+      "amt": 83.4,
+      "profit": -8350.7
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 16363,
+      "amt": 3715.96,
+      "profit": -8302.37
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 113867,
+      "amt": 229.03,
+      "profit": -8203.35
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 8272,
+      "amt": 209.89,
+      "profit": -8089.08
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 83601,
+      "amt": 3905.96,
+      "profit": -8018.59
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 111877,
+      "amt": 70.72,
+      "profit": -8012.1
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 63058,
+      "amt": 3059.47,
+      "profit": -7905.21
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 195477,
+      "amt": 5203.55,
+      "profit": -7844.4
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 51929,
+      "amt": 2270.7,
+      "profit": -7799.68
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 180616,
+      "amt": 1048.13,
+      "profit": -7581.1
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 23868,
+      "amt": 997.38,
+      "profit": -7242.21
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 97140,
+      "amt": 104.4,
+      "profit": -7167.5
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 76802,
+      "amt": 4425.76,
+      "profit": -7127.41
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 25768,
+      "amt": 963.54,
+      "profit": -7000.64
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 214448,
+      "amt": 975.84,
+      "profit": -6801.3
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 207733,
+      "amt": 1761.03,
+      "profit": -6730.55
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 70150,
+      "amt": 0.0,
+      "profit": -6607.73
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 152765,
+      "amt": 648.3,
+      "profit": -6530.17
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 10660,
+      "amt": 1632.34,
+      "profit": -6465.33
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 230663,
+      "amt": 3214.41,
+      "profit": -6281.51
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 6159,
+      "amt": 270.59,
+      "profit": -6210.92
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 37443,
+      "amt": 3150.79,
+      "profit": -5895.36
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 185866,
+      "amt": 2335.79,
+      "profit": -5883.82
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 215748,
+      "amt": 100.48,
+      "profit": -5844.14
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 159742,
+      "amt": 39.59,
+      "profit": -5732.03
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 95467,
+      "amt": 239.13,
+      "profit": -5592.89
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 10538,
+      "amt": 2257.78,
+      "profit": -5460.12
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 73742,
+      "amt": 9840.53,
+      "profit": -5458.61
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 362,
+      "amt": 9.01,
+      "profit": -5118.42
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 230745,
+      "amt": 170.5,
+      "profit": -5114.91
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 64117,
+      "amt": 761.54,
+      "profit": -5061.23
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "substr(s_city, 1, 30)": "Midway",
+      "ss_ticket_number": 229921,
+      "amt": 2708.42,
+      "profit": -4992.39
+    }
+  ]
+}

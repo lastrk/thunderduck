@@ -1,0 +1,74 @@
+{
+  "query_num": 84,
+  "row_count": 16,
+  "columns": [
+    "customer_id",
+    "customername"
+  ],
+  "rows": [
+    {
+      "customer_id": "AAAAAAAAAAPDAAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAAAAPDAAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAACBNCBAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAADMMCBAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAAEDFBAAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAAEEGCBAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAAGLHFBAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAAIANKAAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAAIAODBAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAAJFJGBAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAALCLABAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAAMGLBAAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAAMKIFBAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAAMPPAAAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAAOLANAAAA",
+      "customername": null
+    },
+    {
+      "customer_id": "AAAAAAAAPKABAAAA",
+      "customername": null
+    }
+  ]
+}

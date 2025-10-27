@@ -1,0 +1,16 @@
+{
+  "query_num": 97,
+  "row_count": 1,
+  "columns": [
+    "store_only",
+    "catalog_only",
+    "store_and_catalog"
+  ],
+  "rows": [
+    {
+      "store_only": 540709,
+      "catalog_only": 286686,
+      "store_and_catalog": 171
+    }
+  ]
+}

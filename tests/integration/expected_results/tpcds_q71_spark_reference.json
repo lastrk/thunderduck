@@ -1,0 +1,7230 @@
+{
+  "query_num": 71,
+  "row_count": 1031,
+  "columns": [
+    "brand_id",
+    "brand",
+    "t_hour",
+    "t_minute",
+    "ext_price"
+  ],
+  "rows": [
+    {
+      "brand_id": 6008005,
+      "brand": "namelesscorp #5",
+      "t_hour": 17,
+      "t_minute": 47,
+      "ext_price": 20597.76
+    },
+    {
+      "brand_id": 7004009,
+      "brand": "edu packbrand #9",
+      "t_hour": 19,
+      "t_minute": 36,
+      "ext_price": 18357.0
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 18,
+      "t_minute": 35,
+      "ext_price": 17042.54
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 19,
+      "t_minute": 54,
+      "ext_price": 16727.7
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 19,
+      "t_minute": 14,
+      "ext_price": 15247.2
+    },
+    {
+      "brand_id": 6003008,
+      "brand": "exporticorp #8",
+      "t_hour": 6,
+      "t_minute": 32,
+      "ext_price": 14409.42
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 18,
+      "t_minute": 33,
+      "ext_price": 14147.72
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 9,
+      "t_minute": 55,
+      "ext_price": 14115.75
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 7,
+      "t_minute": 23,
+      "ext_price": 13907.4
+    },
+    {
+      "brand_id": 2004001,
+      "brand": "edu packimporto #1",
+      "t_hour": 19,
+      "t_minute": 33,
+      "ext_price": 13165.02
+    },
+    {
+      "brand_id": 9014011,
+      "brand": "edu packunivamalg #11",
+      "t_hour": 8,
+      "t_minute": 40,
+      "ext_price": 12374.56
+    },
+    {
+      "brand_id": 6005001,
+      "brand": "scholarcorp #1",
+      "t_hour": 6,
+      "t_minute": 58,
+      "ext_price": 12361.32
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 8,
+      "t_minute": 1,
+      "ext_price": 11990.79
+    },
+    {
+      "brand_id": 6011005,
+      "brand": "amalgbrand #5",
+      "t_hour": 18,
+      "t_minute": 33,
+      "ext_price": 11836.05
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 19,
+      "t_minute": 53,
+      "ext_price": 11760.75
+    },
+    {
+      "brand_id": 8005005,
+      "brand": "scholarnameless #5",
+      "t_hour": 9,
+      "t_minute": 15,
+      "ext_price": 11725.0
+    },
+    {
+      "brand_id": 6011008,
+      "brand": "amalgbrand #8",
+      "t_hour": 9,
+      "t_minute": 33,
+      "ext_price": 11527.2
+    },
+    {
+      "brand_id": 6006007,
+      "brand": "corpcorp #7",
+      "t_hour": 18,
+      "t_minute": 53,
+      "ext_price": 11505.6
+    },
+    {
+      "brand_id": 4001002,
+      "brand": "amalgedu pack #2",
+      "t_hour": 6,
+      "t_minute": 3,
+      "ext_price": 11067.42
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 9,
+      "t_minute": 36,
+      "ext_price": 10997.19
+    },
+    {
+      "brand_id": 10003016,
+      "brand": "exportiunivamalg #16",
+      "t_hour": 18,
+      "t_minute": 20,
+      "ext_price": 10788.96
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 19,
+      "t_minute": 43,
+      "ext_price": 10449.0
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 19,
+      "t_minute": 13,
+      "ext_price": 10067.06
+    },
+    {
+      "brand_id": 10012004,
+      "brand": "importoamalgamalg #4",
+      "t_hour": 8,
+      "t_minute": 8,
+      "ext_price": 10000.26
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 9,
+      "t_minute": 28,
+      "ext_price": 9792.51
+    },
+    {
+      "brand_id": 9013009,
+      "brand": "exportiunivamalg #9",
+      "t_hour": 17,
+      "t_minute": 42,
+      "ext_price": 9773.44
+    },
+    {
+      "brand_id": 7010003,
+      "brand": "univnameless #3",
+      "t_hour": 19,
+      "t_minute": 49,
+      "ext_price": 9773.09
+    },
+    {
+      "brand_id": 8005005,
+      "brand": "scholarnameless #5",
+      "t_hour": 17,
+      "t_minute": 31,
+      "ext_price": 9577.62
+    },
+    {
+      "brand_id": 4004002,
+      "brand": "edu packedu pack #2",
+      "t_hour": 18,
+      "t_minute": 18,
+      "ext_price": 9516.0
+    },
+    {
+      "brand_id": 2003001,
+      "brand": "exportiimporto #1",
+      "t_hour": 9,
+      "t_minute": 59,
+      "ext_price": 9347.58
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 9,
+      "t_minute": 31,
+      "ext_price": 9198.51
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 9,
+      "t_minute": 12,
+      "ext_price": 9073.74
+    },
+    {
+      "brand_id": 7016001,
+      "brand": "corpnameless #1",
+      "t_hour": 19,
+      "t_minute": 50,
+      "ext_price": 9026.17
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 19,
+      "t_minute": 19,
+      "ext_price": 8993.7
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 17,
+      "t_minute": 12,
+      "ext_price": 8910.82
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 8,
+      "t_minute": 50,
+      "ext_price": 8457.67
+    },
+    {
+      "brand_id": 2004001,
+      "brand": "edu packimporto #1",
+      "t_hour": 18,
+      "t_minute": 4,
+      "ext_price": 8448.64
+    },
+    {
+      "brand_id": 1004001,
+      "brand": "edu packamalg #1",
+      "t_hour": 19,
+      "t_minute": 26,
+      "ext_price": 8439.57
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 9,
+      "t_minute": 46,
+      "ext_price": 8287.8
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 9,
+      "t_minute": 18,
+      "ext_price": 8166.24
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 17,
+      "t_minute": 55,
+      "ext_price": 8076.18
+    },
+    {
+      "brand_id": 5004002,
+      "brand": "edu packscholar #2",
+      "t_hour": 18,
+      "t_minute": 35,
+      "ext_price": 8067.16
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 18,
+      "t_minute": 18,
+      "ext_price": 8035.86
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 18,
+      "t_minute": 30,
+      "ext_price": 8019.9
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 9,
+      "t_minute": 3,
+      "ext_price": 7897.08
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 17,
+      "t_minute": 58,
+      "ext_price": 7855.2
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 17,
+      "t_minute": 28,
+      "ext_price": 7852.92
+    },
+    {
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "t_hour": 17,
+      "t_minute": 33,
+      "ext_price": 7825.62
+    },
+    {
+      "brand_id": 10012011,
+      "brand": "importoamalgamalg #11",
+      "t_hour": 17,
+      "t_minute": 9,
+      "ext_price": 7805.31
+    },
+    {
+      "brand_id": 7016007,
+      "brand": "corpnameless #7",
+      "t_hour": 18,
+      "t_minute": 45,
+      "ext_price": 7781.95
+    },
+    {
+      "brand_id": 6012008,
+      "brand": "importobrand #8",
+      "t_hour": 9,
+      "t_minute": 10,
+      "ext_price": 7753.2
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 17,
+      "t_minute": 21,
+      "ext_price": 7518.54
+    },
+    {
+      "brand_id": 8005005,
+      "brand": "scholarnameless #5",
+      "t_hour": 19,
+      "t_minute": 55,
+      "ext_price": 7476.84
+    },
+    {
+      "brand_id": 7012010,
+      "brand": "importonameless #10",
+      "t_hour": 7,
+      "t_minute": 19,
+      "ext_price": 7357.35
+    },
+    {
+      "brand_id": 4004002,
+      "brand": "edu packedu pack #2",
+      "t_hour": 17,
+      "t_minute": 57,
+      "ext_price": 7334.49
+    },
+    {
+      "brand_id": 8004003,
+      "brand": "edu packnameless #3",
+      "t_hour": 18,
+      "t_minute": 21,
+      "ext_price": 7203.0
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 18,
+      "t_minute": 14,
+      "ext_price": 7193.28
+    },
+    {
+      "brand_id": 9013009,
+      "brand": "exportiunivamalg #9",
+      "t_hour": 18,
+      "t_minute": 51,
+      "ext_price": 7173.84
+    },
+    {
+      "brand_id": 8011009,
+      "brand": "amalgmaxi #9",
+      "t_hour": 19,
+      "t_minute": 26,
+      "ext_price": 7038.88
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 19,
+      "t_minute": 39,
+      "ext_price": 6973.76
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 19,
+      "t_minute": 25,
+      "ext_price": 6941.08
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 19,
+      "t_minute": 47,
+      "ext_price": 6929.6
+    },
+    {
+      "brand_id": 9008002,
+      "brand": "namelessmaxi #2",
+      "t_hour": 17,
+      "t_minute": 41,
+      "ext_price": 6875.1
+    },
+    {
+      "brand_id": 6011001,
+      "brand": "amalgbrand #1",
+      "t_hour": 19,
+      "t_minute": 21,
+      "ext_price": 6827.55
+    },
+    {
+      "brand_id": 9012008,
+      "brand": "importounivamalg #8",
+      "t_hour": 18,
+      "t_minute": 56,
+      "ext_price": 6778.0
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 19,
+      "t_minute": 59,
+      "ext_price": 6746.04
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 8,
+      "t_minute": 13,
+      "ext_price": 6732.48
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 9,
+      "t_minute": 36,
+      "ext_price": 6704.04
+    },
+    {
+      "brand_id": 6010005,
+      "brand": "univbrand #5",
+      "t_hour": 7,
+      "t_minute": 17,
+      "ext_price": 6661.98
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 19,
+      "t_minute": 53,
+      "ext_price": 6654.36
+    },
+    {
+      "brand_id": 2004001,
+      "brand": "edu packimporto #1",
+      "t_hour": 19,
+      "t_minute": 4,
+      "ext_price": 6592.56
+    },
+    {
+      "brand_id": 10004001,
+      "brand": "edu packunivamalg #1",
+      "t_hour": 18,
+      "t_minute": 49,
+      "ext_price": 6580.98
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 17,
+      "t_minute": 19,
+      "ext_price": 6548.1
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 9,
+      "t_minute": 36,
+      "ext_price": 6511.23
+    },
+    {
+      "brand_id": 9012003,
+      "brand": "importounivamalg #3",
+      "t_hour": 17,
+      "t_minute": 2,
+      "ext_price": 6495.38
+    },
+    {
+      "brand_id": 10002012,
+      "brand": "importounivamalg #12",
+      "t_hour": 17,
+      "t_minute": 1,
+      "ext_price": 6477.21
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 18,
+      "t_minute": 53,
+      "ext_price": 6419.03
+    },
+    {
+      "brand_id": 10010013,
+      "brand": "univamalgamalg #13",
+      "t_hour": 18,
+      "t_minute": 32,
+      "ext_price": 6399.18
+    },
+    {
+      "brand_id": 6005001,
+      "brand": "scholarcorp #1",
+      "t_hour": 18,
+      "t_minute": 43,
+      "ext_price": 6387.36
+    },
+    {
+      "brand_id": 6008007,
+      "brand": "namelesscorp #7",
+      "t_hour": 17,
+      "t_minute": 2,
+      "ext_price": 6383.5
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 7,
+      "t_minute": 31,
+      "ext_price": 6380.4
+    },
+    {
+      "brand_id": 7010003,
+      "brand": "univnameless #3",
+      "t_hour": 18,
+      "t_minute": 35,
+      "ext_price": 6350.4
+    },
+    {
+      "brand_id": 8013009,
+      "brand": "exportimaxi #9",
+      "t_hour": 19,
+      "t_minute": 26,
+      "ext_price": 6289.83
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 17,
+      "t_minute": 18,
+      "ext_price": 6270.02
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 9,
+      "t_minute": 44,
+      "ext_price": 6261.14
+    },
+    {
+      "brand_id": 4001002,
+      "brand": "amalgedu pack #2",
+      "t_hour": 19,
+      "t_minute": 51,
+      "ext_price": 6255.92
+    },
+    {
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "t_hour": 19,
+      "t_minute": 1,
+      "ext_price": 6236.8
+    },
+    {
+      "brand_id": 8003010,
+      "brand": "exportinameless #10",
+      "t_hour": 18,
+      "t_minute": 27,
+      "ext_price": 6199.0
+    },
+    {
+      "brand_id": 6011001,
+      "brand": "amalgbrand #1",
+      "t_hour": 6,
+      "t_minute": 46,
+      "ext_price": 6162.75
+    },
+    {
+      "brand_id": 9014011,
+      "brand": "edu packunivamalg #11",
+      "t_hour": 17,
+      "t_minute": 3,
+      "ext_price": 6116.76
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 7,
+      "t_minute": 41,
+      "ext_price": 6086.96
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 6,
+      "t_minute": 40,
+      "ext_price": 6061.61
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 18,
+      "t_minute": 57,
+      "ext_price": 6056.25
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 18,
+      "t_minute": 29,
+      "ext_price": 6020.82
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 19,
+      "t_minute": 57,
+      "ext_price": 5910.15
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 17,
+      "t_minute": 1,
+      "ext_price": 5893.8
+    },
+    {
+      "brand_id": 7004007,
+      "brand": "edu packbrand #7",
+      "t_hour": 7,
+      "t_minute": 19,
+      "ext_price": 5878.62
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 17,
+      "t_minute": 0,
+      "ext_price": 5859.9
+    },
+    {
+      "brand_id": 10012004,
+      "brand": "importoamalgamalg #4",
+      "t_hour": 17,
+      "t_minute": 24,
+      "ext_price": 5839.68
+    },
+    {
+      "brand_id": 7004007,
+      "brand": "edu packbrand #7",
+      "t_hour": 9,
+      "t_minute": 23,
+      "ext_price": 5820.4
+    },
+    {
+      "brand_id": 7015007,
+      "brand": "scholarnameless #7",
+      "t_hour": 18,
+      "t_minute": 47,
+      "ext_price": 5741.93
+    },
+    {
+      "brand_id": 9014011,
+      "brand": "edu packunivamalg #11",
+      "t_hour": 19,
+      "t_minute": 9,
+      "ext_price": 5723.75
+    },
+    {
+      "brand_id": 6011008,
+      "brand": "amalgbrand #8",
+      "t_hour": 9,
+      "t_minute": 39,
+      "ext_price": 5686.52
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 17,
+      "t_minute": 32,
+      "ext_price": 5682.24
+    },
+    {
+      "brand_id": 8013007,
+      "brand": "exportimaxi #7",
+      "t_hour": 19,
+      "t_minute": 3,
+      "ext_price": 5678.34
+    },
+    {
+      "brand_id": 9012003,
+      "brand": "importounivamalg #3",
+      "t_hour": 8,
+      "t_minute": 59,
+      "ext_price": 5624.38
+    },
+    {
+      "brand_id": 10003016,
+      "brand": "exportiunivamalg #16",
+      "t_hour": 19,
+      "t_minute": 4,
+      "ext_price": 5538.47
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 19,
+      "t_minute": 14,
+      "ext_price": 5535.53
+    },
+    {
+      "brand_id": 7014001,
+      "brand": "edu packnameless #1",
+      "t_hour": 9,
+      "t_minute": 55,
+      "ext_price": 5513.8
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 18,
+      "t_minute": 39,
+      "ext_price": 5504.89
+    },
+    {
+      "brand_id": 6010005,
+      "brand": "univbrand #5",
+      "t_hour": 17,
+      "t_minute": 3,
+      "ext_price": 5482.04
+    },
+    {
+      "brand_id": 6008007,
+      "brand": "namelesscorp #7",
+      "t_hour": 18,
+      "t_minute": 16,
+      "ext_price": 5444.16
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 17,
+      "t_minute": 37,
+      "ext_price": 5432.7
+    },
+    {
+      "brand_id": 6005001,
+      "brand": "scholarcorp #1",
+      "t_hour": 17,
+      "t_minute": 14,
+      "ext_price": 5420.58
+    },
+    {
+      "brand_id": 7012010,
+      "brand": "importonameless #10",
+      "t_hour": 18,
+      "t_minute": 40,
+      "ext_price": 5414.5
+    },
+    {
+      "brand_id": 8005005,
+      "brand": "scholarnameless #5",
+      "t_hour": 17,
+      "t_minute": 19,
+      "ext_price": 5389.23
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 19,
+      "t_minute": 53,
+      "ext_price": 5383.4
+    },
+    {
+      "brand_id": 10012011,
+      "brand": "importoamalgamalg #11",
+      "t_hour": 18,
+      "t_minute": 17,
+      "ext_price": 5379.66
+    },
+    {
+      "brand_id": 10009015,
+      "brand": "maxiunivamalg #15",
+      "t_hour": 9,
+      "t_minute": 58,
+      "ext_price": 5378.52
+    },
+    {
+      "brand_id": 9012005,
+      "brand": "importounivamalg #5",
+      "t_hour": 17,
+      "t_minute": 45,
+      "ext_price": 5367.0
+    },
+    {
+      "brand_id": 9012005,
+      "brand": "importounivamalg #5",
+      "t_hour": 9,
+      "t_minute": 12,
+      "ext_price": 5364.48
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 9,
+      "t_minute": 47,
+      "ext_price": 5354.9
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 9,
+      "t_minute": 31,
+      "ext_price": 5345.34
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 9,
+      "t_minute": 9,
+      "ext_price": 5237.12
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 18,
+      "t_minute": 4,
+      "ext_price": 5200.98
+    },
+    {
+      "brand_id": 6008002,
+      "brand": "namelesscorp #2",
+      "t_hour": 9,
+      "t_minute": 3,
+      "ext_price": 5197.6
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 17,
+      "t_minute": 52,
+      "ext_price": 5192.48
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 19,
+      "t_minute": 10,
+      "ext_price": 5176.08
+    },
+    {
+      "brand_id": 6005001,
+      "brand": "scholarcorp #1",
+      "t_hour": 9,
+      "t_minute": 25,
+      "ext_price": 5173.06
+    },
+    {
+      "brand_id": 6003008,
+      "brand": "exporticorp #8",
+      "t_hour": 17,
+      "t_minute": 56,
+      "ext_price": 5138.32
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 17,
+      "t_minute": 0,
+      "ext_price": 5108.36
+    },
+    {
+      "brand_id": 10012011,
+      "brand": "importoamalgamalg #11",
+      "t_hour": 19,
+      "t_minute": 27,
+      "ext_price": 5106.24
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 19,
+      "t_minute": 6,
+      "ext_price": 5098.47
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 18,
+      "t_minute": 21,
+      "ext_price": 5066.24
+    },
+    {
+      "brand_id": 6008007,
+      "brand": "namelesscorp #7",
+      "t_hour": 17,
+      "t_minute": 20,
+      "ext_price": 5064.56
+    },
+    {
+      "brand_id": 9013009,
+      "brand": "exportiunivamalg #9",
+      "t_hour": 9,
+      "t_minute": 8,
+      "ext_price": 5054.4
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 9,
+      "t_minute": 42,
+      "ext_price": 5050.2
+    },
+    {
+      "brand_id": 7010004,
+      "brand": "univnameless #4",
+      "t_hour": 8,
+      "t_minute": 21,
+      "ext_price": 5014.32
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 18,
+      "t_minute": 40,
+      "ext_price": 5011.3
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 17,
+      "t_minute": 52,
+      "ext_price": 4981.68
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 9,
+      "t_minute": 41,
+      "ext_price": 4957.72
+    },
+    {
+      "brand_id": 6010005,
+      "brand": "univbrand #5",
+      "t_hour": 9,
+      "t_minute": 8,
+      "ext_price": 4882.5
+    },
+    {
+      "brand_id": 7016007,
+      "brand": "corpnameless #7",
+      "t_hour": 19,
+      "t_minute": 53,
+      "ext_price": 4876.5
+    },
+    {
+      "brand_id": 7015007,
+      "brand": "scholarnameless #7",
+      "t_hour": 17,
+      "t_minute": 8,
+      "ext_price": 4766.72
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 17,
+      "t_minute": 6,
+      "ext_price": 4765.68
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 19,
+      "t_minute": 21,
+      "ext_price": 4765.6
+    },
+    {
+      "brand_id": 7016007,
+      "brand": "corpnameless #7",
+      "t_hour": 9,
+      "t_minute": 54,
+      "ext_price": 4747.8
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 8,
+      "t_minute": 52,
+      "ext_price": 4741.18
+    },
+    {
+      "brand_id": 5001002,
+      "brand": "amalgscholar #2",
+      "t_hour": 17,
+      "t_minute": 44,
+      "ext_price": 4711.38
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 8,
+      "t_minute": 24,
+      "ext_price": 4680.9
+    },
+    {
+      "brand_id": 9012005,
+      "brand": "importounivamalg #5",
+      "t_hour": 8,
+      "t_minute": 34,
+      "ext_price": 4612.16
+    },
+    {
+      "brand_id": 7010004,
+      "brand": "univnameless #4",
+      "t_hour": 18,
+      "t_minute": 41,
+      "ext_price": 4595.17
+    },
+    {
+      "brand_id": 9015011,
+      "brand": "scholarunivamalg #11",
+      "t_hour": 19,
+      "t_minute": 54,
+      "ext_price": 4583.0
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 9,
+      "t_minute": 22,
+      "ext_price": 4566.1
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 17,
+      "t_minute": 40,
+      "ext_price": 4553.08
+    },
+    {
+      "brand_id": 2003002,
+      "brand": "exportiimporto #2",
+      "t_hour": 19,
+      "t_minute": 52,
+      "ext_price": 4552.24
+    },
+    {
+      "brand_id": 8013007,
+      "brand": "exportimaxi #7",
+      "t_hour": 18,
+      "t_minute": 32,
+      "ext_price": 4547.9
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 18,
+      "t_minute": 24,
+      "ext_price": 4506.23
+    },
+    {
+      "brand_id": 7008009,
+      "brand": "namelessbrand #9",
+      "t_hour": 19,
+      "t_minute": 39,
+      "ext_price": 4503.74
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 17,
+      "t_minute": 37,
+      "ext_price": 4499.88
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 18,
+      "t_minute": 28,
+      "ext_price": 4470.39
+    },
+    {
+      "brand_id": 7004009,
+      "brand": "edu packbrand #9",
+      "t_hour": 17,
+      "t_minute": 42,
+      "ext_price": 4428.52
+    },
+    {
+      "brand_id": 9016003,
+      "brand": "corpunivamalg #3",
+      "t_hour": 9,
+      "t_minute": 42,
+      "ext_price": 4423.83
+    },
+    {
+      "brand_id": 6008007,
+      "brand": "namelesscorp #7",
+      "t_hour": 18,
+      "t_minute": 47,
+      "ext_price": 4417.88
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 17,
+      "t_minute": 33,
+      "ext_price": 4402.58
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 18,
+      "t_minute": 21,
+      "ext_price": 4382.88
+    },
+    {
+      "brand_id": 10010013,
+      "brand": "univamalgamalg #13",
+      "t_hour": 9,
+      "t_minute": 26,
+      "ext_price": 4381.0
+    },
+    {
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "t_hour": 17,
+      "t_minute": 10,
+      "ext_price": 4359.36
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 17,
+      "t_minute": 28,
+      "ext_price": 4319.08
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 18,
+      "t_minute": 21,
+      "ext_price": 4297.92
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 18,
+      "t_minute": 27,
+      "ext_price": 4289.7
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 17,
+      "t_minute": 4,
+      "ext_price": 4276.34
+    },
+    {
+      "brand_id": 10013013,
+      "brand": "exportiamalgamalg #13",
+      "t_hour": 7,
+      "t_minute": 33,
+      "ext_price": 4258.7
+    },
+    {
+      "brand_id": 6007003,
+      "brand": "brandcorp #3",
+      "t_hour": 17,
+      "t_minute": 49,
+      "ext_price": 4256.64
+    },
+    {
+      "brand_id": 10013013,
+      "brand": "exportiamalgamalg #13",
+      "t_hour": 17,
+      "t_minute": 44,
+      "ext_price": 4255.02
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 17,
+      "t_minute": 38,
+      "ext_price": 4233.84
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 6,
+      "t_minute": 41,
+      "ext_price": 4233.12
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 19,
+      "t_minute": 37,
+      "ext_price": 4232.36
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 7,
+      "t_minute": 34,
+      "ext_price": 4214.58
+    },
+    {
+      "brand_id": 10012017,
+      "brand": "importoamalgamalg #17",
+      "t_hour": 18,
+      "t_minute": 26,
+      "ext_price": 4213.65
+    },
+    {
+      "brand_id": 7012010,
+      "brand": "importonameless #10",
+      "t_hour": 18,
+      "t_minute": 37,
+      "ext_price": 4206.45
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 8,
+      "t_minute": 54,
+      "ext_price": 4193.4
+    },
+    {
+      "brand_id": 10004004,
+      "brand": "edu packunivamalg #4",
+      "t_hour": 19,
+      "t_minute": 59,
+      "ext_price": 4186.56
+    },
+    {
+      "brand_id": 7016007,
+      "brand": "corpnameless #7",
+      "t_hour": 17,
+      "t_minute": 42,
+      "ext_price": 4182.91
+    },
+    {
+      "brand_id": 9008005,
+      "brand": "namelessmaxi #5",
+      "t_hour": 9,
+      "t_minute": 52,
+      "ext_price": 4165.92
+    },
+    {
+      "brand_id": 10012017,
+      "brand": "importoamalgamalg #17",
+      "t_hour": 17,
+      "t_minute": 29,
+      "ext_price": 4165.75
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 9,
+      "t_minute": 51,
+      "ext_price": 4154.54
+    },
+    {
+      "brand_id": 9012003,
+      "brand": "importounivamalg #3",
+      "t_hour": 8,
+      "t_minute": 13,
+      "ext_price": 4154.15
+    },
+    {
+      "brand_id": 6002005,
+      "brand": "importocorp #5",
+      "t_hour": 18,
+      "t_minute": 4,
+      "ext_price": 4147.36
+    },
+    {
+      "brand_id": 10010013,
+      "brand": "univamalgamalg #13",
+      "t_hour": 8,
+      "t_minute": 30,
+      "ext_price": 4135.06
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 17,
+      "t_minute": 58,
+      "ext_price": 4131.72
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 9,
+      "t_minute": 43,
+      "ext_price": 4121.76
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 19,
+      "t_minute": 47,
+      "ext_price": 4101.9
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 18,
+      "t_minute": 46,
+      "ext_price": 4082.58
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 19,
+      "t_minute": 52,
+      "ext_price": 4052.8
+    },
+    {
+      "brand_id": 6006007,
+      "brand": "corpcorp #7",
+      "t_hour": 18,
+      "t_minute": 59,
+      "ext_price": 4046.24
+    },
+    {
+      "brand_id": 10013013,
+      "brand": "exportiamalgamalg #13",
+      "t_hour": 8,
+      "t_minute": 0,
+      "ext_price": 4046.0
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 7,
+      "t_minute": 23,
+      "ext_price": 4013.19
+    },
+    {
+      "brand_id": 6002003,
+      "brand": "importocorp #3",
+      "t_hour": 19,
+      "t_minute": 26,
+      "ext_price": 3982.8
+    },
+    {
+      "brand_id": 7013007,
+      "brand": "exportinameless #7",
+      "t_hour": 19,
+      "t_minute": 42,
+      "ext_price": 3952.5
+    },
+    {
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "t_hour": 17,
+      "t_minute": 18,
+      "ext_price": 3934.71
+    },
+    {
+      "brand_id": 6011008,
+      "brand": "amalgbrand #8",
+      "t_hour": 18,
+      "t_minute": 29,
+      "ext_price": 3895.18
+    },
+    {
+      "brand_id": 9012008,
+      "brand": "importounivamalg #8",
+      "t_hour": 18,
+      "t_minute": 22,
+      "ext_price": 3880.18
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 17,
+      "t_minute": 25,
+      "ext_price": 3870.63
+    },
+    {
+      "brand_id": 7012010,
+      "brand": "importonameless #10",
+      "t_hour": 19,
+      "t_minute": 42,
+      "ext_price": 3870.44
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 19,
+      "t_minute": 50,
+      "ext_price": 3861.6
+    },
+    {
+      "brand_id": 6007003,
+      "brand": "brandcorp #3",
+      "t_hour": 17,
+      "t_minute": 33,
+      "ext_price": 3849.12
+    },
+    {
+      "brand_id": 8004003,
+      "brand": "edu packnameless #3",
+      "t_hour": 18,
+      "t_minute": 52,
+      "ext_price": 3849.08
+    },
+    {
+      "brand_id": 6015006,
+      "brand": "scholarbrand #6",
+      "t_hour": 19,
+      "t_minute": 50,
+      "ext_price": 3839.0
+    },
+    {
+      "brand_id": 6002003,
+      "brand": "importocorp #3",
+      "t_hour": 17,
+      "t_minute": 39,
+      "ext_price": 3776.22
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 19,
+      "t_minute": 40,
+      "ext_price": 3768.82
+    },
+    {
+      "brand_id": 6002005,
+      "brand": "importocorp #5",
+      "t_hour": 8,
+      "t_minute": 27,
+      "ext_price": 3734.78
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 9,
+      "t_minute": 59,
+      "ext_price": 3727.66
+    },
+    {
+      "brand_id": 8014005,
+      "brand": "edu packmaxi #5",
+      "t_hour": 19,
+      "t_minute": 38,
+      "ext_price": 3700.58
+    },
+    {
+      "brand_id": 10009015,
+      "brand": "maxiunivamalg #15",
+      "t_hour": 8,
+      "t_minute": 32,
+      "ext_price": 3697.65
+    },
+    {
+      "brand_id": 2003002,
+      "brand": "exportiimporto #2",
+      "t_hour": 18,
+      "t_minute": 26,
+      "ext_price": 3687.09
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 9,
+      "t_minute": 28,
+      "ext_price": 3668.6
+    },
+    {
+      "brand_id": 6002003,
+      "brand": "importocorp #3",
+      "t_hour": 7,
+      "t_minute": 2,
+      "ext_price": 3658.45
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 17,
+      "t_minute": 18,
+      "ext_price": 3637.47
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 9,
+      "t_minute": 28,
+      "ext_price": 3636.76
+    },
+    {
+      "brand_id": 6007003,
+      "brand": "brandcorp #3",
+      "t_hour": 17,
+      "t_minute": 26,
+      "ext_price": 3600.06
+    },
+    {
+      "brand_id": 6005001,
+      "brand": "scholarcorp #1",
+      "t_hour": 9,
+      "t_minute": 9,
+      "ext_price": 3591.65
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 19,
+      "t_minute": 35,
+      "ext_price": 3579.01
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 9,
+      "t_minute": 29,
+      "ext_price": 3578.4
+    },
+    {
+      "brand_id": 4001002,
+      "brand": "amalgedu pack #2",
+      "t_hour": 7,
+      "t_minute": 45,
+      "ext_price": 3548.44
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 9,
+      "t_minute": 41,
+      "ext_price": 3547.98
+    },
+    {
+      "brand_id": 7001005,
+      "brand": "amalgbrand #5",
+      "t_hour": 17,
+      "t_minute": 4,
+      "ext_price": 3528.98
+    },
+    {
+      "brand_id": 9008002,
+      "brand": "namelessmaxi #2",
+      "t_hour": 17,
+      "t_minute": 4,
+      "ext_price": 3523.77
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 19,
+      "t_minute": 13,
+      "ext_price": 3523.25
+    },
+    {
+      "brand_id": 4001002,
+      "brand": "amalgedu pack #2",
+      "t_hour": 17,
+      "t_minute": 53,
+      "ext_price": 3504.1
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 19,
+      "t_minute": 9,
+      "ext_price": 3490.65
+    },
+    {
+      "brand_id": 6003008,
+      "brand": "exporticorp #8",
+      "t_hour": 18,
+      "t_minute": 47,
+      "ext_price": 3464.15
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 19,
+      "t_minute": 26,
+      "ext_price": 3399.0
+    },
+    {
+      "brand_id": 8014005,
+      "brand": "edu packmaxi #5",
+      "t_hour": 17,
+      "t_minute": 40,
+      "ext_price": 3390.2
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 17,
+      "t_minute": 5,
+      "ext_price": 3389.82
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 19,
+      "t_minute": 38,
+      "ext_price": 3385.15
+    },
+    {
+      "brand_id": 8005005,
+      "brand": "scholarnameless #5",
+      "t_hour": 6,
+      "t_minute": 50,
+      "ext_price": 3351.56
+    },
+    {
+      "brand_id": 6002003,
+      "brand": "importocorp #3",
+      "t_hour": 19,
+      "t_minute": 52,
+      "ext_price": 3330.32
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 17,
+      "t_minute": 13,
+      "ext_price": 3317.88
+    },
+    {
+      "brand_id": 2004001,
+      "brand": "edu packimporto #1",
+      "t_hour": 19,
+      "t_minute": 45,
+      "ext_price": 3313.7
+    },
+    {
+      "brand_id": 8004003,
+      "brand": "edu packnameless #3",
+      "t_hour": 9,
+      "t_minute": 44,
+      "ext_price": 3312.04
+    },
+    {
+      "brand_id": 8005008,
+      "brand": "scholarnameless #8",
+      "t_hour": 8,
+      "t_minute": 19,
+      "ext_price": 3301.12
+    },
+    {
+      "brand_id": 10012004,
+      "brand": "importoamalgamalg #4",
+      "t_hour": 19,
+      "t_minute": 4,
+      "ext_price": 3263.44
+    },
+    {
+      "brand_id": 10015013,
+      "brand": "scholaramalgamalg #13",
+      "t_hour": 9,
+      "t_minute": 34,
+      "ext_price": 3256.54
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 9,
+      "t_minute": 42,
+      "ext_price": 3255.84
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 8,
+      "t_minute": 1,
+      "ext_price": 3251.2
+    },
+    {
+      "brand_id": 8004003,
+      "brand": "edu packnameless #3",
+      "t_hour": 8,
+      "t_minute": 39,
+      "ext_price": 3206.2
+    },
+    {
+      "brand_id": 9014011,
+      "brand": "edu packunivamalg #11",
+      "t_hour": 19,
+      "t_minute": 18,
+      "ext_price": 3183.18
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 6,
+      "t_minute": 45,
+      "ext_price": 3168.4
+    },
+    {
+      "brand_id": 10013015,
+      "brand": "exportiamalgamalg #15",
+      "t_hour": 8,
+      "t_minute": 30,
+      "ext_price": 3158.94
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 18,
+      "t_minute": 34,
+      "ext_price": 3158.71
+    },
+    {
+      "brand_id": 7014001,
+      "brand": "edu packnameless #1",
+      "t_hour": 17,
+      "t_minute": 56,
+      "ext_price": 3141.11
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 17,
+      "t_minute": 45,
+      "ext_price": 3135.48
+    },
+    {
+      "brand_id": 4001002,
+      "brand": "amalgedu pack #2",
+      "t_hour": 17,
+      "t_minute": 14,
+      "ext_price": 3122.25
+    },
+    {
+      "brand_id": 7012003,
+      "brand": "importonameless #3",
+      "t_hour": 18,
+      "t_minute": 18,
+      "ext_price": 3119.52
+    },
+    {
+      "brand_id": 8016004,
+      "brand": "corpmaxi #4",
+      "t_hour": 18,
+      "t_minute": 43,
+      "ext_price": 3116.78
+    },
+    {
+      "brand_id": 6012005,
+      "brand": "importobrand #5",
+      "t_hour": 19,
+      "t_minute": 25,
+      "ext_price": 3085.68
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 19,
+      "t_minute": 42,
+      "ext_price": 3085.11
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 17,
+      "t_minute": 42,
+      "ext_price": 3075.08
+    },
+    {
+      "brand_id": 10012011,
+      "brand": "importoamalgamalg #11",
+      "t_hour": 9,
+      "t_minute": 19,
+      "ext_price": 3064.32
+    },
+    {
+      "brand_id": 6015006,
+      "brand": "scholarbrand #6",
+      "t_hour": 18,
+      "t_minute": 23,
+      "ext_price": 3058.2
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 17,
+      "t_minute": 46,
+      "ext_price": 3058.05
+    },
+    {
+      "brand_id": 9015011,
+      "brand": "scholarunivamalg #11",
+      "t_hour": 18,
+      "t_minute": 55,
+      "ext_price": 3051.65
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 19,
+      "t_minute": 31,
+      "ext_price": 3001.5
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 19,
+      "t_minute": 27,
+      "ext_price": 2999.25
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 18,
+      "t_minute": 24,
+      "ext_price": 2968.82
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 19,
+      "t_minute": 51,
+      "ext_price": 2967.04
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 9,
+      "t_minute": 49,
+      "ext_price": 2952.84
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 19,
+      "t_minute": 3,
+      "ext_price": 2948.0
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 8,
+      "t_minute": 51,
+      "ext_price": 2946.58
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 17,
+      "t_minute": 16,
+      "ext_price": 2946.24
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 18,
+      "t_minute": 2,
+      "ext_price": 2928.36
+    },
+    {
+      "brand_id": 7015007,
+      "brand": "scholarnameless #7",
+      "t_hour": 18,
+      "t_minute": 44,
+      "ext_price": 2925.52
+    },
+    {
+      "brand_id": 9008005,
+      "brand": "namelessmaxi #5",
+      "t_hour": 17,
+      "t_minute": 42,
+      "ext_price": 2920.98
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 18,
+      "t_minute": 4,
+      "ext_price": 2906.52
+    },
+    {
+      "brand_id": 7010009,
+      "brand": "univnameless #9",
+      "t_hour": 8,
+      "t_minute": 48,
+      "ext_price": 2896.0
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 18,
+      "t_minute": 32,
+      "ext_price": 2893.8
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 19,
+      "t_minute": 50,
+      "ext_price": 2890.86
+    },
+    {
+      "brand_id": 7010004,
+      "brand": "univnameless #4",
+      "t_hour": 19,
+      "t_minute": 4,
+      "ext_price": 2890.41
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 18,
+      "t_minute": 38,
+      "ext_price": 2889.68
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 17,
+      "t_minute": 51,
+      "ext_price": 2884.86
+    },
+    {
+      "brand_id": 7010003,
+      "brand": "univnameless #3",
+      "t_hour": 18,
+      "t_minute": 37,
+      "ext_price": 2872.23
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 8,
+      "t_minute": 33,
+      "ext_price": 2870.0
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 8,
+      "t_minute": 54,
+      "ext_price": 2864.25
+    },
+    {
+      "brand_id": 2003002,
+      "brand": "exportiimporto #2",
+      "t_hour": 6,
+      "t_minute": 17,
+      "ext_price": 2815.56
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 6,
+      "t_minute": 50,
+      "ext_price": 2815.34
+    },
+    {
+      "brand_id": 5001002,
+      "brand": "amalgscholar #2",
+      "t_hour": 19,
+      "t_minute": 51,
+      "ext_price": 2810.64
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 17,
+      "t_minute": 11,
+      "ext_price": 2809.0
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 17,
+      "t_minute": 35,
+      "ext_price": 2806.18
+    },
+    {
+      "brand_id": 4001002,
+      "brand": "amalgedu pack #2",
+      "t_hour": 19,
+      "t_minute": 19,
+      "ext_price": 2799.37
+    },
+    {
+      "brand_id": 7007004,
+      "brand": "brandbrand #4",
+      "t_hour": 9,
+      "t_minute": 31,
+      "ext_price": 2791.36
+    },
+    {
+      "brand_id": 10002012,
+      "brand": "importounivamalg #12",
+      "t_hour": 19,
+      "t_minute": 19,
+      "ext_price": 2756.5
+    },
+    {
+      "brand_id": 9012005,
+      "brand": "importounivamalg #5",
+      "t_hour": 7,
+      "t_minute": 0,
+      "ext_price": 2754.8
+    },
+    {
+      "brand_id": 5004001,
+      "brand": "edu packscholar #1",
+      "t_hour": 18,
+      "t_minute": 27,
+      "ext_price": 2752.86
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 19,
+      "t_minute": 31,
+      "ext_price": 2747.29
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 17,
+      "t_minute": 27,
+      "ext_price": 2737.35
+    },
+    {
+      "brand_id": 9012003,
+      "brand": "importounivamalg #3",
+      "t_hour": 8,
+      "t_minute": 9,
+      "ext_price": 2714.4
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 19,
+      "t_minute": 52,
+      "ext_price": 2708.64
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 9,
+      "t_minute": 20,
+      "ext_price": 2704.35
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 19,
+      "t_minute": 19,
+      "ext_price": 2700.9
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 18,
+      "t_minute": 15,
+      "ext_price": 2697.94
+    },
+    {
+      "brand_id": 6011001,
+      "brand": "amalgbrand #1",
+      "t_hour": 9,
+      "t_minute": 18,
+      "ext_price": 2696.04
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 19,
+      "t_minute": 35,
+      "ext_price": 2691.5
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 18,
+      "t_minute": 59,
+      "ext_price": 2690.76
+    },
+    {
+      "brand_id": 6011008,
+      "brand": "amalgbrand #8",
+      "t_hour": 9,
+      "t_minute": 14,
+      "ext_price": 2672.38
+    },
+    {
+      "brand_id": 6011005,
+      "brand": "amalgbrand #5",
+      "t_hour": 9,
+      "t_minute": 53,
+      "ext_price": 2663.64
+    },
+    {
+      "brand_id": 7010004,
+      "brand": "univnameless #4",
+      "t_hour": 18,
+      "t_minute": 21,
+      "ext_price": 2656.78
+    },
+    {
+      "brand_id": 10002012,
+      "brand": "importounivamalg #12",
+      "t_hour": 17,
+      "t_minute": 51,
+      "ext_price": 2651.44
+    },
+    {
+      "brand_id": 9013009,
+      "brand": "exportiunivamalg #9",
+      "t_hour": 17,
+      "t_minute": 24,
+      "ext_price": 2651.15
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 19,
+      "t_minute": 6,
+      "ext_price": 2649.01
+    },
+    {
+      "brand_id": 7008009,
+      "brand": "namelessbrand #9",
+      "t_hour": 18,
+      "t_minute": 12,
+      "ext_price": 2638.58
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 19,
+      "t_minute": 41,
+      "ext_price": 2634.28
+    },
+    {
+      "brand_id": 2003002,
+      "brand": "exportiimporto #2",
+      "t_hour": 18,
+      "t_minute": 18,
+      "ext_price": 2627.3
+    },
+    {
+      "brand_id": 8014005,
+      "brand": "edu packmaxi #5",
+      "t_hour": 9,
+      "t_minute": 34,
+      "ext_price": 2607.56
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 7,
+      "t_minute": 42,
+      "ext_price": 2605.5
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 19,
+      "t_minute": 57,
+      "ext_price": 2600.64
+    },
+    {
+      "brand_id": 10015013,
+      "brand": "scholaramalgamalg #13",
+      "t_hour": 18,
+      "t_minute": 20,
+      "ext_price": 2596.77
+    },
+    {
+      "brand_id": 6008005,
+      "brand": "namelesscorp #5",
+      "t_hour": 9,
+      "t_minute": 1,
+      "ext_price": 2586.24
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 18,
+      "t_minute": 35,
+      "ext_price": 2584.4
+    },
+    {
+      "brand_id": 2004001,
+      "brand": "edu packimporto #1",
+      "t_hour": 18,
+      "t_minute": 42,
+      "ext_price": 2575.57
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 19,
+      "t_minute": 50,
+      "ext_price": 2574.95
+    },
+    {
+      "brand_id": 10003004,
+      "brand": "exportiunivamalg #4",
+      "t_hour": 7,
+      "t_minute": 34,
+      "ext_price": 2568.82
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 19,
+      "t_minute": 31,
+      "ext_price": 2566.2
+    },
+    {
+      "brand_id": 10012011,
+      "brand": "importoamalgamalg #11",
+      "t_hour": 8,
+      "t_minute": 53,
+      "ext_price": 2553.16
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 9,
+      "t_minute": 56,
+      "ext_price": 2552.22
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 18,
+      "t_minute": 33,
+      "ext_price": 2545.56
+    },
+    {
+      "brand_id": 6006007,
+      "brand": "corpcorp #7",
+      "t_hour": 6,
+      "t_minute": 1,
+      "ext_price": 2543.91
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 6,
+      "t_minute": 6,
+      "ext_price": 2537.15
+    },
+    {
+      "brand_id": 7008009,
+      "brand": "namelessbrand #9",
+      "t_hour": 19,
+      "t_minute": 45,
+      "ext_price": 2523.5
+    },
+    {
+      "brand_id": 2001001,
+      "brand": "amalgimporto #1",
+      "t_hour": 17,
+      "t_minute": 51,
+      "ext_price": 2520.14
+    },
+    {
+      "brand_id": 2003002,
+      "brand": "exportiimporto #2",
+      "t_hour": 9,
+      "t_minute": 31,
+      "ext_price": 2518.71
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 9,
+      "t_minute": 40,
+      "ext_price": 2512.62
+    },
+    {
+      "brand_id": 5004002,
+      "brand": "edu packscholar #2",
+      "t_hour": 18,
+      "t_minute": 7,
+      "ext_price": 2490.95
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 19,
+      "t_minute": 16,
+      "ext_price": 2480.24
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 17,
+      "t_minute": 40,
+      "ext_price": 2473.74
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 8,
+      "t_minute": 49,
+      "ext_price": 2473.5
+    },
+    {
+      "brand_id": 6009003,
+      "brand": "maxicorp #3",
+      "t_hour": 6,
+      "t_minute": 4,
+      "ext_price": 2471.71
+    },
+    {
+      "brand_id": 7010003,
+      "brand": "univnameless #3",
+      "t_hour": 7,
+      "t_minute": 5,
+      "ext_price": 2438.72
+    },
+    {
+      "brand_id": 10002012,
+      "brand": "importounivamalg #12",
+      "t_hour": 18,
+      "t_minute": 10,
+      "ext_price": 2432.7
+    },
+    {
+      "brand_id": 10012017,
+      "brand": "importoamalgamalg #17",
+      "t_hour": 19,
+      "t_minute": 11,
+      "ext_price": 2430.81
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 8,
+      "t_minute": 59,
+      "ext_price": 2417.52
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 19,
+      "t_minute": 28,
+      "ext_price": 2414.79
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 19,
+      "t_minute": 45,
+      "ext_price": 2396.52
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 17,
+      "t_minute": 59,
+      "ext_price": 2394.72
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 17,
+      "t_minute": 40,
+      "ext_price": 2388.6
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 8,
+      "t_minute": 51,
+      "ext_price": 2388.14
+    },
+    {
+      "brand_id": 6008007,
+      "brand": "namelesscorp #7",
+      "t_hour": 18,
+      "t_minute": 0,
+      "ext_price": 2384.18
+    },
+    {
+      "brand_id": 2001001,
+      "brand": "amalgimporto #1",
+      "t_hour": 6,
+      "t_minute": 40,
+      "ext_price": 2377.18
+    },
+    {
+      "brand_id": 6006007,
+      "brand": "corpcorp #7",
+      "t_hour": 7,
+      "t_minute": 24,
+      "ext_price": 2372.82
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 19,
+      "t_minute": 27,
+      "ext_price": 2363.02
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 18,
+      "t_minute": 1,
+      "ext_price": 2353.59
+    },
+    {
+      "brand_id": 7016007,
+      "brand": "corpnameless #7",
+      "t_hour": 19,
+      "t_minute": 16,
+      "ext_price": 2345.0
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 9,
+      "t_minute": 14,
+      "ext_price": 2312.0
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 17,
+      "t_minute": 26,
+      "ext_price": 2309.94
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 17,
+      "t_minute": 43,
+      "ext_price": 2309.04
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 19,
+      "t_minute": 33,
+      "ext_price": 2307.38
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 19,
+      "t_minute": 45,
+      "ext_price": 2307.24
+    },
+    {
+      "brand_id": 6011001,
+      "brand": "amalgbrand #1",
+      "t_hour": 19,
+      "t_minute": 3,
+      "ext_price": 2276.05
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 7,
+      "t_minute": 29,
+      "ext_price": 2265.05
+    },
+    {
+      "brand_id": 1004001,
+      "brand": "edu packamalg #1",
+      "t_hour": 17,
+      "t_minute": 26,
+      "ext_price": 2253.02
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 18,
+      "t_minute": 35,
+      "ext_price": 2251.9
+    },
+    {
+      "brand_id": 4004002,
+      "brand": "edu packedu pack #2",
+      "t_hour": 19,
+      "t_minute": 7,
+      "ext_price": 2247.6
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 19,
+      "t_minute": 5,
+      "ext_price": 2237.06
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 7,
+      "t_minute": 58,
+      "ext_price": 2232.45
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 19,
+      "t_minute": 49,
+      "ext_price": 2228.52
+    },
+    {
+      "brand_id": 7016007,
+      "brand": "corpnameless #7",
+      "t_hour": 17,
+      "t_minute": 56,
+      "ext_price": 2222.85
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 9,
+      "t_minute": 32,
+      "ext_price": 2219.18
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 17,
+      "t_minute": 4,
+      "ext_price": 2219.11
+    },
+    {
+      "brand_id": 7015007,
+      "brand": "scholarnameless #7",
+      "t_hour": 17,
+      "t_minute": 55,
+      "ext_price": 2206.75
+    },
+    {
+      "brand_id": 8004003,
+      "brand": "edu packnameless #3",
+      "t_hour": 19,
+      "t_minute": 58,
+      "ext_price": 2203.92
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 8,
+      "t_minute": 3,
+      "ext_price": 2195.64
+    },
+    {
+      "brand_id": 10004001,
+      "brand": "edu packunivamalg #1",
+      "t_hour": 17,
+      "t_minute": 26,
+      "ext_price": 2195.6
+    },
+    {
+      "brand_id": 8004003,
+      "brand": "edu packnameless #3",
+      "t_hour": 18,
+      "t_minute": 44,
+      "ext_price": 2193.75
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 17,
+      "t_minute": 46,
+      "ext_price": 2188.62
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 17,
+      "t_minute": 56,
+      "ext_price": 2175.66
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 19,
+      "t_minute": 25,
+      "ext_price": 2148.84
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 9,
+      "t_minute": 36,
+      "ext_price": 2136.0
+    },
+    {
+      "brand_id": 5004001,
+      "brand": "edu packscholar #1",
+      "t_hour": 8,
+      "t_minute": 19,
+      "ext_price": 2129.05
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 9,
+      "t_minute": 42,
+      "ext_price": 2113.53
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 19,
+      "t_minute": 3,
+      "ext_price": 2112.04
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 9,
+      "t_minute": 22,
+      "ext_price": 2106.72
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 19,
+      "t_minute": 13,
+      "ext_price": 2106.16
+    },
+    {
+      "brand_id": 8013009,
+      "brand": "exportimaxi #9",
+      "t_hour": 17,
+      "t_minute": 24,
+      "ext_price": 2088.84
+    },
+    {
+      "brand_id": 10003016,
+      "brand": "exportiunivamalg #16",
+      "t_hour": 17,
+      "t_minute": 55,
+      "ext_price": 2087.15
+    },
+    {
+      "brand_id": 5004001,
+      "brand": "edu packscholar #1",
+      "t_hour": 6,
+      "t_minute": 36,
+      "ext_price": 2086.7
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 18,
+      "t_minute": 21,
+      "ext_price": 2086.16
+    },
+    {
+      "brand_id": 6005001,
+      "brand": "scholarcorp #1",
+      "t_hour": 19,
+      "t_minute": 55,
+      "ext_price": 2075.64
+    },
+    {
+      "brand_id": 7010009,
+      "brand": "univnameless #9",
+      "t_hour": 9,
+      "t_minute": 22,
+      "ext_price": 2066.24
+    },
+    {
+      "brand_id": 9008002,
+      "brand": "namelessmaxi #2",
+      "t_hour": 17,
+      "t_minute": 28,
+      "ext_price": 2064.66
+    },
+    {
+      "brand_id": 6009003,
+      "brand": "maxicorp #3",
+      "t_hour": 19,
+      "t_minute": 38,
+      "ext_price": 2016.84
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 19,
+      "t_minute": 12,
+      "ext_price": 2015.94
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 9,
+      "t_minute": 27,
+      "ext_price": 2000.16
+    },
+    {
+      "brand_id": 7012003,
+      "brand": "importonameless #3",
+      "t_hour": 9,
+      "t_minute": 22,
+      "ext_price": 1997.1
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 9,
+      "t_minute": 32,
+      "ext_price": 1985.92
+    },
+    {
+      "brand_id": 10004001,
+      "brand": "edu packunivamalg #1",
+      "t_hour": 9,
+      "t_minute": 20,
+      "ext_price": 1976.19
+    },
+    {
+      "brand_id": 7004009,
+      "brand": "edu packbrand #9",
+      "t_hour": 6,
+      "t_minute": 11,
+      "ext_price": 1974.24
+    },
+    {
+      "brand_id": 7014001,
+      "brand": "edu packnameless #1",
+      "t_hour": 17,
+      "t_minute": 15,
+      "ext_price": 1968.32
+    },
+    {
+      "brand_id": 9008005,
+      "brand": "namelessmaxi #5",
+      "t_hour": 6,
+      "t_minute": 9,
+      "ext_price": 1958.06
+    },
+    {
+      "brand_id": 6003008,
+      "brand": "exporticorp #8",
+      "t_hour": 9,
+      "t_minute": 18,
+      "ext_price": 1956.96
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 19,
+      "t_minute": 15,
+      "ext_price": 1954.48
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 8,
+      "t_minute": 37,
+      "ext_price": 1952.28
+    },
+    {
+      "brand_id": 7016001,
+      "brand": "corpnameless #1",
+      "t_hour": 18,
+      "t_minute": 53,
+      "ext_price": 1950.9
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 9,
+      "t_minute": 54,
+      "ext_price": 1930.59
+    },
+    {
+      "brand_id": 9008002,
+      "brand": "namelessmaxi #2",
+      "t_hour": 19,
+      "t_minute": 23,
+      "ext_price": 1930.5
+    },
+    {
+      "brand_id": 7010003,
+      "brand": "univnameless #3",
+      "t_hour": 7,
+      "t_minute": 58,
+      "ext_price": 1930.2
+    },
+    {
+      "brand_id": 2003001,
+      "brand": "exportiimporto #1",
+      "t_hour": 9,
+      "t_minute": 23,
+      "ext_price": 1930.08
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 17,
+      "t_minute": 11,
+      "ext_price": 1929.6
+    },
+    {
+      "brand_id": 6011008,
+      "brand": "amalgbrand #8",
+      "t_hour": 8,
+      "t_minute": 28,
+      "ext_price": 1919.16
+    },
+    {
+      "brand_id": 9013009,
+      "brand": "exportiunivamalg #9",
+      "t_hour": 9,
+      "t_minute": 36,
+      "ext_price": 1918.44
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 8,
+      "t_minute": 26,
+      "ext_price": 1913.6
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 17,
+      "t_minute": 45,
+      "ext_price": 1913.52
+    },
+    {
+      "brand_id": 7004007,
+      "brand": "edu packbrand #7",
+      "t_hour": 17,
+      "t_minute": 8,
+      "ext_price": 1907.57
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 17,
+      "t_minute": 54,
+      "ext_price": 1902.42
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 8,
+      "t_minute": 8,
+      "ext_price": 1901.0
+    },
+    {
+      "brand_id": 8002009,
+      "brand": "importonameless #9",
+      "t_hour": 18,
+      "t_minute": 12,
+      "ext_price": 1892.55
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 9,
+      "t_minute": 12,
+      "ext_price": 1887.6
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 17,
+      "t_minute": 38,
+      "ext_price": 1849.0
+    },
+    {
+      "brand_id": 7016007,
+      "brand": "corpnameless #7",
+      "t_hour": 17,
+      "t_minute": 28,
+      "ext_price": 1841.94
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 18,
+      "t_minute": 37,
+      "ext_price": 1838.85
+    },
+    {
+      "brand_id": 6011005,
+      "brand": "amalgbrand #5",
+      "t_hour": 19,
+      "t_minute": 3,
+      "ext_price": 1832.8
+    },
+    {
+      "brand_id": 10003004,
+      "brand": "exportiunivamalg #4",
+      "t_hour": 19,
+      "t_minute": 43,
+      "ext_price": 1829.52
+    },
+    {
+      "brand_id": 10013013,
+      "brand": "exportiamalgamalg #13",
+      "t_hour": 19,
+      "t_minute": 39,
+      "ext_price": 1808.23
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 19,
+      "t_minute": 24,
+      "ext_price": 1800.68
+    },
+    {
+      "brand_id": 7008009,
+      "brand": "namelessbrand #9",
+      "t_hour": 19,
+      "t_minute": 19,
+      "ext_price": 1790.25
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 19,
+      "t_minute": 54,
+      "ext_price": 1787.25
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 8,
+      "t_minute": 54,
+      "ext_price": 1787.1
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 17,
+      "t_minute": 52,
+      "ext_price": 1782.75
+    },
+    {
+      "brand_id": 8002009,
+      "brand": "importonameless #9",
+      "t_hour": 8,
+      "t_minute": 46,
+      "ext_price": 1779.16
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 9,
+      "t_minute": 38,
+      "ext_price": 1775.4
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 8,
+      "t_minute": 25,
+      "ext_price": 1764.99
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 17,
+      "t_minute": 1,
+      "ext_price": 1750.0
+    },
+    {
+      "brand_id": 5004002,
+      "brand": "edu packscholar #2",
+      "t_hour": 18,
+      "t_minute": 15,
+      "ext_price": 1748.11
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 9,
+      "t_minute": 43,
+      "ext_price": 1723.09
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 9,
+      "t_minute": 53,
+      "ext_price": 1718.75
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 8,
+      "t_minute": 6,
+      "ext_price": 1710.0
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 19,
+      "t_minute": 10,
+      "ext_price": 1703.65
+    },
+    {
+      "brand_id": 5004002,
+      "brand": "edu packscholar #2",
+      "t_hour": 19,
+      "t_minute": 20,
+      "ext_price": 1694.0
+    },
+    {
+      "brand_id": 9016003,
+      "brand": "corpunivamalg #3",
+      "t_hour": 19,
+      "t_minute": 8,
+      "ext_price": 1692.47
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 8,
+      "t_minute": 25,
+      "ext_price": 1691.76
+    },
+    {
+      "brand_id": 7004007,
+      "brand": "edu packbrand #7",
+      "t_hour": 17,
+      "t_minute": 57,
+      "ext_price": 1690.56
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 19,
+      "t_minute": 42,
+      "ext_price": 1688.25
+    },
+    {
+      "brand_id": 6008005,
+      "brand": "namelesscorp #5",
+      "t_hour": 19,
+      "t_minute": 2,
+      "ext_price": 1684.25
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 8,
+      "t_minute": 16,
+      "ext_price": 1684.24
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 19,
+      "t_minute": 19,
+      "ext_price": 1678.98
+    },
+    {
+      "brand_id": 6012008,
+      "brand": "importobrand #8",
+      "t_hour": 8,
+      "t_minute": 33,
+      "ext_price": 1678.8
+    },
+    {
+      "brand_id": 8002009,
+      "brand": "importonameless #9",
+      "t_hour": 9,
+      "t_minute": 18,
+      "ext_price": 1672.43
+    },
+    {
+      "brand_id": 7013007,
+      "brand": "exportinameless #7",
+      "t_hour": 18,
+      "t_minute": 20,
+      "ext_price": 1671.66
+    },
+    {
+      "brand_id": 8004009,
+      "brand": "edu packnameless #9",
+      "t_hour": 19,
+      "t_minute": 44,
+      "ext_price": 1667.7
+    },
+    {
+      "brand_id": 7001005,
+      "brand": "amalgbrand #5",
+      "t_hour": 8,
+      "t_minute": 59,
+      "ext_price": 1655.79
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 17,
+      "t_minute": 56,
+      "ext_price": 1632.0
+    },
+    {
+      "brand_id": 4001002,
+      "brand": "amalgedu pack #2",
+      "t_hour": 17,
+      "t_minute": 55,
+      "ext_price": 1630.16
+    },
+    {
+      "brand_id": 8004009,
+      "brand": "edu packnameless #9",
+      "t_hour": 17,
+      "t_minute": 8,
+      "ext_price": 1625.94
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 19,
+      "t_minute": 31,
+      "ext_price": 1605.99
+    },
+    {
+      "brand_id": 2003001,
+      "brand": "exportiimporto #1",
+      "t_hour": 18,
+      "t_minute": 28,
+      "ext_price": 1597.32
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 19,
+      "t_minute": 21,
+      "ext_price": 1594.43
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 17,
+      "t_minute": 2,
+      "ext_price": 1589.64
+    },
+    {
+      "brand_id": 2003002,
+      "brand": "exportiimporto #2",
+      "t_hour": 8,
+      "t_minute": 25,
+      "ext_price": 1586.3
+    },
+    {
+      "brand_id": 10015013,
+      "brand": "scholaramalgamalg #13",
+      "t_hour": 8,
+      "t_minute": 18,
+      "ext_price": 1584.03
+    },
+    {
+      "brand_id": 9014011,
+      "brand": "edu packunivamalg #11",
+      "t_hour": 18,
+      "t_minute": 32,
+      "ext_price": 1580.54
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 18,
+      "t_minute": 20,
+      "ext_price": 1575.22
+    },
+    {
+      "brand_id": 9016003,
+      "brand": "corpunivamalg #3",
+      "t_hour": 17,
+      "t_minute": 53,
+      "ext_price": 1567.53
+    },
+    {
+      "brand_id": 6011001,
+      "brand": "amalgbrand #1",
+      "t_hour": 7,
+      "t_minute": 21,
+      "ext_price": 1560.54
+    },
+    {
+      "brand_id": 7001005,
+      "brand": "amalgbrand #5",
+      "t_hour": 8,
+      "t_minute": 12,
+      "ext_price": 1560.16
+    },
+    {
+      "brand_id": 5004002,
+      "brand": "edu packscholar #2",
+      "t_hour": 17,
+      "t_minute": 22,
+      "ext_price": 1557.76
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 8,
+      "t_minute": 28,
+      "ext_price": 1540.35
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 9,
+      "t_minute": 9,
+      "ext_price": 1540.19
+    },
+    {
+      "brand_id": 4004002,
+      "brand": "edu packedu pack #2",
+      "t_hour": 9,
+      "t_minute": 34,
+      "ext_price": 1535.85
+    },
+    {
+      "brand_id": 10012017,
+      "brand": "importoamalgamalg #17",
+      "t_hour": 8,
+      "t_minute": 4,
+      "ext_price": 1534.39
+    },
+    {
+      "brand_id": 4004002,
+      "brand": "edu packedu pack #2",
+      "t_hour": 17,
+      "t_minute": 3,
+      "ext_price": 1531.36
+    },
+    {
+      "brand_id": 9012008,
+      "brand": "importounivamalg #8",
+      "t_hour": 18,
+      "t_minute": 11,
+      "ext_price": 1529.32
+    },
+    {
+      "brand_id": 8011009,
+      "brand": "amalgmaxi #9",
+      "t_hour": 19,
+      "t_minute": 5,
+      "ext_price": 1523.49
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 9,
+      "t_minute": 48,
+      "ext_price": 1521.0
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 8,
+      "t_minute": 38,
+      "ext_price": 1520.64
+    },
+    {
+      "brand_id": 7010003,
+      "brand": "univnameless #3",
+      "t_hour": 18,
+      "t_minute": 12,
+      "ext_price": 1506.7
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 6,
+      "t_minute": 10,
+      "ext_price": 1503.9
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 9,
+      "t_minute": 6,
+      "ext_price": 1503.18
+    },
+    {
+      "brand_id": 5001002,
+      "brand": "amalgscholar #2",
+      "t_hour": 9,
+      "t_minute": 39,
+      "ext_price": 1492.0
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 18,
+      "t_minute": 49,
+      "ext_price": 1485.43
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 18,
+      "t_minute": 40,
+      "ext_price": 1477.35
+    },
+    {
+      "brand_id": 7010009,
+      "brand": "univnameless #9",
+      "t_hour": 9,
+      "t_minute": 5,
+      "ext_price": 1475.55
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 18,
+      "t_minute": 52,
+      "ext_price": 1474.2
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 19,
+      "t_minute": 10,
+      "ext_price": 1470.75
+    },
+    {
+      "brand_id": 8016004,
+      "brand": "corpmaxi #4",
+      "t_hour": 19,
+      "t_minute": 8,
+      "ext_price": 1469.76
+    },
+    {
+      "brand_id": 7010003,
+      "brand": "univnameless #3",
+      "t_hour": 19,
+      "t_minute": 28,
+      "ext_price": 1458.88
+    },
+    {
+      "brand_id": 6008005,
+      "brand": "namelesscorp #5",
+      "t_hour": 18,
+      "t_minute": 27,
+      "ext_price": 1456.2
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 18,
+      "t_minute": 26,
+      "ext_price": 1452.36
+    },
+    {
+      "brand_id": 7014001,
+      "brand": "edu packnameless #1",
+      "t_hour": 6,
+      "t_minute": 35,
+      "ext_price": 1451.34
+    },
+    {
+      "brand_id": 9012003,
+      "brand": "importounivamalg #3",
+      "t_hour": 8,
+      "t_minute": 30,
+      "ext_price": 1446.72
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 17,
+      "t_minute": 5,
+      "ext_price": 1444.52
+    },
+    {
+      "brand_id": 7010004,
+      "brand": "univnameless #4",
+      "t_hour": 19,
+      "t_minute": 51,
+      "ext_price": 1434.72
+    },
+    {
+      "brand_id": 9008002,
+      "brand": "namelessmaxi #2",
+      "t_hour": 17,
+      "t_minute": 33,
+      "ext_price": 1425.84
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 19,
+      "t_minute": 48,
+      "ext_price": 1417.68
+    },
+    {
+      "brand_id": 10009015,
+      "brand": "maxiunivamalg #15",
+      "t_hour": 7,
+      "t_minute": 51,
+      "ext_price": 1416.42
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 9,
+      "t_minute": 48,
+      "ext_price": 1415.96
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 18,
+      "t_minute": 27,
+      "ext_price": 1408.2
+    },
+    {
+      "brand_id": 2004001,
+      "brand": "edu packimporto #1",
+      "t_hour": 19,
+      "t_minute": 50,
+      "ext_price": 1406.72
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 18,
+      "t_minute": 48,
+      "ext_price": 1393.26
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 9,
+      "t_minute": 41,
+      "ext_price": 1386.3
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 17,
+      "t_minute": 14,
+      "ext_price": 1376.88
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 19,
+      "t_minute": 59,
+      "ext_price": 1360.32
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 8,
+      "t_minute": 34,
+      "ext_price": 1359.26
+    },
+    {
+      "brand_id": 7010003,
+      "brand": "univnameless #3",
+      "t_hour": 19,
+      "t_minute": 4,
+      "ext_price": 1356.48
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 18,
+      "t_minute": 31,
+      "ext_price": 1356.25
+    },
+    {
+      "brand_id": 6010005,
+      "brand": "univbrand #5",
+      "t_hour": 8,
+      "t_minute": 8,
+      "ext_price": 1353.24
+    },
+    {
+      "brand_id": 7008009,
+      "brand": "namelessbrand #9",
+      "t_hour": 17,
+      "t_minute": 52,
+      "ext_price": 1348.93
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 18,
+      "t_minute": 26,
+      "ext_price": 1329.75
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 17,
+      "t_minute": 48,
+      "ext_price": 1324.78
+    },
+    {
+      "brand_id": 8014005,
+      "brand": "edu packmaxi #5",
+      "t_hour": 9,
+      "t_minute": 22,
+      "ext_price": 1323.56
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 18,
+      "t_minute": 22,
+      "ext_price": 1312.71
+    },
+    {
+      "brand_id": 10009015,
+      "brand": "maxiunivamalg #15",
+      "t_hour": 17,
+      "t_minute": 29,
+      "ext_price": 1298.2
+    },
+    {
+      "brand_id": 8003010,
+      "brand": "exportinameless #10",
+      "t_hour": 17,
+      "t_minute": 42,
+      "ext_price": 1292.4
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 17,
+      "t_minute": 21,
+      "ext_price": 1289.8
+    },
+    {
+      "brand_id": 7004009,
+      "brand": "edu packbrand #9",
+      "t_hour": 9,
+      "t_minute": 36,
+      "ext_price": 1287.9
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 19,
+      "t_minute": 16,
+      "ext_price": 1282.82
+    },
+    {
+      "brand_id": 5001002,
+      "brand": "amalgscholar #2",
+      "t_hour": 9,
+      "t_minute": 46,
+      "ext_price": 1281.39
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 18,
+      "t_minute": 24,
+      "ext_price": 1279.2
+    },
+    {
+      "brand_id": 10015013,
+      "brand": "scholaramalgamalg #13",
+      "t_hour": 19,
+      "t_minute": 51,
+      "ext_price": 1263.24
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 18,
+      "t_minute": 0,
+      "ext_price": 1263.0
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 7,
+      "t_minute": 0,
+      "ext_price": 1260.84
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 18,
+      "t_minute": 17,
+      "ext_price": 1255.11
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 19,
+      "t_minute": 40,
+      "ext_price": 1254.88
+    },
+    {
+      "brand_id": 6015006,
+      "brand": "scholarbrand #6",
+      "t_hour": 6,
+      "t_minute": 14,
+      "ext_price": 1250.2
+    },
+    {
+      "brand_id": 8002009,
+      "brand": "importonameless #9",
+      "t_hour": 18,
+      "t_minute": 28,
+      "ext_price": 1242.54
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 17,
+      "t_minute": 8,
+      "ext_price": 1239.3
+    },
+    {
+      "brand_id": 8003010,
+      "brand": "exportinameless #10",
+      "t_hour": 17,
+      "t_minute": 7,
+      "ext_price": 1236.15
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 17,
+      "t_minute": 2,
+      "ext_price": 1235.65
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 9,
+      "t_minute": 12,
+      "ext_price": 1232.5
+    },
+    {
+      "brand_id": 2003002,
+      "brand": "exportiimporto #2",
+      "t_hour": 18,
+      "t_minute": 9,
+      "ext_price": 1223.8
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 17,
+      "t_minute": 22,
+      "ext_price": 1220.56
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 17,
+      "t_minute": 24,
+      "ext_price": 1218.63
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 9,
+      "t_minute": 53,
+      "ext_price": 1215.9
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 19,
+      "t_minute": 5,
+      "ext_price": 1210.95
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 19,
+      "t_minute": 20,
+      "ext_price": 1202.26
+    },
+    {
+      "brand_id": 7015007,
+      "brand": "scholarnameless #7",
+      "t_hour": 9,
+      "t_minute": 48,
+      "ext_price": 1199.54
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 19,
+      "t_minute": 9,
+      "ext_price": 1192.82
+    },
+    {
+      "brand_id": 8004003,
+      "brand": "edu packnameless #3",
+      "t_hour": 17,
+      "t_minute": 23,
+      "ext_price": 1192.2
+    },
+    {
+      "brand_id": 6011008,
+      "brand": "amalgbrand #8",
+      "t_hour": 17,
+      "t_minute": 4,
+      "ext_price": 1190.0
+    },
+    {
+      "brand_id": 6008007,
+      "brand": "namelesscorp #7",
+      "t_hour": 19,
+      "t_minute": 15,
+      "ext_price": 1185.75
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 17,
+      "t_minute": 28,
+      "ext_price": 1185.03
+    },
+    {
+      "brand_id": 10013015,
+      "brand": "exportiamalgamalg #15",
+      "t_hour": 17,
+      "t_minute": 14,
+      "ext_price": 1165.29
+    },
+    {
+      "brand_id": 6010005,
+      "brand": "univbrand #5",
+      "t_hour": 9,
+      "t_minute": 27,
+      "ext_price": 1164.36
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 19,
+      "t_minute": 3,
+      "ext_price": 1160.25
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 6,
+      "t_minute": 53,
+      "ext_price": 1159.86
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 9,
+      "t_minute": 38,
+      "ext_price": 1151.07
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 9,
+      "t_minute": 56,
+      "ext_price": 1145.46
+    },
+    {
+      "brand_id": 6007003,
+      "brand": "brandcorp #3",
+      "t_hour": 19,
+      "t_minute": 33,
+      "ext_price": 1144.48
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 9,
+      "t_minute": 16,
+      "ext_price": 1143.56
+    },
+    {
+      "brand_id": 6011005,
+      "brand": "amalgbrand #5",
+      "t_hour": 17,
+      "t_minute": 31,
+      "ext_price": 1141.2
+    },
+    {
+      "brand_id": 10012011,
+      "brand": "importoamalgamalg #11",
+      "t_hour": 19,
+      "t_minute": 25,
+      "ext_price": 1131.57
+    },
+    {
+      "brand_id": 9012005,
+      "brand": "importounivamalg #5",
+      "t_hour": 8,
+      "t_minute": 3,
+      "ext_price": 1129.55
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 7,
+      "t_minute": 0,
+      "ext_price": 1125.76
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 17,
+      "t_minute": 32,
+      "ext_price": 1117.8
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 18,
+      "t_minute": 49,
+      "ext_price": 1117.0
+    },
+    {
+      "brand_id": 8002009,
+      "brand": "importonameless #9",
+      "t_hour": 19,
+      "t_minute": 8,
+      "ext_price": 1104.0
+    },
+    {
+      "brand_id": 2003001,
+      "brand": "exportiimporto #1",
+      "t_hour": 19,
+      "t_minute": 11,
+      "ext_price": 1101.88
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 17,
+      "t_minute": 23,
+      "ext_price": 1100.0
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 19,
+      "t_minute": 10,
+      "ext_price": 1088.89
+    },
+    {
+      "brand_id": 6011001,
+      "brand": "amalgbrand #1",
+      "t_hour": 8,
+      "t_minute": 42,
+      "ext_price": 1086.6
+    },
+    {
+      "brand_id": 8014005,
+      "brand": "edu packmaxi #5",
+      "t_hour": 17,
+      "t_minute": 2,
+      "ext_price": 1080.77
+    },
+    {
+      "brand_id": 6009003,
+      "brand": "maxicorp #3",
+      "t_hour": 17,
+      "t_minute": 6,
+      "ext_price": 1076.73
+    },
+    {
+      "brand_id": 5004001,
+      "brand": "edu packscholar #1",
+      "t_hour": 18,
+      "t_minute": 30,
+      "ext_price": 1068.98
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 19,
+      "t_minute": 31,
+      "ext_price": 1068.75
+    },
+    {
+      "brand_id": 10012004,
+      "brand": "importoamalgamalg #4",
+      "t_hour": 9,
+      "t_minute": 43,
+      "ext_price": 1063.82
+    },
+    {
+      "brand_id": 8005005,
+      "brand": "scholarnameless #5",
+      "t_hour": 19,
+      "t_minute": 51,
+      "ext_price": 1057.08
+    },
+    {
+      "brand_id": 9015011,
+      "brand": "scholarunivamalg #11",
+      "t_hour": 8,
+      "t_minute": 2,
+      "ext_price": 1056.51
+    },
+    {
+      "brand_id": 8011009,
+      "brand": "amalgmaxi #9",
+      "t_hour": 19,
+      "t_minute": 35,
+      "ext_price": 1049.0
+    },
+    {
+      "brand_id": 6012008,
+      "brand": "importobrand #8",
+      "t_hour": 19,
+      "t_minute": 13,
+      "ext_price": 1048.99
+    },
+    {
+      "brand_id": 10002012,
+      "brand": "importounivamalg #12",
+      "t_hour": 18,
+      "t_minute": 3,
+      "ext_price": 1042.26
+    },
+    {
+      "brand_id": 4001002,
+      "brand": "amalgedu pack #2",
+      "t_hour": 17,
+      "t_minute": 57,
+      "ext_price": 1040.44
+    },
+    {
+      "brand_id": 2001001,
+      "brand": "amalgimporto #1",
+      "t_hour": 19,
+      "t_minute": 48,
+      "ext_price": 1038.78
+    },
+    {
+      "brand_id": 6008002,
+      "brand": "namelesscorp #2",
+      "t_hour": 18,
+      "t_minute": 38,
+      "ext_price": 1035.0
+    },
+    {
+      "brand_id": 8016004,
+      "brand": "corpmaxi #4",
+      "t_hour": 18,
+      "t_minute": 55,
+      "ext_price": 1028.0
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 8,
+      "t_minute": 56,
+      "ext_price": 1027.74
+    },
+    {
+      "brand_id": 6005001,
+      "brand": "scholarcorp #1",
+      "t_hour": 17,
+      "t_minute": 43,
+      "ext_price": 1027.18
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 9,
+      "t_minute": 26,
+      "ext_price": 1020.08
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 17,
+      "t_minute": 56,
+      "ext_price": 1015.02
+    },
+    {
+      "brand_id": 7010004,
+      "brand": "univnameless #4",
+      "t_hour": 17,
+      "t_minute": 51,
+      "ext_price": 1003.2
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 17,
+      "t_minute": 26,
+      "ext_price": 1002.86
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 8,
+      "t_minute": 41,
+      "ext_price": 1002.24
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 18,
+      "t_minute": 44,
+      "ext_price": 1001.87
+    },
+    {
+      "brand_id": 10004004,
+      "brand": "edu packunivamalg #4",
+      "t_hour": 19,
+      "t_minute": 3,
+      "ext_price": 999.84
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 8,
+      "t_minute": 39,
+      "ext_price": 997.62
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 19,
+      "t_minute": 59,
+      "ext_price": 996.0
+    },
+    {
+      "brand_id": 6002003,
+      "brand": "importocorp #3",
+      "t_hour": 17,
+      "t_minute": 53,
+      "ext_price": 989.0
+    },
+    {
+      "brand_id": 9015011,
+      "brand": "scholarunivamalg #11",
+      "t_hour": 17,
+      "t_minute": 17,
+      "ext_price": 969.1
+    },
+    {
+      "brand_id": 1004001,
+      "brand": "edu packamalg #1",
+      "t_hour": 17,
+      "t_minute": 57,
+      "ext_price": 960.63
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 19,
+      "t_minute": 20,
+      "ext_price": 959.9
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 8,
+      "t_minute": 58,
+      "ext_price": 956.16
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 18,
+      "t_minute": 10,
+      "ext_price": 936.36
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 19,
+      "t_minute": 14,
+      "ext_price": 935.74
+    },
+    {
+      "brand_id": 5001002,
+      "brand": "amalgscholar #2",
+      "t_hour": 8,
+      "t_minute": 59,
+      "ext_price": 934.92
+    },
+    {
+      "brand_id": 6005001,
+      "brand": "scholarcorp #1",
+      "t_hour": 8,
+      "t_minute": 14,
+      "ext_price": 922.04
+    },
+    {
+      "brand_id": 7008009,
+      "brand": "namelessbrand #9",
+      "t_hour": 19,
+      "t_minute": 27,
+      "ext_price": 909.02
+    },
+    {
+      "brand_id": 10012017,
+      "brand": "importoamalgamalg #17",
+      "t_hour": 18,
+      "t_minute": 54,
+      "ext_price": 909.0
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 18,
+      "t_minute": 52,
+      "ext_price": 903.24
+    },
+    {
+      "brand_id": 2003001,
+      "brand": "exportiimporto #1",
+      "t_hour": 9,
+      "t_minute": 17,
+      "ext_price": 903.24
+    },
+    {
+      "brand_id": 6008002,
+      "brand": "namelesscorp #2",
+      "t_hour": 17,
+      "t_minute": 31,
+      "ext_price": 901.74
+    },
+    {
+      "brand_id": 9014011,
+      "brand": "edu packunivamalg #11",
+      "t_hour": 17,
+      "t_minute": 50,
+      "ext_price": 899.75
+    },
+    {
+      "brand_id": 10004004,
+      "brand": "edu packunivamalg #4",
+      "t_hour": 17,
+      "t_minute": 8,
+      "ext_price": 898.0
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 9,
+      "t_minute": 46,
+      "ext_price": 890.52
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 6,
+      "t_minute": 50,
+      "ext_price": 890.4
+    },
+    {
+      "brand_id": 10015004,
+      "brand": "scholaramalgamalg #4",
+      "t_hour": 9,
+      "t_minute": 2,
+      "ext_price": 886.16
+    },
+    {
+      "brand_id": 8014005,
+      "brand": "edu packmaxi #5",
+      "t_hour": 18,
+      "t_minute": 43,
+      "ext_price": 883.2
+    },
+    {
+      "brand_id": 10012004,
+      "brand": "importoamalgamalg #4",
+      "t_hour": 6,
+      "t_minute": 49,
+      "ext_price": 877.44
+    },
+    {
+      "brand_id": 9014011,
+      "brand": "edu packunivamalg #11",
+      "t_hour": 17,
+      "t_minute": 44,
+      "ext_price": 867.75
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 17,
+      "t_minute": 30,
+      "ext_price": 863.46
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 18,
+      "t_minute": 30,
+      "ext_price": 857.66
+    },
+    {
+      "brand_id": 10013013,
+      "brand": "exportiamalgamalg #13",
+      "t_hour": 7,
+      "t_minute": 42,
+      "ext_price": 850.78
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 17,
+      "t_minute": 14,
+      "ext_price": 840.58
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 9,
+      "t_minute": 14,
+      "ext_price": 831.3
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 18,
+      "t_minute": 50,
+      "ext_price": 823.16
+    },
+    {
+      "brand_id": 7009010,
+      "brand": "maxibrand #10",
+      "t_hour": 9,
+      "t_minute": 38,
+      "ext_price": 820.8
+    },
+    {
+      "brand_id": 6006007,
+      "brand": "corpcorp #7",
+      "t_hour": 18,
+      "t_minute": 55,
+      "ext_price": 819.0
+    },
+    {
+      "brand_id": 2003002,
+      "brand": "exportiimporto #2",
+      "t_hour": 9,
+      "t_minute": 27,
+      "ext_price": 815.4
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 9,
+      "t_minute": 28,
+      "ext_price": 814.66
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 19,
+      "t_minute": 27,
+      "ext_price": 812.87
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 17,
+      "t_minute": 32,
+      "ext_price": 805.56
+    },
+    {
+      "brand_id": 9012003,
+      "brand": "importounivamalg #3",
+      "t_hour": 9,
+      "t_minute": 18,
+      "ext_price": 804.53
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 18,
+      "t_minute": 31,
+      "ext_price": 803.67
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 18,
+      "t_minute": 14,
+      "ext_price": 802.4
+    },
+    {
+      "brand_id": 7012003,
+      "brand": "importonameless #3",
+      "t_hour": 9,
+      "t_minute": 29,
+      "ext_price": 799.2
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 8,
+      "t_minute": 58,
+      "ext_price": 797.92
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 19,
+      "t_minute": 4,
+      "ext_price": 791.05
+    },
+    {
+      "brand_id": 9008002,
+      "brand": "namelessmaxi #2",
+      "t_hour": 9,
+      "t_minute": 51,
+      "ext_price": 788.04
+    },
+    {
+      "brand_id": 7016001,
+      "brand": "corpnameless #1",
+      "t_hour": 19,
+      "t_minute": 5,
+      "ext_price": 787.2
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 18,
+      "t_minute": 20,
+      "ext_price": 781.92
+    },
+    {
+      "brand_id": 7008009,
+      "brand": "namelessbrand #9",
+      "t_hour": 17,
+      "t_minute": 29,
+      "ext_price": 780.78
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 19,
+      "t_minute": 25,
+      "ext_price": 778.68
+    },
+    {
+      "brand_id": 7004009,
+      "brand": "edu packbrand #9",
+      "t_hour": 17,
+      "t_minute": 25,
+      "ext_price": 777.26
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 18,
+      "t_minute": 43,
+      "ext_price": 774.41
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 8,
+      "t_minute": 22,
+      "ext_price": 774.0
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 9,
+      "t_minute": 53,
+      "ext_price": 773.2
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 18,
+      "t_minute": 51,
+      "ext_price": 768.04
+    },
+    {
+      "brand_id": 4002001,
+      "brand": "importoedu pack #1",
+      "t_hour": 18,
+      "t_minute": 51,
+      "ext_price": 768.0
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 17,
+      "t_minute": 37,
+      "ext_price": 767.97
+    },
+    {
+      "brand_id": 8003010,
+      "brand": "exportinameless #10",
+      "t_hour": 19,
+      "t_minute": 57,
+      "ext_price": 764.01
+    },
+    {
+      "brand_id": 6002005,
+      "brand": "importocorp #5",
+      "t_hour": 19,
+      "t_minute": 0,
+      "ext_price": 762.6
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 17,
+      "t_minute": 7,
+      "ext_price": 762.12
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 9,
+      "t_minute": 29,
+      "ext_price": 759.85
+    },
+    {
+      "brand_id": 6003008,
+      "brand": "exporticorp #8",
+      "t_hour": 17,
+      "t_minute": 16,
+      "ext_price": 752.76
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 17,
+      "t_minute": 59,
+      "ext_price": 751.41
+    },
+    {
+      "brand_id": 6005001,
+      "brand": "scholarcorp #1",
+      "t_hour": 7,
+      "t_minute": 39,
+      "ext_price": 750.4
+    },
+    {
+      "brand_id": 2004001,
+      "brand": "edu packimporto #1",
+      "t_hour": 17,
+      "t_minute": 48,
+      "ext_price": 748.8
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 18,
+      "t_minute": 49,
+      "ext_price": 747.66
+    },
+    {
+      "brand_id": 2003002,
+      "brand": "exportiimporto #2",
+      "t_hour": 9,
+      "t_minute": 41,
+      "ext_price": 746.64
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 9,
+      "t_minute": 26,
+      "ext_price": 733.72
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 8,
+      "t_minute": 19,
+      "ext_price": 728.18
+    },
+    {
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "t_hour": 17,
+      "t_minute": 25,
+      "ext_price": 725.6
+    },
+    {
+      "brand_id": 6003008,
+      "brand": "exporticorp #8",
+      "t_hour": 18,
+      "t_minute": 8,
+      "ext_price": 714.66
+    },
+    {
+      "brand_id": 7004007,
+      "brand": "edu packbrand #7",
+      "t_hour": 18,
+      "t_minute": 15,
+      "ext_price": 712.92
+    },
+    {
+      "brand_id": 6010005,
+      "brand": "univbrand #5",
+      "t_hour": 8,
+      "t_minute": 18,
+      "ext_price": 711.72
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 6,
+      "t_minute": 34,
+      "ext_price": 707.85
+    },
+    {
+      "brand_id": 7010009,
+      "brand": "univnameless #9",
+      "t_hour": 17,
+      "t_minute": 54,
+      "ext_price": 701.68
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 19,
+      "t_minute": 58,
+      "ext_price": 699.95
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 17,
+      "t_minute": 16,
+      "ext_price": 695.64
+    },
+    {
+      "brand_id": 6008002,
+      "brand": "namelesscorp #2",
+      "t_hour": 8,
+      "t_minute": 59,
+      "ext_price": 688.5
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 18,
+      "t_minute": 1,
+      "ext_price": 687.57
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 8,
+      "t_minute": 31,
+      "ext_price": 683.92
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 19,
+      "t_minute": 34,
+      "ext_price": 680.68
+    },
+    {
+      "brand_id": 9015011,
+      "brand": "scholarunivamalg #11",
+      "t_hour": 18,
+      "t_minute": 16,
+      "ext_price": 679.32
+    },
+    {
+      "brand_id": 10012011,
+      "brand": "importoamalgamalg #11",
+      "t_hour": 17,
+      "t_minute": 31,
+      "ext_price": 679.21
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 9,
+      "t_minute": 41,
+      "ext_price": 675.0
+    },
+    {
+      "brand_id": 10015013,
+      "brand": "scholaramalgamalg #13",
+      "t_hour": 8,
+      "t_minute": 32,
+      "ext_price": 673.53
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 18,
+      "t_minute": 50,
+      "ext_price": 666.6
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 19,
+      "t_minute": 37,
+      "ext_price": 666.5
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 6,
+      "t_minute": 35,
+      "ext_price": 661.05
+    },
+    {
+      "brand_id": 8002009,
+      "brand": "importonameless #9",
+      "t_hour": 9,
+      "t_minute": 23,
+      "ext_price": 660.77
+    },
+    {
+      "brand_id": 6011008,
+      "brand": "amalgbrand #8",
+      "t_hour": 9,
+      "t_minute": 50,
+      "ext_price": 655.8
+    },
+    {
+      "brand_id": 10013013,
+      "brand": "exportiamalgamalg #13",
+      "t_hour": 18,
+      "t_minute": 27,
+      "ext_price": 645.42
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 9,
+      "t_minute": 41,
+      "ext_price": 643.9
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 17,
+      "t_minute": 46,
+      "ext_price": 642.5
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 19,
+      "t_minute": 44,
+      "ext_price": 640.9
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 8,
+      "t_minute": 1,
+      "ext_price": 640.7
+    },
+    {
+      "brand_id": 10012017,
+      "brand": "importoamalgamalg #17",
+      "t_hour": 17,
+      "t_minute": 19,
+      "ext_price": 640.6
+    },
+    {
+      "brand_id": 7012010,
+      "brand": "importonameless #10",
+      "t_hour": 18,
+      "t_minute": 50,
+      "ext_price": 640.22
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 19,
+      "t_minute": 10,
+      "ext_price": 637.38
+    },
+    {
+      "brand_id": 10004001,
+      "brand": "edu packunivamalg #1",
+      "t_hour": 18,
+      "t_minute": 13,
+      "ext_price": 635.6
+    },
+    {
+      "brand_id": 6015006,
+      "brand": "scholarbrand #6",
+      "t_hour": 19,
+      "t_minute": 58,
+      "ext_price": 634.5
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 17,
+      "t_minute": 2,
+      "ext_price": 616.2
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 8,
+      "t_minute": 24,
+      "ext_price": 614.22
+    },
+    {
+      "brand_id": 6003008,
+      "brand": "exporticorp #8",
+      "t_hour": 18,
+      "t_minute": 38,
+      "ext_price": 611.25
+    },
+    {
+      "brand_id": 9013009,
+      "brand": "exportiunivamalg #9",
+      "t_hour": 7,
+      "t_minute": 31,
+      "ext_price": 607.86
+    },
+    {
+      "brand_id": 6005001,
+      "brand": "scholarcorp #1",
+      "t_hour": 9,
+      "t_minute": 44,
+      "ext_price": 606.25
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 6,
+      "t_minute": 34,
+      "ext_price": 604.36
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 9,
+      "t_minute": 14,
+      "ext_price": 604.24
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 9,
+      "t_minute": 27,
+      "ext_price": 599.06
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 19,
+      "t_minute": 26,
+      "ext_price": 596.16
+    },
+    {
+      "brand_id": 8002009,
+      "brand": "importonameless #9",
+      "t_hour": 9,
+      "t_minute": 37,
+      "ext_price": 590.73
+    },
+    {
+      "brand_id": 8005008,
+      "brand": "scholarnameless #8",
+      "t_hour": 18,
+      "t_minute": 20,
+      "ext_price": 584.64
+    },
+    {
+      "brand_id": 6008005,
+      "brand": "namelesscorp #5",
+      "t_hour": 9,
+      "t_minute": 19,
+      "ext_price": 578.89
+    },
+    {
+      "brand_id": 6007003,
+      "brand": "brandcorp #3",
+      "t_hour": 6,
+      "t_minute": 9,
+      "ext_price": 577.08
+    },
+    {
+      "brand_id": 6008002,
+      "brand": "namelesscorp #2",
+      "t_hour": 18,
+      "t_minute": 48,
+      "ext_price": 574.56
+    },
+    {
+      "brand_id": 7004009,
+      "brand": "edu packbrand #9",
+      "t_hour": 9,
+      "t_minute": 8,
+      "ext_price": 571.74
+    },
+    {
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "t_hour": 7,
+      "t_minute": 26,
+      "ext_price": 569.8
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 9,
+      "t_minute": 54,
+      "ext_price": 569.06
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 17,
+      "t_minute": 9,
+      "ext_price": 561.68
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 9,
+      "t_minute": 7,
+      "ext_price": 561.15
+    },
+    {
+      "brand_id": 6011008,
+      "brand": "amalgbrand #8",
+      "t_hour": 8,
+      "t_minute": 13,
+      "ext_price": 560.55
+    },
+    {
+      "brand_id": 7010004,
+      "brand": "univnameless #4",
+      "t_hour": 19,
+      "t_minute": 23,
+      "ext_price": 559.65
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 7,
+      "t_minute": 2,
+      "ext_price": 557.62
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 7,
+      "t_minute": 8,
+      "ext_price": 557.46
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 18,
+      "t_minute": 31,
+      "ext_price": 555.66
+    },
+    {
+      "brand_id": 9012005,
+      "brand": "importounivamalg #5",
+      "t_hour": 19,
+      "t_minute": 59,
+      "ext_price": 551.46
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 17,
+      "t_minute": 51,
+      "ext_price": 541.58
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 19,
+      "t_minute": 2,
+      "ext_price": 538.89
+    },
+    {
+      "brand_id": 9013009,
+      "brand": "exportiunivamalg #9",
+      "t_hour": 9,
+      "t_minute": 57,
+      "ext_price": 536.76
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 19,
+      "t_minute": 20,
+      "ext_price": 534.3
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 9,
+      "t_minute": 12,
+      "ext_price": 528.7
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 18,
+      "t_minute": 23,
+      "ext_price": 525.69
+    },
+    {
+      "brand_id": 6015006,
+      "brand": "scholarbrand #6",
+      "t_hour": 19,
+      "t_minute": 0,
+      "ext_price": 525.39
+    },
+    {
+      "brand_id": 9013009,
+      "brand": "exportiunivamalg #9",
+      "t_hour": 18,
+      "t_minute": 43,
+      "ext_price": 525.3
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 19,
+      "t_minute": 19,
+      "ext_price": 524.7
+    },
+    {
+      "brand_id": 8013007,
+      "brand": "exportimaxi #7",
+      "t_hour": 7,
+      "t_minute": 11,
+      "ext_price": 520.8
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 17,
+      "t_minute": 15,
+      "ext_price": 518.24
+    },
+    {
+      "brand_id": 8002009,
+      "brand": "importonameless #9",
+      "t_hour": 19,
+      "t_minute": 33,
+      "ext_price": 516.87
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 19,
+      "t_minute": 45,
+      "ext_price": 512.82
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 8,
+      "t_minute": 32,
+      "ext_price": 511.53
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 8,
+      "t_minute": 52,
+      "ext_price": 510.72
+    },
+    {
+      "brand_id": 2003001,
+      "brand": "exportiimporto #1",
+      "t_hour": 18,
+      "t_minute": 54,
+      "ext_price": 508.08
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 17,
+      "t_minute": 53,
+      "ext_price": 507.78
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 9,
+      "t_minute": 24,
+      "ext_price": 502.5
+    },
+    {
+      "brand_id": 8004009,
+      "brand": "edu packnameless #9",
+      "t_hour": 9,
+      "t_minute": 22,
+      "ext_price": 501.96
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 17,
+      "t_minute": 9,
+      "ext_price": 500.4
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 17,
+      "t_minute": 51,
+      "ext_price": 500.01
+    },
+    {
+      "brand_id": 8003010,
+      "brand": "exportinameless #10",
+      "t_hour": 9,
+      "t_minute": 0,
+      "ext_price": 495.38
+    },
+    {
+      "brand_id": 8016004,
+      "brand": "corpmaxi #4",
+      "t_hour": 17,
+      "t_minute": 32,
+      "ext_price": 493.6
+    },
+    {
+      "brand_id": 6008005,
+      "brand": "namelesscorp #5",
+      "t_hour": 18,
+      "t_minute": 51,
+      "ext_price": 493.47
+    },
+    {
+      "brand_id": 10012017,
+      "brand": "importoamalgamalg #17",
+      "t_hour": 8,
+      "t_minute": 53,
+      "ext_price": 492.56
+    },
+    {
+      "brand_id": 9012003,
+      "brand": "importounivamalg #3",
+      "t_hour": 19,
+      "t_minute": 16,
+      "ext_price": 492.15
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 17,
+      "t_minute": 51,
+      "ext_price": 492.12
+    },
+    {
+      "brand_id": 7016001,
+      "brand": "corpnameless #1",
+      "t_hour": 17,
+      "t_minute": 32,
+      "ext_price": 491.47
+    },
+    {
+      "brand_id": 6012008,
+      "brand": "importobrand #8",
+      "t_hour": 19,
+      "t_minute": 41,
+      "ext_price": 490.62
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 17,
+      "t_minute": 41,
+      "ext_price": 486.55
+    },
+    {
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "t_hour": 9,
+      "t_minute": 41,
+      "ext_price": 478.8
+    },
+    {
+      "brand_id": 10004001,
+      "brand": "edu packunivamalg #1",
+      "t_hour": 18,
+      "t_minute": 58,
+      "ext_price": 478.5
+    },
+    {
+      "brand_id": 6003008,
+      "brand": "exporticorp #8",
+      "t_hour": 18,
+      "t_minute": 36,
+      "ext_price": 478.08
+    },
+    {
+      "brand_id": 2003001,
+      "brand": "exportiimporto #1",
+      "t_hour": 19,
+      "t_minute": 58,
+      "ext_price": 477.0
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 18,
+      "t_minute": 51,
+      "ext_price": 474.96
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 17,
+      "t_minute": 56,
+      "ext_price": 473.8
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 7,
+      "t_minute": 46,
+      "ext_price": 467.48
+    },
+    {
+      "brand_id": 10010013,
+      "brand": "univamalgamalg #13",
+      "t_hour": 18,
+      "t_minute": 51,
+      "ext_price": 465.84
+    },
+    {
+      "brand_id": 9008005,
+      "brand": "namelessmaxi #5",
+      "t_hour": 17,
+      "t_minute": 4,
+      "ext_price": 465.74
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 18,
+      "t_minute": 8,
+      "ext_price": 462.25
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 6,
+      "t_minute": 23,
+      "ext_price": 461.02
+    },
+    {
+      "brand_id": 9013009,
+      "brand": "exportiunivamalg #9",
+      "t_hour": 9,
+      "t_minute": 16,
+      "ext_price": 457.1
+    },
+    {
+      "brand_id": 8016004,
+      "brand": "corpmaxi #4",
+      "t_hour": 7,
+      "t_minute": 53,
+      "ext_price": 455.4
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 19,
+      "t_minute": 55,
+      "ext_price": 451.2
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 8,
+      "t_minute": 21,
+      "ext_price": 440.72
+    },
+    {
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "t_hour": 19,
+      "t_minute": 57,
+      "ext_price": 440.45
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 17,
+      "t_minute": 46,
+      "ext_price": 437.52
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 18,
+      "t_minute": 32,
+      "ext_price": 434.16
+    },
+    {
+      "brand_id": 10009015,
+      "brand": "maxiunivamalg #15",
+      "t_hour": 19,
+      "t_minute": 55,
+      "ext_price": 427.7
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 8,
+      "t_minute": 19,
+      "ext_price": 421.2
+    },
+    {
+      "brand_id": 9015011,
+      "brand": "scholarunivamalg #11",
+      "t_hour": 8,
+      "t_minute": 55,
+      "ext_price": 420.48
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 9,
+      "t_minute": 47,
+      "ext_price": 417.12
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 19,
+      "t_minute": 26,
+      "ext_price": 412.83
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 18,
+      "t_minute": 31,
+      "ext_price": 409.2
+    },
+    {
+      "brand_id": 4001002,
+      "brand": "amalgedu pack #2",
+      "t_hour": 8,
+      "t_minute": 50,
+      "ext_price": 408.76
+    },
+    {
+      "brand_id": 7010009,
+      "brand": "univnameless #9",
+      "t_hour": 18,
+      "t_minute": 26,
+      "ext_price": 408.15
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 19,
+      "t_minute": 47,
+      "ext_price": 404.82
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 9,
+      "t_minute": 58,
+      "ext_price": 401.39
+    },
+    {
+      "brand_id": 9012008,
+      "brand": "importounivamalg #8",
+      "t_hour": 9,
+      "t_minute": 43,
+      "ext_price": 400.04
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 17,
+      "t_minute": 10,
+      "ext_price": 399.84
+    },
+    {
+      "brand_id": 6008007,
+      "brand": "namelesscorp #7",
+      "t_hour": 19,
+      "t_minute": 54,
+      "ext_price": 396.8
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 18,
+      "t_minute": 37,
+      "ext_price": 395.17
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 18,
+      "t_minute": 37,
+      "ext_price": 394.5
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 17,
+      "t_minute": 39,
+      "ext_price": 390.6
+    },
+    {
+      "brand_id": 7016001,
+      "brand": "corpnameless #1",
+      "t_hour": 9,
+      "t_minute": 37,
+      "ext_price": 388.49
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 8,
+      "t_minute": 48,
+      "ext_price": 387.0
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 8,
+      "t_minute": 1,
+      "ext_price": 384.29
+    },
+    {
+      "brand_id": 8004003,
+      "brand": "edu packnameless #3",
+      "t_hour": 8,
+      "t_minute": 11,
+      "ext_price": 383.78
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 17,
+      "t_minute": 22,
+      "ext_price": 383.4
+    },
+    {
+      "brand_id": 9014011,
+      "brand": "edu packunivamalg #11",
+      "t_hour": 7,
+      "t_minute": 58,
+      "ext_price": 382.67
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 9,
+      "t_minute": 26,
+      "ext_price": 372.06
+    },
+    {
+      "brand_id": 10015013,
+      "brand": "scholaramalgamalg #13",
+      "t_hour": 8,
+      "t_minute": 25,
+      "ext_price": 372.05
+    },
+    {
+      "brand_id": 5004001,
+      "brand": "edu packscholar #1",
+      "t_hour": 8,
+      "t_minute": 30,
+      "ext_price": 371.2
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 18,
+      "t_minute": 0,
+      "ext_price": 368.25
+    },
+    {
+      "brand_id": 10003004,
+      "brand": "exportiunivamalg #4",
+      "t_hour": 18,
+      "t_minute": 18,
+      "ext_price": 365.7
+    },
+    {
+      "brand_id": 10015013,
+      "brand": "scholaramalgamalg #13",
+      "t_hour": 17,
+      "t_minute": 10,
+      "ext_price": 362.16
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 6,
+      "t_minute": 7,
+      "ext_price": 359.64
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 19,
+      "t_minute": 16,
+      "ext_price": 358.02
+    },
+    {
+      "brand_id": 8011009,
+      "brand": "amalgmaxi #9",
+      "t_hour": 19,
+      "t_minute": 42,
+      "ext_price": 357.6
+    },
+    {
+      "brand_id": 9013009,
+      "brand": "exportiunivamalg #9",
+      "t_hour": 19,
+      "t_minute": 55,
+      "ext_price": 357.03
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 19,
+      "t_minute": 0,
+      "ext_price": 355.46
+    },
+    {
+      "brand_id": 5004002,
+      "brand": "edu packscholar #2",
+      "t_hour": 19,
+      "t_minute": 24,
+      "ext_price": 350.46
+    },
+    {
+      "brand_id": 6002005,
+      "brand": "importocorp #5",
+      "t_hour": 17,
+      "t_minute": 22,
+      "ext_price": 348.88
+    },
+    {
+      "brand_id": 7016001,
+      "brand": "corpnameless #1",
+      "t_hour": 17,
+      "t_minute": 51,
+      "ext_price": 348.48
+    },
+    {
+      "brand_id": 7016001,
+      "brand": "corpnameless #1",
+      "t_hour": 9,
+      "t_minute": 8,
+      "ext_price": 347.62
+    },
+    {
+      "brand_id": 6010005,
+      "brand": "univbrand #5",
+      "t_hour": 19,
+      "t_minute": 23,
+      "ext_price": 346.45
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 17,
+      "t_minute": 41,
+      "ext_price": 338.85
+    },
+    {
+      "brand_id": 6012008,
+      "brand": "importobrand #8",
+      "t_hour": 9,
+      "t_minute": 0,
+      "ext_price": 338.04
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 19,
+      "t_minute": 43,
+      "ext_price": 330.28
+    },
+    {
+      "brand_id": 4001002,
+      "brand": "amalgedu pack #2",
+      "t_hour": 17,
+      "t_minute": 6,
+      "ext_price": 330.24
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 18,
+      "t_minute": 16,
+      "ext_price": 326.77
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 19,
+      "t_minute": 58,
+      "ext_price": 324.86
+    },
+    {
+      "brand_id": 10003016,
+      "brand": "exportiunivamalg #16",
+      "t_hour": 19,
+      "t_minute": 34,
+      "ext_price": 323.28
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 17,
+      "t_minute": 1,
+      "ext_price": 321.75
+    },
+    {
+      "brand_id": 6005001,
+      "brand": "scholarcorp #1",
+      "t_hour": 17,
+      "t_minute": 45,
+      "ext_price": 320.32
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 19,
+      "t_minute": 9,
+      "ext_price": 320.16
+    },
+    {
+      "brand_id": 5001002,
+      "brand": "amalgscholar #2",
+      "t_hour": 19,
+      "t_minute": 42,
+      "ext_price": 319.26
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 19,
+      "t_minute": 20,
+      "ext_price": 316.0
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 18,
+      "t_minute": 11,
+      "ext_price": 311.04
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 6,
+      "t_minute": 18,
+      "ext_price": 310.27
+    },
+    {
+      "brand_id": 10004001,
+      "brand": "edu packunivamalg #1",
+      "t_hour": 8,
+      "t_minute": 39,
+      "ext_price": 309.72
+    },
+    {
+      "brand_id": 8011009,
+      "brand": "amalgmaxi #9",
+      "t_hour": 8,
+      "t_minute": 23,
+      "ext_price": 309.14
+    },
+    {
+      "brand_id": 6011005,
+      "brand": "amalgbrand #5",
+      "t_hour": 18,
+      "t_minute": 40,
+      "ext_price": 308.89
+    },
+    {
+      "brand_id": 7012010,
+      "brand": "importonameless #10",
+      "t_hour": 19,
+      "t_minute": 35,
+      "ext_price": 308.37
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 17,
+      "t_minute": 43,
+      "ext_price": 305.61
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 18,
+      "t_minute": 27,
+      "ext_price": 303.96
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 7,
+      "t_minute": 56,
+      "ext_price": 302.75
+    },
+    {
+      "brand_id": 8014005,
+      "brand": "edu packmaxi #5",
+      "t_hour": 18,
+      "t_minute": 14,
+      "ext_price": 302.64
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 19,
+      "t_minute": 27,
+      "ext_price": 301.51
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 18,
+      "t_minute": 3,
+      "ext_price": 299.0
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 8,
+      "t_minute": 13,
+      "ext_price": 298.08
+    },
+    {
+      "brand_id": 6010005,
+      "brand": "univbrand #5",
+      "t_hour": 17,
+      "t_minute": 24,
+      "ext_price": 297.44
+    },
+    {
+      "brand_id": 5001002,
+      "brand": "amalgscholar #2",
+      "t_hour": 19,
+      "t_minute": 24,
+      "ext_price": 297.33
+    },
+    {
+      "brand_id": 7010003,
+      "brand": "univnameless #3",
+      "t_hour": 8,
+      "t_minute": 27,
+      "ext_price": 294.35
+    },
+    {
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "t_hour": 8,
+      "t_minute": 38,
+      "ext_price": 293.2
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 19,
+      "t_minute": 57,
+      "ext_price": 292.11
+    },
+    {
+      "brand_id": 6012005,
+      "brand": "importobrand #5",
+      "t_hour": 17,
+      "t_minute": 30,
+      "ext_price": 291.24
+    },
+    {
+      "brand_id": 10015004,
+      "brand": "scholaramalgamalg #4",
+      "t_hour": 17,
+      "t_minute": 58,
+      "ext_price": 289.94
+    },
+    {
+      "brand_id": 4001002,
+      "brand": "amalgedu pack #2",
+      "t_hour": 7,
+      "t_minute": 40,
+      "ext_price": 289.8
+    },
+    {
+      "brand_id": 6015006,
+      "brand": "scholarbrand #6",
+      "t_hour": 17,
+      "t_minute": 2,
+      "ext_price": 289.11
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 7,
+      "t_minute": 56,
+      "ext_price": 287.31
+    },
+    {
+      "brand_id": 2003002,
+      "brand": "exportiimporto #2",
+      "t_hour": 6,
+      "t_minute": 53,
+      "ext_price": 281.28
+    },
+    {
+      "brand_id": 5004002,
+      "brand": "edu packscholar #2",
+      "t_hour": 18,
+      "t_minute": 47,
+      "ext_price": 279.68
+    },
+    {
+      "brand_id": 4003001,
+      "brand": "exportiedu pack #1",
+      "t_hour": 9,
+      "t_minute": 31,
+      "ext_price": 278.38
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 9,
+      "t_minute": 24,
+      "ext_price": 275.95
+    },
+    {
+      "brand_id": 4001002,
+      "brand": "amalgedu pack #2",
+      "t_hour": 7,
+      "t_minute": 6,
+      "ext_price": 273.53
+    },
+    {
+      "brand_id": 5004002,
+      "brand": "edu packscholar #2",
+      "t_hour": 19,
+      "t_minute": 31,
+      "ext_price": 273.08
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 9,
+      "t_minute": 1,
+      "ext_price": 272.02
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 17,
+      "t_minute": 15,
+      "ext_price": 268.92
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 18,
+      "t_minute": 33,
+      "ext_price": 267.12
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 9,
+      "t_minute": 32,
+      "ext_price": 266.0
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 19,
+      "t_minute": 21,
+      "ext_price": 264.1
+    },
+    {
+      "brand_id": 3002002,
+      "brand": "importoexporti #2",
+      "t_hour": 8,
+      "t_minute": 35,
+      "ext_price": 254.1
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 19,
+      "t_minute": 10,
+      "ext_price": 253.47
+    },
+    {
+      "brand_id": 10015004,
+      "brand": "scholaramalgamalg #4",
+      "t_hour": 19,
+      "t_minute": 42,
+      "ext_price": 253.46
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 17,
+      "t_minute": 0,
+      "ext_price": 253.27
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 8,
+      "t_minute": 38,
+      "ext_price": 251.02
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 19,
+      "t_minute": 15,
+      "ext_price": 247.75
+    },
+    {
+      "brand_id": 7010009,
+      "brand": "univnameless #9",
+      "t_hour": 17,
+      "t_minute": 37,
+      "ext_price": 247.08
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 9,
+      "t_minute": 27,
+      "ext_price": 244.93
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 19,
+      "t_minute": 32,
+      "ext_price": 241.08
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 7,
+      "t_minute": 57,
+      "ext_price": 240.8
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 18,
+      "t_minute": 21,
+      "ext_price": 236.72
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 8,
+      "t_minute": 9,
+      "ext_price": 236.6
+    },
+    {
+      "brand_id": 9008002,
+      "brand": "namelessmaxi #2",
+      "t_hour": 18,
+      "t_minute": 6,
+      "ext_price": 233.68
+    },
+    {
+      "brand_id": 10010013,
+      "brand": "univamalgamalg #13",
+      "t_hour": 17,
+      "t_minute": 7,
+      "ext_price": 232.5
+    },
+    {
+      "brand_id": 10003004,
+      "brand": "exportiunivamalg #4",
+      "t_hour": 17,
+      "t_minute": 27,
+      "ext_price": 227.43
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 19,
+      "t_minute": 17,
+      "ext_price": 225.36
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 18,
+      "t_minute": 29,
+      "ext_price": 221.32
+    },
+    {
+      "brand_id": 6012008,
+      "brand": "importobrand #8",
+      "t_hour": 9,
+      "t_minute": 53,
+      "ext_price": 218.4
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 9,
+      "t_minute": 41,
+      "ext_price": 215.28
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 7,
+      "t_minute": 31,
+      "ext_price": 215.05
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 8,
+      "t_minute": 1,
+      "ext_price": 213.45
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 19,
+      "t_minute": 15,
+      "ext_price": 211.96
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 7,
+      "t_minute": 32,
+      "ext_price": 210.84
+    },
+    {
+      "brand_id": 7012010,
+      "brand": "importonameless #10",
+      "t_hour": 7,
+      "t_minute": 2,
+      "ext_price": 208.72
+    },
+    {
+      "brand_id": 7008009,
+      "brand": "namelessbrand #9",
+      "t_hour": 17,
+      "t_minute": 43,
+      "ext_price": 207.97
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 17,
+      "t_minute": 8,
+      "ext_price": 206.14
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 19,
+      "t_minute": 18,
+      "ext_price": 203.73
+    },
+    {
+      "brand_id": 7009010,
+      "brand": "maxibrand #10",
+      "t_hour": 18,
+      "t_minute": 11,
+      "ext_price": 203.68
+    },
+    {
+      "brand_id": 10015004,
+      "brand": "scholaramalgamalg #4",
+      "t_hour": 17,
+      "t_minute": 46,
+      "ext_price": 203.16
+    },
+    {
+      "brand_id": 6011001,
+      "brand": "amalgbrand #1",
+      "t_hour": 8,
+      "t_minute": 8,
+      "ext_price": 202.3
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 9,
+      "t_minute": 25,
+      "ext_price": 201.78
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 7,
+      "t_minute": 50,
+      "ext_price": 199.92
+    },
+    {
+      "brand_id": 7010009,
+      "brand": "univnameless #9",
+      "t_hour": 18,
+      "t_minute": 48,
+      "ext_price": 197.2
+    },
+    {
+      "brand_id": 10012017,
+      "brand": "importoamalgamalg #17",
+      "t_hour": 17,
+      "t_minute": 7,
+      "ext_price": 196.96
+    },
+    {
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "t_hour": 17,
+      "t_minute": 53,
+      "ext_price": 196.46
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 17,
+      "t_minute": 43,
+      "ext_price": 192.96
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 17,
+      "t_minute": 36,
+      "ext_price": 192.08
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 17,
+      "t_minute": 34,
+      "ext_price": 190.6
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 18,
+      "t_minute": 26,
+      "ext_price": 189.15
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 17,
+      "t_minute": 55,
+      "ext_price": 186.66
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 19,
+      "t_minute": 29,
+      "ext_price": 186.5
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 18,
+      "t_minute": 45,
+      "ext_price": 185.64
+    },
+    {
+      "brand_id": 9012008,
+      "brand": "importounivamalg #8",
+      "t_hour": 7,
+      "t_minute": 51,
+      "ext_price": 184.14
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 18,
+      "t_minute": 3,
+      "ext_price": 183.3
+    },
+    {
+      "brand_id": 10012004,
+      "brand": "importoamalgamalg #4",
+      "t_hour": 18,
+      "t_minute": 33,
+      "ext_price": 180.0
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 18,
+      "t_minute": 42,
+      "ext_price": 174.86
+    },
+    {
+      "brand_id": 5001002,
+      "brand": "amalgscholar #2",
+      "t_hour": 18,
+      "t_minute": 15,
+      "ext_price": 174.72
+    },
+    {
+      "brand_id": 8013009,
+      "brand": "exportimaxi #9",
+      "t_hour": 19,
+      "t_minute": 25,
+      "ext_price": 171.57
+    },
+    {
+      "brand_id": 7008009,
+      "brand": "namelessbrand #9",
+      "t_hour": 18,
+      "t_minute": 40,
+      "ext_price": 170.1
+    },
+    {
+      "brand_id": 5001002,
+      "brand": "amalgscholar #2",
+      "t_hour": 8,
+      "t_minute": 25,
+      "ext_price": 169.8
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 19,
+      "t_minute": 16,
+      "ext_price": 169.26
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 19,
+      "t_minute": 0,
+      "ext_price": 167.05
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 17,
+      "t_minute": 32,
+      "ext_price": 166.64
+    },
+    {
+      "brand_id": 10002012,
+      "brand": "importounivamalg #12",
+      "t_hour": 18,
+      "t_minute": 16,
+      "ext_price": 161.7
+    },
+    {
+      "brand_id": 7014001,
+      "brand": "edu packnameless #1",
+      "t_hour": 18,
+      "t_minute": 38,
+      "ext_price": 161.54
+    },
+    {
+      "brand_id": 10003004,
+      "brand": "exportiunivamalg #4",
+      "t_hour": 19,
+      "t_minute": 46,
+      "ext_price": 159.58
+    },
+    {
+      "brand_id": 10010013,
+      "brand": "univamalgamalg #13",
+      "t_hour": 18,
+      "t_minute": 40,
+      "ext_price": 158.62
+    },
+    {
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "t_hour": 17,
+      "t_minute": 38,
+      "ext_price": 156.69
+    },
+    {
+      "brand_id": 6008002,
+      "brand": "namelesscorp #2",
+      "t_hour": 19,
+      "t_minute": 53,
+      "ext_price": 153.78
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 19,
+      "t_minute": 48,
+      "ext_price": 150.99
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 8,
+      "t_minute": 5,
+      "ext_price": 148.39
+    },
+    {
+      "brand_id": 9012005,
+      "brand": "importounivamalg #5",
+      "t_hour": 18,
+      "t_minute": 34,
+      "ext_price": 143.6
+    },
+    {
+      "brand_id": 9008005,
+      "brand": "namelessmaxi #5",
+      "t_hour": 18,
+      "t_minute": 3,
+      "ext_price": 142.74
+    },
+    {
+      "brand_id": 6002005,
+      "brand": "importocorp #5",
+      "t_hour": 7,
+      "t_minute": 54,
+      "ext_price": 142.36
+    },
+    {
+      "brand_id": 2004001,
+      "brand": "edu packimporto #1",
+      "t_hour": 19,
+      "t_minute": 10,
+      "ext_price": 142.35
+    },
+    {
+      "brand_id": 7010004,
+      "brand": "univnameless #4",
+      "t_hour": 17,
+      "t_minute": 44,
+      "ext_price": 141.37
+    },
+    {
+      "brand_id": 6002005,
+      "brand": "importocorp #5",
+      "t_hour": 9,
+      "t_minute": 41,
+      "ext_price": 140.7
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 17,
+      "t_minute": 4,
+      "ext_price": 139.06
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 18,
+      "t_minute": 31,
+      "ext_price": 137.7
+    },
+    {
+      "brand_id": 8013007,
+      "brand": "exportimaxi #7",
+      "t_hour": 18,
+      "t_minute": 51,
+      "ext_price": 136.71
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 17,
+      "t_minute": 38,
+      "ext_price": 134.2
+    },
+    {
+      "brand_id": 4004002,
+      "brand": "edu packedu pack #2",
+      "t_hour": 18,
+      "t_minute": 23,
+      "ext_price": 128.03
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 17,
+      "t_minute": 44,
+      "ext_price": 126.36
+    },
+    {
+      "brand_id": 7013007,
+      "brand": "exportinameless #7",
+      "t_hour": 19,
+      "t_minute": 49,
+      "ext_price": 123.2
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 18,
+      "t_minute": 40,
+      "ext_price": 122.32
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 6,
+      "t_minute": 44,
+      "ext_price": 118.32
+    },
+    {
+      "brand_id": 2003002,
+      "brand": "exportiimporto #2",
+      "t_hour": 9,
+      "t_minute": 49,
+      "ext_price": 118.08
+    },
+    {
+      "brand_id": 6005001,
+      "brand": "scholarcorp #1",
+      "t_hour": 17,
+      "t_minute": 13,
+      "ext_price": 113.68
+    },
+    {
+      "brand_id": 9008002,
+      "brand": "namelessmaxi #2",
+      "t_hour": 17,
+      "t_minute": 52,
+      "ext_price": 111.8
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 17,
+      "t_minute": 59,
+      "ext_price": 104.64
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 9,
+      "t_minute": 23,
+      "ext_price": 104.38
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 18,
+      "t_minute": 52,
+      "ext_price": 103.14
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 9,
+      "t_minute": 28,
+      "ext_price": 98.28
+    },
+    {
+      "brand_id": 10004001,
+      "brand": "edu packunivamalg #1",
+      "t_hour": 19,
+      "t_minute": 56,
+      "ext_price": 96.46
+    },
+    {
+      "brand_id": 8013007,
+      "brand": "exportimaxi #7",
+      "t_hour": 17,
+      "t_minute": 49,
+      "ext_price": 95.81
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 9,
+      "t_minute": 3,
+      "ext_price": 94.29
+    },
+    {
+      "brand_id": 7012003,
+      "brand": "importonameless #3",
+      "t_hour": 8,
+      "t_minute": 51,
+      "ext_price": 93.03
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 19,
+      "t_minute": 24,
+      "ext_price": 92.13
+    },
+    {
+      "brand_id": 2001001,
+      "brand": "amalgimporto #1",
+      "t_hour": 18,
+      "t_minute": 47,
+      "ext_price": 92.1
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 17,
+      "t_minute": 15,
+      "ext_price": 89.28
+    },
+    {
+      "brand_id": 8014005,
+      "brand": "edu packmaxi #5",
+      "t_hour": 18,
+      "t_minute": 24,
+      "ext_price": 89.1
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 18,
+      "t_minute": 21,
+      "ext_price": 87.48
+    },
+    {
+      "brand_id": 8016004,
+      "brand": "corpmaxi #4",
+      "t_hour": 17,
+      "t_minute": 34,
+      "ext_price": 87.1
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 17,
+      "t_minute": 26,
+      "ext_price": 86.92
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 19,
+      "t_minute": 19,
+      "ext_price": 85.68
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 19,
+      "t_minute": 46,
+      "ext_price": 85.44
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 6,
+      "t_minute": 3,
+      "ext_price": 85.26
+    },
+    {
+      "brand_id": 7014001,
+      "brand": "edu packnameless #1",
+      "t_hour": 9,
+      "t_minute": 26,
+      "ext_price": 83.64
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 9,
+      "t_minute": 7,
+      "ext_price": 81.0
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 18,
+      "t_minute": 9,
+      "ext_price": 80.1
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 19,
+      "t_minute": 8,
+      "ext_price": 79.56
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 9,
+      "t_minute": 37,
+      "ext_price": 76.52
+    },
+    {
+      "brand_id": 8003010,
+      "brand": "exportinameless #10",
+      "t_hour": 19,
+      "t_minute": 26,
+      "ext_price": 75.95
+    },
+    {
+      "brand_id": 2003001,
+      "brand": "exportiimporto #1",
+      "t_hour": 9,
+      "t_minute": 32,
+      "ext_price": 75.64
+    },
+    {
+      "brand_id": 6002003,
+      "brand": "importocorp #3",
+      "t_hour": 17,
+      "t_minute": 20,
+      "ext_price": 74.16
+    },
+    {
+      "brand_id": 10009015,
+      "brand": "maxiunivamalg #15",
+      "t_hour": 18,
+      "t_minute": 2,
+      "ext_price": 73.5
+    },
+    {
+      "brand_id": 6015006,
+      "brand": "scholarbrand #6",
+      "t_hour": 19,
+      "t_minute": 26,
+      "ext_price": 72.9
+    },
+    {
+      "brand_id": 6006007,
+      "brand": "corpcorp #7",
+      "t_hour": 19,
+      "t_minute": 54,
+      "ext_price": 72.42
+    },
+    {
+      "brand_id": 1004001,
+      "brand": "edu packamalg #1",
+      "t_hour": 19,
+      "t_minute": 2,
+      "ext_price": 71.12
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 17,
+      "t_minute": 28,
+      "ext_price": 70.98
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 19,
+      "t_minute": 59,
+      "ext_price": 70.15
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 8,
+      "t_minute": 35,
+      "ext_price": 68.8
+    },
+    {
+      "brand_id": 1004001,
+      "brand": "edu packamalg #1",
+      "t_hour": 19,
+      "t_minute": 42,
+      "ext_price": 67.47
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 19,
+      "t_minute": 58,
+      "ext_price": 67.28
+    },
+    {
+      "brand_id": 6011005,
+      "brand": "amalgbrand #5",
+      "t_hour": 17,
+      "t_minute": 13,
+      "ext_price": 64.38
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 8,
+      "t_minute": 52,
+      "ext_price": 64.2
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 9,
+      "t_minute": 48,
+      "ext_price": 63.78
+    },
+    {
+      "brand_id": 10002012,
+      "brand": "importounivamalg #12",
+      "t_hour": 18,
+      "t_minute": 4,
+      "ext_price": 63.75
+    },
+    {
+      "brand_id": 8002009,
+      "brand": "importonameless #9",
+      "t_hour": 6,
+      "t_minute": 46,
+      "ext_price": 63.51
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 17,
+      "t_minute": 19,
+      "ext_price": 58.8
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 9,
+      "t_minute": 20,
+      "ext_price": 56.75
+    },
+    {
+      "brand_id": 5002001,
+      "brand": "importoscholar #1",
+      "t_hour": 8,
+      "t_minute": 48,
+      "ext_price": 55.4
+    },
+    {
+      "brand_id": 8014005,
+      "brand": "edu packmaxi #5",
+      "t_hour": 17,
+      "t_minute": 11,
+      "ext_price": 54.9
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 19,
+      "t_minute": 49,
+      "ext_price": 54.05
+    },
+    {
+      "brand_id": 10013015,
+      "brand": "exportiamalgamalg #15",
+      "t_hour": 9,
+      "t_minute": 18,
+      "ext_price": 53.19
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 17,
+      "t_minute": 4,
+      "ext_price": 50.0
+    },
+    {
+      "brand_id": 6008007,
+      "brand": "namelesscorp #7",
+      "t_hour": 17,
+      "t_minute": 17,
+      "ext_price": 49.95
+    },
+    {
+      "brand_id": 2003001,
+      "brand": "exportiimporto #1",
+      "t_hour": 17,
+      "t_minute": 18,
+      "ext_price": 49.66
+    },
+    {
+      "brand_id": 10012011,
+      "brand": "importoamalgamalg #11",
+      "t_hour": 18,
+      "t_minute": 29,
+      "ext_price": 48.51
+    },
+    {
+      "brand_id": 9016003,
+      "brand": "corpunivamalg #3",
+      "t_hour": 18,
+      "t_minute": 8,
+      "ext_price": 47.46
+    },
+    {
+      "brand_id": 6005001,
+      "brand": "scholarcorp #1",
+      "t_hour": 19,
+      "t_minute": 16,
+      "ext_price": 46.9
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 18,
+      "t_minute": 25,
+      "ext_price": 46.56
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 8,
+      "t_minute": 5,
+      "ext_price": 45.08
+    },
+    {
+      "brand_id": 5004002,
+      "brand": "edu packscholar #2",
+      "t_hour": 17,
+      "t_minute": 10,
+      "ext_price": 44.58
+    },
+    {
+      "brand_id": 10002012,
+      "brand": "importounivamalg #12",
+      "t_hour": 18,
+      "t_minute": 0,
+      "ext_price": 42.66
+    },
+    {
+      "brand_id": 7010003,
+      "brand": "univnameless #3",
+      "t_hour": 19,
+      "t_minute": 20,
+      "ext_price": 41.58
+    },
+    {
+      "brand_id": 10010013,
+      "brand": "univamalgamalg #13",
+      "t_hour": 7,
+      "t_minute": 11,
+      "ext_price": 41.14
+    },
+    {
+      "brand_id": 8013009,
+      "brand": "exportimaxi #9",
+      "t_hour": 19,
+      "t_minute": 31,
+      "ext_price": 38.61
+    },
+    {
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "t_hour": 9,
+      "t_minute": 57,
+      "ext_price": 36.74
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 7,
+      "t_minute": 37,
+      "ext_price": 32.8
+    },
+    {
+      "brand_id": 6012005,
+      "brand": "importobrand #5",
+      "t_hour": 7,
+      "t_minute": 20,
+      "ext_price": 31.68
+    },
+    {
+      "brand_id": 10012017,
+      "brand": "importoamalgamalg #17",
+      "t_hour": 17,
+      "t_minute": 16,
+      "ext_price": 29.16
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 9,
+      "t_minute": 3,
+      "ext_price": 28.98
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 17,
+      "t_minute": 27,
+      "ext_price": 28.16
+    },
+    {
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "t_hour": 9,
+      "t_minute": 38,
+      "ext_price": 27.75
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 18,
+      "t_minute": 10,
+      "ext_price": 27.56
+    },
+    {
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "t_hour": 19,
+      "t_minute": 19,
+      "ext_price": 27.39
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 17,
+      "t_minute": 38,
+      "ext_price": 27.2
+    },
+    {
+      "brand_id": 1004001,
+      "brand": "edu packamalg #1",
+      "t_hour": 8,
+      "t_minute": 16,
+      "ext_price": 26.5
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 17,
+      "t_minute": 32,
+      "ext_price": 25.05
+    },
+    {
+      "brand_id": 9012005,
+      "brand": "importounivamalg #5",
+      "t_hour": 6,
+      "t_minute": 45,
+      "ext_price": 23.43
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 17,
+      "t_minute": 44,
+      "ext_price": 22.95
+    },
+    {
+      "brand_id": 3002001,
+      "brand": "importoexporti #1",
+      "t_hour": 19,
+      "t_minute": 4,
+      "ext_price": 21.44
+    },
+    {
+      "brand_id": 2004001,
+      "brand": "edu packimporto #1",
+      "t_hour": 19,
+      "t_minute": 27,
+      "ext_price": 21.36
+    },
+    {
+      "brand_id": 2003001,
+      "brand": "exportiimporto #1",
+      "t_hour": 8,
+      "t_minute": 42,
+      "ext_price": 19.44
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 19,
+      "t_minute": 11,
+      "ext_price": 19.2
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 19,
+      "t_minute": 18,
+      "ext_price": 19.2
+    },
+    {
+      "brand_id": 2002001,
+      "brand": "importoimporto #1",
+      "t_hour": 9,
+      "t_minute": 58,
+      "ext_price": 18.61
+    },
+    {
+      "brand_id": 9015009,
+      "brand": "scholarunivamalg #9",
+      "t_hour": 19,
+      "t_minute": 9,
+      "ext_price": 18.4
+    },
+    {
+      "brand_id": 8003010,
+      "brand": "exportinameless #10",
+      "t_hour": 7,
+      "t_minute": 24,
+      "ext_price": 17.6
+    },
+    {
+      "brand_id": 5002002,
+      "brand": "importoscholar #2",
+      "t_hour": 17,
+      "t_minute": 49,
+      "ext_price": 16.88
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 19,
+      "t_minute": 36,
+      "ext_price": 16.2
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 7,
+      "t_minute": 44,
+      "ext_price": 15.96
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 8,
+      "t_minute": 35,
+      "ext_price": 15.36
+    },
+    {
+      "brand_id": 1001001,
+      "brand": "amalgamalg #1",
+      "t_hour": 17,
+      "t_minute": 59,
+      "ext_price": 13.63
+    },
+    {
+      "brand_id": 7010004,
+      "brand": "univnameless #4",
+      "t_hour": 9,
+      "t_minute": 16,
+      "ext_price": 13.6
+    },
+    {
+      "brand_id": 4001001,
+      "brand": "amalgedu pack #1",
+      "t_hour": 17,
+      "t_minute": 54,
+      "ext_price": 12.75
+    },
+    {
+      "brand_id": 6002005,
+      "brand": "importocorp #5",
+      "t_hour": 19,
+      "t_minute": 43,
+      "ext_price": 10.8
+    },
+    {
+      "brand_id": 3003001,
+      "brand": "exportiexporti #1",
+      "t_hour": 8,
+      "t_minute": 58,
+      "ext_price": 9.93
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 7,
+      "t_minute": 40,
+      "ext_price": 7.42
+    },
+    {
+      "brand_id": 6009003,
+      "brand": "maxicorp #3",
+      "t_hour": 17,
+      "t_minute": 44,
+      "ext_price": 7.2
+    },
+    {
+      "brand_id": 9015011,
+      "brand": "scholarunivamalg #11",
+      "t_hour": 19,
+      "t_minute": 15,
+      "ext_price": 6.34
+    },
+    {
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "t_hour": 9,
+      "t_minute": 48,
+      "ext_price": 5.04
+    },
+    {
+      "brand_id": 6007003,
+      "brand": "brandcorp #3",
+      "t_hour": 17,
+      "t_minute": 51,
+      "ext_price": 4.32
+    },
+    {
+      "brand_id": 6016003,
+      "brand": "corpbrand #3",
+      "t_hour": 17,
+      "t_minute": 33,
+      "ext_price": 3.35
+    },
+    {
+      "brand_id": 5004002,
+      "brand": "edu packscholar #2",
+      "t_hour": 18,
+      "t_minute": 50,
+      "ext_price": 2.84
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 17,
+      "t_minute": 33,
+      "ext_price": 2.54
+    },
+    {
+      "brand_id": 3003002,
+      "brand": "exportiexporti #2",
+      "t_hour": 9,
+      "t_minute": 20,
+      "ext_price": 1.52
+    },
+    {
+      "brand_id": 9015011,
+      "brand": "scholarunivamalg #11",
+      "t_hour": 17,
+      "t_minute": 40,
+      "ext_price": 1.2
+    },
+    {
+      "brand_id": 1002001,
+      "brand": "importoamalg #1",
+      "t_hour": 9,
+      "t_minute": 28,
+      "ext_price": 0.0
+    },
+    {
+      "brand_id": 1002002,
+      "brand": "importoamalg #2",
+      "t_hour": 18,
+      "t_minute": 15,
+      "ext_price": 0.0
+    },
+    {
+      "brand_id": 1003002,
+      "brand": "exportiamalg #2",
+      "t_hour": 18,
+      "t_minute": 53,
+      "ext_price": 0.0
+    },
+    {
+      "brand_id": 1004002,
+      "brand": "edu packamalg #2",
+      "t_hour": 17,
+      "t_minute": 11,
+      "ext_price": 0.0
+    },
+    {
+      "brand_id": 2001001,
+      "brand": "amalgimporto #1",
+      "t_hour": 17,
+      "t_minute": 28,
+      "ext_price": 0.0
+    },
+    {
+      "brand_id": 2001002,
+      "brand": "amalgimporto #2",
+      "t_hour": 18,
+      "t_minute": 1,
+      "ext_price": 0.0
+    },
+    {
+      "brand_id": 2004001,
+      "brand": "edu packimporto #1",
+      "t_hour": 17,
+      "t_minute": 3,
+      "ext_price": 0.0
+    },
+    {
+      "brand_id": 2004002,
+      "brand": "edu packimporto #2",
+      "t_hour": 9,
+      "t_minute": 46,
+      "ext_price": 0.0
+    },
+    {
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "t_hour": 7,
+      "t_minute": 45,
+      "ext_price": 0.0
+    },
+    {
+      "brand_id": 4004001,
+      "brand": "edu packedu pack #1",
+      "t_hour": 17,
+      "t_minute": 3,
+      "ext_price": 0.0
+    },
+    {
+      "brand_id": 4004002,
+      "brand": "edu packedu pack #2",
+      "t_hour": 17,
+      "t_minute": 2,
+      "ext_price": 0.0
+    },
+    {
+      "brand_id": 8003010,
+      "brand": "exportinameless #10",
+      "t_hour": 17,
+      "t_minute": 28,
+      "ext_price": 0.0
+    },
+    {
+      "brand_id": 9012005,
+      "brand": "importounivamalg #5",
+      "t_hour": 19,
+      "t_minute": 25,
+      "ext_price": 0.0
+    },
+    {
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "t_hour": 9,
+      "t_minute": 3,
+      "ext_price": null
+    },
+    {
+      "brand_id": 8004009,
+      "brand": "edu packnameless #9",
+      "t_hour": 8,
+      "t_minute": 59,
+      "ext_price": null
+    },
+    {
+      "brand_id": 8011009,
+      "brand": "amalgmaxi #9",
+      "t_hour": 19,
+      "t_minute": 15,
+      "ext_price": null
+    },
+    {
+      "brand_id": 9016003,
+      "brand": "corpunivamalg #3",
+      "t_hour": 8,
+      "t_minute": 42,
+      "ext_price": null
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "query_num": 90,
+  "row_count": 1,
+  "columns": [
+    "am_pm_ratio"
+  ],
+  "rows": [
+    {
+      "am_pm_ratio": 0.5621890547263682
+    }
+  ]
+}

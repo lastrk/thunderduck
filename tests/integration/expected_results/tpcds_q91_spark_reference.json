@@ -1,0 +1,24 @@
+{
+  "query_num": 91,
+  "row_count": 2,
+  "columns": [
+    "Call_Center",
+    "Call_Center_Name",
+    "Manager",
+    "Returns_Loss"
+  ],
+  "rows": [
+    {
+      "Call_Center": "AAAAAAAABAAAAAAA",
+      "Call_Center_Name": "NY Metro",
+      "Manager": "Bob Belcher",
+      "Returns_Loss": 4725.36
+    },
+    {
+      "Call_Center": "AAAAAAAABAAAAAAA",
+      "Call_Center_Name": "NY Metro",
+      "Manager": "Bob Belcher",
+      "Returns_Loss": 574.43
+    }
+  ]
+}

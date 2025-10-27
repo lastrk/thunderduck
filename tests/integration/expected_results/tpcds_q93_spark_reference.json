@@ -1,0 +1,410 @@
+{
+  "query_num": 93,
+  "row_count": 100,
+  "columns": [
+    "ss_customer_sk",
+    "sumsales"
+  ],
+  "rows": [
+    {
+      "ss_customer_sk": 693,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 893,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 2146,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 2243,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 2301,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 2757,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 2902,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 4088,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 4221,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 4392,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 4413,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 5772,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 6198,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 6512,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 6768,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 6825,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 6881,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 7561,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 7819,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 8112,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 8616,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 8796,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 8903,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 9101,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 9313,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 9391,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 9867,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 9921,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 10225,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 10317,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 10427,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 10540,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 10557,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 11766,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 11885,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 12609,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 13145,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 13197,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 13411,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 14246,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 14264,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 14316,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 15108,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 15383,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 15544,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 15699,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 15756,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 16609,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 16696,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 17074,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 17078,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 17392,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 18061,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 18267,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 18479,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 18650,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 18682,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 19361,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 20000,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 20025,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 20057,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 20533,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 21219,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 21684,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 22295,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 23758,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 24374,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 24476,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 24561,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 24682,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 24716,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 24725,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 25116,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 25557,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 26107,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 26154,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 26856,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 26962,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 27021,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 27257,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 27391,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 27753,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 27835,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 27957,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 29327,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 29911,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 29972,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 30588,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 31036,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 31178,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 31610,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 32029,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 32625,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 33494,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 33754,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 33908,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 34212,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 35466,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 35499,
+      "sumsales": null
+    },
+    {
+      "ss_customer_sk": 35653,
+      "sumsales": null
+    }
+  ]
+}
