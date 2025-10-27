@@ -1,0 +1,511 @@
+{
+  "query_num": 53,
+  "row_count": 100,
+  "columns": [
+    "i_manufact_id",
+    "sum_sales",
+    "avg_quarterly_sales"
+  ],
+  "rows": [
+    {
+      "i_manufact_id": 827,
+      "sum_sales": 86.44,
+      "avg_quarterly_sales": 284.6175
+    },
+    {
+      "i_manufact_id": 827,
+      "sum_sales": 349.77,
+      "avg_quarterly_sales": 284.6175
+    },
+    {
+      "i_manufact_id": 827,
+      "sum_sales": 417.55,
+      "avg_quarterly_sales": 284.6175
+    },
+    {
+      "i_manufact_id": 360,
+      "sum_sales": 131.29,
+      "avg_quarterly_sales": 370.025
+    },
+    {
+      "i_manufact_id": 360,
+      "sum_sales": 198.02,
+      "avg_quarterly_sales": 370.025
+    },
+    {
+      "i_manufact_id": 360,
+      "sum_sales": 266.37,
+      "avg_quarterly_sales": 370.025
+    },
+    {
+      "i_manufact_id": 360,
+      "sum_sales": 884.42,
+      "avg_quarterly_sales": 370.025
+    },
+    {
+      "i_manufact_id": 812,
+      "sum_sales": 257.48,
+      "avg_quarterly_sales": 378.6275
+    },
+    {
+      "i_manufact_id": 812,
+      "sum_sales": 300.17,
+      "avg_quarterly_sales": 378.6275
+    },
+    {
+      "i_manufact_id": 812,
+      "sum_sales": 310.62,
+      "avg_quarterly_sales": 378.6275
+    },
+    {
+      "i_manufact_id": 812,
+      "sum_sales": 646.24,
+      "avg_quarterly_sales": 378.6275
+    },
+    {
+      "i_manufact_id": 247,
+      "sum_sales": 197.83,
+      "avg_quarterly_sales": 381.115
+    },
+    {
+      "i_manufact_id": 247,
+      "sum_sales": 289.54,
+      "avg_quarterly_sales": 381.115
+    },
+    {
+      "i_manufact_id": 247,
+      "sum_sales": 478.79,
+      "avg_quarterly_sales": 381.115
+    },
+    {
+      "i_manufact_id": 247,
+      "sum_sales": 558.3,
+      "avg_quarterly_sales": 381.115
+    },
+    {
+      "i_manufact_id": 134,
+      "sum_sales": 225.26,
+      "avg_quarterly_sales": 391.3175
+    },
+    {
+      "i_manufact_id": 134,
+      "sum_sales": 240.65,
+      "avg_quarterly_sales": 391.3175
+    },
+    {
+      "i_manufact_id": 134,
+      "sum_sales": 449.77,
+      "avg_quarterly_sales": 391.3175
+    },
+    {
+      "i_manufact_id": 134,
+      "sum_sales": 649.59,
+      "avg_quarterly_sales": 391.3175
+    },
+    {
+      "i_manufact_id": 554,
+      "sum_sales": 79.27,
+      "avg_quarterly_sales": 402.7125
+    },
+    {
+      "i_manufact_id": 554,
+      "sum_sales": 213.69,
+      "avg_quarterly_sales": 402.7125
+    },
+    {
+      "i_manufact_id": 554,
+      "sum_sales": 293.41,
+      "avg_quarterly_sales": 402.7125
+    },
+    {
+      "i_manufact_id": 554,
+      "sum_sales": 1024.48,
+      "avg_quarterly_sales": 402.7125
+    },
+    {
+      "i_manufact_id": 411,
+      "sum_sales": 161.47,
+      "avg_quarterly_sales": 403.7325
+    },
+    {
+      "i_manufact_id": 411,
+      "sum_sales": 254.01,
+      "avg_quarterly_sales": 403.7325
+    },
+    {
+      "i_manufact_id": 411,
+      "sum_sales": 781.15,
+      "avg_quarterly_sales": 403.7325
+    },
+    {
+      "i_manufact_id": 147,
+      "sum_sales": 181.75,
+      "avg_quarterly_sales": 407.7025
+    },
+    {
+      "i_manufact_id": 147,
+      "sum_sales": 195.77,
+      "avg_quarterly_sales": 407.7025
+    },
+    {
+      "i_manufact_id": 147,
+      "sum_sales": 514.21,
+      "avg_quarterly_sales": 407.7025
+    },
+    {
+      "i_manufact_id": 147,
+      "sum_sales": 739.08,
+      "avg_quarterly_sales": 407.7025
+    },
+    {
+      "i_manufact_id": 384,
+      "sum_sales": 243.55,
+      "avg_quarterly_sales": 418.4125
+    },
+    {
+      "i_manufact_id": 384,
+      "sum_sales": 335.9,
+      "avg_quarterly_sales": 418.4125
+    },
+    {
+      "i_manufact_id": 384,
+      "sum_sales": 539.46,
+      "avg_quarterly_sales": 418.4125
+    },
+    {
+      "i_manufact_id": 384,
+      "sum_sales": 554.74,
+      "avg_quarterly_sales": 418.4125
+    },
+    {
+      "i_manufact_id": 272,
+      "sum_sales": 198.52,
+      "avg_quarterly_sales": 422.9925
+    },
+    {
+      "i_manufact_id": 272,
+      "sum_sales": 251.97,
+      "avg_quarterly_sales": 422.9925
+    },
+    {
+      "i_manufact_id": 272,
+      "sum_sales": 533.33,
+      "avg_quarterly_sales": 422.9925
+    },
+    {
+      "i_manufact_id": 272,
+      "sum_sales": 708.15,
+      "avg_quarterly_sales": 422.9925
+    },
+    {
+      "i_manufact_id": 621,
+      "sum_sales": 274.67,
+      "avg_quarterly_sales": 424.125
+    },
+    {
+      "i_manufact_id": 621,
+      "sum_sales": 290.96,
+      "avg_quarterly_sales": 424.125
+    },
+    {
+      "i_manufact_id": 621,
+      "sum_sales": 326.67,
+      "avg_quarterly_sales": 424.125
+    },
+    {
+      "i_manufact_id": 621,
+      "sum_sales": 804.2,
+      "avg_quarterly_sales": 424.125
+    },
+    {
+      "i_manufact_id": 619,
+      "sum_sales": 193.92,
+      "avg_quarterly_sales": 428.6825
+    },
+    {
+      "i_manufact_id": 619,
+      "sum_sales": 359.91,
+      "avg_quarterly_sales": 428.6825
+    },
+    {
+      "i_manufact_id": 619,
+      "sum_sales": 689.55,
+      "avg_quarterly_sales": 428.6825
+    },
+    {
+      "i_manufact_id": 141,
+      "sum_sales": 197.58,
+      "avg_quarterly_sales": 428.9925
+    },
+    {
+      "i_manufact_id": 141,
+      "sum_sales": 321.08,
+      "avg_quarterly_sales": 428.9925
+    },
+    {
+      "i_manufact_id": 141,
+      "sum_sales": 794.81,
+      "avg_quarterly_sales": 428.9925
+    },
+    {
+      "i_manufact_id": 440,
+      "sum_sales": 83.69,
+      "avg_quarterly_sales": 431.78
+    },
+    {
+      "i_manufact_id": 440,
+      "sum_sales": 246.92,
+      "avg_quarterly_sales": 431.78
+    },
+    {
+      "i_manufact_id": 440,
+      "sum_sales": 632.4,
+      "avg_quarterly_sales": 431.78
+    },
+    {
+      "i_manufact_id": 440,
+      "sum_sales": 764.11,
+      "avg_quarterly_sales": 431.78
+    },
+    {
+      "i_manufact_id": 70,
+      "sum_sales": 145.64,
+      "avg_quarterly_sales": 432.4275
+    },
+    {
+      "i_manufact_id": 70,
+      "sum_sales": 359.22,
+      "avg_quarterly_sales": 432.4275
+    },
+    {
+      "i_manufact_id": 70,
+      "sum_sales": 529.47,
+      "avg_quarterly_sales": 432.4275
+    },
+    {
+      "i_manufact_id": 70,
+      "sum_sales": 695.38,
+      "avg_quarterly_sales": 432.4275
+    },
+    {
+      "i_manufact_id": 159,
+      "sum_sales": 120.7,
+      "avg_quarterly_sales": 432.8925
+    },
+    {
+      "i_manufact_id": 159,
+      "sum_sales": 353.38,
+      "avg_quarterly_sales": 432.8925
+    },
+    {
+      "i_manufact_id": 159,
+      "sum_sales": 511.45,
+      "avg_quarterly_sales": 432.8925
+    },
+    {
+      "i_manufact_id": 159,
+      "sum_sales": 746.04,
+      "avg_quarterly_sales": 432.8925
+    },
+    {
+      "i_manufact_id": 507,
+      "sum_sales": 230.77,
+      "avg_quarterly_sales": 433.1225
+    },
+    {
+      "i_manufact_id": 507,
+      "sum_sales": 363.83,
+      "avg_quarterly_sales": 433.1225
+    },
+    {
+      "i_manufact_id": 507,
+      "sum_sales": 698.57,
+      "avg_quarterly_sales": 433.1225
+    },
+    {
+      "i_manufact_id": 860,
+      "sum_sales": 164.9,
+      "avg_quarterly_sales": 434.2675
+    },
+    {
+      "i_manufact_id": 860,
+      "sum_sales": 380.73,
+      "avg_quarterly_sales": 434.2675
+    },
+    {
+      "i_manufact_id": 860,
+      "sum_sales": 524.21,
+      "avg_quarterly_sales": 434.2675
+    },
+    {
+      "i_manufact_id": 860,
+      "sum_sales": 667.23,
+      "avg_quarterly_sales": 434.2675
+    },
+    {
+      "i_manufact_id": 39,
+      "sum_sales": 94.42,
+      "avg_quarterly_sales": 435.015
+    },
+    {
+      "i_manufact_id": 39,
+      "sum_sales": 479.18,
+      "avg_quarterly_sales": 435.015
+    },
+    {
+      "i_manufact_id": 39,
+      "sum_sales": 534.58,
+      "avg_quarterly_sales": 435.015
+    },
+    {
+      "i_manufact_id": 39,
+      "sum_sales": 631.88,
+      "avg_quarterly_sales": 435.015
+    },
+    {
+      "i_manufact_id": 362,
+      "sum_sales": 245.25,
+      "avg_quarterly_sales": 441.25
+    },
+    {
+      "i_manufact_id": 362,
+      "sum_sales": 327.74,
+      "avg_quarterly_sales": 441.25
+    },
+    {
+      "i_manufact_id": 362,
+      "sum_sales": 567.34,
+      "avg_quarterly_sales": 441.25
+    },
+    {
+      "i_manufact_id": 362,
+      "sum_sales": 624.67,
+      "avg_quarterly_sales": 441.25
+    },
+    {
+      "i_manufact_id": 278,
+      "sum_sales": 186.1,
+      "avg_quarterly_sales": 441.5425
+    },
+    {
+      "i_manufact_id": 278,
+      "sum_sales": 274.39,
+      "avg_quarterly_sales": 441.5425
+    },
+    {
+      "i_manufact_id": 278,
+      "sum_sales": 595.33,
+      "avg_quarterly_sales": 441.5425
+    },
+    {
+      "i_manufact_id": 278,
+      "sum_sales": 710.35,
+      "avg_quarterly_sales": 441.5425
+    },
+    {
+      "i_manufact_id": 636,
+      "sum_sales": 136.44,
+      "avg_quarterly_sales": 444.335
+    },
+    {
+      "i_manufact_id": 636,
+      "sum_sales": 284.75,
+      "avg_quarterly_sales": 444.335
+    },
+    {
+      "i_manufact_id": 636,
+      "sum_sales": 877.04,
+      "avg_quarterly_sales": 444.335
+    },
+    {
+      "i_manufact_id": 251,
+      "sum_sales": 114.98,
+      "avg_quarterly_sales": 444.425
+    },
+    {
+      "i_manufact_id": 251,
+      "sum_sales": 266.16,
+      "avg_quarterly_sales": 444.425
+    },
+    {
+      "i_manufact_id": 251,
+      "sum_sales": 619.22,
+      "avg_quarterly_sales": 444.425
+    },
+    {
+      "i_manufact_id": 251,
+      "sum_sales": 777.34,
+      "avg_quarterly_sales": 444.425
+    },
+    {
+      "i_manufact_id": 648,
+      "sum_sales": 110.8,
+      "avg_quarterly_sales": 446.39
+    },
+    {
+      "i_manufact_id": 648,
+      "sum_sales": 208.38,
+      "avg_quarterly_sales": 446.39
+    },
+    {
+      "i_manufact_id": 648,
+      "sum_sales": 698.37,
+      "avg_quarterly_sales": 446.39
+    },
+    {
+      "i_manufact_id": 648,
+      "sum_sales": 768.01,
+      "avg_quarterly_sales": 446.39
+    },
+    {
+      "i_manufact_id": 242,
+      "sum_sales": 206.99,
+      "avg_quarterly_sales": 447.075
+    },
+    {
+      "i_manufact_id": 242,
+      "sum_sales": 237.0,
+      "avg_quarterly_sales": 447.075
+    },
+    {
+      "i_manufact_id": 242,
+      "sum_sales": 346.94,
+      "avg_quarterly_sales": 447.075
+    },
+    {
+      "i_manufact_id": 242,
+      "sum_sales": 997.37,
+      "avg_quarterly_sales": 447.075
+    },
+    {
+      "i_manufact_id": 332,
+      "sum_sales": 228.43,
+      "avg_quarterly_sales": 451.6175
+    },
+    {
+      "i_manufact_id": 332,
+      "sum_sales": 373.65,
+      "avg_quarterly_sales": 451.6175
+    },
+    {
+      "i_manufact_id": 332,
+      "sum_sales": 560.44,
+      "avg_quarterly_sales": 451.6175
+    },
+    {
+      "i_manufact_id": 332,
+      "sum_sales": 643.95,
+      "avg_quarterly_sales": 451.6175
+    },
+    {
+      "i_manufact_id": 441,
+      "sum_sales": 66.59,
+      "avg_quarterly_sales": 452.8125
+    },
+    {
+      "i_manufact_id": 441,
+      "sum_sales": 281.62,
+      "avg_quarterly_sales": 452.8125
+    }
+  ]
+}

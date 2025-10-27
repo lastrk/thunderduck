@@ -1,0 +1,16 @@
+{
+  "query_num": 54,
+  "row_count": 1,
+  "columns": [
+    "segment",
+    "num_customers",
+    "segment_base"
+  ],
+  "rows": [
+    {
+      "segment": 10714,
+      "num_customers": 1,
+      "segment_base": 535700
+    }
+  ]
+}

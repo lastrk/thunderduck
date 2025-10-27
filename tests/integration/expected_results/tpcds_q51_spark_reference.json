@@ -1,0 +1,814 @@
+{
+  "query_num": 51,
+  "row_count": 100,
+  "columns": [
+    "item_sk",
+    "d_date",
+    "web_sales",
+    "store_sales",
+    "web_cumulative",
+    "store_cumulative"
+  ],
+  "rows": [
+    {
+      "item_sk": 5,
+      "d_date": "2000-01-25",
+      "web_sales": 193.18,
+      "store_sales": null,
+      "web_cumulative": 193.18,
+      "store_cumulative": 93.88
+    },
+    {
+      "item_sk": 5,
+      "d_date": "2000-01-29",
+      "web_sales": null,
+      "store_sales": 162.45,
+      "web_cumulative": 193.18,
+      "store_cumulative": 162.45
+    },
+    {
+      "item_sk": 5,
+      "d_date": "2000-01-31",
+      "web_sales": null,
+      "store_sales": 184.53,
+      "web_cumulative": 193.18,
+      "store_cumulative": 184.53
+    },
+    {
+      "item_sk": 5,
+      "d_date": "2000-02-23",
+      "web_sales": null,
+      "store_sales": 189.68,
+      "web_cumulative": 193.18,
+      "store_cumulative": 189.68
+    },
+    {
+      "item_sk": 11,
+      "d_date": "2000-03-05",
+      "web_sales": 151.26,
+      "store_sales": null,
+      "web_cumulative": 151.26,
+      "store_cumulative": 94.43
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-01-10",
+      "web_sales": 135.98,
+      "store_sales": null,
+      "web_cumulative": 135.98,
+      "store_cumulative": 73.88
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-01-29",
+      "web_sales": 141.97,
+      "store_sales": null,
+      "web_cumulative": 141.97,
+      "store_cumulative": 73.88
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-02-02",
+      "web_sales": 188.37,
+      "store_sales": null,
+      "web_cumulative": 188.37,
+      "store_cumulative": 73.88
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-02-08",
+      "web_sales": null,
+      "store_sales": 132.92,
+      "web_cumulative": 188.37,
+      "store_cumulative": 132.92
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-02-19",
+      "web_sales": null,
+      "store_sales": 136.67,
+      "web_cumulative": 188.37,
+      "store_cumulative": 136.67
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-02-21",
+      "web_sales": 232.68,
+      "store_sales": null,
+      "web_cumulative": 232.68,
+      "store_cumulative": 136.67
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-02-22",
+      "web_sales": null,
+      "store_sales": 167.46,
+      "web_cumulative": 232.68,
+      "store_cumulative": 167.46
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-03-28",
+      "web_sales": 457.1,
+      "store_sales": null,
+      "web_cumulative": 457.1,
+      "store_cumulative": 243.42
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-03-31",
+      "web_sales": 462.73,
+      "store_sales": null,
+      "web_cumulative": 462.73,
+      "store_cumulative": 243.42
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-04-05",
+      "web_sales": null,
+      "store_sales": 248.54,
+      "web_cumulative": 462.73,
+      "store_cumulative": 248.54
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-04-15",
+      "web_sales": 558.42,
+      "store_sales": null,
+      "web_cumulative": 558.42,
+      "store_cumulative": 248.54
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-04-27",
+      "web_sales": null,
+      "store_sales": 252.33,
+      "web_cumulative": 558.42,
+      "store_cumulative": 252.33
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-05-03",
+      "web_sales": null,
+      "store_sales": 318.57,
+      "web_cumulative": 558.42,
+      "store_cumulative": 318.57
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-05-10",
+      "web_sales": 558.81,
+      "store_sales": null,
+      "web_cumulative": 558.81,
+      "store_cumulative": 318.57
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-05-21",
+      "web_sales": null,
+      "store_sales": 322.1,
+      "web_cumulative": 558.81,
+      "store_cumulative": 322.1
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-05-26",
+      "web_sales": 696.78,
+      "store_sales": null,
+      "web_cumulative": 696.78,
+      "store_cumulative": 322.1
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-05-29",
+      "web_sales": null,
+      "store_sales": 322.1,
+      "web_cumulative": 696.78,
+      "store_cumulative": 322.1
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-06-20",
+      "web_sales": null,
+      "store_sales": 365.27,
+      "web_cumulative": 696.78,
+      "store_cumulative": 365.27
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-07-03",
+      "web_sales": 719.18,
+      "store_sales": null,
+      "web_cumulative": 719.18,
+      "store_cumulative": 365.27
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-07-07",
+      "web_sales": null,
+      "store_sales": 417.26,
+      "web_cumulative": 719.18,
+      "store_cumulative": 417.26
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-07-18",
+      "web_sales": null,
+      "store_sales": 430.5,
+      "web_cumulative": 719.18,
+      "store_cumulative": 430.5
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-07-25",
+      "web_sales": 861.03,
+      "store_sales": null,
+      "web_cumulative": 861.03,
+      "store_cumulative": 430.5
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-08-10",
+      "web_sales": null,
+      "store_sales": 436.52,
+      "web_cumulative": 861.03,
+      "store_cumulative": 436.52
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-08-14",
+      "web_sales": null,
+      "store_sales": 473.95,
+      "web_cumulative": 861.03,
+      "store_cumulative": 473.95
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-08-21",
+      "web_sales": null,
+      "store_sales": 507.13,
+      "web_cumulative": 861.03,
+      "store_cumulative": 507.13
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-08-26",
+      "web_sales": null,
+      "store_sales": 509.91,
+      "web_cumulative": 861.03,
+      "store_cumulative": 509.91
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-08-28",
+      "web_sales": null,
+      "store_sales": 575.33,
+      "web_cumulative": 861.03,
+      "store_cumulative": 575.33
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-08-31",
+      "web_sales": null,
+      "store_sales": 647.81,
+      "web_cumulative": 861.03,
+      "store_cumulative": 647.81
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-09-01",
+      "web_sales": null,
+      "store_sales": 700.73,
+      "web_cumulative": 861.03,
+      "store_cumulative": 700.73
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-09-02",
+      "web_sales": 914.24,
+      "store_sales": 767.83,
+      "web_cumulative": 914.24,
+      "store_cumulative": 767.83
+    },
+    {
+      "item_sk": 14,
+      "d_date": "2000-09-03",
+      "web_sales": null,
+      "store_sales": 844.8,
+      "web_cumulative": 914.24,
+      "store_cumulative": 844.8
+    },
+    {
+      "item_sk": 19,
+      "d_date": "2000-01-02",
+      "web_sales": 171.64,
+      "store_sales": 57.07,
+      "web_cumulative": 171.64,
+      "store_cumulative": 57.07
+    },
+    {
+      "item_sk": 20,
+      "d_date": "2000-01-09",
+      "web_sales": 37.64,
+      "store_sales": null,
+      "web_cumulative": 37.64,
+      "store_cumulative": 7.25
+    },
+    {
+      "item_sk": 25,
+      "d_date": "2000-01-28",
+      "web_sales": 145.8,
+      "store_sales": null,
+      "web_cumulative": 145.8,
+      "store_cumulative": 37.63
+    },
+    {
+      "item_sk": 25,
+      "d_date": "2000-02-09",
+      "web_sales": null,
+      "store_sales": 40.98,
+      "web_cumulative": 145.8,
+      "store_cumulative": 40.98
+    },
+    {
+      "item_sk": 25,
+      "d_date": "2000-02-11",
+      "web_sales": null,
+      "store_sales": 139.21,
+      "web_cumulative": 145.8,
+      "store_cumulative": 139.21
+    },
+    {
+      "item_sk": 25,
+      "d_date": "2000-02-21",
+      "web_sales": null,
+      "store_sales": 143.19,
+      "web_cumulative": 145.8,
+      "store_cumulative": 143.19
+    },
+    {
+      "item_sk": 32,
+      "d_date": "2000-02-22",
+      "web_sales": 76.51,
+      "store_sales": null,
+      "web_cumulative": 76.51,
+      "store_cumulative": 53.06
+    },
+    {
+      "item_sk": 35,
+      "d_date": "2000-01-14",
+      "web_sales": null,
+      "store_sales": 40.94,
+      "web_cumulative": 95.44,
+      "store_cumulative": 40.94
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-01-02",
+      "web_sales": 106.22,
+      "store_sales": 43.81,
+      "web_cumulative": 106.22,
+      "store_cumulative": 43.81
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-01-04",
+      "web_sales": null,
+      "store_sales": 106.03,
+      "web_cumulative": 106.22,
+      "store_cumulative": 106.03
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-01-05",
+      "web_sales": 136.71,
+      "store_sales": null,
+      "web_cumulative": 136.71,
+      "store_cumulative": 106.03
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-01-06",
+      "web_sales": null,
+      "store_sales": 111.82,
+      "web_cumulative": 136.71,
+      "store_cumulative": 111.82
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-01-24",
+      "web_sales": null,
+      "store_sales": 134.51,
+      "web_cumulative": 136.71,
+      "store_cumulative": 134.51
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-02-04",
+      "web_sales": 176.29,
+      "store_sales": null,
+      "web_cumulative": 176.29,
+      "store_cumulative": 145.13
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-02-07",
+      "web_sales": null,
+      "store_sales": 145.13,
+      "web_cumulative": 176.29,
+      "store_cumulative": 145.13
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-02-26",
+      "web_sales": null,
+      "store_sales": 149.83,
+      "web_cumulative": 176.29,
+      "store_cumulative": 149.83
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-03-14",
+      "web_sales": null,
+      "store_sales": 161.01,
+      "web_cumulative": 176.29,
+      "store_cumulative": 161.01
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-03-15",
+      "web_sales": null,
+      "store_sales": 164.4,
+      "web_cumulative": 176.29,
+      "store_cumulative": 164.4
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-03-16",
+      "web_sales": null,
+      "store_sales": 164.4,
+      "web_cumulative": 176.29,
+      "store_cumulative": 164.4
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-03-21",
+      "web_sales": 203.97,
+      "store_sales": null,
+      "web_cumulative": 203.97,
+      "store_cumulative": 164.4
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-04-03",
+      "web_sales": 208.51,
+      "store_sales": null,
+      "web_cumulative": 208.51,
+      "store_cumulative": 164.4
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-04-05",
+      "web_sales": 263.04,
+      "store_sales": null,
+      "web_cumulative": 263.04,
+      "store_cumulative": 164.4
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-04-07",
+      "web_sales": 367.78,
+      "store_sales": null,
+      "web_cumulative": 367.78,
+      "store_cumulative": 164.4
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-04-10",
+      "web_sales": null,
+      "store_sales": 203.26,
+      "web_cumulative": 367.78,
+      "store_cumulative": 203.26
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-05-04",
+      "web_sales": 446.26,
+      "store_sales": null,
+      "web_cumulative": 446.26,
+      "store_cumulative": 203.26
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-05-09",
+      "web_sales": null,
+      "store_sales": 300.02,
+      "web_cumulative": 446.26,
+      "store_cumulative": 300.02
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-05-13",
+      "web_sales": 507.85,
+      "store_sales": null,
+      "web_cumulative": 507.85,
+      "store_cumulative": 300.02
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-05-23",
+      "web_sales": null,
+      "store_sales": 319.79,
+      "web_cumulative": 507.85,
+      "store_cumulative": 319.79
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-06-21",
+      "web_sales": null,
+      "store_sales": 355.11,
+      "web_cumulative": 507.85,
+      "store_cumulative": 355.11
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-06-26",
+      "web_sales": null,
+      "store_sales": 392.21,
+      "web_cumulative": 507.85,
+      "store_cumulative": 392.21
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-07-15",
+      "web_sales": null,
+      "store_sales": 394.18,
+      "web_cumulative": 507.85,
+      "store_cumulative": 394.18
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-07-17",
+      "web_sales": null,
+      "store_sales": 396.94,
+      "web_cumulative": 507.85,
+      "store_cumulative": 396.94
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-07-24",
+      "web_sales": 519.67,
+      "store_sales": null,
+      "web_cumulative": 519.67,
+      "store_cumulative": 396.94
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-08-04",
+      "web_sales": null,
+      "store_sales": 507.14,
+      "web_cumulative": 519.67,
+      "store_cumulative": 507.14
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-08-13",
+      "web_sales": null,
+      "store_sales": 512.2,
+      "web_cumulative": 519.67,
+      "store_cumulative": 512.2
+    },
+    {
+      "item_sk": 37,
+      "d_date": "2000-08-14",
+      "web_sales": null,
+      "store_sales": 518.76,
+      "web_cumulative": 519.67,
+      "store_cumulative": 518.76
+    },
+    {
+      "item_sk": 41,
+      "d_date": "2000-01-21",
+      "web_sales": null,
+      "store_sales": 72.7,
+      "web_cumulative": 115.36,
+      "store_cumulative": 72.7
+    },
+    {
+      "item_sk": 47,
+      "d_date": "2000-01-19",
+      "web_sales": null,
+      "store_sales": 95.71,
+      "web_cumulative": 113.23,
+      "store_cumulative": 95.71
+    },
+    {
+      "item_sk": 47,
+      "d_date": "2000-02-17",
+      "web_sales": 146.76,
+      "store_sales": null,
+      "web_cumulative": 146.76,
+      "store_cumulative": 146.27
+    },
+    {
+      "item_sk": 53,
+      "d_date": "2000-01-08",
+      "web_sales": 38.38,
+      "store_sales": null,
+      "web_cumulative": 38.38,
+      "store_cumulative": 7.5
+    },
+    {
+      "item_sk": 53,
+      "d_date": "2000-01-09",
+      "web_sales": 61.72,
+      "store_sales": null,
+      "web_cumulative": 61.72,
+      "store_cumulative": 7.5
+    },
+    {
+      "item_sk": 53,
+      "d_date": "2000-01-15",
+      "web_sales": null,
+      "store_sales": 31.2,
+      "web_cumulative": 61.72,
+      "store_cumulative": 31.2
+    },
+    {
+      "item_sk": 61,
+      "d_date": "2000-01-02",
+      "web_sales": 64.44,
+      "store_sales": 7.73,
+      "web_cumulative": 64.44,
+      "store_cumulative": 7.73
+    },
+    {
+      "item_sk": 61,
+      "d_date": "2000-01-07",
+      "web_sales": 79.56,
+      "store_sales": 33.81,
+      "web_cumulative": 79.56,
+      "store_cumulative": 33.81
+    },
+    {
+      "item_sk": 61,
+      "d_date": "2000-02-17",
+      "web_sales": 257.98,
+      "store_sales": null,
+      "web_cumulative": 257.98,
+      "store_cumulative": 189.63
+    },
+    {
+      "item_sk": 61,
+      "d_date": "2000-03-01",
+      "web_sales": null,
+      "store_sales": 240.65,
+      "web_cumulative": 257.98,
+      "store_cumulative": 240.65
+    },
+    {
+      "item_sk": 65,
+      "d_date": "2000-01-03",
+      "web_sales": 71.96,
+      "store_sales": null,
+      "web_cumulative": 71.96,
+      "store_cumulative": 66.75
+    },
+    {
+      "item_sk": 68,
+      "d_date": "2000-01-19",
+      "web_sales": 14.25,
+      "store_sales": null,
+      "web_cumulative": 14.25,
+      "store_cumulative": 6.38
+    },
+    {
+      "item_sk": 68,
+      "d_date": "2000-01-21",
+      "web_sales": null,
+      "store_sales": 8.61,
+      "web_cumulative": 14.25,
+      "store_cumulative": 8.61
+    },
+    {
+      "item_sk": 71,
+      "d_date": "2000-01-02",
+      "web_sales": 35.36,
+      "store_sales": 2.26,
+      "web_cumulative": 35.36,
+      "store_cumulative": 2.26
+    },
+    {
+      "item_sk": 71,
+      "d_date": "2000-01-11",
+      "web_sales": null,
+      "store_sales": 6.59,
+      "web_cumulative": 35.36,
+      "store_cumulative": 6.59
+    },
+    {
+      "item_sk": 86,
+      "d_date": "2000-01-19",
+      "web_sales": 83.91,
+      "store_sales": null,
+      "web_cumulative": 83.91,
+      "store_cumulative": 2.39
+    },
+    {
+      "item_sk": 98,
+      "d_date": "2000-01-18",
+      "web_sales": 20.64,
+      "store_sales": null,
+      "web_cumulative": 20.64,
+      "store_cumulative": 20.14
+    },
+    {
+      "item_sk": 98,
+      "d_date": "2000-03-29",
+      "web_sales": 233.74,
+      "store_sales": null,
+      "web_cumulative": 233.74,
+      "store_cumulative": 219.29
+    },
+    {
+      "item_sk": 98,
+      "d_date": "2000-04-23",
+      "web_sales": 462.63,
+      "store_sales": 284.52,
+      "web_cumulative": 462.63,
+      "store_cumulative": 284.52
+    },
+    {
+      "item_sk": 98,
+      "d_date": "2000-05-01",
+      "web_sales": null,
+      "store_sales": 413.39,
+      "web_cumulative": 462.63,
+      "store_cumulative": 413.39
+    },
+    {
+      "item_sk": 98,
+      "d_date": "2000-05-06",
+      "web_sales": null,
+      "store_sales": 438.37,
+      "web_cumulative": 462.63,
+      "store_cumulative": 438.37
+    },
+    {
+      "item_sk": 101,
+      "d_date": "2000-01-27",
+      "web_sales": null,
+      "store_sales": 51.36,
+      "web_cumulative": 102.93,
+      "store_cumulative": 51.36
+    },
+    {
+      "item_sk": 101,
+      "d_date": "2000-02-07",
+      "web_sales": 147.16,
+      "store_sales": null,
+      "web_cumulative": 147.16,
+      "store_cumulative": 51.36
+    },
+    {
+      "item_sk": 101,
+      "d_date": "2000-05-02",
+      "web_sales": 411.55,
+      "store_sales": null,
+      "web_cumulative": 411.55,
+      "store_cumulative": 367.06
+    },
+    {
+      "item_sk": 101,
+      "d_date": "2000-05-12",
+      "web_sales": 418.18,
+      "store_sales": null,
+      "web_cumulative": 418.18,
+      "store_cumulative": 367.06
+    },
+    {
+      "item_sk": 101,
+      "d_date": "2000-06-19",
+      "web_sales": 576.37,
+      "store_sales": null,
+      "web_cumulative": 576.37,
+      "store_cumulative": 522.55
+    },
+    {
+      "item_sk": 110,
+      "d_date": "2000-01-16",
+      "web_sales": null,
+      "store_sales": 2.66,
+      "web_cumulative": 91.38,
+      "store_cumulative": 2.66
+    },
+    {
+      "item_sk": 110,
+      "d_date": "2000-01-21",
+      "web_sales": null,
+      "store_sales": 80.55,
+      "web_cumulative": 91.38,
+      "store_cumulative": 80.55
+    }
+  ]
+}
