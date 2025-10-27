@@ -1,0 +1,1016 @@
+{
+  "query_num": 68,
+  "row_count": 100,
+  "columns": [
+    "c_last_name",
+    "c_first_name",
+    "ca_city",
+    "bought_city",
+    "ss_ticket_number",
+    "extended_price",
+    "extended_tax",
+    "list_price"
+  ],
+  "rows": [
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Unionville",
+      "bought_city": "Woodlawn",
+      "ss_ticket_number": 70,
+      "extended_price": 15617.02,
+      "extended_tax": 1059.2,
+      "list_price": 35200.1
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Midway",
+      "bought_city": "Oakwood",
+      "ss_ticket_number": 11488,
+      "extended_price": 16050.99,
+      "extended_tax": 361.53,
+      "list_price": 25084.9
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Rene",
+      "ca_city": "Caledonia",
+      "bought_city": "Stringtown",
+      "ss_ticket_number": 16638,
+      "extended_price": 18982.21,
+      "extended_tax": 851.66,
+      "list_price": 61572.9
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "John",
+      "ca_city": "Parkwood",
+      "bought_city": "Edgewood",
+      "ss_ticket_number": 24159,
+      "extended_price": 27211.89,
+      "extended_tax": 1604.38,
+      "list_price": 43810.22
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Ana",
+      "ca_city": "Deerfield",
+      "bought_city": "Jamestown",
+      "ss_ticket_number": 26329,
+      "extended_price": 29588.22,
+      "extended_tax": 1896.98,
+      "list_price": 44933.7
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Kent",
+      "ca_city": "Wilson",
+      "bought_city": "Mountain View",
+      "ss_ticket_number": 27855,
+      "extended_price": 6056.95,
+      "extended_tax": 364.49,
+      "list_price": 33702.67
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Rene",
+      "ca_city": "Caledonia",
+      "bought_city": "Spring Valley",
+      "ss_ticket_number": 30016,
+      "extended_price": 33809.93,
+      "extended_tax": 1774.76,
+      "list_price": 50200.07
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Clinton",
+      "bought_city": "Redland",
+      "ss_ticket_number": 36631,
+      "extended_price": 18294.15,
+      "extended_tax": 828.86,
+      "list_price": 48252.58
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Donna",
+      "ca_city": "Oak Hill",
+      "bought_city": "Sulphur Springs",
+      "ss_ticket_number": 36870,
+      "extended_price": 33229.68,
+      "extended_tax": 907.76,
+      "list_price": 54501.43
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Sunnyside",
+      "bought_city": "Newtown",
+      "ss_ticket_number": 40831,
+      "extended_price": 33108.47,
+      "extended_tax": 1069.05,
+      "list_price": 52500.53
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Karen",
+      "ca_city": "Greenfield",
+      "bought_city": "Friendship",
+      "ss_ticket_number": 40841,
+      "extended_price": 16463.34,
+      "extended_tax": 422.03,
+      "list_price": 32375.62
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Shiloh",
+      "bought_city": "Oakland",
+      "ss_ticket_number": 46266,
+      "extended_price": 12854.97,
+      "extended_tax": 273.81,
+      "list_price": 36292.72
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Joshua",
+      "ca_city": "Lakeside",
+      "bought_city": "Highland Park",
+      "ss_ticket_number": 46736,
+      "extended_price": 28890.4,
+      "extended_tax": 1493.83,
+      "list_price": 46182.44
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Newport",
+      "bought_city": "Bunker Hill",
+      "ss_ticket_number": 47193,
+      "extended_price": 13889.47,
+      "extended_tax": 483.83,
+      "list_price": 35637.42
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Guilford",
+      "bought_city": "Wildwood",
+      "ss_ticket_number": 49651,
+      "extended_price": 15693.84,
+      "extended_tax": 454.6,
+      "list_price": 29538.5
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Leon",
+      "bought_city": "Five Points",
+      "ss_ticket_number": 50330,
+      "extended_price": 40167.73,
+      "extended_tax": 1682.75,
+      "list_price": 56198.72
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Salem",
+      "bought_city": "Mount Pleasant",
+      "ss_ticket_number": 50365,
+      "extended_price": 18228.49,
+      "extended_tax": 831.0,
+      "list_price": 37713.88
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Brownsville",
+      "bought_city": "Walnut Grove",
+      "ss_ticket_number": 53883,
+      "extended_price": 14709.49,
+      "extended_tax": 173.84,
+      "list_price": 30359.86
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Shelby",
+      "bought_city": "Clifton",
+      "ss_ticket_number": 54573,
+      "extended_price": 17992.16,
+      "extended_tax": 539.08,
+      "list_price": 28633.01
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Larry",
+      "ca_city": "Oak Hill",
+      "bought_city": "Five Points",
+      "ss_ticket_number": 54597,
+      "extended_price": 23089.71,
+      "extended_tax": 325.91,
+      "list_price": 53696.82
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Dallas",
+      "bought_city": "Shady Grove",
+      "ss_ticket_number": 55706,
+      "extended_price": 12701.55,
+      "extended_tax": 394.67,
+      "list_price": 23287.65
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Tabatha",
+      "ca_city": "Harmony",
+      "bought_city": "Greenfield",
+      "ss_ticket_number": 56102,
+      "extended_price": 18215.83,
+      "extended_tax": 661.35,
+      "list_price": 30860.74
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Shannon",
+      "ca_city": "Brownsville",
+      "bought_city": "Deerfield",
+      "ss_ticket_number": 57279,
+      "extended_price": 10989.61,
+      "extended_tax": 278.14,
+      "list_price": 24580.71
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Centerville",
+      "bought_city": "Providence",
+      "ss_ticket_number": 62604,
+      "extended_price": 11309.86,
+      "extended_tax": 401.7,
+      "list_price": 25488.06
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Springfield",
+      "bought_city": "Florence",
+      "ss_ticket_number": 77578,
+      "extended_price": 19728.18,
+      "extended_tax": 1275.54,
+      "list_price": 37291.36
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Fairview",
+      "bought_city": "Florence",
+      "ss_ticket_number": 90439,
+      "extended_price": 15148.26,
+      "extended_tax": 644.76,
+      "list_price": 34824.23
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Lillian",
+      "ca_city": "Fairview",
+      "bought_city": "Pleasant Hill",
+      "ss_ticket_number": 90533,
+      "extended_price": 11370.78,
+      "extended_tax": 788.08,
+      "list_price": 30513.94
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "White Oak",
+      "bought_city": "Florence",
+      "ss_ticket_number": 92664,
+      "extended_price": 12198.63,
+      "extended_tax": 448.33,
+      "list_price": 26745.81
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Morris",
+      "bought_city": "Sullivan",
+      "ss_ticket_number": 97140,
+      "extended_price": 17892.16,
+      "extended_tax": 952.8,
+      "list_price": 40602.97
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Malcolm",
+      "ca_city": "Spring Hill",
+      "bought_city": "Bridgeport",
+      "ss_ticket_number": 97846,
+      "extended_price": 25404.69,
+      "extended_tax": 917.66,
+      "list_price": 54757.05
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Andrew",
+      "ca_city": "Centerville",
+      "bought_city": "Plainview",
+      "ss_ticket_number": 98661,
+      "extended_price": 41902.0,
+      "extended_tax": 2017.42,
+      "list_price": 86094.03
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "James",
+      "ca_city": "Riverview",
+      "bought_city": "Valley View",
+      "ss_ticket_number": 99563,
+      "extended_price": 6687.5,
+      "extended_tax": 416.02,
+      "list_price": 18412.89
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Juanita",
+      "ca_city": "Waterloo",
+      "bought_city": "Georgetown",
+      "ss_ticket_number": 100509,
+      "extended_price": 20296.61,
+      "extended_tax": 869.64,
+      "list_price": 54777.96
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Shady Grove",
+      "bought_city": "Clifford",
+      "ss_ticket_number": 103990,
+      "extended_price": 14359.18,
+      "extended_tax": 467.06,
+      "list_price": 24716.94
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Florence",
+      "bought_city": "Spring Hill",
+      "ss_ticket_number": 104935,
+      "extended_price": 25057.07,
+      "extended_tax": 1261.85,
+      "list_price": 47121.26
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "David",
+      "ca_city": "Florence",
+      "bought_city": "Springdale",
+      "ss_ticket_number": 108460,
+      "extended_price": 19642.52,
+      "extended_tax": 1168.44,
+      "list_price": 40111.2
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Frank",
+      "ca_city": "Riverview",
+      "bought_city": "Waterloo",
+      "ss_ticket_number": 109144,
+      "extended_price": 8470.24,
+      "extended_tax": 554.01,
+      "list_price": 25579.19
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Buena Vista",
+      "bought_city": "Griffin",
+      "ss_ticket_number": 109500,
+      "extended_price": 24830.06,
+      "extended_tax": 1112.37,
+      "list_price": 50094.52
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Wilson",
+      "bought_city": "Jamestown",
+      "ss_ticket_number": 111773,
+      "extended_price": 13984.56,
+      "extended_tax": 397.78,
+      "list_price": 30817.04
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Melvin",
+      "ca_city": "Woodville",
+      "bought_city": "Harmony",
+      "ss_ticket_number": 115030,
+      "extended_price": 16623.59,
+      "extended_tax": 784.22,
+      "list_price": 26203.1
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Ricky",
+      "ca_city": "Stringtown",
+      "bought_city": "Glenwood",
+      "ss_ticket_number": 120194,
+      "extended_price": 17864.8,
+      "extended_tax": 1002.51,
+      "list_price": 45152.49
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "John",
+      "ca_city": "Fairview",
+      "bought_city": "Lakeside",
+      "ss_ticket_number": 123374,
+      "extended_price": 17746.84,
+      "extended_tax": 986.67,
+      "list_price": 31438.0
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Ralph",
+      "ca_city": "Valley View",
+      "bought_city": "Harmony",
+      "ss_ticket_number": 125234,
+      "extended_price": 10531.41,
+      "extended_tax": 700.49,
+      "list_price": 19010.07
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Bernadette",
+      "ca_city": "Ashland",
+      "bought_city": "Pleasant Grove",
+      "ss_ticket_number": 134217,
+      "extended_price": 25936.51,
+      "extended_tax": 1321.77,
+      "list_price": 60748.64
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Joseph",
+      "ca_city": "Springdale",
+      "bought_city": "Lakeside",
+      "ss_ticket_number": 134343,
+      "extended_price": 32300.74,
+      "extended_tax": 720.33,
+      "list_price": 53828.07
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Lacey",
+      "ca_city": "Jamestown",
+      "bought_city": "Riverside",
+      "ss_ticket_number": 134462,
+      "extended_price": 5365.29,
+      "extended_tax": 356.53,
+      "list_price": 14289.43
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Warren",
+      "ca_city": "Bunker Hill",
+      "bought_city": "Greenville",
+      "ss_ticket_number": 134828,
+      "extended_price": 13619.79,
+      "extended_tax": 555.8,
+      "list_price": 25054.82
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Gertrude",
+      "ca_city": "Greenwood",
+      "bought_city": "Macedonia",
+      "ss_ticket_number": 137410,
+      "extended_price": 33974.25,
+      "extended_tax": 1241.82,
+      "list_price": 49535.24
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Galena",
+      "bought_city": "Sulphur Springs",
+      "ss_ticket_number": 137765,
+      "extended_price": 12123.38,
+      "extended_tax": 785.49,
+      "list_price": 28248.16
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Forest Hills",
+      "bought_city": "Argyle",
+      "ss_ticket_number": 139387,
+      "extended_price": 15038.27,
+      "extended_tax": 133.35,
+      "list_price": 31670.31
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "James",
+      "ca_city": "Shiloh",
+      "bought_city": "Wesley",
+      "ss_ticket_number": 142680,
+      "extended_price": 20487.97,
+      "extended_tax": 1060.04,
+      "list_price": 43644.09
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Susan",
+      "ca_city": "Green Acres",
+      "bought_city": "Liberty",
+      "ss_ticket_number": 143399,
+      "extended_price": 19682.69,
+      "extended_tax": 346.83,
+      "list_price": 45296.34
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Willie",
+      "ca_city": "Freeport",
+      "bought_city": "Wyoming",
+      "ss_ticket_number": 147738,
+      "extended_price": 18873.05,
+      "extended_tax": 598.33,
+      "list_price": 40546.66
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Walnut Grove",
+      "bought_city": "Willow",
+      "ss_ticket_number": 147740,
+      "extended_price": 15881.09,
+      "extended_tax": 1040.11,
+      "list_price": 48011.06
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Jack",
+      "ca_city": "Oakwood",
+      "bought_city": "Liberty",
+      "ss_ticket_number": 149758,
+      "extended_price": 22364.94,
+      "extended_tax": 938.26,
+      "list_price": 34929.32
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Pleasant Hill",
+      "bought_city": "Waterloo",
+      "ss_ticket_number": 156554,
+      "extended_price": 20347.07,
+      "extended_tax": 490.11,
+      "list_price": 31447.08
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Five Points",
+      "bought_city": "Tracy",
+      "ss_ticket_number": 159202,
+      "extended_price": 16948.59,
+      "extended_tax": 761.54,
+      "list_price": 32884.04
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Glendale",
+      "bought_city": "Mount Pleasant",
+      "ss_ticket_number": 159389,
+      "extended_price": 34914.16,
+      "extended_tax": 692.22,
+      "list_price": 57646.18
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Victor",
+      "ca_city": "Providence",
+      "bought_city": "Antioch",
+      "ss_ticket_number": 161524,
+      "extended_price": 15107.55,
+      "extended_tax": 613.92,
+      "list_price": 34455.45
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Pleasant Grove",
+      "bought_city": "Newtown",
+      "ss_ticket_number": 164893,
+      "extended_price": 11443.91,
+      "extended_tax": 709.71,
+      "list_price": 23340.46
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Raymond",
+      "ca_city": "Springfield",
+      "bought_city": "Greenfield",
+      "ss_ticket_number": 174183,
+      "extended_price": 25595.12,
+      "extended_tax": 621.45,
+      "list_price": 59332.81
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Mount Zion",
+      "bought_city": "Greenwood",
+      "ss_ticket_number": 174923,
+      "extended_price": 22313.61,
+      "extended_tax": 523.07,
+      "list_price": 32055.34
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Kingston",
+      "bought_city": "Wildwood",
+      "ss_ticket_number": 176614,
+      "extended_price": 21589.36,
+      "extended_tax": 939.06,
+      "list_price": 38415.82
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Springfield",
+      "bought_city": "Jackson",
+      "ss_ticket_number": 176898,
+      "extended_price": 19100.75,
+      "extended_tax": 702.37,
+      "list_price": 49968.0
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "George",
+      "ca_city": "Pleasant Grove",
+      "bought_city": "Shiloh",
+      "ss_ticket_number": 179953,
+      "extended_price": 13839.05,
+      "extended_tax": 646.27,
+      "list_price": 30115.84
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Newtown",
+      "bought_city": "Union Hill",
+      "ss_ticket_number": 186823,
+      "extended_price": 10469.81,
+      "extended_tax": 489.69,
+      "list_price": 24628.5
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Antone",
+      "ca_city": "Antioch",
+      "bought_city": "Forest Hills",
+      "ss_ticket_number": 192973,
+      "extended_price": 40194.32,
+      "extended_tax": 1379.77,
+      "list_price": 70621.27
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Violet",
+      "ca_city": "Woodlawn",
+      "bought_city": "Woodville",
+      "ss_ticket_number": 193534,
+      "extended_price": 25572.81,
+      "extended_tax": 787.15,
+      "list_price": 41865.05
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Emiko",
+      "ca_city": "Liberty",
+      "bought_city": "Oakdale",
+      "ss_ticket_number": 193771,
+      "extended_price": 19610.23,
+      "extended_tax": 681.17,
+      "list_price": 45043.05
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Mountain View",
+      "bought_city": "Deerfield",
+      "ss_ticket_number": 194436,
+      "extended_price": 7432.11,
+      "extended_tax": 152.61,
+      "list_price": 17920.09
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Georgetown",
+      "bought_city": "Forest Hills",
+      "ss_ticket_number": 195266,
+      "extended_price": 14065.41,
+      "extended_tax": 432.04,
+      "list_price": 28953.13
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Roy",
+      "ca_city": "Georgetown",
+      "bought_city": "Riverside",
+      "ss_ticket_number": 200033,
+      "extended_price": 38525.15,
+      "extended_tax": 1584.09,
+      "list_price": 54651.99
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Barbara",
+      "ca_city": "Westgate",
+      "bought_city": "Crossroads",
+      "ss_ticket_number": 202167,
+      "extended_price": 29774.57,
+      "extended_tax": 759.89,
+      "list_price": 57217.71
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Diane",
+      "ca_city": "Five Points",
+      "bought_city": "Mount Zion",
+      "ss_ticket_number": 203347,
+      "extended_price": 36587.99,
+      "extended_tax": 494.65,
+      "list_price": 66098.94
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Andrew",
+      "ca_city": "Shiloh",
+      "bought_city": "Mount Zion",
+      "ss_ticket_number": 205712,
+      "extended_price": 18576.19,
+      "extended_tax": 593.23,
+      "list_price": 39242.39
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Mount Pleasant",
+      "bought_city": "Greenville",
+      "ss_ticket_number": 206301,
+      "extended_price": 22861.83,
+      "extended_tax": 1045.3,
+      "list_price": 48022.73
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Waterloo",
+      "bought_city": "Spring Hill",
+      "ss_ticket_number": 206784,
+      "extended_price": 17965.93,
+      "extended_tax": 689.25,
+      "list_price": 29316.46
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Littleton",
+      "bought_city": "Walnut Grove",
+      "ss_ticket_number": 209023,
+      "extended_price": 20841.54,
+      "extended_tax": 1106.46,
+      "list_price": 57051.42
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Norman",
+      "ca_city": "Jamestown",
+      "bought_city": "Farmington",
+      "ss_ticket_number": 218063,
+      "extended_price": 21778.15,
+      "extended_tax": 811.33,
+      "list_price": 46935.03
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Hillcrest",
+      "bought_city": "Valley View",
+      "ss_ticket_number": 218569,
+      "extended_price": 20608.21,
+      "extended_tax": 1077.14,
+      "list_price": 42824.59
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Douglas",
+      "ca_city": "Crossroads",
+      "bought_city": "Sunnyside",
+      "ss_ticket_number": 218776,
+      "extended_price": 13991.57,
+      "extended_tax": 480.95,
+      "list_price": 39642.78
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Summit",
+      "bought_city": "Concord",
+      "ss_ticket_number": 224470,
+      "extended_price": 16753.12,
+      "extended_tax": 781.09,
+      "list_price": 42501.34
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Joshua",
+      "ca_city": "Five Points",
+      "bought_city": "Hopewell",
+      "ss_ticket_number": 227114,
+      "extended_price": 15509.5,
+      "extended_tax": 560.16,
+      "list_price": 47045.57
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Edgewood",
+      "bought_city": "Belmont",
+      "ss_ticket_number": 230383,
+      "extended_price": 18252.32,
+      "extended_tax": 805.72,
+      "list_price": 35147.68
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Franklin",
+      "bought_city": "Floyd",
+      "ss_ticket_number": 230648,
+      "extended_price": 18347.71,
+      "extended_tax": 530.71,
+      "list_price": 33093.43
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Joseph",
+      "ca_city": "Lakewood",
+      "bought_city": "Mount Olive",
+      "ss_ticket_number": 231104,
+      "extended_price": 36907.62,
+      "extended_tax": 1354.76,
+      "list_price": 62079.89
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": "Marti",
+      "ca_city": "Greenwood",
+      "bought_city": "Providence",
+      "ss_ticket_number": 231861,
+      "extended_price": 14596.26,
+      "extended_tax": 483.55,
+      "list_price": 38253.54
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Deerfield",
+      "bought_city": "Lakeside",
+      "ss_ticket_number": 232906,
+      "extended_price": 21387.51,
+      "extended_tax": 810.79,
+      "list_price": 28657.64
+    },
+    {
+      "c_last_name": null,
+      "c_first_name": null,
+      "ca_city": "Lakeside",
+      "bought_city": "Jackson",
+      "ss_ticket_number": 235093,
+      "extended_price": 12231.85,
+      "extended_tax": 380.29,
+      "list_price": 45651.44
+    },
+    {
+      "c_last_name": "Aaron",
+      "c_first_name": "Guy",
+      "ca_city": "Lakeside",
+      "bought_city": "Mount Pleasant",
+      "ss_ticket_number": 210815,
+      "extended_price": 17578.87,
+      "extended_tax": 809.71,
+      "list_price": 43572.79
+    },
+    {
+      "c_last_name": "Abbott",
+      "c_first_name": "Joseph",
+      "ca_city": "Greenfield",
+      "bought_city": "Midway",
+      "ss_ticket_number": 62751,
+      "extended_price": 26919.52,
+      "extended_tax": 1116.58,
+      "list_price": 57080.4
+    },
+    {
+      "c_last_name": "Abbott",
+      "c_first_name": "Harriet",
+      "ca_city": "Wesley",
+      "bought_city": "Forest Hills",
+      "ss_ticket_number": 84405,
+      "extended_price": 22861.5,
+      "extended_tax": 1369.56,
+      "list_price": 44009.9
+    },
+    {
+      "c_last_name": "Abney",
+      "c_first_name": "Louis",
+      "ca_city": "Gladstone",
+      "bought_city": "Green Acres",
+      "ss_ticket_number": 140967,
+      "extended_price": 19446.55,
+      "extended_tax": 877.95,
+      "list_price": 32461.55
+    },
+    {
+      "c_last_name": "Acevedo",
+      "c_first_name": "David",
+      "ca_city": "Clinton",
+      "bought_city": "Shady Grove",
+      "ss_ticket_number": 131505,
+      "extended_price": 38482.28,
+      "extended_tax": 1224.88,
+      "list_price": 75008.94
+    },
+    {
+      "c_last_name": "Acosta",
+      "c_first_name": "Johnnie",
+      "ca_city": "Centerville",
+      "bought_city": "Enterprise",
+      "ss_ticket_number": 69183,
+      "extended_price": 11146.93,
+      "extended_tax": 215.5,
+      "list_price": 17512.59
+    },
+    {
+      "c_last_name": "Acosta",
+      "c_first_name": "David",
+      "ca_city": "Harmony",
+      "bought_city": "Bunker Hill",
+      "ss_ticket_number": 112259,
+      "extended_price": 23555.67,
+      "extended_tax": 1186.06,
+      "list_price": 38964.27
+    },
+    {
+      "c_last_name": "Adair",
+      "c_first_name": "Evan",
+      "ca_city": "Blanchard",
+      "bought_city": "New Hope",
+      "ss_ticket_number": 117449,
+      "extended_price": 15560.75,
+      "extended_tax": 571.23,
+      "list_price": 38387.23
+    },
+    {
+      "c_last_name": "Adams",
+      "c_first_name": "Genevieve",
+      "ca_city": "Enterprise",
+      "bought_city": "Union Hill",
+      "ss_ticket_number": 109910,
+      "extended_price": 38112.6,
+      "extended_tax": 2078.45,
+      "list_price": 68698.5
+    },
+    {
+      "c_last_name": "Adams",
+      "c_first_name": "Joyce",
+      "ca_city": "Newtown",
+      "bought_city": "Concord",
+      "ss_ticket_number": 166181,
+      "extended_price": 11300.17,
+      "extended_tax": 395.01,
+      "list_price": 32793.82
+    },
+    {
+      "c_last_name": "Adams",
+      "c_first_name": "John",
+      "ca_city": "Marion",
+      "bought_city": "Oak Ridge",
+      "ss_ticket_number": 206733,
+      "extended_price": 32377.89,
+      "extended_tax": 1224.72,
+      "list_price": 72590.31
+    }
+  ]
+}

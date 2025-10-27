@@ -1,0 +1,1016 @@
+{
+  "query_num": 62,
+  "row_count": 100,
+  "columns": [
+    "substr(w_warehouse_name, 1, 20)",
+    "sm_type",
+    "web_name",
+    "30 days",
+    "31-60 days",
+    "61-90 days",
+    "91-120 days",
+    ">120 days"
+  ],
+  "rows": [
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "EXPRESS",
+      "web_name": "site_0",
+      "30 days": 266,
+      "31-60 days": 293,
+      "61-90 days": 315,
+      "91-120 days": 321,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "EXPRESS",
+      "web_name": "site_1",
+      "30 days": 298,
+      "31-60 days": 312,
+      "61-90 days": 304,
+      "91-120 days": 308,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "EXPRESS",
+      "web_name": "site_2",
+      "30 days": 301,
+      "31-60 days": 304,
+      "61-90 days": 316,
+      "91-120 days": 313,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "EXPRESS",
+      "web_name": "site_3",
+      "30 days": 288,
+      "31-60 days": 261,
+      "61-90 days": 243,
+      "91-120 days": 251,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "EXPRESS",
+      "web_name": "site_4",
+      "30 days": 230,
+      "31-60 days": 277,
+      "61-90 days": 291,
+      "91-120 days": 272,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "LIBRARY",
+      "web_name": "site_0",
+      "30 days": 192,
+      "31-60 days": 177,
+      "61-90 days": 175,
+      "91-120 days": 181,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "LIBRARY",
+      "web_name": "site_1",
+      "30 days": 222,
+      "31-60 days": 212,
+      "61-90 days": 214,
+      "91-120 days": 219,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "LIBRARY",
+      "web_name": "site_2",
+      "30 days": 260,
+      "31-60 days": 230,
+      "61-90 days": 238,
+      "91-120 days": 235,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "LIBRARY",
+      "web_name": "site_3",
+      "30 days": 217,
+      "31-60 days": 248,
+      "61-90 days": 247,
+      "91-120 days": 269,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "LIBRARY",
+      "web_name": "site_4",
+      "30 days": 205,
+      "31-60 days": 211,
+      "61-90 days": 221,
+      "91-120 days": 188,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "NEXT DAY",
+      "web_name": "site_0",
+      "30 days": 283,
+      "31-60 days": 303,
+      "61-90 days": 332,
+      "91-120 days": 331,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "NEXT DAY",
+      "web_name": "site_1",
+      "30 days": 286,
+      "31-60 days": 304,
+      "61-90 days": 287,
+      "91-120 days": 321,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "NEXT DAY",
+      "web_name": "site_2",
+      "30 days": 293,
+      "31-60 days": 262,
+      "61-90 days": 250,
+      "91-120 days": 263,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "NEXT DAY",
+      "web_name": "site_3",
+      "30 days": 255,
+      "31-60 days": 276,
+      "61-90 days": 244,
+      "91-120 days": 269,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "NEXT DAY",
+      "web_name": "site_4",
+      "30 days": 299,
+      "31-60 days": 294,
+      "61-90 days": 256,
+      "91-120 days": 304,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_0",
+      "30 days": 230,
+      "31-60 days": 238,
+      "61-90 days": 212,
+      "91-120 days": 236,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_1",
+      "30 days": 217,
+      "31-60 days": 232,
+      "61-90 days": 222,
+      "91-120 days": 192,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_2",
+      "30 days": 174,
+      "31-60 days": 169,
+      "61-90 days": 169,
+      "91-120 days": 177,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_3",
+      "30 days": 202,
+      "31-60 days": 179,
+      "61-90 days": 202,
+      "91-120 days": 213,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_4",
+      "30 days": 247,
+      "31-60 days": 216,
+      "61-90 days": 277,
+      "91-120 days": 236,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "REGULAR",
+      "web_name": "site_0",
+      "30 days": 198,
+      "31-60 days": 213,
+      "61-90 days": 217,
+      "91-120 days": 208,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "REGULAR",
+      "web_name": "site_1",
+      "30 days": 253,
+      "31-60 days": 241,
+      "61-90 days": 238,
+      "91-120 days": 243,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "REGULAR",
+      "web_name": "site_2",
+      "30 days": 241,
+      "31-60 days": 238,
+      "61-90 days": 223,
+      "91-120 days": 230,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "REGULAR",
+      "web_name": "site_3",
+      "30 days": 196,
+      "31-60 days": 203,
+      "61-90 days": 238,
+      "91-120 days": 197,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "REGULAR",
+      "web_name": "site_4",
+      "30 days": 194,
+      "31-60 days": 173,
+      "61-90 days": 168,
+      "91-120 days": 183,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "TWO DAY",
+      "web_name": "site_0",
+      "30 days": 204,
+      "31-60 days": 231,
+      "61-90 days": 209,
+      "91-120 days": 222,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "TWO DAY",
+      "web_name": "site_1",
+      "30 days": 191,
+      "31-60 days": 193,
+      "61-90 days": 188,
+      "91-120 days": 167,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "TWO DAY",
+      "web_name": "site_2",
+      "30 days": 188,
+      "31-60 days": 243,
+      "61-90 days": 217,
+      "91-120 days": 205,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "TWO DAY",
+      "web_name": "site_3",
+      "30 days": 249,
+      "31-60 days": 254,
+      "61-90 days": 204,
+      "91-120 days": 248,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": null,
+      "sm_type": "TWO DAY",
+      "web_name": "site_4",
+      "30 days": 230,
+      "31-60 days": 245,
+      "61-90 days": 263,
+      "91-120 days": 242,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "EXPRESS",
+      "web_name": "site_0",
+      "30 days": 300,
+      "31-60 days": 279,
+      "61-90 days": 328,
+      "91-120 days": 296,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "EXPRESS",
+      "web_name": "site_1",
+      "30 days": 249,
+      "31-60 days": 289,
+      "61-90 days": 248,
+      "91-120 days": 264,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "EXPRESS",
+      "web_name": "site_2",
+      "30 days": 262,
+      "31-60 days": 286,
+      "61-90 days": 262,
+      "91-120 days": 270,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "EXPRESS",
+      "web_name": "site_3",
+      "30 days": 319,
+      "31-60 days": 283,
+      "61-90 days": 279,
+      "91-120 days": 302,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "EXPRESS",
+      "web_name": "site_4",
+      "30 days": 314,
+      "31-60 days": 285,
+      "61-90 days": 267,
+      "91-120 days": 318,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "LIBRARY",
+      "web_name": "site_0",
+      "30 days": 250,
+      "31-60 days": 212,
+      "61-90 days": 247,
+      "91-120 days": 230,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "LIBRARY",
+      "web_name": "site_1",
+      "30 days": 224,
+      "31-60 days": 238,
+      "61-90 days": 237,
+      "91-120 days": 232,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "LIBRARY",
+      "web_name": "site_2",
+      "30 days": 218,
+      "31-60 days": 210,
+      "61-90 days": 228,
+      "91-120 days": 193,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "LIBRARY",
+      "web_name": "site_3",
+      "30 days": 166,
+      "31-60 days": 189,
+      "61-90 days": 176,
+      "91-120 days": 196,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "LIBRARY",
+      "web_name": "site_4",
+      "30 days": 221,
+      "31-60 days": 220,
+      "61-90 days": 217,
+      "91-120 days": 196,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "NEXT DAY",
+      "web_name": "site_0",
+      "30 days": 252,
+      "31-60 days": 233,
+      "61-90 days": 266,
+      "91-120 days": 258,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "NEXT DAY",
+      "web_name": "site_1",
+      "30 days": 262,
+      "31-60 days": 262,
+      "61-90 days": 252,
+      "91-120 days": 272,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "NEXT DAY",
+      "web_name": "site_2",
+      "30 days": 308,
+      "31-60 days": 259,
+      "61-90 days": 320,
+      "91-120 days": 285,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "NEXT DAY",
+      "web_name": "site_3",
+      "30 days": 256,
+      "31-60 days": 304,
+      "61-90 days": 284,
+      "91-120 days": 330,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "NEXT DAY",
+      "web_name": "site_4",
+      "30 days": 271,
+      "31-60 days": 307,
+      "61-90 days": 279,
+      "91-120 days": 298,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_0",
+      "30 days": 159,
+      "31-60 days": 176,
+      "61-90 days": 160,
+      "91-120 days": 196,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_1",
+      "30 days": 215,
+      "31-60 days": 192,
+      "61-90 days": 252,
+      "91-120 days": 182,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_2",
+      "30 days": 243,
+      "31-60 days": 235,
+      "61-90 days": 233,
+      "91-120 days": 216,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_3",
+      "30 days": 236,
+      "31-60 days": 251,
+      "61-90 days": 209,
+      "91-120 days": 238,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_4",
+      "30 days": 198,
+      "31-60 days": 185,
+      "61-90 days": 226,
+      "91-120 days": 196,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "REGULAR",
+      "web_name": "site_0",
+      "30 days": 268,
+      "31-60 days": 257,
+      "61-90 days": 255,
+      "91-120 days": 220,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "REGULAR",
+      "web_name": "site_1",
+      "30 days": 216,
+      "31-60 days": 203,
+      "61-90 days": 195,
+      "91-120 days": 221,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "REGULAR",
+      "web_name": "site_2",
+      "30 days": 178,
+      "31-60 days": 187,
+      "61-90 days": 156,
+      "91-120 days": 184,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "REGULAR",
+      "web_name": "site_3",
+      "30 days": 211,
+      "31-60 days": 198,
+      "61-90 days": 196,
+      "91-120 days": 218,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "REGULAR",
+      "web_name": "site_4",
+      "30 days": 236,
+      "31-60 days": 226,
+      "61-90 days": 229,
+      "91-120 days": 252,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "TWO DAY",
+      "web_name": "site_0",
+      "30 days": 219,
+      "31-60 days": 200,
+      "61-90 days": 239,
+      "91-120 days": 215,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "TWO DAY",
+      "web_name": "site_1",
+      "30 days": 248,
+      "31-60 days": 226,
+      "61-90 days": 210,
+      "91-120 days": 232,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "TWO DAY",
+      "web_name": "site_2",
+      "30 days": 245,
+      "31-60 days": 219,
+      "61-90 days": 256,
+      "91-120 days": 245,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "TWO DAY",
+      "web_name": "site_3",
+      "30 days": 214,
+      "31-60 days": 167,
+      "61-90 days": 207,
+      "91-120 days": 207,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Conventional childr",
+      "sm_type": "TWO DAY",
+      "web_name": "site_4",
+      "30 days": 168,
+      "31-60 days": 179,
+      "61-90 days": 192,
+      "91-120 days": 206,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "EXPRESS",
+      "web_name": "site_0",
+      "30 days": 263,
+      "31-60 days": 273,
+      "61-90 days": 271,
+      "91-120 days": 288,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "EXPRESS",
+      "web_name": "site_1",
+      "30 days": 320,
+      "31-60 days": 312,
+      "61-90 days": 308,
+      "91-120 days": 283,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "EXPRESS",
+      "web_name": "site_2",
+      "30 days": 259,
+      "31-60 days": 296,
+      "61-90 days": 268,
+      "91-120 days": 301,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "EXPRESS",
+      "web_name": "site_3",
+      "30 days": 308,
+      "31-60 days": 284,
+      "61-90 days": 316,
+      "91-120 days": 296,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "EXPRESS",
+      "web_name": "site_4",
+      "30 days": 270,
+      "31-60 days": 236,
+      "61-90 days": 288,
+      "91-120 days": 276,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "LIBRARY",
+      "web_name": "site_0",
+      "30 days": 197,
+      "31-60 days": 212,
+      "61-90 days": 207,
+      "91-120 days": 210,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "LIBRARY",
+      "web_name": "site_1",
+      "30 days": 168,
+      "31-60 days": 168,
+      "61-90 days": 177,
+      "91-120 days": 183,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "LIBRARY",
+      "web_name": "site_2",
+      "30 days": 222,
+      "31-60 days": 182,
+      "61-90 days": 208,
+      "91-120 days": 197,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "LIBRARY",
+      "web_name": "site_3",
+      "30 days": 239,
+      "31-60 days": 226,
+      "61-90 days": 225,
+      "91-120 days": 220,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "LIBRARY",
+      "web_name": "site_4",
+      "30 days": 220,
+      "31-60 days": 230,
+      "61-90 days": 266,
+      "91-120 days": 235,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "NEXT DAY",
+      "web_name": "site_0",
+      "30 days": 286,
+      "31-60 days": 273,
+      "61-90 days": 301,
+      "91-120 days": 300,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "NEXT DAY",
+      "web_name": "site_1",
+      "30 days": 282,
+      "31-60 days": 301,
+      "61-90 days": 292,
+      "91-120 days": 283,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "NEXT DAY",
+      "web_name": "site_2",
+      "30 days": 321,
+      "31-60 days": 287,
+      "61-90 days": 295,
+      "91-120 days": 315,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "NEXT DAY",
+      "web_name": "site_3",
+      "30 days": 252,
+      "31-60 days": 272,
+      "61-90 days": 254,
+      "91-120 days": 294,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "NEXT DAY",
+      "web_name": "site_4",
+      "30 days": 276,
+      "31-60 days": 259,
+      "61-90 days": 286,
+      "91-120 days": 263,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_0",
+      "30 days": 232,
+      "31-60 days": 255,
+      "61-90 days": 269,
+      "91-120 days": 216,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_1",
+      "30 days": 246,
+      "31-60 days": 228,
+      "61-90 days": 226,
+      "91-120 days": 243,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_2",
+      "30 days": 218,
+      "31-60 days": 196,
+      "61-90 days": 225,
+      "91-120 days": 192,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_3",
+      "30 days": 186,
+      "31-60 days": 168,
+      "61-90 days": 163,
+      "91-120 days": 194,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "OVERNIGHT",
+      "web_name": "site_4",
+      "30 days": 186,
+      "31-60 days": 211,
+      "61-90 days": 200,
+      "91-120 days": 200,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "REGULAR",
+      "web_name": "site_0",
+      "30 days": 178,
+      "31-60 days": 175,
+      "61-90 days": 188,
+      "91-120 days": 190,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "REGULAR",
+      "web_name": "site_1",
+      "30 days": 192,
+      "31-60 days": 202,
+      "61-90 days": 238,
+      "91-120 days": 209,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "REGULAR",
+      "web_name": "site_2",
+      "30 days": 250,
+      "31-60 days": 271,
+      "61-90 days": 217,
+      "91-120 days": 239,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "REGULAR",
+      "web_name": "site_3",
+      "30 days": 229,
+      "31-60 days": 216,
+      "61-90 days": 226,
+      "91-120 days": 265,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "REGULAR",
+      "web_name": "site_4",
+      "30 days": 226,
+      "31-60 days": 203,
+      "61-90 days": 218,
+      "91-120 days": 186,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "TWO DAY",
+      "web_name": "site_0",
+      "30 days": 215,
+      "31-60 days": 233,
+      "61-90 days": 263,
+      "91-120 days": 238,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "TWO DAY",
+      "web_name": "site_1",
+      "30 days": 207,
+      "31-60 days": 212,
+      "61-90 days": 198,
+      "91-120 days": 210,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "TWO DAY",
+      "web_name": "site_2",
+      "30 days": 165,
+      "31-60 days": 206,
+      "61-90 days": 165,
+      "91-120 days": 163,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "TWO DAY",
+      "web_name": "site_3",
+      "30 days": 214,
+      "31-60 days": 204,
+      "61-90 days": 206,
+      "91-120 days": 207,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Of course ot",
+      "sm_type": "TWO DAY",
+      "web_name": "site_4",
+      "30 days": 223,
+      "31-60 days": 216,
+      "61-90 days": 223,
+      "91-120 days": 249,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Social, royal laws m",
+      "sm_type": "EXPRESS",
+      "web_name": "site_0",
+      "30 days": 295,
+      "31-60 days": 304,
+      "61-90 days": 298,
+      "91-120 days": 304,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Social, royal laws m",
+      "sm_type": "EXPRESS",
+      "web_name": "site_1",
+      "30 days": 308,
+      "31-60 days": 301,
+      "61-90 days": 312,
+      "91-120 days": 290,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Social, royal laws m",
+      "sm_type": "EXPRESS",
+      "web_name": "site_2",
+      "30 days": 280,
+      "31-60 days": 272,
+      "61-90 days": 270,
+      "91-120 days": 269,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Social, royal laws m",
+      "sm_type": "EXPRESS",
+      "web_name": "site_3",
+      "30 days": 265,
+      "31-60 days": 239,
+      "61-90 days": 261,
+      "91-120 days": 281,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Social, royal laws m",
+      "sm_type": "EXPRESS",
+      "web_name": "site_4",
+      "30 days": 283,
+      "31-60 days": 306,
+      "61-90 days": 308,
+      "91-120 days": 267,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Social, royal laws m",
+      "sm_type": "LIBRARY",
+      "web_name": "site_0",
+      "30 days": 220,
+      "31-60 days": 202,
+      "61-90 days": 229,
+      "91-120 days": 197,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Social, royal laws m",
+      "sm_type": "LIBRARY",
+      "web_name": "site_1",
+      "30 days": 224,
+      "31-60 days": 256,
+      "61-90 days": 221,
+      "91-120 days": 247,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Social, royal laws m",
+      "sm_type": "LIBRARY",
+      "web_name": "site_2",
+      "30 days": 249,
+      "31-60 days": 244,
+      "61-90 days": 252,
+      "91-120 days": 218,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Social, royal laws m",
+      "sm_type": "LIBRARY",
+      "web_name": "site_3",
+      "30 days": 204,
+      "31-60 days": 221,
+      "61-90 days": 206,
+      "91-120 days": 228,
+      ">120 days": 0
+    },
+    {
+      "substr(w_warehouse_name, 1, 20)": "Social, royal laws m",
+      "sm_type": "LIBRARY",
+      "web_name": "site_4",
+      "30 days": 178,
+      "31-60 days": 167,
+      "61-90 days": 171,
+      "91-120 days": 207,
+      ">120 days": 0
+    }
+  ]
+}

@@ -1,0 +1,511 @@
+{
+  "query_num": 63,
+  "row_count": 100,
+  "columns": [
+    "i_manager_id",
+    "sum_sales",
+    "avg_monthly_sales"
+  ],
+  "rows": [
+    {
+      "i_manager_id": 1,
+      "sum_sales": 122.92,
+      "avg_monthly_sales": 612.800833
+    },
+    {
+      "i_manager_id": 1,
+      "sum_sales": 271.2,
+      "avg_monthly_sales": 612.800833
+    },
+    {
+      "i_manager_id": 1,
+      "sum_sales": 324.29,
+      "avg_monthly_sales": 612.800833
+    },
+    {
+      "i_manager_id": 1,
+      "sum_sales": 391.74,
+      "avg_monthly_sales": 612.800833
+    },
+    {
+      "i_manager_id": 1,
+      "sum_sales": 504.62,
+      "avg_monthly_sales": 612.800833
+    },
+    {
+      "i_manager_id": 1,
+      "sum_sales": 542.37,
+      "avg_monthly_sales": 612.800833
+    },
+    {
+      "i_manager_id": 1,
+      "sum_sales": 679.25,
+      "avg_monthly_sales": 612.800833
+    },
+    {
+      "i_manager_id": 1,
+      "sum_sales": 873.89,
+      "avg_monthly_sales": 612.800833
+    },
+    {
+      "i_manager_id": 1,
+      "sum_sales": 892.28,
+      "avg_monthly_sales": 612.800833
+    },
+    {
+      "i_manager_id": 1,
+      "sum_sales": 920.79,
+      "avg_monthly_sales": 612.800833
+    },
+    {
+      "i_manager_id": 1,
+      "sum_sales": 1215.74,
+      "avg_monthly_sales": 612.800833
+    },
+    {
+      "i_manager_id": 2,
+      "sum_sales": 150.13,
+      "avg_monthly_sales": 529.7425
+    },
+    {
+      "i_manager_id": 2,
+      "sum_sales": 264.16,
+      "avg_monthly_sales": 529.7425
+    },
+    {
+      "i_manager_id": 2,
+      "sum_sales": 283.39,
+      "avg_monthly_sales": 529.7425
+    },
+    {
+      "i_manager_id": 2,
+      "sum_sales": 318.31,
+      "avg_monthly_sales": 529.7425
+    },
+    {
+      "i_manager_id": 2,
+      "sum_sales": 368.51,
+      "avg_monthly_sales": 529.7425
+    },
+    {
+      "i_manager_id": 2,
+      "sum_sales": 372.82,
+      "avg_monthly_sales": 529.7425
+    },
+    {
+      "i_manager_id": 2,
+      "sum_sales": 620.55,
+      "avg_monthly_sales": 529.7425
+    },
+    {
+      "i_manager_id": 2,
+      "sum_sales": 655.7,
+      "avg_monthly_sales": 529.7425
+    },
+    {
+      "i_manager_id": 2,
+      "sum_sales": 917.5,
+      "avg_monthly_sales": 529.7425
+    },
+    {
+      "i_manager_id": 2,
+      "sum_sales": 946.91,
+      "avg_monthly_sales": 529.7425
+    },
+    {
+      "i_manager_id": 2,
+      "sum_sales": 958.37,
+      "avg_monthly_sales": 529.7425
+    },
+    {
+      "i_manager_id": 3,
+      "sum_sales": 308.88,
+      "avg_monthly_sales": 1005.744167
+    },
+    {
+      "i_manager_id": 3,
+      "sum_sales": 459.9,
+      "avg_monthly_sales": 1005.744167
+    },
+    {
+      "i_manager_id": 3,
+      "sum_sales": 472.12,
+      "avg_monthly_sales": 1005.744167
+    },
+    {
+      "i_manager_id": 3,
+      "sum_sales": 524.55,
+      "avg_monthly_sales": 1005.744167
+    },
+    {
+      "i_manager_id": 3,
+      "sum_sales": 679.56,
+      "avg_monthly_sales": 1005.744167
+    },
+    {
+      "i_manager_id": 3,
+      "sum_sales": 1177.72,
+      "avg_monthly_sales": 1005.744167
+    },
+    {
+      "i_manager_id": 3,
+      "sum_sales": 1531.5,
+      "avg_monthly_sales": 1005.744167
+    },
+    {
+      "i_manager_id": 3,
+      "sum_sales": 1735.53,
+      "avg_monthly_sales": 1005.744167
+    },
+    {
+      "i_manager_id": 3,
+      "sum_sales": 2152.01,
+      "avg_monthly_sales": 1005.744167
+    },
+    {
+      "i_manager_id": 5,
+      "sum_sales": 549.48,
+      "avg_monthly_sales": 1118.365
+    },
+    {
+      "i_manager_id": 5,
+      "sum_sales": 579.3,
+      "avg_monthly_sales": 1118.365
+    },
+    {
+      "i_manager_id": 5,
+      "sum_sales": 660.99,
+      "avg_monthly_sales": 1118.365
+    },
+    {
+      "i_manager_id": 5,
+      "sum_sales": 663.38,
+      "avg_monthly_sales": 1118.365
+    },
+    {
+      "i_manager_id": 5,
+      "sum_sales": 800.39,
+      "avg_monthly_sales": 1118.365
+    },
+    {
+      "i_manager_id": 5,
+      "sum_sales": 905.38,
+      "avg_monthly_sales": 1118.365
+    },
+    {
+      "i_manager_id": 5,
+      "sum_sales": 950.61,
+      "avg_monthly_sales": 1118.365
+    },
+    {
+      "i_manager_id": 5,
+      "sum_sales": 1503.56,
+      "avg_monthly_sales": 1118.365
+    },
+    {
+      "i_manager_id": 5,
+      "sum_sales": 1627.04,
+      "avg_monthly_sales": 1118.365
+    },
+    {
+      "i_manager_id": 5,
+      "sum_sales": 1883.02,
+      "avg_monthly_sales": 1118.365
+    },
+    {
+      "i_manager_id": 5,
+      "sum_sales": 2169.53,
+      "avg_monthly_sales": 1118.365
+    },
+    {
+      "i_manager_id": 6,
+      "sum_sales": 616.31,
+      "avg_monthly_sales": 1883.96
+    },
+    {
+      "i_manager_id": 6,
+      "sum_sales": 842.33,
+      "avg_monthly_sales": 1883.96
+    },
+    {
+      "i_manager_id": 6,
+      "sum_sales": 928.93,
+      "avg_monthly_sales": 1883.96
+    },
+    {
+      "i_manager_id": 6,
+      "sum_sales": 1034.24,
+      "avg_monthly_sales": 1883.96
+    },
+    {
+      "i_manager_id": 6,
+      "sum_sales": 1120.96,
+      "avg_monthly_sales": 1883.96
+    },
+    {
+      "i_manager_id": 6,
+      "sum_sales": 1241.23,
+      "avg_monthly_sales": 1883.96
+    },
+    {
+      "i_manager_id": 6,
+      "sum_sales": 1528.1,
+      "avg_monthly_sales": 1883.96
+    },
+    {
+      "i_manager_id": 6,
+      "sum_sales": 2242.79,
+      "avg_monthly_sales": 1883.96
+    },
+    {
+      "i_manager_id": 6,
+      "sum_sales": 2553.84,
+      "avg_monthly_sales": 1883.96
+    },
+    {
+      "i_manager_id": 6,
+      "sum_sales": 2614.18,
+      "avg_monthly_sales": 1883.96
+    },
+    {
+      "i_manager_id": 6,
+      "sum_sales": 3566.95,
+      "avg_monthly_sales": 1883.96
+    },
+    {
+      "i_manager_id": 6,
+      "sum_sales": 4317.66,
+      "avg_monthly_sales": 1883.96
+    },
+    {
+      "i_manager_id": 7,
+      "sum_sales": 803.93,
+      "avg_monthly_sales": 1564.6175
+    },
+    {
+      "i_manager_id": 7,
+      "sum_sales": 821.79,
+      "avg_monthly_sales": 1564.6175
+    },
+    {
+      "i_manager_id": 7,
+      "sum_sales": 842.89,
+      "avg_monthly_sales": 1564.6175
+    },
+    {
+      "i_manager_id": 7,
+      "sum_sales": 914.62,
+      "avg_monthly_sales": 1564.6175
+    },
+    {
+      "i_manager_id": 7,
+      "sum_sales": 982.68,
+      "avg_monthly_sales": 1564.6175
+    },
+    {
+      "i_manager_id": 7,
+      "sum_sales": 1190.12,
+      "avg_monthly_sales": 1564.6175
+    },
+    {
+      "i_manager_id": 7,
+      "sum_sales": 1372.28,
+      "avg_monthly_sales": 1564.6175
+    },
+    {
+      "i_manager_id": 7,
+      "sum_sales": 1756.83,
+      "avg_monthly_sales": 1564.6175
+    },
+    {
+      "i_manager_id": 7,
+      "sum_sales": 1968.1,
+      "avg_monthly_sales": 1564.6175
+    },
+    {
+      "i_manager_id": 7,
+      "sum_sales": 2022.35,
+      "avg_monthly_sales": 1564.6175
+    },
+    {
+      "i_manager_id": 7,
+      "sum_sales": 2788.38,
+      "avg_monthly_sales": 1564.6175
+    },
+    {
+      "i_manager_id": 7,
+      "sum_sales": 3311.44,
+      "avg_monthly_sales": 1564.6175
+    },
+    {
+      "i_manager_id": 8,
+      "sum_sales": 707.6,
+      "avg_monthly_sales": 1568.485
+    },
+    {
+      "i_manager_id": 8,
+      "sum_sales": 764.98,
+      "avg_monthly_sales": 1568.485
+    },
+    {
+      "i_manager_id": 8,
+      "sum_sales": 802.16,
+      "avg_monthly_sales": 1568.485
+    },
+    {
+      "i_manager_id": 8,
+      "sum_sales": 903.04,
+      "avg_monthly_sales": 1568.485
+    },
+    {
+      "i_manager_id": 8,
+      "sum_sales": 940.24,
+      "avg_monthly_sales": 1568.485
+    },
+    {
+      "i_manager_id": 8,
+      "sum_sales": 1365.01,
+      "avg_monthly_sales": 1568.485
+    },
+    {
+      "i_manager_id": 8,
+      "sum_sales": 1371.52,
+      "avg_monthly_sales": 1568.485
+    },
+    {
+      "i_manager_id": 8,
+      "sum_sales": 1744.71,
+      "avg_monthly_sales": 1568.485
+    },
+    {
+      "i_manager_id": 8,
+      "sum_sales": 1840.43,
+      "avg_monthly_sales": 1568.485
+    },
+    {
+      "i_manager_id": 8,
+      "sum_sales": 2360.83,
+      "avg_monthly_sales": 1568.485
+    },
+    {
+      "i_manager_id": 8,
+      "sum_sales": 2904.4,
+      "avg_monthly_sales": 1568.485
+    },
+    {
+      "i_manager_id": 8,
+      "sum_sales": 3116.9,
+      "avg_monthly_sales": 1568.485
+    },
+    {
+      "i_manager_id": 9,
+      "sum_sales": 574.79,
+      "avg_monthly_sales": 1592.710833
+    },
+    {
+      "i_manager_id": 9,
+      "sum_sales": 634.6,
+      "avg_monthly_sales": 1592.710833
+    },
+    {
+      "i_manager_id": 9,
+      "sum_sales": 652.64,
+      "avg_monthly_sales": 1592.710833
+    },
+    {
+      "i_manager_id": 9,
+      "sum_sales": 725.48,
+      "avg_monthly_sales": 1592.710833
+    },
+    {
+      "i_manager_id": 9,
+      "sum_sales": 766.49,
+      "avg_monthly_sales": 1592.710833
+    },
+    {
+      "i_manager_id": 9,
+      "sum_sales": 946.68,
+      "avg_monthly_sales": 1592.710833
+    },
+    {
+      "i_manager_id": 9,
+      "sum_sales": 1016.8,
+      "avg_monthly_sales": 1592.710833
+    },
+    {
+      "i_manager_id": 9,
+      "sum_sales": 1885.91,
+      "avg_monthly_sales": 1592.710833
+    },
+    {
+      "i_manager_id": 9,
+      "sum_sales": 2291.9,
+      "avg_monthly_sales": 1592.710833
+    },
+    {
+      "i_manager_id": 9,
+      "sum_sales": 2524.35,
+      "avg_monthly_sales": 1592.710833
+    },
+    {
+      "i_manager_id": 9,
+      "sum_sales": 3469.69,
+      "avg_monthly_sales": 1592.710833
+    },
+    {
+      "i_manager_id": 9,
+      "sum_sales": 3623.2,
+      "avg_monthly_sales": 1592.710833
+    },
+    {
+      "i_manager_id": 10,
+      "sum_sales": 458.18,
+      "avg_monthly_sales": 1152.190833
+    },
+    {
+      "i_manager_id": 10,
+      "sum_sales": 495.48,
+      "avg_monthly_sales": 1152.190833
+    },
+    {
+      "i_manager_id": 10,
+      "sum_sales": 697.28,
+      "avg_monthly_sales": 1152.190833
+    },
+    {
+      "i_manager_id": 10,
+      "sum_sales": 763.47,
+      "avg_monthly_sales": 1152.190833
+    },
+    {
+      "i_manager_id": 10,
+      "sum_sales": 842.9,
+      "avg_monthly_sales": 1152.190833
+    },
+    {
+      "i_manager_id": 10,
+      "sum_sales": 850.0,
+      "avg_monthly_sales": 1152.190833
+    },
+    {
+      "i_manager_id": 10,
+      "sum_sales": 1269.99,
+      "avg_monthly_sales": 1152.190833
+    },
+    {
+      "i_manager_id": 10,
+      "sum_sales": 1404.21,
+      "avg_monthly_sales": 1152.190833
+    },
+    {
+      "i_manager_id": 10,
+      "sum_sales": 2057.38,
+      "avg_monthly_sales": 1152.190833
+    },
+    {
+      "i_manager_id": 10,
+      "sum_sales": 2721.23,
+      "avg_monthly_sales": 1152.190833
+    }
+  ]
+}

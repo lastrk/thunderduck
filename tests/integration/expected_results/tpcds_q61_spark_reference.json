@@ -1,0 +1,16 @@
+{
+  "query_num": 61,
+  "row_count": 1,
+  "columns": [
+    "promotions",
+    "total",
+    "((CAST(promotions AS DECIMAL(15,4)) / CAST(total AS DECIMAL(15,4))) * 100)"
+  ],
+  "rows": [
+    {
+      "promotions": 2894907.87,
+      "total": 5586124.26,
+      "((CAST(promotions AS DECIMAL(15,4)) / CAST(total AS DECIMAL(15,4))) * 100)": 51.8231914518851
+    }
+  ]
+}
