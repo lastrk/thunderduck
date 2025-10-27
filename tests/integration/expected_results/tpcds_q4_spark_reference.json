@@ -1,0 +1,48 @@
+{
+  "query_num": 4,
+  "row_count": 6,
+  "columns": [
+    "customer_id",
+    "customer_first_name",
+    "customer_last_name",
+    "customer_preferred_cust_flag"
+  ],
+  "rows": [
+    {
+      "customer_id": "AAAAAAAADIIOAAAA",
+      "customer_first_name": "David",
+      "customer_last_name": "Carroll",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAIJCIBAAA",
+      "customer_first_name": "Thomas",
+      "customer_last_name": "Oneal",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAAKJBLAAAA",
+      "customer_first_name": "Kerry",
+      "customer_last_name": "Davis",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAANJAMAAAA",
+      "customer_first_name": "Thaddeus",
+      "customer_last_name": "Griffin",
+      "customer_preferred_cust_flag": "N"
+    },
+    {
+      "customer_id": "AAAAAAAANJOLAAAA",
+      "customer_first_name": "Debra",
+      "customer_last_name": "Underwood",
+      "customer_preferred_cust_flag": "Y"
+    },
+    {
+      "customer_id": "AAAAAAAAPFCLAAAA",
+      "customer_first_name": "Felicia",
+      "customer_last_name": "Neville",
+      "customer_preferred_cust_flag": "N"
+    }
+  ]
+}

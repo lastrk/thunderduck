@@ -1,0 +1,309 @@
+{
+  "query_num": 1,
+  "row_count": 100,
+  "columns": [
+    "c_customer_id"
+  ],
+  "rows": [
+    {
+      "c_customer_id": "AAAAAAAAAAABBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAADBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAADBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAACJAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAACNAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAADEBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAADFBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAADGAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAADKAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAEAAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAEBBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAEDAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAEGBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAFAAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAFABAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAFIBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAGAAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAGGAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAHCAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAHCAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAHDBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAHGAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAHIAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAICAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAIDAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAIGAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAJIAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAKBBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAKGAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAKJAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAKMAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAALEBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAMBBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAMFBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAMFBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAMPAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAANGAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAANJAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAOCAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAOJAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAOPAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAPCBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAAAPPAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABAAAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABAFBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABBFAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABBIAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABBLAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABBLAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABCBBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABCJAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABDCAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABDIAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABDNAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABEDAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABEFBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABEGBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABEPAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABFABAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABFIBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABFLAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABFMAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABFPAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABFPAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABGEAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABGIBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABGKAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABGLAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABIGAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABJAAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABJBBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABJEAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABJHAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABJIAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABLBAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABLBAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABLPAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABNEBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABOCAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABOFBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAABPFBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACACBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACAHBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACALAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACANAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACBEBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACBIBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACBKAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACBPAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACCEBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACDABAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACDABAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACDDAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACDGAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACDHBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACEBBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACECBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACECBAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACFAAAAA"
+    },
+    {
+      "c_customer_id": "AAAAAAAAACFABAAA"
+    }
+  ]
+}

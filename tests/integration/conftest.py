@@ -254,3 +254,40 @@ def pytest_collection_modifyitems(config, items):
         # Add sql marker to tests with 'sql' in name
         if '_sql' in item.nodeid.lower():
             item.add_marker(pytest.mark.sql)
+
+
+# TPC-DS Fixtures
+
+@pytest.fixture(scope="session")
+def tpcds_data_dir():
+    """Path to TPC-DS test data"""
+    data_dir = Path("/workspace/data/tpcds_sf1")
+    if not data_dir.exists():
+        pytest.skip(f"TPC-DS data not found at {data_dir}")
+    return data_dir
+
+
+@pytest.fixture(scope="session")
+def tpcds_tables(spark_session, tpcds_data_dir):
+    """Load all TPC-DS tables as temp views"""
+    tables = sorted([f.stem for f in tpcds_data_dir.glob("*.parquet")])
+
+    print(f"\nLoading {len(tables)} TPC-DS tables...")
+    for table in tables:
+        path = str(tpcds_data_dir / f"{table}.parquet")
+        df = spark_session.read.parquet(path)
+        df.createOrReplaceTempView(table)
+
+    print(f"✓ All {len(tables)} TPC-DS tables registered")
+    return tables
+
+
+@pytest.fixture
+def load_tpcds_query():
+    """Load TPC-DS query by number"""
+    def _load_query(qnum):
+        query_file = Path(f"/workspace/benchmarks/tpcds_queries/q{qnum}.sql")
+        if not query_file.exists():
+            pytest.skip(f"Query file not found: {query_file}")
+        return query_file.read_text()
+    return _load_query

@@ -1,0 +1,713 @@
+{
+  "query_num": 5,
+  "row_count": 100,
+  "columns": [
+    "channel",
+    "id",
+    "sales",
+    "returns",
+    "profit"
+  ],
+  "rows": [
+    {
+      "channel": null,
+      "id": null,
+      "sales": 112458734.7,
+      "returns": 3255243.12,
+      "profit": -31584085.44
+    },
+    {
+      "channel": "catalog channel",
+      "id": null,
+      "sales": 38544639.28,
+      "returns": 1083573.98,
+      "profit": -4396139.07
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAAABAAAA",
+      "sales": 163753.93,
+      "returns": 4645.17,
+      "profit": -36282.28
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAABBAAAA",
+      "sales": 0.0,
+      "returns": 326.05,
+      "profit": -191.31
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAABABAAAA",
+      "sales": 87201.46,
+      "returns": 0.0,
+      "profit": 838.9
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAABIAAAAA",
+      "sales": 0.0,
+      "returns": 564.8,
+      "profit": -417.26
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAACABAAAA",
+      "sales": 66295.66,
+      "returns": 410.56,
+      "profit": -8354.81
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAACJAAAAA",
+      "sales": 0.0,
+      "returns": 458.8,
+      "profit": -1255.28
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAADABAAAA",
+      "sales": 80733.59,
+      "returns": 0.0,
+      "profit": -28308.77
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAADCBAAAA",
+      "sales": 74461.52,
+      "returns": 0.0,
+      "profit": -13496.66
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAEABAAAA",
+      "sales": 72573.19,
+      "returns": 31.1,
+      "profit": -11507.69
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAEBBAAAA",
+      "sales": 0.0,
+      "returns": 732.24,
+      "profit": -317.65
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAECBAAAA",
+      "sales": 104457.44,
+      "returns": 0.0,
+      "profit": -6611.61
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAEPAAAAA",
+      "sales": 0.0,
+      "returns": 1415.67,
+      "profit": -1158.73
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAFABAAAA",
+      "sales": 65420.53,
+      "returns": 0.0,
+      "profit": -20106.28
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAFCBAAAA",
+      "sales": 105300.34,
+      "returns": 0.0,
+      "profit": -8194.81
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAFPAAAAA",
+      "sales": 0.0,
+      "returns": 127.09,
+      "profit": -231.51
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAGABAAAA",
+      "sales": 70575.69,
+      "returns": 3187.01,
+      "profit": -12630.36
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAGCBAAAA",
+      "sales": 86687.48,
+      "returns": 0.0,
+      "profit": -780.19
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAGIAAAAA",
+      "sales": 0.0,
+      "returns": 17.07,
+      "profit": -105.35
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAGPAAAAA",
+      "sales": 0.0,
+      "returns": 722.42,
+      "profit": -3009.18
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAHABAAAA",
+      "sales": 87201.78,
+      "returns": 0.0,
+      "profit": -10260.58
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAHCBAAAA",
+      "sales": 31174.07,
+      "returns": 0.0,
+      "profit": -27306.81
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAHPAAAAA",
+      "sales": 0.0,
+      "returns": 3922.7,
+      "profit": -6561.73
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAIABAAAA",
+      "sales": 0.0,
+      "returns": 25.55,
+      "profit": -16.12
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAICBAAAA",
+      "sales": 67523.56,
+      "returns": 0.0,
+      "profit": -26215.54
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAIPAAAAA",
+      "sales": 0.0,
+      "returns": 738.06,
+      "profit": -892.1
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAJABAAAA",
+      "sales": 0.0,
+      "returns": 281.75,
+      "profit": -231.32
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAJBBAAAA",
+      "sales": 0.0,
+      "returns": 3841.47,
+      "profit": -2645.45
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAJCBAAAA",
+      "sales": 64422.47,
+      "returns": 0.0,
+      "profit": -21760.27
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAJPAAAAA",
+      "sales": 0.0,
+      "returns": 776.21,
+      "profit": -987.92
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAKCBAAAA",
+      "sales": 8385.31,
+      "returns": 0.0,
+      "profit": 1119.71
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAKPAAAAA",
+      "sales": 186409.44,
+      "returns": 1955.06,
+      "profit": -17834.13
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAALCBAAAA",
+      "sales": 5307.21,
+      "returns": 0.0,
+      "profit": -1410.66
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAALPAAAAA",
+      "sales": 127062.3,
+      "returns": 821.68,
+      "profit": -9635.43
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAMCBAAAA",
+      "sales": 7584.75,
+      "returns": 0.0,
+      "profit": 60.97
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAMPAAAAA",
+      "sales": 165051.22,
+      "returns": 1660.34,
+      "profit": 2161.21
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAANBBAAAA",
+      "sales": 0.0,
+      "returns": 2770.26,
+      "profit": -4806.67
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAANCBAAAA",
+      "sales": 3247.5,
+      "returns": 0.0,
+      "profit": -999.98
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAANPAAAAA",
+      "sales": 151287.41,
+      "returns": 2497.94,
+      "profit": -21987.54
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAOABAAAA",
+      "sales": 0.0,
+      "returns": 233.4,
+      "profit": -317.74
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAOCBAAAA",
+      "sales": 6384.0,
+      "returns": 0.0,
+      "profit": 1780.68
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAOPAAAAA",
+      "sales": 185559.84,
+      "returns": 82.29,
+      "profit": 10072.16
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAPABAAAA",
+      "sales": 0.0,
+      "returns": 1018.02,
+      "profit": -147.66
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAPCBAAAA",
+      "sales": 7497.63,
+      "returns": 0.0,
+      "profit": -3560.97
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAAAPPAAAAA",
+      "sales": 192066.74,
+      "returns": 4317.48,
+      "profit": -10580.22
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABAABAAAA",
+      "sales": 245522.46,
+      "returns": 0.0,
+      "profit": -6595.62
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABABBAAAA",
+      "sales": 0.0,
+      "returns": 339.24,
+      "profit": -357.33
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABAJAAAAA",
+      "sales": 0.0,
+      "returns": 3999.96,
+      "profit": -892.25
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABBABAAAA",
+      "sales": 105735.8,
+      "returns": 0.0,
+      "profit": -655.91
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABCABAAAA",
+      "sales": 63001.17,
+      "returns": 0.0,
+      "profit": -22416.4
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABDABAAAA",
+      "sales": 95335.65,
+      "returns": 851.8,
+      "profit": -15517.95
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABDBBAAAA",
+      "sales": 0.0,
+      "returns": 3064.75,
+      "profit": -1892.02
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABDCBAAAA",
+      "sales": 67382.28,
+      "returns": 563.4,
+      "profit": -13054.21
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABDJAAAAA",
+      "sales": 0.0,
+      "returns": 2136.45,
+      "profit": -1010.6
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABDPAAAAA",
+      "sales": 0.0,
+      "returns": 379.16,
+      "profit": -516.48
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABEABAAAA",
+      "sales": 68341.49,
+      "returns": 0.0,
+      "profit": -16387.25
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABECBAAAA",
+      "sales": 59060.46,
+      "returns": 0.0,
+      "profit": -11710.4
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABEPAAAAA",
+      "sales": 0.0,
+      "returns": 10339.55,
+      "profit": -5613.65
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABFABAAAA",
+      "sales": 92343.51,
+      "returns": 0.0,
+      "profit": -22989.96
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABFCBAAAA",
+      "sales": 85194.32,
+      "returns": 0.0,
+      "profit": -13576.93
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABFIAAAAA",
+      "sales": 0.0,
+      "returns": 8697.1,
+      "profit": -2081.71
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABFPAAAAA",
+      "sales": 0.0,
+      "returns": 6740.27,
+      "profit": -5916.94
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABGABAAAA",
+      "sales": 82462.85,
+      "returns": 33.99,
+      "profit": -18702.3
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABGCBAAAA",
+      "sales": 85875.93,
+      "returns": 0.0,
+      "profit": -9051.98
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABGPAAAAA",
+      "sales": 0.0,
+      "returns": 8381.15,
+      "profit": -6711.51
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABHABAAAA",
+      "sales": 124171.02,
+      "returns": 54.18,
+      "profit": -197.57
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABHCBAAAA",
+      "sales": 68036.22,
+      "returns": 0.0,
+      "profit": -14007.52
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABHPAAAAA",
+      "sales": 0.0,
+      "returns": 7365.89,
+      "profit": -5178.27
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABICBAAAA",
+      "sales": 94990.21,
+      "returns": 0.0,
+      "profit": 4425.06
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABIPAAAAA",
+      "sales": 0.0,
+      "returns": 1564.6,
+      "profit": -1447.13
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABJABAAAA",
+      "sales": 0.0,
+      "returns": 979.44,
+      "profit": -1802.33
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABJCBAAAA",
+      "sales": 6231.12,
+      "returns": 0.0,
+      "profit": 1678.96
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABJPAAAAA",
+      "sales": 0.0,
+      "returns": 2436.63,
+      "profit": -970.25
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABKCBAAAA",
+      "sales": 133.2,
+      "returns": 0.0,
+      "profit": -1430.43
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABKPAAAAA",
+      "sales": 206609.66,
+      "returns": 473.75,
+      "profit": -19692.7
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABLBBAAAA",
+      "sales": 0.0,
+      "returns": 4842.72,
+      "profit": -785.83
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABLPAAAAA",
+      "sales": 169282.06,
+      "returns": 76.7,
+      "profit": 8430.92
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABMABAAAA",
+      "sales": 0.0,
+      "returns": 1234.35,
+      "profit": -398.38
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABMCBAAAA",
+      "sales": 6706.57,
+      "returns": 0.0,
+      "profit": -2348.17
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABMPAAAAA",
+      "sales": 168435.88,
+      "returns": 21.75,
+      "profit": -37718.67
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABNCBAAAA",
+      "sales": 6532.76,
+      "returns": 0.0,
+      "profit": -6949.13
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABNPAAAAA",
+      "sales": 153941.95,
+      "returns": 1472.8,
+      "profit": -21070.32
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABOCBAAAA",
+      "sales": 1926.58,
+      "returns": 0.0,
+      "profit": -2167.0
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABOPAAAAA",
+      "sales": 107801.17,
+      "returns": 0.0,
+      "profit": -57851.69
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABPABAAAA",
+      "sales": 0.0,
+      "returns": 85.32,
+      "profit": -80.67
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABPCBAAAA",
+      "sales": 3860.83,
+      "returns": 0.0,
+      "profit": 1081.78
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAABPPAAAAA",
+      "sales": 194664.82,
+      "returns": 2402.38,
+      "profit": -1062.59
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAACAABAAAA",
+      "sales": 189820.6,
+      "returns": 5.96,
+      "profit": 1292.88
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAACBABAAAA",
+      "sales": 118568.5,
+      "returns": 122.88,
+      "profit": -3355.82
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAACBBBAAAA",
+      "sales": 0.0,
+      "returns": 2219.07,
+      "profit": -1573.11
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAACBCBAAAA",
+      "sales": 0.0,
+      "returns": 2280.5,
+      "profit": -331.26
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAACBIAAAAA",
+      "sales": 0.0,
+      "returns": 0.0,
+      "profit": -530.26
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAACCABAAAA",
+      "sales": 137571.44,
+      "returns": 0.0,
+      "profit": -16709.85
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAACCCBAAAA",
+      "sales": 0.0,
+      "returns": 124.2,
+      "profit": -313.56
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAACCIAAAAA",
+      "sales": 0.0,
+      "returns": 70.29,
+      "profit": -40.64
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAACDABAAAA",
+      "sales": 54405.14,
+      "returns": 623.01,
+      "profit": -32042.98
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAACDCBAAAA",
+      "sales": 71871.07,
+      "returns": 0.0,
+      "profit": -11581.87
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAACDIAAAAA",
+      "sales": 0.0,
+      "returns": 416.1,
+      "profit": -231.91
+    },
+    {
+      "channel": "catalog channel",
+      "id": "catalog_pageAAAAAAAACDPAAAAA",
+      "sales": 0.0,
+      "returns": 1279.25,
+      "profit": -3731.5
+    }
+  ]
+}

@@ -1,0 +1,546 @@
+{
+  "query_num": 3,
+  "row_count": 89,
+  "columns": [
+    "d_year",
+    "brand_id",
+    "brand",
+    "sum_agg"
+  ],
+  "rows": [
+    {
+      "d_year": 1998,
+      "brand_id": 2001001,
+      "brand": "amalgimporto #1",
+      "sum_agg": 60828.6
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "sum_agg": 50182.63
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "sum_agg": 29036.38
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "sum_agg": 28596.63
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "sum_agg": 27087.35
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 10010002,
+      "brand": "univamalgamalg #2",
+      "sum_agg": 23921.88
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 10001002,
+      "brand": "amalgunivamalg #2",
+      "sum_agg": 23729.82
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 7007010,
+      "brand": "brandbrand #10",
+      "sum_agg": 22010.87
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "sum_agg": 21028.9
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 1004001,
+      "brand": "edu packamalg #1",
+      "sum_agg": 17509.46
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "sum_agg": 17343.09
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 5004001,
+      "brand": "edu packscholar #1",
+      "sum_agg": 16821.72
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "sum_agg": 15562.14
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 3001002,
+      "brand": "amalgexporti #2",
+      "sum_agg": 15324.42
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 8001009,
+      "brand": "amalgnameless #9",
+      "sum_agg": 12715.59
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 7003009,
+      "brand": "exportibrand #9",
+      "sum_agg": 12195.5
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 6004008,
+      "brand": "edu packcorp #8",
+      "sum_agg": 8227.95
+    },
+    {
+      "d_year": 1998,
+      "brand_id": 7009008,
+      "brand": "maxibrand #8",
+      "sum_agg": 7927.26
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 2001001,
+      "brand": "amalgimporto #1",
+      "sum_agg": 50239.96
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 10001002,
+      "brand": "amalgunivamalg #2",
+      "sum_agg": 44299.74
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 7003009,
+      "brand": "exportibrand #9",
+      "sum_agg": 37320.24
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 10010002,
+      "brand": "univamalgamalg #2",
+      "sum_agg": 36264.59
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 5003001,
+      "brand": "exportischolar #1",
+      "sum_agg": 35395.69
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "sum_agg": 34578.3
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "sum_agg": 33844.98
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 1004001,
+      "brand": "edu packamalg #1",
+      "sum_agg": 33119.78
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "sum_agg": 26393.05
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 6004008,
+      "brand": "edu packcorp #8",
+      "sum_agg": 25090.52
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 7009008,
+      "brand": "maxibrand #8",
+      "sum_agg": 19470.39
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "sum_agg": 13937.28
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 8001009,
+      "brand": "amalgnameless #9",
+      "sum_agg": 11056.9
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "sum_agg": 10199.74
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 3001002,
+      "brand": "amalgexporti #2",
+      "sum_agg": 9441.01
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 5004001,
+      "brand": "edu packscholar #1",
+      "sum_agg": 9221.84
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "sum_agg": 7284.55
+    },
+    {
+      "d_year": 1999,
+      "brand_id": 7007010,
+      "brand": "brandbrand #10",
+      "sum_agg": 5907.19
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 2001001,
+      "brand": "amalgimporto #1",
+      "sum_agg": 33656.34
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 3004001,
+      "brand": "edu packexporti #1",
+      "sum_agg": 30286.46
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 10008017,
+      "brand": "namelessunivamalg #17",
+      "sum_agg": 24716.92
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 5004001,
+      "brand": "edu packscholar #1",
+      "sum_agg": 24124.11
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "sum_agg": 23019.46
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 1003001,
+      "brand": "exportiamalg #1",
+      "sum_agg": 22118.29
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 5003001,
+      "brand": "amalgunivamalg #2",
+      "sum_agg": 21993.81
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 8001009,
+      "brand": "importoexporti #2",
+      "sum_agg": 20854.44
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 3001002,
+      "brand": "amalgexporti #2",
+      "sum_agg": 20722.82
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 10001002,
+      "brand": "amalgunivamalg #2",
+      "sum_agg": 19996.2
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 7009008,
+      "brand": "maxibrand #8",
+      "sum_agg": 18286.83
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 7007010,
+      "brand": "brandbrand #10",
+      "sum_agg": 15821.14
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 6004008,
+      "brand": "edu packcorp #8",
+      "sum_agg": 12630.7
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 7003009,
+      "brand": "exportibrand #9",
+      "sum_agg": 11507.62
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "sum_agg": 11218.38
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 3001001,
+      "brand": "amalgexporti #1",
+      "sum_agg": 8357.04
+    },
+    {
+      "d_year": 2000,
+      "brand_id": 1004001,
+      "brand": "edu packamalg #1",
+      "sum_agg": 4689.54
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 8001009,
+      "brand": "importoexporti #2",
+      "sum_agg": 38858.06
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "sum_agg": 37170.41
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 3001002,
+      "brand": "amalgexporti #2",
+      "sum_agg": 27291.55
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 7007010,
+      "brand": "brandbrand #10",
+      "sum_agg": 27050.79
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 1003001,
+      "brand": "exportiamalg #2",
+      "sum_agg": 25119.87
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 10008017,
+      "brand": "namelessunivamalg #17",
+      "sum_agg": 24395.94
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "sum_agg": 21633.46
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 7011010,
+      "brand": "amalgnameless #10",
+      "sum_agg": 20242.84
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 5003001,
+      "brand": "amalgunivamalg #2",
+      "sum_agg": 19480.04
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 8004010,
+      "brand": "edu packnameless #10",
+      "sum_agg": 16726.15
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 6005001,
+      "brand": "edu packimporto #2",
+      "sum_agg": 16009.26
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 1004001,
+      "brand": "exportiexporti #2",
+      "sum_agg": 15110.66
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 5004001,
+      "brand": "edu packunivamalg #8",
+      "sum_agg": 13565.13
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 7009008,
+      "brand": "maxibrand #8",
+      "sum_agg": 10468.51
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 6004008,
+      "brand": "edu packcorp #8",
+      "sum_agg": 9395.71
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 2001001,
+      "brand": "exportischolar #2",
+      "sum_agg": 6962.6
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 4001001,
+      "brand": "scholaramalgamalg #15",
+      "sum_agg": 6567.13
+    },
+    {
+      "d_year": 2001,
+      "brand_id": 3001001,
+      "brand": "importoscholar #2",
+      "sum_agg": 4972.21
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 3001002,
+      "brand": "amalgexporti #2",
+      "sum_agg": 51572.97
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 1001002,
+      "brand": "amalgamalg #2",
+      "sum_agg": 42920.29
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 7007010,
+      "brand": "brandbrand #10",
+      "sum_agg": 30924.9
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 4001001,
+      "brand": "scholaramalgamalg #15",
+      "sum_agg": 30203.38
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 2001001,
+      "brand": "exportischolar #2",
+      "sum_agg": 28348.98
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 10013016,
+      "brand": "exportiamalgamalg #16",
+      "sum_agg": 26943.48
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 7011010,
+      "brand": "amalgnameless #10",
+      "sum_agg": 24795.77
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 1004001,
+      "brand": "exportiexporti #2",
+      "sum_agg": 24114.32
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 8004010,
+      "brand": "edu packnameless #10",
+      "sum_agg": 24049.49
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 6005001,
+      "brand": "edu packimporto #2",
+      "sum_agg": 23710.11
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 10008017,
+      "brand": "amalgedu pack #1",
+      "sum_agg": 22201.5
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 5004001,
+      "brand": "edu packunivamalg #8",
+      "sum_agg": 20416.83
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 7009008,
+      "brand": "maxibrand #8",
+      "sum_agg": 15793.33
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 5003002,
+      "brand": "exportischolar #2",
+      "sum_agg": 15697.35
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 1003001,
+      "brand": "exportiamalg #2",
+      "sum_agg": 14803.58
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 5001001,
+      "brand": "amalgscholar #1",
+      "sum_agg": 13457.88
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 6004008,
+      "brand": "edu packcorp #8",
+      "sum_agg": 13049.22
+    },
+    {
+      "d_year": 2002,
+      "brand_id": 3001001,
+      "brand": "importoscholar #2",
+      "sum_agg": 9886.23
+    }
+  ]
+}
