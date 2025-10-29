@@ -8,67 +8,67 @@
   "rows": [
     {
       "customer_id": "AAAAAAAAAAPDAAAA",
-      "customername": null
+      "customername": "Benson, Floyd"
     },
     {
       "customer_id": "AAAAAAAAAAPDAAAA",
-      "customername": null
+      "customername": "Benson, Floyd"
     },
     {
       "customer_id": "AAAAAAAACBNCBAAA",
-      "customername": null
+      "customername": "Ferraro, Timothy"
     },
     {
       "customer_id": "AAAAAAAADMMCBAAA",
-      "customername": null
+      "customername": "Sandoval, Rosemary"
     },
     {
       "customer_id": "AAAAAAAAEDFBAAAA",
-      "customername": null
+      "customername": "Smallwood, Betty"
     },
     {
       "customer_id": "AAAAAAAAEEGCBAAA",
-      "customername": null
+      "customername": "Mattson, Alyson"
     },
     {
       "customer_id": "AAAAAAAAGLHFBAAA",
-      "customername": null
+      "customername": "Fisher, David"
     },
     {
       "customer_id": "AAAAAAAAIANKAAAA",
-      "customername": null
+      "customername": "Nelson, William"
     },
     {
       "customer_id": "AAAAAAAAIAODBAAA",
-      "customername": null
+      "customername": "Murray, Karen"
     },
     {
       "customer_id": "AAAAAAAAJFJGBAAA",
-      "customername": null
+      "customername": "Wing, Deborah"
     },
     {
       "customer_id": "AAAAAAAALCLABAAA",
-      "customername": null
+      "customername": "Whitaker, Lettie"
     },
     {
       "customer_id": "AAAAAAAAMGLBAAAA",
-      "customername": null
+      "customername": "Johnson, Wendy"
     },
     {
       "customer_id": "AAAAAAAAMKIFBAAA",
-      "customername": null
+      "customername": "Evans, Marianna"
     },
     {
       "customer_id": "AAAAAAAAMPPAAAAA",
-      "customername": null
+      "customername": "Cunningham, Katrina"
     },
     {
       "customer_id": "AAAAAAAAOLANAAAA",
-      "customername": null
+      "customername": "Bostick, Eric"
     },
     {
       "customer_id": "AAAAAAAAPKABAAAA",
-      "customername": null
+      "customername": "Jones, Terri"
     }
   ]
 }

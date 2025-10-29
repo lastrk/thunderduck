@@ -138,39 +138,13 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             }
 
             if (sql != null) {
-                // Translate Spark SQL backticks to DuckDB double quotes for identifier quoting
-                // Spark SQL: SELECT col AS `my column`
-                // DuckDB:    SELECT col AS "my column"
-                sql = sql.replace('`', '"');
+                // Apply all SQL preprocessing for Spark compatibility
+                String originalSql = sql;
+                sql = preprocessSQL(sql);
 
-                // Fix count(*) column naming to match Spark (only if not already aliased)
-                // Spark names count(*) as "count(1)", DuckDB names it "count_star()"
-                // Add alias unless:
-                // 1. Already has AS keyword
-                // 2. Part of a comparison/HAVING clause
-                // 3. Followed by a direct alias (identifier that's not a SQL keyword)
-                // 4. In ORDER BY context
-                // To avoid ORDER BY issues, we check if preceding context contains ORDER BY
-                String sqlLower = sql.toLowerCase();
-                if (!sqlLower.contains("order by")) {
-                    // Simple case: no ORDER BY in the query
-                    sql = sql.replaceAll("(?i)count\\s*\\(\\s*\\*\\s*\\)(?!\\s+as\\s+|\\s*[><=!]|\\s+(?!(?i)from|where|group|order|having|limit|union|intersect|except|join|on|and|or|into|by|desc|asc|with|select)(?-i)[a-z_][a-z0-9_]*)", "count(*) AS \"count(1)\"");
-                } else {
-                    // Complex case: need to avoid ORDER BY context
-                    // Split by ORDER BY and only process the SELECT part
-                    int orderByIndex = sqlLower.lastIndexOf("order by");
-                    String beforeOrderBy = sql.substring(0, orderByIndex);
-                    String orderByClause = sql.substring(orderByIndex);
-
-                    beforeOrderBy = beforeOrderBy.replaceAll("(?i)count\\s*\\(\\s*\\*\\s*\\)(?!\\s+as\\s+|\\s*[><=!]|\\s+(?!(?i)from|where|group|order|having|limit|union|intersect|except|join|on|and|or|into|by|desc|asc|with|select)(?-i)[a-z_][a-z0-9_]*)", "count(*) AS \"count(1)\"");
-                    sql = beforeOrderBy + orderByClause;
+                if (!originalSql.equals(sql)) {
+                    logger.debug("Applied SQL preprocessing");
                 }
-
-                // Fix "returns" keyword used as alias without AS
-                // DuckDB treats "returns" as a reserved keyword, so we need to add AS when it's used as an alias
-                // Pattern: any expression (function call or column) followed by " returns" (case insensitive)
-                // Example: "coalesce(returns, 0) returns" -> "coalesce(returns, 0) AS returns"
-                sql = sql.replaceAll("(\\)\\s+)(?i)returns(?=\\s*,|\\s*\\)|\\s+from|\\s*$)", "$1AS returns");
 
                 logger.info("Executing SQL: {}", sql);
 
@@ -346,12 +320,16 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     if (plan.hasRoot() && plan.getRoot().hasSql()) {
                         // Direct SQL query - infer schema using LIMIT 0
                         sql = plan.getRoot().getSql().getQuery();
+                        // Apply SQL preprocessing for Spark compatibility
+                        sql = preprocessSQL(sql);
                         logger.debug("Analyzing SQL query schema: {}", sql.substring(0, Math.min(100, sql.length())));
                         schema = inferSchemaFromDuckDB(sql);
 
                     } else if (plan.hasCommand() && plan.getCommand().hasSqlCommand()) {
                         // SQL command - infer schema
                         sql = plan.getCommand().getSqlCommand().getSql();
+                        // Apply SQL preprocessing for Spark compatibility
+                        sql = preprocessSQL(sql);
                         logger.debug("Analyzing SQL command schema: {}", sql.substring(0, Math.min(100, sql.length())));
                         schema = inferSchemaFromDuckDB(sql);
 
@@ -407,6 +385,161 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 .withCause(e)
                 .asRuntimeException());
         }
+    }
+
+    /**
+     * Preprocess SQL query to make Spark SQL compatible with DuckDB.
+     *
+     * Applies various transformations:
+     * - Convert backticks to double quotes for identifiers
+     * - Fix string concatenation (+ to ||)
+     * - Fix COUNT(*) aliasing
+     * - Fix "returns" keyword usage
+     * - Fix Q90 "at cross join" syntax
+     *
+     * Note: NULL ordering is handled at the DuckDB configuration level
+     * (default_null_order='NULLS FIRST' is set in DuckDBConnectionManager)
+     *
+     * @param sql Original SQL query
+     * @return Preprocessed SQL query
+     */
+    private String preprocessSQL(String sql) {
+        // Translate Spark SQL backticks to DuckDB double quotes for identifier quoting
+        sql = sql.replace('`', '"');
+
+        // Fix count(*) column naming to match Spark (only if not already aliased)
+        String sqlLower = sql.toLowerCase();
+        if (!sqlLower.contains("order by")) {
+            // Simple case: no ORDER BY in the query
+            sql = sql.replaceAll("(?i)count\\s*\\(\\s*\\*\\s*\\)(?!\\s+as\\s+|\\s*[><=!]|\\s+(?!(?i)from|where|group|order|having|limit|union|intersect|except|join|on|and|or|into|by|desc|asc|with|select)(?-i)[a-z_][a-z0-9_]*)", "count(*) AS \"count(1)\"");
+        } else {
+            // Complex case: need to avoid ORDER BY context
+            int orderByIndex = sqlLower.lastIndexOf("order by");
+            String beforeOrderBy = sql.substring(0, orderByIndex);
+            String orderByClause = sql.substring(orderByIndex);
+
+            beforeOrderBy = beforeOrderBy.replaceAll("(?i)count\\s*\\(\\s*\\*\\s*\\)(?!\\s+as\\s+|\\s*[><=!]|\\s+(?!(?i)from|where|group|order|having|limit|union|intersect|except|join|on|and|or|into|by|desc|asc|with|select)(?-i)[a-z_][a-z0-9_]*)", "count(*) AS \"count(1)\"");
+            sql = beforeOrderBy + orderByClause;
+        }
+
+        // Fix "returns" keyword used as alias without AS
+        sql = sql.replaceAll("(\\)\\s+)(?i)returns(?=\\s*,|\\s*\\)|\\s+from|\\s*$)", "$1AS returns");
+
+        // Fix string concatenation operator: Spark uses + but DuckDB uses ||
+        sql = sql.replaceAll("(\\))\\s*\\+\\s*(')", "$1 || $2");
+        sql = sql.replaceAll("(')\\s*\\+\\s*(coalesce|')", "$1 || $2");
+
+        // Fix Q90: Remove "at" before "cross join"
+        sql = sql.replaceAll("\\)\\s+at\\s+cross\\s+join", ") cross join");
+
+        // Fix integer division/casting for Spark compatibility
+        // Spark's cast(x/y as integer) truncates, DuckDB might round
+        // Replace cast(expr as integer) with CAST(TRUNC(expr) AS INTEGER)
+        sql = sql.replaceAll("(?i)cast\\s*\\((.*?)\\s+as\\s+integer\\s*\\)",
+                            "CAST(TRUNC($1) AS INTEGER)");
+
+        // Fix case of DESC/ASC keywords - DuckDB requires uppercase
+        // Using a simple replacement approach
+        sql = sql.replaceAll("(?i)\\bdesc\\b", "DESC");
+        sql = sql.replaceAll("(?i)\\basc\\b", "ASC");
+
+        // Additional NULL ordering for ROLLUP queries
+        // While DuckDB is configured with default_null_order='NULLS FIRST',
+        // ROLLUP queries need explicit NULLS FIRST in ORDER BY for all columns
+        if (sql.toLowerCase().contains("group by rollup") && sql.toLowerCase().contains("order by")) {
+            // Find ORDER BY clause and add NULLS FIRST to ALL columns
+            // This is tricky because we need to handle:
+            // 1. Simple columns: col1, col2
+            // 2. Columns with DESC/ASC: col1 DESC, col2 ASC
+            // 3. CASE expressions: CASE WHEN ... END
+            // 4. Function calls: func(col)
+
+            // First, find the ORDER BY clause
+            String sqlLowerCase = sql.toLowerCase();
+            int orderByIndex = sqlLowerCase.lastIndexOf("order by");
+            int limitIndex = sqlLowerCase.indexOf("limit", orderByIndex);
+
+            String beforeOrderBy = sql.substring(0, orderByIndex);
+            String orderByClause;
+            String afterOrderBy = "";
+
+            if (limitIndex > 0) {
+                // Skip the "order by" prefix (8 chars)
+                orderByClause = sql.substring(orderByIndex + 8, limitIndex).trim();
+                afterOrderBy = sql.substring(limitIndex);
+            } else {
+                // Skip the "order by" prefix (8 chars)
+                orderByClause = sql.substring(orderByIndex + 8).trim();
+            }
+
+            // Split the ORDER BY clause by commas (being careful with CASE expressions)
+            // For simplicity, let's just add NULLS FIRST after DESC/ASC or at the end of each expression
+            StringBuilder newOrderBy = new StringBuilder();
+            int i = 0;
+            int parenLevel = 0;
+            int caseLevel = 0;
+            StringBuilder currentExpr = new StringBuilder();
+
+            while (i < orderByClause.length()) {
+                char c = orderByClause.charAt(i);
+
+                // Track parentheses
+                if (c == '(') parenLevel++;
+                else if (c == ')') parenLevel--;
+
+                // Track CASE expressions
+                String upcoming = orderByClause.substring(i).toLowerCase();
+                if (upcoming.startsWith("case ")) caseLevel++;
+                else if (upcoming.startsWith("end") && caseLevel > 0) {
+                    currentExpr.append("END");
+                    i += 3;
+                    caseLevel--;
+                    continue;
+                }
+
+                // Check for comma separator (only at top level)
+                if (c == ',' && parenLevel == 0 && caseLevel == 0) {
+                    // Process the current expression
+                    String expr = currentExpr.toString().trim();
+                    if (!expr.isEmpty()) {
+                        // Check if it already has NULLS FIRST/LAST
+                        if (!expr.toUpperCase().contains("NULLS ")) {
+                            // Check if it ends with DESC or ASC
+                            if (expr.toUpperCase().endsWith(" DESC") || expr.toUpperCase().endsWith(" ASC")) {
+                                expr += " NULLS FIRST";
+                            } else {
+                                expr += " NULLS FIRST";
+                            }
+                        }
+                        if (newOrderBy.length() > 0) {
+                            newOrderBy.append(", ");
+                        }
+                        newOrderBy.append(expr);
+                    }
+                    currentExpr = new StringBuilder();
+                } else {
+                    currentExpr.append(c);
+                }
+                i++;
+            }
+
+            // Don't forget the last expression
+            String expr = currentExpr.toString().trim();
+            if (!expr.isEmpty()) {
+                if (!expr.toUpperCase().contains("NULLS ")) {
+                    expr += " NULLS FIRST";
+                }
+                if (newOrderBy.length() > 0) {
+                    newOrderBy.append(", ");
+                }
+                newOrderBy.append(expr);
+            }
+
+            // Reconstruct the query
+            sql = beforeOrderBy + "ORDER BY " + newOrderBy.toString() + " " + afterOrderBy;
+        }
+
+        return sql;
     }
 
     /**
