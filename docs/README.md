@@ -24,6 +24,16 @@ This directory contains comprehensive documentation for the thunderduck project.
 - **[04_CI_CD_Integration_Design.md](coder/04_CI_CD_Integration_Design.md)** - CI/CD pipeline
 - **[05_Data_Generation_Pipeline_Design.md](coder/05_Data_Generation_Pipeline_Design.md)** - Test data generation
 
+### Research & Analysis (research/)
+Deep technical investigations and root cause analyses conducted during development:
+
+- **[DUCKDB_TPCDS_DISCOVERY.md](research/DUCKDB_TPCDS_DISCOVERY.md)** - Discovery of DuckDB's TPC-DS implementation patterns
+- **[TPCDS_ROOT_CAUSE_ANALYSIS.md](research/TPCDS_ROOT_CAUSE_ANALYSIS.md)** - Root cause analysis of Q36 & Q86 failures
+- **[Q36_DUCKDB_LIMITATION.md](research/Q36_DUCKDB_LIMITATION.md)** - Documentation of Q36's GROUPING() in PARTITION BY limitation
+- **[GROUPING_FUNCTION_ANALYSIS.md](research/GROUPING_FUNCTION_ANALYSIS.md)** - Analysis of GROUPING() function behavior
+- **[GROUPING_STANDARD_RESEARCH.md](research/GROUPING_STANDARD_RESEARCH.md)** - Research on SQL standard GROUPING() semantics
+- **[GROUPING_ANSWER.md](research/GROUPING_ANSWER.md)** - Definitive answer on GROUPING() standardization
+
 ---
 
 ## Quick Links
@@ -44,4 +54,4 @@ This directory contains comprehensive documentation for the thunderduck project.
 
 ---
 
-**Last Updated**: 2025-10-24
+**Last Updated**: 2025-10-29
