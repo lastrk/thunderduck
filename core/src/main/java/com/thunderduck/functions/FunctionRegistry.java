@@ -142,6 +142,12 @@ public class FunctionRegistry {
         DIRECT_MAPPINGS.put("regexp_replace", "regexp_replace");
         DIRECT_MAPPINGS.put("regexp_like", "regexp_matches");
 
+        // String predicates
+        DIRECT_MAPPINGS.put("startswith", "starts_with");
+        DIRECT_MAPPINGS.put("endswith", "ends_with");
+        DIRECT_MAPPINGS.put("contains", "contains");
+        DIRECT_MAPPINGS.put("rlike", "regexp_matches");
+
         // Other string functions
         DIRECT_MAPPINGS.put("ascii", "ascii");
         DIRECT_MAPPINGS.put("chr", "chr");

@@ -141,6 +141,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             visitLocalRelation((LocalRelation) plan);
         } else if (plan instanceof SQLRelation) {
             visitSQLRelation((SQLRelation) plan);
+        } else if (plan instanceof Distinct) {
+            visitDistinct((Distinct) plan);
         } else {
             throw new UnsupportedOperationException(
                 "SQL generation not implemented for: " + plan.getClass().getSimpleName());
@@ -204,6 +206,33 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         sql.append(") AS ").append(generateSubqueryAlias());
         sql.append(" WHERE ");
         sql.append(plan.condition().toSQL());
+    }
+
+    /**
+     * Visits a Distinct node (DISTINCT operation).
+     */
+    private void visitDistinct(Distinct plan) {
+        List<String> columns = plan.columns();
+
+        if (columns == null || columns.isEmpty()) {
+            // DISTINCT on all columns
+            sql.append("SELECT DISTINCT * FROM (");
+        } else {
+            // DISTINCT on specific columns
+            sql.append("SELECT DISTINCT ");
+            for (int i = 0; i < columns.size(); i++) {
+                if (i > 0) {
+                    sql.append(", ");
+                }
+                sql.append(quoteIdentifier(columns.get(i)));
+            }
+            sql.append(" FROM (");
+        }
+
+        subqueryDepth++;
+        visit(plan.children().get(0));
+        subqueryDepth--;
+        sql.append(") AS ").append(generateSubqueryAlias());
     }
 
     /**
@@ -354,51 +383,95 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
     /**
      * Visits a Join node.
      * Builds SQL directly in buffer to avoid corruption.
+     *
+     * For semi-joins and anti-joins, uses EXISTS/NOT EXISTS patterns
+     * since DuckDB doesn't support LEFT SEMI JOIN syntax directly.
      */
     private void visitJoin(Join plan) {
-        // SELECT * FROM left
-        sql.append("SELECT * FROM (");
-        subqueryDepth++;
-        visit(plan.left());
-        subqueryDepth--;
-        sql.append(") AS ").append(generateSubqueryAlias());
+        // Handle SEMI and ANTI joins differently (using EXISTS/NOT EXISTS)
+        if (plan.joinType() == Join.JoinType.LEFT_SEMI ||
+            plan.joinType() == Join.JoinType.LEFT_ANTI) {
 
-        // JOIN type
-        switch (plan.joinType()) {
-            case INNER:
-                sql.append(" INNER JOIN ");
-                break;
-            case LEFT:
-                sql.append(" LEFT OUTER JOIN ");
-                break;
-            case RIGHT:
-                sql.append(" RIGHT OUTER JOIN ");
-                break;
-            case FULL:
-                sql.append(" FULL OUTER JOIN ");
-                break;
-            case CROSS:
-                sql.append(" CROSS JOIN ");
-                break;
-            case LEFT_SEMI:
-                sql.append(" LEFT SEMI JOIN ");
-                break;
-            case LEFT_ANTI:
-                sql.append(" LEFT ANTI JOIN ");
-                break;
-        }
+            // For semi/anti joins, we need to use WHERE EXISTS/NOT EXISTS
+            // SELECT * FROM left WHERE [NOT] EXISTS (SELECT 1 FROM right WHERE condition)
 
-        // Right side
-        sql.append("(");
-        subqueryDepth++;
-        visit(plan.right());
-        subqueryDepth--;
-        sql.append(") AS ").append(generateSubqueryAlias());
+            String leftAlias = generateSubqueryAlias();
+            String rightAlias = generateSubqueryAlias();
 
-        // ON clause (except for CROSS join)
-        if (plan.joinType() != Join.JoinType.CROSS && plan.condition() != null) {
-            sql.append(" ON ");
-            sql.append(plan.condition().toSQL());
+            // Start with SELECT * FROM left
+            sql.append("SELECT * FROM (");
+            subqueryDepth++;
+            visit(plan.left());
+            subqueryDepth--;
+            sql.append(") AS ").append(leftAlias);
+
+            // Add WHERE [NOT] EXISTS
+            sql.append(" WHERE ");
+            if (plan.joinType() == Join.JoinType.LEFT_ANTI) {
+                sql.append("NOT ");
+            }
+            sql.append("EXISTS (SELECT 1 FROM (");
+
+            // Add right side
+            subqueryDepth++;
+            visit(plan.right());
+            subqueryDepth--;
+            sql.append(") AS ").append(rightAlias);
+
+            // Add WHERE clause for the correlation
+            if (plan.condition() != null) {
+                sql.append(" WHERE ");
+                // Need to properly handle the join condition here
+                // For now, using the condition as-is (may need column qualification)
+                sql.append(plan.condition().toSQL());
+            }
+
+            sql.append(")");
+
+        } else {
+            // Regular joins (INNER, LEFT, RIGHT, FULL, CROSS)
+
+            // SELECT * FROM left
+            sql.append("SELECT * FROM (");
+            subqueryDepth++;
+            visit(plan.left());
+            subqueryDepth--;
+            sql.append(") AS ").append(generateSubqueryAlias());
+
+            // JOIN type
+            switch (plan.joinType()) {
+                case INNER:
+                    sql.append(" INNER JOIN ");
+                    break;
+                case LEFT:
+                    sql.append(" LEFT OUTER JOIN ");
+                    break;
+                case RIGHT:
+                    sql.append(" RIGHT OUTER JOIN ");
+                    break;
+                case FULL:
+                    sql.append(" FULL OUTER JOIN ");
+                    break;
+                case CROSS:
+                    sql.append(" CROSS JOIN ");
+                    break;
+                default:
+                    throw new UnsupportedOperationException(
+                        "Unexpected join type: " + plan.joinType());
+            }
+
+            // Right side
+            sql.append("(");
+            subqueryDepth++;
+            visit(plan.right());
+            subqueryDepth--;
+            sql.append(") AS ").append(generateSubqueryAlias());
+
+            // ON clause (except for CROSS join)
+            if (plan.joinType() != Join.JoinType.CROSS && plan.condition() != null) {
+                sql.append(" ON ");
+                sql.append(plan.condition().toSQL());
+            }
         }
     }
 

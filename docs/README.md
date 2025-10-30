@@ -24,6 +24,10 @@ This directory contains comprehensive documentation for the thunderduck project.
 - **[04_CI_CD_Integration_Design.md](coder/04_CI_CD_Integration_Design.md)** - CI/CD pipeline
 - **[05_Data_Generation_Pipeline_Design.md](coder/05_Data_Generation_Pipeline_Design.md)** - Test data generation
 
+### DataFrame API Documentation (dataframe_api/)
+- **[DATAFRAME_API_GAPS.md](dataframe_api/DATAFRAME_API_GAPS.md)** - DataFrame API gaps and implementation status
+- **[DATAFRAME_API_TEST_RESULTS.md](dataframe_api/DATAFRAME_API_TEST_RESULTS.md)** - Test results for DataFrame API enhancements
+
 ### Research & Analysis (research/)
 Deep technical investigations and root cause analyses conducted during development:
 
@@ -54,4 +58,4 @@ Deep technical investigations and root cause analyses conducted during developme
 
 ---
 
-**Last Updated**: 2025-10-29
+**Last Updated**: 2025-10-30

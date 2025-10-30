@@ -150,7 +150,7 @@ public class BinaryExpression extends Expression {
      * @return the SQL string
      */
     public String toSQL() {
-        return String.format("(%s %s %s)", left, operator.symbol(), right);
+        return String.format("(%s %s %s)", left.toSQL(), operator.symbol(), right.toSQL());
     }
 
     @Override

@@ -122,12 +122,12 @@ public class UnaryExpression extends Expression {
         if (operator.isPrefix()) {
             // For NEGATE, no space between operator and operand
             if (operator == Operator.NEGATE) {
-                return String.format("(%s%s)", operator.symbol(), operand);
+                return String.format("(%s%s)", operator.symbol(), operand.toSQL());
             }
             // For NOT, include space
-            return String.format("(%s %s)", operator.symbol(), operand);
+            return String.format("(%s %s)", operator.symbol(), operand.toSQL());
         } else {
-            return String.format("(%s %s)", operand, operator.symbol());
+            return String.format("(%s %s)", operand.toSQL(), operator.symbol());
         }
     }
 

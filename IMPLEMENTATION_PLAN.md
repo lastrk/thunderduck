@@ -1205,9 +1205,21 @@ tests/integration/
 
 ---
 
-#### Original Week 15: Performance & Optimization 📋 BACKLOG / FUTURE WORK
+#### Week 16: DataFrame API Testing & Translation Validation ⭐ ACTIVE
 
-**Note**: Moved to backlog to prioritize TPC-DS validation. Can be addressed after achieving comprehensive benchmark coverage.
+**Goal**: Implement TPC-H queries using DataFrame API to test translation layer
+
+**Status**: PLANNED - Critical gap identified in current testing approach
+
+**Rationale**: Current SQL passthrough tests bypass the DataFrame-to-SQL translation layer that most users will actually use
+
+**Tasks**: See WEEK16_IMPLEMENTATION_PLAN.md for detailed 5-day implementation
+
+---
+
+#### Original Week 15-16: Performance & Optimization 📋 BACKLOG / FUTURE WORK
+
+**Note**: Moved to backlog to prioritize comprehensive testing coverage
 
 **Goal**: Optimize server performance and implement caching
 

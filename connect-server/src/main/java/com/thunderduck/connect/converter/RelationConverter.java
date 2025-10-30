@@ -62,6 +62,9 @@ public class RelationConverter {
             case SHOW_STRING:
                 // ShowString wraps another relation - just unwrap and convert the inner relation
                 return convert(relation.getShowString().getInput());
+            case DEDUPLICATE:
+                // Handle distinct() operation
+                return convertDeduplicate(relation.getDeduplicate());
             default:
                 throw new PlanConversionException("Unsupported relation type: " + relation.getRelTypeCase());
         }
@@ -292,6 +295,26 @@ public class RelationConverter {
 
         logger.debug("Creating Join of type: {}", joinType);
         return new com.thunderduck.logical.Join(left, right, joinType, condition);
+    }
+
+    /**
+     * Converts a Deduplicate relation (distinct operation).
+     *
+     * @param deduplicate the Deduplicate relation
+     * @return a LogicalPlan that removes duplicates
+     */
+    private LogicalPlan convertDeduplicate(Deduplicate deduplicate) {
+        LogicalPlan input = convert(deduplicate.getInput());
+
+        // If columns are specified, deduplicate based on those columns
+        // Otherwise, deduplicate based on all columns
+        List<String> columns = deduplicate.getColumnNamesList();
+
+        logger.debug("Creating Deduplicate with {} specified columns", columns.size());
+
+        // For now, we'll create a Distinct logical plan
+        // In SQL, this becomes SELECT DISTINCT ...
+        return new Distinct(input, columns.isEmpty() ? null : columns);
     }
 
     /**
