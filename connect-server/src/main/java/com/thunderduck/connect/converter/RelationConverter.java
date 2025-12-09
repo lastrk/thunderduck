@@ -4,6 +4,7 @@ import com.thunderduck.logical.*;
 import com.thunderduck.expression.Expression;
 import com.thunderduck.expression.FunctionCall;
 import com.thunderduck.expression.AliasExpression;
+import com.thunderduck.logical.LocalDataRelation;
 
 import org.apache.spark.connect.proto.*;
 import org.slf4j.Logger;
@@ -48,6 +49,8 @@ public class RelationConverter {
                 return convertFilter(relation.getFilter());
             case AGGREGATE:
                 return convertAggregate(relation.getAggregate());
+            case LOCAL_RELATION:
+                return convertLocalRelation(relation.getLocalRelation());
             case SORT:
                 return convertSort(relation.getSort());
             case LIMIT:
@@ -382,5 +385,40 @@ public class RelationConverter {
             default:
                 throw new PlanConversionException("Unsupported join type: " + sparkJoinType);
         }
+    }
+
+    /**
+     * Converts a LocalRelation to a LogicalPlan.
+     *
+     * <p>LocalRelation represents data sent from Spark in Arrow IPC format.
+     * This is used for pre-computed results (like count()), small DataFrames,
+     * or cached local data.
+     *
+     * @param localRelation the LocalRelation protobuf message
+     * @return a LocalDataRelation logical plan
+     */
+    private LogicalPlan convertLocalRelation(org.apache.spark.connect.proto.LocalRelation localRelation) {
+        byte[] arrowData = null;
+        String schema = null;
+
+        // Extract Arrow IPC data if present
+        if (localRelation.hasData()) {
+            arrowData = localRelation.getData().toByteArray();
+            logger.debug("LocalRelation has {} bytes of Arrow IPC data", arrowData.length);
+        }
+
+        // Extract schema if present
+        if (localRelation.hasSchema()) {
+            schema = localRelation.getSchema();
+            logger.debug("LocalRelation has schema: {}", schema);
+        }
+
+        // Validate that we have at least data or schema
+        if ((arrowData == null || arrowData.length == 0) && (schema == null || schema.isEmpty())) {
+            throw new PlanConversionException("LocalRelation must have either data or schema");
+        }
+
+        logger.debug("Creating LocalDataRelation");
+        return new LocalDataRelation(arrowData, schema);
     }
 }

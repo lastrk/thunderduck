@@ -154,6 +154,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             visitInMemoryRelation((InMemoryRelation) plan);
         } else if (plan instanceof LocalRelation) {
             visitLocalRelation((LocalRelation) plan);
+        } else if (plan instanceof LocalDataRelation) {
+            visitLocalDataRelation((LocalDataRelation) plan);
         } else if (plan instanceof SQLRelation) {
             visitSQLRelation((SQLRelation) plan);
         } else if (plan instanceof Distinct) {
@@ -525,6 +527,163 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         // LocalRelation support - will be fully implemented in Week 3
         throw new UnsupportedOperationException(
             "LocalRelation SQL generation will be implemented in Week 3");
+    }
+
+    /**
+     * Visits a LocalDataRelation node (Arrow IPC data).
+     * Deserializes Arrow data and generates VALUES clause or temp table.
+     */
+    private void visitLocalDataRelation(LocalDataRelation plan) {
+        // Deserialize Arrow data
+        org.apache.arrow.vector.VectorSchemaRoot root = plan.deserializeArrowData();
+
+        if (root == null || root.getRowCount() == 0) {
+            // Empty relation - generate a VALUES clause that returns no rows
+            sql.append(generateEmptyValues());
+        } else if (root.getRowCount() <= 100) {
+            // Small dataset - use VALUES clause
+            sql.append(generateValuesClause(root));
+        } else {
+            // Larger dataset - for now, fall back to VALUES (can be optimized with temp tables later)
+            sql.append(generateValuesClause(root));
+        }
+    }
+
+    /**
+     * Generates an empty VALUES clause that returns no rows.
+     * Example: SELECT * FROM (VALUES (NULL)) AS t WHERE FALSE
+     *
+     * @return SQL for empty values
+     */
+    public String generateEmptyValues() {
+        return "SELECT * FROM (VALUES (NULL)) AS t WHERE FALSE";
+    }
+
+    /**
+     * Generates a VALUES clause from Arrow VectorSchemaRoot.
+     * Example: VALUES (1, 'a'), (2, 'b'), (3, 'c')
+     *
+     * @param root the Arrow VectorSchemaRoot containing data
+     * @return SQL VALUES clause
+     */
+    public String generateValuesClause(org.apache.arrow.vector.VectorSchemaRoot root) {
+        if (root == null || root.getRowCount() == 0) {
+            return generateEmptyValues();
+        }
+
+        StringBuilder values = new StringBuilder("SELECT * FROM (VALUES ");
+
+        int rowCount = root.getRowCount();
+        int columnCount = root.getFieldVectors().size();
+
+        for (int row = 0; row < rowCount; row++) {
+            if (row > 0) {
+                values.append(", ");
+            }
+            values.append("(");
+
+            for (int col = 0; col < columnCount; col++) {
+                if (col > 0) {
+                    values.append(", ");
+                }
+
+                org.apache.arrow.vector.FieldVector vector = root.getVector(col);
+                Object value = getArrowValue(vector, row);
+                values.append(formatSQLValue(value));
+            }
+
+            values.append(")");
+        }
+
+        values.append(") AS t");
+
+        // Add column aliases if available
+        if (columnCount > 0) {
+            values.append("(");
+            for (int col = 0; col < columnCount; col++) {
+                if (col > 0) {
+                    values.append(", ");
+                }
+                String columnName = root.getSchema().getFields().get(col).getName();
+                values.append(quoteIdentifier(columnName));
+            }
+            values.append(")");
+        }
+
+        return values.toString();
+    }
+
+    /**
+     * Gets a value from an Arrow vector at the specified row index.
+     *
+     * @param vector the Arrow field vector
+     * @param index the row index
+     * @return the value (may be null)
+     */
+    private Object getArrowValue(org.apache.arrow.vector.FieldVector vector, int index) {
+        if (vector.isNull(index)) {
+            return null;
+        }
+
+        if (vector instanceof org.apache.arrow.vector.BitVector) {
+            return ((org.apache.arrow.vector.BitVector) vector).get(index) != 0;
+        } else if (vector instanceof org.apache.arrow.vector.TinyIntVector) {
+            return ((org.apache.arrow.vector.TinyIntVector) vector).get(index);
+        } else if (vector instanceof org.apache.arrow.vector.SmallIntVector) {
+            return ((org.apache.arrow.vector.SmallIntVector) vector).get(index);
+        } else if (vector instanceof org.apache.arrow.vector.IntVector) {
+            return ((org.apache.arrow.vector.IntVector) vector).get(index);
+        } else if (vector instanceof org.apache.arrow.vector.BigIntVector) {
+            return ((org.apache.arrow.vector.BigIntVector) vector).get(index);
+        } else if (vector instanceof org.apache.arrow.vector.Float4Vector) {
+            return ((org.apache.arrow.vector.Float4Vector) vector).get(index);
+        } else if (vector instanceof org.apache.arrow.vector.Float8Vector) {
+            return ((org.apache.arrow.vector.Float8Vector) vector).get(index);
+        } else if (vector instanceof org.apache.arrow.vector.VarCharVector) {
+            byte[] bytes = ((org.apache.arrow.vector.VarCharVector) vector).get(index);
+            return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+        } else if (vector instanceof org.apache.arrow.vector.DateDayVector) {
+            int days = ((org.apache.arrow.vector.DateDayVector) vector).get(index);
+            return java.time.LocalDate.ofEpochDay(days);
+        } else if (vector instanceof org.apache.arrow.vector.TimeStampMicroVector) {
+            long micros = ((org.apache.arrow.vector.TimeStampMicroVector) vector).get(index);
+            return new java.sql.Timestamp(micros / 1000);
+        }
+
+        // Fallback: try to get object representation
+        return vector.getObject(index);
+    }
+
+    /**
+     * Formats a value for SQL (with proper quoting/escaping).
+     *
+     * @param value the value to format
+     * @return SQL representation of the value
+     */
+    private String formatSQLValue(Object value) {
+        if (value == null) {
+            return "NULL";
+        }
+
+        if (value instanceof String) {
+            // Escape single quotes by doubling them
+            String escaped = ((String) value).replace("'", "''");
+            return "'" + escaped + "'";
+        } else if (value instanceof Number) {
+            return value.toString();
+        } else if (value instanceof Boolean) {
+            return (Boolean) value ? "TRUE" : "FALSE";
+        } else if (value instanceof java.time.LocalDate) {
+            return "DATE '" + value.toString() + "'";
+        } else if (value instanceof java.sql.Date) {
+            return "DATE '" + value.toString() + "'";
+        } else if (value instanceof java.sql.Timestamp) {
+            return "TIMESTAMP '" + value.toString() + "'";
+        } else {
+            // Fallback: convert to string and quote
+            String escaped = value.toString().replace("'", "''");
+            return "'" + escaped + "'";
+        }
     }
 
     // Removed local quoteIdentifier() methods - using SQLQuoting.quoteIdentifier() everywhere

@@ -14,6 +14,8 @@ import org.apache.spark.connect.proto.Relation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 import static com.thunderduck.generator.SQLQuoting.quoteIdentifier;
 
 /**
@@ -581,9 +583,42 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         break;
 
                     case GET:
-                        // For MVP, return empty values for GET requests
+                        // Return actual configuration values from session
                         ConfigRequest.Get get = op.getGet();
-                        logger.debug("Config GET requested for {} keys (returning empty)", get.getKeysCount());
+                        Session session = sessionManager.getSession(sessionId);
+
+                        if (session == null) {
+                            logger.error("Session not found: {}", sessionId);
+                            responseObserver.onError(Status.NOT_FOUND
+                                .withDescription("Session not found: " + sessionId)
+                                .asRuntimeException());
+                            return;
+                        }
+
+                        // If no specific keys requested, return all configs
+                        if (get.getKeysCount() == 0) {
+                            Map<String, String> allConfig = session.getAllConfig();
+                            for (Map.Entry<String, String> entry : allConfig.entrySet()) {
+                                responseBuilder.addPairs(KeyValue.newBuilder()
+                                    .setKey(entry.getKey())
+                                    .setValue(entry.getValue())
+                                    .build());
+                            }
+                            logger.debug("Returning all configs: {} pairs", allConfig.size());
+                        } else {
+                            // Return requested keys only
+                            for (String key : get.getKeysList()) {
+                                String value = session.getConfig(key);
+                                if (value != null) {
+                                    responseBuilder.addPairs(KeyValue.newBuilder()
+                                        .setKey(key)
+                                        .setValue(value)
+                                        .build());
+                                }
+                            }
+                            logger.debug("Returning {} configs out of {} requested keys",
+                                responseBuilder.getPairsCount(), get.getKeysList());
+                        }
                         break;
 
                     default:

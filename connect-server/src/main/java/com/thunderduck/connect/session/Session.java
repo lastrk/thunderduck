@@ -34,6 +34,7 @@ public class Session {
         this.tempViews = new ConcurrentHashMap<>();
 
         // Set default configuration
+        config.putAll(SparkDefaults.getDefaults());
         config.put("spark.app.name", "thunderduck-connect");
         config.put("spark.sql.dialect", "spark");
     }
