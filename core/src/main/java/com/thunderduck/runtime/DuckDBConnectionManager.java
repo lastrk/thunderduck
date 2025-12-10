@@ -163,7 +163,7 @@ public class DuckDBConnectionManager implements AutoCloseable {
      *
      * @param conn the connection to release (may be null)
      */
-    void releaseConnection(DuckDBConnection conn) {
+    public void releaseConnection(DuckDBConnection conn) {
         if (conn == null || closed) {
             return;
         }

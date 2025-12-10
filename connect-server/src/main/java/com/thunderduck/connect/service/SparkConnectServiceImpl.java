@@ -7,7 +7,9 @@ import com.thunderduck.generator.SQLGenerator;
 import com.thunderduck.logical.LogicalPlan;
 import com.thunderduck.runtime.DuckDBConnectionManager;
 import com.thunderduck.runtime.QueryExecutor;
+import io.grpc.Context;
 import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.apache.spark.connect.proto.*;
 import org.apache.spark.connect.proto.Relation;
@@ -53,12 +55,13 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     /**
      * Execute a Spark plan and stream results back to client.
      *
-     * This is the main RPC for query execution. For MVP:
-     * 1. Extract session ID from request
-     * 2. Validate/create session
+     * This is the main RPC for query execution:
+     * 1. Acquire execution slot (may wait in queue if busy)
+     * 2. Extract session ID from request
      * 3. Deserialize plan to SQL
      * 4. Execute via QueryExecutor
      * 5. Stream results as Arrow batches
+     * 6. Release execution slot in finally block
      *
      * @param request ExecutePlanRequest containing the plan
      * @param responseObserver Stream observer for responses
@@ -69,9 +72,12 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         String sessionId = request.getSessionId();
         logger.info("executePlan called for session: {}", sessionId);
 
+        Session session = null;
+
         try {
-            // Update activity or create session
-            updateOrCreateSession(sessionId);
+            // Acquire execution slot (may wait in queue if busy)
+            Context grpcContext = Context.current();
+            session = sessionManager.startExecution(sessionId, grpcContext);
 
             // Extract the plan
             if (!request.hasPlan()) {
@@ -188,12 +194,21 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     .asRuntimeException());
             }
 
+        } catch (StatusRuntimeException e) {
+            // gRPC status errors (queue full, cancelled, etc.) - pass through
+            logger.warn("Plan execution failed with gRPC error for session {}: {}", sessionId, e.getMessage());
+            responseObserver.onError(e);
         } catch (Exception e) {
             logger.error("Error executing plan for session " + sessionId, e);
             responseObserver.onError(Status.INTERNAL
                 .withDescription("Execution failed: " + e.getMessage())
                 .withCause(e)
                 .asRuntimeException());
+        } finally {
+            // Always release execution slot
+            if (session != null) {
+                sessionManager.completeExecution(sessionId);
+            }
         }
     }
 
@@ -306,7 +321,8 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         logger.info("analyzePlan called for session: {}", sessionId);
 
         try {
-            updateOrCreateSession(sessionId);
+            // Get or create session for metadata operation (doesn't acquire execution slot)
+            Session session = sessionManager.getOrCreateSessionForMetadata(sessionId);
 
             // Handle different analysis types
             if (request.hasSchema()) {
@@ -560,7 +576,8 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         logger.info("config called for session: {}", sessionId);
 
         try {
-            updateOrCreateSession(sessionId);
+            // Get or create session for metadata operation (doesn't acquire execution slot)
+            Session session = sessionManager.getOrCreateSessionForMetadata(sessionId);
 
             ConfigResponse.Builder responseBuilder = ConfigResponse.newBuilder()
                 .setSessionId(sessionId);
@@ -585,15 +602,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     case GET:
                         // Return actual configuration values from session
                         ConfigRequest.Get get = op.getGet();
-                        Session session = sessionManager.getSession(sessionId);
-
-                        if (session == null) {
-                            logger.error("Session not found: {}", sessionId);
-                            responseObserver.onError(Status.NOT_FOUND
-                                .withDescription("Session not found: " + sessionId)
-                                .asRuntimeException());
-                            return;
-                        }
+                        // session is already available from getOrCreateSessionForMetadata above
 
                         // If no specific keys requested, return all configs
                         if (get.getKeysCount() == 0) {
@@ -736,25 +745,6 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     }
 
     // ========== Helper Methods ==========
-
-    /**
-     * Update activity for existing session or create new session.
-     *
-     * @param sessionId Session ID from request
-     * @throws Exception if session creation fails (server busy)
-     */
-    private void updateOrCreateSession(String sessionId) throws Exception {
-        SessionManager.SessionInfo info = sessionManager.getSessionInfo();
-
-        if (info.hasActiveSession) {
-            // Update activity for existing session
-            sessionManager.updateActivity(sessionId);
-        } else {
-            // Create new session (will throw if server is busy)
-            Session session = sessionManager.createSession(sessionId);
-            logger.info("New session created: {}", session);
-        }
-    }
 
     /**
      * Execute SQL query and format results as ShowString (text table).
