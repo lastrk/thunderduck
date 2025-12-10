@@ -96,4 +96,32 @@ spark.sql("SELECT 1").show()  # Should succeed
 
 ---
 
+## Protobuf Code Generation
+
+### Background
+The `xolstice/protobuf-maven-plugin` is archived and has unfixed bugs that prevent proper code generation. The `ascopes/protobuf-maven-plugin` requires Maven 3.9.6+ which may not be available in all environments.
+
+### Solution
+We use `maven-antrun-plugin` to invoke `protoc` directly:
+
+1. **maven-dependency-plugin** downloads protoc and grpc-java plugin executables
+2. **Unzip** extracts well-known proto types from protobuf-java JAR
+3. **maven-antrun-plugin** executes protoc with proper arguments
+4. **build-helper-maven-plugin** adds generated sources to compile path
+
+### Build Process
+The build automatically:
+- Downloads platform-specific protoc binary
+- Extracts `google/protobuf/*.proto` from protobuf-java JAR
+- Generates Java classes and gRPC stubs
+- Adds generated sources to the build
+
+No manual intervention is required; just run:
+```bash
+mvn clean compile -pl connect-server
+```
+
+---
+
 *Original issue resolved: November 2025*
+*Protobuf build fix: December 2025*

@@ -514,3 +514,187 @@ class TestRangeOperations(ThunderduckE2ETestBase):
         self.assertEqual(schema.fields[0].name, "id")
         # In PySpark, this should be LongType
         self.assertEqual(str(schema.fields[0].dataType), "LongType()")
+
+
+class TestColumnOperations(ThunderduckE2ETestBase):
+    """Test column manipulation operations: drop, withColumnRenamed, withColumn."""
+
+    def test_drop_single_column(self):
+        """Test dropping a single column."""
+        df = self.spark.sql("SELECT 1 as a, 2 as b, 3 as c")
+
+        result = df.drop("c").collect()
+
+        self.assertEqual(len(result), 1)
+        # Column c should be gone, only a and b remain
+        self.assertEqual(result[0]["a"], 1)
+        self.assertEqual(result[0]["b"], 2)
+        self.assertNotIn("c", result[0].asDict())
+
+    def test_drop_multiple_columns(self):
+        """Test dropping multiple columns."""
+        df = self.spark.sql("SELECT 1 as a, 2 as b, 3 as c, 4 as d")
+
+        result = df.drop("b", "d").collect()
+
+        self.assertEqual(len(result), 1)
+        # Only a and c should remain
+        row_dict = result[0].asDict()
+        self.assertIn("a", row_dict)
+        self.assertIn("c", row_dict)
+        self.assertNotIn("b", row_dict)
+        self.assertNotIn("d", row_dict)
+
+    def test_drop_nonexistent_column(self):
+        """Test that dropping a nonexistent column raises error in DuckDB.
+
+        Note: Spark silently ignores non-existent columns, but DuckDB throws an error.
+        This is a known behavioral difference. We document it here.
+        """
+        df = self.spark.sql("SELECT 1 as a, 2 as b")
+
+        # DuckDB throws error for non-existent column in EXCLUDE clause
+        # This is a behavioral difference from Spark, which silently ignores
+        with self.assertRaises(Exception):
+            df.drop("nonexistent").collect()
+
+    def test_drop_with_range(self):
+        """Test drop on a range DataFrame."""
+        df = self.spark.range(5).select(
+            F.col("id"),
+            (F.col("id") * 2).alias("doubled")
+        )
+
+        result = df.drop("doubled").collect()
+
+        self.assertEqual(len(result), 5)
+        # Only id should remain
+        for row in result:
+            self.assertIn("id", row.asDict())
+            self.assertNotIn("doubled", row.asDict())
+
+    def test_with_column_renamed_single(self):
+        """Test renaming a single column."""
+        df = self.spark.sql("SELECT 1 as a, 2 as b, 3 as c")
+
+        result = df.withColumnRenamed("a", "x").collect()
+
+        self.assertEqual(len(result), 1)
+        row_dict = result[0].asDict()
+        # a should be renamed to x
+        self.assertIn("x", row_dict)
+        self.assertNotIn("a", row_dict)
+        self.assertEqual(row_dict["x"], 1)
+        # b and c should still exist
+        self.assertEqual(row_dict["b"], 2)
+        self.assertEqual(row_dict["c"], 3)
+
+    def test_with_column_renamed_multiple(self):
+        """Test renaming multiple columns sequentially."""
+        df = self.spark.sql("SELECT 1 as a, 2 as b, 3 as c")
+
+        result = df.withColumnRenamed("a", "x").withColumnRenamed("b", "y").collect()
+
+        self.assertEqual(len(result), 1)
+        row_dict = result[0].asDict()
+        self.assertIn("x", row_dict)
+        self.assertIn("y", row_dict)
+        self.assertIn("c", row_dict)
+        self.assertEqual(row_dict["x"], 1)
+        self.assertEqual(row_dict["y"], 2)
+        self.assertEqual(row_dict["c"], 3)
+
+    def test_with_column_renamed_nonexistent(self):
+        """Test that renaming a nonexistent column raises error in DuckDB.
+
+        Note: Spark silently ignores non-existent columns, but DuckDB throws an error.
+        This is a known behavioral difference. We document it here.
+        """
+        df = self.spark.sql("SELECT 1 as a, 2 as b")
+
+        # DuckDB throws error for non-existent column in EXCLUDE clause
+        # This is a behavioral difference from Spark, which silently ignores
+        with self.assertRaises(Exception):
+            df.withColumnRenamed("nonexistent", "x").collect()
+
+    def test_with_column_add_new(self):
+        """Test adding a new column with withColumn."""
+        df = self.spark.sql("SELECT 1 as a, 2 as b")
+
+        result = df.withColumn("c", F.col("a") + F.col("b")).collect()
+
+        self.assertEqual(len(result), 1)
+        row_dict = result[0].asDict()
+        self.assertEqual(row_dict["a"], 1)
+        self.assertEqual(row_dict["b"], 2)
+        self.assertEqual(row_dict["c"], 3)
+
+    def test_with_column_replace_existing(self):
+        """Test replacing an existing column with withColumn."""
+        df = self.spark.sql("SELECT 1 as a, 2 as b")
+
+        result = df.withColumn("a", F.col("a") * 10).collect()
+
+        self.assertEqual(len(result), 1)
+        row_dict = result[0].asDict()
+        self.assertEqual(row_dict["a"], 10)
+        self.assertEqual(row_dict["b"], 2)
+
+    def test_with_column_literal(self):
+        """Test adding a constant column with withColumn."""
+        df = self.spark.sql("SELECT 1 as a, 2 as b")
+
+        result = df.withColumn("const", F.lit(42)).collect()
+
+        self.assertEqual(len(result), 1)
+        row_dict = result[0].asDict()
+        self.assertEqual(row_dict["a"], 1)
+        self.assertEqual(row_dict["b"], 2)
+        self.assertEqual(row_dict["const"], 42)
+
+    def test_with_column_multiple(self):
+        """Test adding multiple columns with chained withColumn."""
+        df = self.spark.sql("SELECT 1 as a, 2 as b")
+
+        result = (df
+            .withColumn("sum", F.col("a") + F.col("b"))
+            .withColumn("diff", F.col("a") - F.col("b"))
+            .withColumn("prod", F.col("a") * F.col("b"))
+            .collect())
+
+        self.assertEqual(len(result), 1)
+        row_dict = result[0].asDict()
+        self.assertEqual(row_dict["sum"], 3)
+        self.assertEqual(row_dict["diff"], -1)
+        self.assertEqual(row_dict["prod"], 2)
+
+    def test_with_column_on_range(self):
+        """Test withColumn on a range DataFrame."""
+        df = self.spark.range(1, 6)
+
+        result = df.withColumn("squared", F.col("id") * F.col("id")).collect()
+
+        self.assertEqual(len(result), 5)
+        for row in result:
+            self.assertEqual(row["squared"], row["id"] ** 2)
+
+    def test_combined_operations(self):
+        """Test combining drop, withColumnRenamed, and withColumn."""
+        df = self.spark.sql("SELECT 1 as a, 2 as b, 3 as c")
+
+        result = (df
+            .drop("c")
+            .withColumnRenamed("a", "x")
+            .withColumn("sum", F.col("x") + F.col("b"))
+            .collect())
+
+        self.assertEqual(len(result), 1)
+        row_dict = result[0].asDict()
+        self.assertNotIn("c", row_dict)
+        self.assertNotIn("a", row_dict)
+        self.assertIn("x", row_dict)
+        self.assertIn("b", row_dict)
+        self.assertIn("sum", row_dict)
+        self.assertEqual(row_dict["x"], 1)
+        self.assertEqual(row_dict["b"], 2)
+        self.assertEqual(row_dict["sum"], 3)

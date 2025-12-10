@@ -129,23 +129,137 @@
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
 
-            <!-- Protobuf Maven Plugin -->
+            <!--
+            ============================================================================
+            Maven Dependency Plugin - Download protoc and grpc-java plugin
+            ============================================================================
+            Downloads the protoc compiler and grpc-java plugin from Maven Central.
+            These are platform-specific executables that we'll invoke via antrun.
+            ============================================================================
+            -->
             <plugin>
-                <groupId>org.xolstice.maven.plugins</groupId>
-                <artifactId>protobuf-maven-plugin</artifactId>
-                <version>0.6.1</version>
-                <configuration>
-                    <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
-                    <pluginId>grpc-java</pluginId>
-                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
-                    <protoSourceRoot>${project.basedir}/src/main/proto</protoSourceRoot>
-                </configuration>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.1</version>
                 <executions>
                     <execution>
+                        <id>copy-protoc</id>
+                        <phase>generate-sources</phase>
                         <goals>
-                            <goal>compile</goal>
-                            <goal>compile-custom</goal>
+                            <goal>copy</goal>
                         </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.google.protobuf</groupId>
+                                    <artifactId>protoc</artifactId>
+                                    <version>${protobuf.version}</version>
+                                    <classifier>${os.detected.classifier}</classifier>
+                                    <type>exe</type>
+                                    <outputDirectory>${project.build.directory}/protoc</outputDirectory>
+                                    <destFileName>protoc</destFileName>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.grpc</groupId>
+                                    <artifactId>protoc-gen-grpc-java</artifactId>
+                                    <version>${grpc.version}</version>
+                                    <classifier>${os.detected.classifier}</classifier>
+                                    <type>exe</type>
+                                    <outputDirectory>${project.build.directory}/protoc</outputDirectory>
+                                    <destFileName>protoc-gen-grpc-java</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+            ============================================================================
+            Maven Antrun Plugin - Execute protoc compiler
+            ============================================================================
+            Runs protoc to generate Java classes and gRPC stubs from .proto files.
+            This replaces the broken xolstice and Maven 3.9.6-requiring ascopes plugins.
+            ============================================================================
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-protobuf</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <!-- Create output directories -->
+                                <mkdir dir="${project.build.directory}/generated-sources/protobuf/java"/>
+                                <mkdir dir="${project.build.directory}/generated-sources/protobuf/grpc-java"/>
+                                <mkdir dir="${project.build.directory}/protobuf-include"/>
+
+                                <!-- Extract google/protobuf well-known types from protobuf JAR -->
+                                <unzip src="${settings.localRepository}/com/google/protobuf/protobuf-java/${protobuf.version}/protobuf-java-${protobuf.version}.jar"
+                                       dest="${project.build.directory}/protobuf-include">
+                                    <patternset>
+                                        <include name="google/protobuf/*.proto"/>
+                                    </patternset>
+                                </unzip>
+
+                                <!-- Make protoc executables -->
+                                <chmod file="${project.build.directory}/protoc/protoc" perm="755"/>
+                                <chmod file="${project.build.directory}/protoc/protoc-gen-grpc-java" perm="755"/>
+
+                                <!-- Run protoc for Java messages -->
+                                <exec executable="${project.build.directory}/protoc/protoc" failonerror="true">
+                                    <arg value="--java_out=${project.build.directory}/generated-sources/protobuf/java"/>
+                                    <arg value="--grpc-java_out=${project.build.directory}/generated-sources/protobuf/grpc-java"/>
+                                    <arg value="--plugin=protoc-gen-grpc-java=${project.build.directory}/protoc/protoc-gen-grpc-java"/>
+                                    <arg value="--proto_path=${project.build.directory}/protobuf-include"/>
+                                    <arg value="--proto_path=${project.basedir}/src/main/proto"/>
+                                    <arg value="${project.basedir}/src/main/proto/spark/connect/base.proto"/>
+                                    <arg value="${project.basedir}/src/main/proto/spark/connect/catalog.proto"/>
+                                    <arg value="${project.basedir}/src/main/proto/spark/connect/commands.proto"/>
+                                    <arg value="${project.basedir}/src/main/proto/spark/connect/common.proto"/>
+                                    <arg value="${project.basedir}/src/main/proto/spark/connect/example_plugins.proto"/>
+                                    <arg value="${project.basedir}/src/main/proto/spark/connect/expressions.proto"/>
+                                    <arg value="${project.basedir}/src/main/proto/spark/connect/relations.proto"/>
+                                    <arg value="${project.basedir}/src/main/proto/spark/connect/types.proto"/>
+                                </exec>
+
+                                <echo message="Generated protobuf classes successfully"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+            ============================================================================
+            Build Helper Plugin - Add generated sources to build
+            ============================================================================
+            Adds the protobuf-generated Java files to the compile source path.
+            ============================================================================
+            -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>add-protobuf-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/protobuf/java</source>
+                                <source>${project.build.directory}/generated-sources/protobuf/grpc-java</source>
+                            </sources>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
