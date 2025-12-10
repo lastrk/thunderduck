@@ -14,11 +14,16 @@ This file contains project-specific rules and guidelines for working with thunde
 2. **Permanent documentation** (in `docs/`)
    - `docs/MVP_IMPLEMENTATION_PLAN.md` - Original 16-week MVP roadmap (archived)
    - `docs/architect/` - Architecture decisions and designs
-   - `docs/dev_journal/` - Completion reports and historical records
+   - `docs/dev_journal/` - Developer journal with milestone completion reports
    - `docs/SPARK_CONNECT_PROTOCOL_SPEC.md` - Protocol reference
    - `docs/Testing_Strategy.md` - Testing approach
 
-3. **Test infrastructure** (in `tests/scripts/`)
+3. **Developer journal** (`docs/dev_journal/`)
+   - Completion reports after each milestone, prefixed with `M[X]_` (e.g., `M1_`, `M2_`)
+   - X is a monotonically increasing number indicating chronological order
+   - Each report documents achievements, decisions, and lessons learned
+
+4. **Test infrastructure** (in `tests/scripts/`)
    - Test runner scripts and utilities
 
 ### Enforcement
