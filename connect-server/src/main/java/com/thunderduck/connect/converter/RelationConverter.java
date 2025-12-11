@@ -146,8 +146,8 @@ public class RelationConverter {
             Read.NamedTable namedTable = read.getNamedTable();
             String tableName = namedTable.getUnparsedIdentifier();
             logger.debug("Creating TableScan for table: {}", tableName);
-            // For named tables, assume parquet format (will be enhanced later)
-            return new TableScan(tableName, TableScan.TableFormat.PARQUET, null);
+            // For named tables, use TABLE format (regular DuckDB table)
+            return new TableScan(tableName, TableScan.TableFormat.TABLE, null);
         } else {
             throw new PlanConversionException("Read relation must have either data_source or named_table");
         }

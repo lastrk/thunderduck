@@ -63,9 +63,9 @@
         'com/google/protobuf/AbstractMessage'
 
         Solution: Use 'provided' scope and generate our own protobuf classes with
-        the protobuf-maven-plugin using our specified protobuf version (3.23.4).
+        the protobuf-maven-plugin using our specified protobuf version (3.25.1).
 
-        Validated: 2025-11-05 - Works with PySpark 3.5.3 client
+        Validated: 2025-12-11 - Works with PySpark 4.0.1 client
         ============================================================================
         -->
         <dependency>
@@ -199,6 +199,16 @@
                                 <mkdir dir="${project.build.directory}/generated-sources/protobuf/java"/>
                                 <mkdir dir="${project.build.directory}/generated-sources/protobuf/grpc-java"/>
                                 <mkdir dir="${project.build.directory}/protobuf-include"/>
+
+                                <!-- Extract .proto files from Spark Connect JAR -->
+                                <echo message="Extracting proto files from spark-connect_2.13-${spark.version}.jar"/>
+                                <unzip src="${settings.localRepository}/org/apache/spark/spark-connect_2.13/${spark.version}/spark-connect_2.13-${spark.version}.jar"
+                                       dest="${project.basedir}/src/main/proto"
+                                       overwrite="true">
+                                    <patternset>
+                                        <include name="spark/connect/*.proto"/>
+                                    </patternset>
+                                </unzip>
 
                                 <!-- Extract google/protobuf well-known types from protobuf JAR -->
                                 <unzip src="${settings.localRepository}/com/google/protobuf/protobuf-java/${protobuf.version}/protobuf-java-${protobuf.version}.jar"

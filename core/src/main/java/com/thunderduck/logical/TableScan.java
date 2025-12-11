@@ -28,6 +28,7 @@ public class TableScan extends LogicalPlan {
      * Supported table formats.
      */
     public enum TableFormat {
+        TABLE,      // Regular DuckDB table
         PARQUET,
         DELTA,
         ICEBERG
@@ -96,6 +97,11 @@ public class TableScan extends LogicalPlan {
         Objects.requireNonNull(generator, "generator must not be null");
 
         switch (format) {
+            case TABLE:
+                // Regular DuckDB table - use table name directly with proper quoting
+                return String.format("SELECT * FROM %s",
+                    com.thunderduck.generator.SQLQuoting.quoteIdentifier(source));
+
             case PARQUET:
                 // Use DuckDB's read_parquet function with safe path quoting
                 return String.format("SELECT * FROM read_parquet(%s)",

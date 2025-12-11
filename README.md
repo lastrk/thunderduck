@@ -111,7 +111,7 @@ thunderduck uses a three-layer architecture:
 
 ### Prerequisites
 
-- **Java**: 11 or later
+- **Java**: 17 or later
 - **Maven**: 3.9 or later
 - **DuckDB**: 1.1.3 (automatically included via JDBC driver)
 
