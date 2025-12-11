@@ -16,10 +16,6 @@ public final class StreamingConfig {
     /** Minimum batch size to prevent too many small batches */
     public static final int MIN_BATCH_SIZE = 1024;
 
-    /** Enable streaming results (default: false during rollout) */
-    public static final boolean STREAMING_ENABLED =
-        Boolean.parseBoolean(System.getProperty("thunderduck.streaming.enabled", "false"));
-
     /**
      * Validate and normalize batch size to be within allowed bounds.
      *

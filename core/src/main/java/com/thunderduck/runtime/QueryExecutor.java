@@ -2,11 +2,18 @@ package com.thunderduck.runtime;
 
 import com.thunderduck.exception.QueryExecutionException;
 import com.thunderduck.logging.QueryLogger;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.VectorUnloader;
+import org.apache.arrow.vector.ipc.message.ArrowRecordBatch;
+import org.apache.arrow.vector.VectorLoader;
 import org.duckdb.DuckDBConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -47,6 +54,8 @@ public class QueryExecutor {
     private static final Logger logger = LoggerFactory.getLogger(QueryExecutor.class);
 
     private final DuckDBConnectionManager connectionManager;
+    private final ArrowStreamingExecutor streamingExecutor;
+    private final BufferAllocator allocator;
 
     /**
      * Creates a query executor with the specified connection manager.
@@ -56,6 +65,8 @@ public class QueryExecutor {
     public QueryExecutor(DuckDBConnectionManager connectionManager) {
         this.connectionManager = Objects.requireNonNull(
             connectionManager, "connectionManager must not be null");
+        this.allocator = new RootAllocator(Long.MAX_VALUE);
+        this.streamingExecutor = new ArrowStreamingExecutor(connectionManager, allocator, StreamingConfig.DEFAULT_BATCH_SIZE);
     }
 
     /**
@@ -93,79 +104,157 @@ public class QueryExecutor {
             // Detect EXPLAIN statements for SQL introspection
             boolean isExplain = isExplainStatement(sql);
 
-            // Use try-with-resources for automatic connection cleanup
-            try (PooledConnection pooled = connectionManager.borrowConnection()) {
-                DuckDBConnection conn = pooled.get();
-                Statement stmt = null;
-                ResultSet rs = null;
+            // Use streaming executor and collect batches into single VectorSchemaRoot
+            try (ArrowBatchIterator iter = streamingExecutor.executeStreaming(sql)) {
+                long execTimeMs = (System.nanoTime() - queryStartTime) / 1_000_000;
 
-                try {
-                    // Execute query
-                    long execStartTime = System.nanoTime();
-                    stmt = conn.createStatement();
-                    rs = stmt.executeQuery(sql);
-                    long execTimeMs = (System.nanoTime() - execStartTime) / 1_000_000;
+                // Collect all batches and merge into single result
+                VectorSchemaRoot result = collectBatches(iter);
 
-                    // Convert to Arrow
-                    long arrowStartTime = System.nanoTime();
-                    VectorSchemaRoot result = ArrowInterchange.fromResultSet(rs);
-                    long arrowTimeMs = (System.nanoTime() - arrowStartTime) / 1_000_000;
+                // Get row count from result
+                long rowCount = result.getRowCount();
 
-                    // Get row count from result
-                    long rowCount = result.getRowCount();
+                // Log execution metrics
+                QueryLogger.logExecution(execTimeMs, rowCount);
 
-                    // Log execution metrics
-                    QueryLogger.logExecution(execTimeMs + arrowTimeMs, rowCount);
-
-                    // Log SQL for EXPLAIN statements (they're typically short)
-                    if (isExplain) {
-                        QueryLogger.logSQLGeneration(sql, 0); // No generation for direct SQL
-                    }
-
-                    // Complete query logging
-                    long totalTimeMs = (System.nanoTime() - queryStartTime) / 1_000_000;
-                    QueryLogger.completeQuery(totalTimeMs);
-
-                    return result;
-
-                } catch (SQLException e) {
-                    // Log error before throwing
-                    QueryLogger.logError(e);
-
-                    // Wrap in QueryExecutionException with context
-                    throw new QueryExecutionException(
-                        "Failed to execute query: " + e.getMessage(), e, sql);
-
-                } finally {
-                    // Clean up JDBC resources
-                    if (rs != null) {
-                        try {
-                            rs.close();
-                        } catch (SQLException e) {
-                            // Log but don't throw
-                            logger.warn("Error closing ResultSet: " + e.getMessage());
-                        }
-                    }
-                    if (stmt != null) {
-                        try {
-                            stmt.close();
-                        } catch (SQLException e) {
-                            // Log but don't throw
-                            logger.warn("Error closing Statement: " + e.getMessage());
-                        }
-                    }
+                // Log SQL for EXPLAIN statements (they're typically short)
+                if (isExplain) {
+                    QueryLogger.logSQLGeneration(sql, 0); // No generation for direct SQL
                 }
+
+                // Complete query logging
+                long totalTimeMs = (System.nanoTime() - queryStartTime) / 1_000_000;
+                QueryLogger.completeQuery(totalTimeMs);
+
+                return result;
+
             } catch (SQLException e) {
-                // Log error
+                // Log error before throwing
                 QueryLogger.logError(e);
 
-                // Wrap connection acquisition errors
+                // Wrap in QueryExecutionException with context
                 throw new QueryExecutionException(
-                    "Failed to acquire database connection: " + e.getMessage(), e, sql);
+                    "Failed to execute query: " + e.getMessage(), e, sql);
             }
         } finally {
             // Always clear logging context to prevent memory leaks
             QueryLogger.clearContext();
+        }
+    }
+
+    /**
+     * Collects all batches from an ArrowBatchIterator into a single VectorSchemaRoot.
+     *
+     * @param iter the batch iterator
+     * @return a single VectorSchemaRoot containing all rows
+     */
+    private VectorSchemaRoot collectBatches(ArrowBatchIterator iter) {
+        List<ArrowRecordBatch> batches = new ArrayList<>();
+        VectorSchemaRoot result = null;
+
+        try {
+            // Get schema from first batch
+            if (!iter.hasNext()) {
+                // Empty result - create empty root with schema from iterator
+                return VectorSchemaRoot.create(iter.getSchema(), allocator);
+            }
+
+            // Collect all batches
+            while (iter.hasNext()) {
+                VectorSchemaRoot batch = iter.next();
+                if (result == null) {
+                    // First batch - create result with same schema
+                    result = VectorSchemaRoot.create(batch.getSchema(), allocator);
+                }
+                // Unload batch data for later merging
+                VectorUnloader unloader = new VectorUnloader(batch);
+                batches.add(unloader.getRecordBatch());
+            }
+
+            // If only one batch, load it directly
+            if (batches.size() == 1) {
+                VectorLoader loader = new VectorLoader(result);
+                loader.load(batches.get(0));
+                return result;
+            }
+
+            // Multiple batches - need to merge them
+            // Calculate total row count
+            int totalRows = 0;
+            for (ArrowRecordBatch batch : batches) {
+                totalRows += batch.getLength();
+            }
+
+            // Allocate result with total capacity (result is guaranteed non-null here since batches > 1)
+            assert result != null : "result should be non-null when batches.size() > 1";
+            result.setRowCount(totalRows);
+
+            // Load batches sequentially (simple approach for now)
+            int currentRow = 0;
+            for (ArrowRecordBatch batch : batches) {
+                // For simplicity, we create a temp root, load the batch, then copy
+                try (VectorSchemaRoot tempRoot = VectorSchemaRoot.create(result.getSchema(), allocator)) {
+                    VectorLoader loader = new VectorLoader(tempRoot);
+                    loader.load(batch);
+
+                    // Copy from temp to result at currentRow offset
+                    for (int col = 0; col < tempRoot.getFieldVectors().size(); col++) {
+                        org.apache.arrow.vector.FieldVector srcVector = tempRoot.getVector(col);
+                        org.apache.arrow.vector.FieldVector dstVector = result.getVector(col);
+
+                        for (int row = 0; row < tempRoot.getRowCount(); row++) {
+                            copyValue(srcVector, row, dstVector, currentRow + row);
+                        }
+                    }
+                    currentRow += tempRoot.getRowCount();
+                }
+            }
+
+            return result;
+
+        } finally {
+            // Close all record batches
+            for (ArrowRecordBatch batch : batches) {
+                batch.close();
+            }
+        }
+    }
+
+    /**
+     * Copy a value from one vector to another at specified indices.
+     */
+    private void copyValue(org.apache.arrow.vector.FieldVector src, int srcIdx,
+                          org.apache.arrow.vector.FieldVector dst, int dstIdx) {
+        if (src.isNull(srcIdx)) {
+            dst.setNull(dstIdx);
+            return;
+        }
+
+        // Handle common vector types
+        if (src instanceof org.apache.arrow.vector.IntVector) {
+            ((org.apache.arrow.vector.IntVector) dst).setSafe(dstIdx,
+                ((org.apache.arrow.vector.IntVector) src).get(srcIdx));
+        } else if (src instanceof org.apache.arrow.vector.BigIntVector) {
+            ((org.apache.arrow.vector.BigIntVector) dst).setSafe(dstIdx,
+                ((org.apache.arrow.vector.BigIntVector) src).get(srcIdx));
+        } else if (src instanceof org.apache.arrow.vector.Float8Vector) {
+            ((org.apache.arrow.vector.Float8Vector) dst).setSafe(dstIdx,
+                ((org.apache.arrow.vector.Float8Vector) src).get(srcIdx));
+        } else if (src instanceof org.apache.arrow.vector.VarCharVector) {
+            byte[] bytes = ((org.apache.arrow.vector.VarCharVector) src).get(srcIdx);
+            ((org.apache.arrow.vector.VarCharVector) dst).setSafe(dstIdx, bytes);
+        } else if (src instanceof org.apache.arrow.vector.BitVector) {
+            ((org.apache.arrow.vector.BitVector) dst).setSafe(dstIdx,
+                ((org.apache.arrow.vector.BitVector) src).get(srcIdx));
+        } else if (src instanceof org.apache.arrow.vector.DateDayVector) {
+            ((org.apache.arrow.vector.DateDayVector) dst).setSafe(dstIdx,
+                ((org.apache.arrow.vector.DateDayVector) src).get(srcIdx));
+        } else if (src instanceof org.apache.arrow.vector.DecimalVector) {
+            java.math.BigDecimal val = ((org.apache.arrow.vector.DecimalVector) src).getObject(srcIdx);
+            ((org.apache.arrow.vector.DecimalVector) dst).setSafe(dstIdx, val);
+        } else {
+            // Fallback - try to get object and set
+            logger.warn("Unhandled vector type for copy: {}", src.getClass().getSimpleName());
         }
     }
 

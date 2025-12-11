@@ -802,11 +802,34 @@ public static VectorSchemaRoot fromResultSet(ResultSet rs) throws SQLException {
 
 ### Phase 4 Checklist
 
-- [ ] Make streaming the default
-- [ ] Deprecate legacy methods
-- [ ] Update all callers to use streaming
-- [ ] Remove deprecated code (after validation period)
-- [ ] Update architecture documentation
+- [x] Remove `STREAMING_ENABLED` flag - streaming is always on
+- [x] Simplify `executeSQL()` to always use streaming for queries
+- [x] Rename `executeSQLMaterialized()` to `executeDDL()` for DDL-only handling
+- [x] Remove `StreamingConfig` import from SparkConnectServiceImpl
+- [x] Refactor `QueryExecutor.executeQuery()` to use streaming internally
+- [x] Delete `ArrowInterchange.fromResultSet()` - no longer needed
+- [x] Delete `ArrowInterchange.sqlTypeToArrowType()` - no longer needed
+- [x] Delete `ArrowInterchange.setVectorValue()` - no longer needed
+- [x] Build and verify compilation succeeds
+
+**Phase 4 COMPLETE** - 2025-12-11
+
+### Phase 4 Final Changes
+
+**Key Changes**:
+1. Removed `StreamingConfig.STREAMING_ENABLED` flag - streaming is now the only path
+2. `executeSQL()` always routes queries to `executeSQLStreaming()`
+3. Renamed `executeSQLMaterialized()` → `executeDDL()` (only handles DDL statements)
+4. Removed `StreamingConfig` import from SparkConnectServiceImpl
+5. **Refactored `QueryExecutor.executeQuery()`** to use `ArrowStreamingExecutor` internally
+   - Collects batches and merges into single `VectorSchemaRoot` for API compatibility
+   - Tests/benchmarks that use `QueryExecutor` now use streaming under the hood
+6. **Deleted `ArrowInterchange.fromResultSet()`** and related methods (231 lines removed)
+   - `sqlTypeToArrowType()` - no longer needed
+   - `setVectorValue()` - no longer needed
+   - `ArrowInterchange` is now just for Arrow→DuckDB import (`toTable()`)
+
+**Result**: -138 net lines of legacy code removed, all paths use streaming
 
 ---
 

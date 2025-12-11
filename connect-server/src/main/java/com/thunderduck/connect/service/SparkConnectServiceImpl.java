@@ -9,7 +9,6 @@ import com.thunderduck.runtime.ArrowBatchIterator;
 import com.thunderduck.runtime.ArrowStreamingExecutor;
 import com.thunderduck.runtime.DuckDBConnectionManager;
 import com.thunderduck.runtime.QueryExecutor;
-import com.thunderduck.runtime.StreamingConfig;
 import io.grpc.Context;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -55,8 +54,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         this.sqlGenerator = new SQLGenerator();
         this.streamingExecutor = new ArrowStreamingExecutor(connectionManager);
 
-        logger.info("SparkConnectServiceImpl initialized with plan deserialization support" +
-                   (StreamingConfig.STREAMING_ENABLED ? " [STREAMING ENABLED]" : ""));
+        logger.info("SparkConnectServiceImpl initialized with plan deserialization support");
     }
 
     /**
@@ -953,14 +951,14 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
      */
     private void executeSQL(String sql, String sessionId,
                            StreamObserver<ExecutePlanResponse> responseObserver) {
-        // Use streaming path if enabled and not a DDL statement
-        if (StreamingConfig.STREAMING_ENABLED && !isDDLStatement(sql)) {
-            executeSQLStreaming(sql, sessionId, responseObserver);
+        // DDL statements don't return results - handle separately
+        if (isDDLStatement(sql)) {
+            executeDDL(sql, sessionId, responseObserver);
             return;
         }
 
-        // Legacy materialized execution path
-        executeSQLMaterialized(sql, sessionId, responseObserver);
+        // All queries use streaming (zero-copy Arrow batch iteration)
+        executeSQLStreaming(sql, sessionId, responseObserver);
     }
 
     /**
@@ -1012,62 +1010,44 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     }
 
     /**
-     * Execute SQL query using legacy full-materialization approach.
+     * Execute DDL statement (CREATE, DROP, ALTER, etc.).
      *
-     * <p>Handles both queries (SELECT) and DDL statements (CREATE, DROP, ALTER, etc.).
-     * DDL statements return an empty result set with success status.
+     * <p>DDL statements don't return results - they return an empty success response.
      *
-     * @param sql SQL query string
+     * @param sql DDL statement
      * @param sessionId Session ID
      * @param responseObserver Response stream
      */
-    private void executeSQLMaterialized(String sql, String sessionId,
-                                        StreamObserver<ExecutePlanResponse> responseObserver) {
+    private void executeDDL(String sql, String sessionId,
+                            StreamObserver<ExecutePlanResponse> responseObserver) {
         String operationId = java.util.UUID.randomUUID().toString();
         long startTime = System.nanoTime();
 
         try {
-            logger.info("[{}] Executing SQL for session {}: {}", operationId, sessionId, sql);
+            logger.info("[{}] Executing DDL for session {}: {}", operationId, sessionId, sql);
 
             // Create QueryExecutor with connection manager
             QueryExecutor executor = new QueryExecutor(connectionManager);
 
-            // Check if this is a DDL statement (doesn't return results)
-            if (isDDLStatement(sql)) {
-                // Execute DDL using executeUpdate (no ResultSet)
-                executor.executeUpdate(sql);
-
-                long durationMs = (System.nanoTime() - startTime) / 1_000_000;
-                logger.info("[{}] DDL completed in {}ms", operationId, durationMs);
-
-                // Return empty success response for DDL
-                ExecutePlanResponse response = ExecutePlanResponse.newBuilder()
-                    .setSessionId(sessionId)
-                    .setOperationId(operationId)
-                    .setResponseId(java.util.UUID.randomUUID().toString())
-                    .setResultComplete(ExecutePlanResponse.ResultComplete.newBuilder().build())
-                    .build();
-
-                responseObserver.onNext(response);
-                responseObserver.onCompleted();
-                return;
-            }
-
-            // Execute query and get Arrow results
-            org.apache.arrow.vector.VectorSchemaRoot results = executor.executeQuery(sql);
-
-            // Stream Arrow results
-            streamArrowResults(results, sessionId, operationId, responseObserver);
+            // Execute DDL using executeUpdate (no ResultSet)
+            executor.executeUpdate(sql);
 
             long durationMs = (System.nanoTime() - startTime) / 1_000_000;
-            logger.info("[{}] Query completed in {}ms, {} rows",
-                operationId, durationMs, results.getRowCount());
+            logger.info("[{}] DDL completed in {}ms", operationId, durationMs);
 
-            // Clean up Arrow resources
-            results.close();
+            // Return empty success response for DDL
+            ExecutePlanResponse response = ExecutePlanResponse.newBuilder()
+                .setSessionId(sessionId)
+                .setOperationId(operationId)
+                .setResponseId(java.util.UUID.randomUUID().toString())
+                .setResultComplete(ExecutePlanResponse.ResultComplete.newBuilder().build())
+                .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
 
         } catch (Exception e) {
-            logger.error("[{}] SQL execution failed", operationId, e);
+            logger.error("[{}] DDL execution failed", operationId, e);
 
             // Determine appropriate gRPC status code based on exception type
             Status status;
