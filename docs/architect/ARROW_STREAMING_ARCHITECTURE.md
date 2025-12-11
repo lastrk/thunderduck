@@ -563,16 +563,161 @@ The refactored code will be **wire-compatible** with existing PySpark clients:
 
 ---
 
-## 10. Appendix: DuckDB Arrow Export API
+## 10. Dependencies and Alternative Approaches
 
-### 10.1 Method Signature
+### 10.1 Required Dependency: `arrow-c-data`
+
+The streaming architecture requires the Apache Arrow C Data Interface module:
+
+```xml
+<dependency>
+    <groupId>org.apache.arrow</groupId>
+    <artifactId>arrow-c-data</artifactId>
+    <version>${arrow.version}</version>
+</dependency>
+```
+
+**Why it's required:**
+
+DuckDB's `arrowExportStream()` method uses the [Arrow C Data Interface](https://arrow.apache.org/docs/java/cdata.html) for zero-copy data transfer. Internally, it:
+
+1. Creates an `ArrowArrayStream` C struct pointer in native memory
+2. Uses `org.apache.arrow.c.ArrowArrayStream.wrap(pointer)` to wrap the native pointer
+3. Uses `org.apache.arrow.c.Data.importArrayStream()` to convert to a Java `ArrowReader`
+
+These classes (`ArrowArrayStream`, `Data`) are in the `arrow-c-data` module. DuckDB uses reflection to load them at runtime, so if they're missing:
+
+```
+java.lang.ClassNotFoundException: org.apache.arrow.c.ArrowArrayStream
+```
+
+**Benefits of the C Data Interface:**
+
+| Aspect | Benefit |
+|--------|---------|
+| Zero-copy | Data stays in DuckDB's native memory, no Java heap copy |
+| No serialization | Unlike IPC, no serialization overhead within process |
+| Memory efficiency | Only batch-sized chunks in Java at a time |
+| Type safety | Full Arrow schema metadata preserved |
+
+### 10.2 Alternative Approaches Considered
+
+We evaluated several alternative approaches before selecting the current design:
+
+#### Alternative 1: Pure JDBC Row Iteration (Current Implementation)
+
+**Approach:** Use standard JDBC `ResultSet.next()` + `getObject()` to iterate rows, manually build Arrow vectors.
+
+```java
+// Current approach
+List<List<Object>> rows = new ArrayList<>();
+while (rs.next()) {
+    List<Object> row = new ArrayList<>();
+    for (int i = 1; i <= columnCount; i++) {
+        row.add(rs.getObject(i));
+    }
+    rows.add(row);
+}
+// Then copy to Arrow vectors...
+```
+
+| Pros | Cons |
+|------|------|
+| No additional dependencies | O(rows × columns) object allocations |
+| Simple implementation | Double materialization (Java objects → Arrow) |
+| | High GC pressure |
+| | No streaming capability |
+
+**Verdict:** ❌ Rejected - defeats the purpose of the refactoring.
+
+#### Alternative 2: Arrow IPC Extension (SQL-based)
+
+**Approach:** Use DuckDB's `arrow` community extension to export IPC bytes directly via SQL.
+
+```sql
+COPY (SELECT * FROM table) TO '/dev/stdout' (FORMAT 'arrow');
+```
+
+| Pros | Cons |
+|------|------|
+| Direct IPC bytes output | Extension not available in JDBC |
+| No Java-side serialization | Requires file/pipe I/O, not ResultSet |
+| | Community extension, not core JDBC |
+
+**Verdict:** ❌ Rejected - not available through JDBC driver.
+
+#### Alternative 3: ADBC (Arrow Database Connectivity)
+
+**Approach:** Use ADBC instead of JDBC for native Arrow result streaming.
+
+| Pros | Cons |
+|------|------|
+| Designed for Arrow-native access | **No Java driver for DuckDB** |
+| True zero-copy to IPC | Would require C/JNI bindings |
+| Industry standard | Complete rewrite of data layer |
+
+**DuckDB ADBC language support:**
+- ✅ C/C++, Python, Go, R, Ruby
+- ❌ **Java not supported**
+
+**Verdict:** ❌ Rejected - Java ADBC driver for DuckDB does not exist.
+
+#### Alternative 4: Direct IPC Export from DuckDB (Hypothetical)
+
+**Approach:** If DuckDB JDBC had `arrowExportIPC()` returning `byte[]` directly.
+
+| Pros | Cons |
+|------|------|
+| Skip Java-side IPC serialization | **Does not exist** |
+| Minimal Java heap usage | Would require DuckDB JDBC changes |
+
+**Verdict:** ❌ Not available - would require changes to DuckDB's JDBC driver.
+
+### 10.3 Chosen Approach: C Data Interface + Java IPC Serialization
+
+**Data flow:**
+```
+DuckDB native → arrowExportStream() → ArrowReader → VectorSchemaRoot → ArrowStreamWriter → IPC bytes → gRPC
+               ─────────────────────────────────────────────────────    ───────────────────────────────────
+               Zero-copy (via arrow-c-data)                              Java-side serialization (unavoidable)
+```
+
+**Why this is optimal:**
+
+1. **Eliminates JDBC row iteration** - the expensive O(rows × columns) copy
+2. **Zero-copy from DuckDB** - data stays in native memory until serialization
+3. **Batch streaming** - only 8K rows in Java heap at a time
+4. **IPC serialization is unavoidable** - Spark Connect protocol requires IPC bytes over gRPC
+
+**Trade-off accepted:**
+
+We still serialize to IPC bytes in Java (using `ArrowStreamWriter`). This is unavoidable because:
+- Spark Connect protocol transmits `ExecutePlanResponse.ArrowBatch.data` as IPC bytes
+- gRPC requires serialized bytes, not memory pointers
+- Even with ADBC, we'd need IPC serialization for network transport
+
+The key win is **eliminating the double materialization** (JDBC objects → Arrow vectors), not eliminating serialization entirely.
+
+### 10.4 Dependency Summary
+
+| Module | Purpose | Required |
+|--------|---------|----------|
+| `arrow-vector` | Arrow vector types, VectorSchemaRoot | Yes (existing) |
+| `arrow-memory-netty` | Off-heap memory allocation | Yes (existing) |
+| `arrow-c-data` | C Data Interface for DuckDB export | **Yes (new)** |
+
+---
+
+## 11. Appendix: DuckDB Arrow Export API
+
+### 11.1 Method Signature
 
 ```java
 // From org.duckdb.DuckDBResultSet
 public ArrowReader arrowExportStream(BufferAllocator allocator, long batchSize)
 ```
 
-### 10.2 Usage Pattern
+### 11.2 Usage Pattern
 
 ```java
 DuckDBResultSet duckRS = resultSet.unwrap(DuckDBResultSet.class);
@@ -585,7 +730,7 @@ try (ArrowReader reader = (ArrowReader) duckRS.arrowExportStream(allocator, 8192
 }
 ```
 
-### 10.3 Key Behaviors
+### 11.3 Key Behaviors
 
 1. `loadNextBatch()` returns `false` when no more data
 2. `getVectorSchemaRoot()` returns the **same object** with updated data
