@@ -235,6 +235,8 @@
                                     <arg value="${project.basedir}/src/main/proto/spark/connect/common.proto"/>
                                     <arg value="${project.basedir}/src/main/proto/spark/connect/example_plugins.proto"/>
                                     <arg value="${project.basedir}/src/main/proto/spark/connect/expressions.proto"/>
+                                    <arg value="${project.basedir}/src/main/proto/spark/connect/ml.proto"/>
+                                    <arg value="${project.basedir}/src/main/proto/spark/connect/ml_common.proto"/>
                                     <arg value="${project.basedir}/src/main/proto/spark/connect/relations.proto"/>
                                     <arg value="${project.basedir}/src/main/proto/spark/connect/types.proto"/>
                                 </exec>
