@@ -116,9 +116,11 @@ public class SparkConnectE2ETest {
         // Start the server
         ProcessBuilder pb = new ProcessBuilder(
             "java",
-            "-Xmx2g",
-            "-jar",
-            jarPath.toString()
+                "-Xmx2g",
+                "--add-opens=java.base/java.nio=ALL-UNNAMED",
+                "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+                "-jar",
+                jarPath.toString()
         );
 
         pb.redirectErrorStream(true);
