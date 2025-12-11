@@ -162,6 +162,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             visitDistinct((Distinct) plan);
         } else if (plan instanceof RangeRelation) {
             visitRangeRelation((RangeRelation) plan);
+        } else if (plan instanceof Tail) {
+            visitTail((Tail) plan);
         } else {
             throw new UnsupportedOperationException(
                 "SQL generation not implemented for: " + plan.getClass().getSimpleName());
@@ -366,6 +368,24 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             sql.append(" OFFSET ");
             sql.append(plan.offset());
         }
+    }
+
+    /**
+     * Visits a Tail node.
+     *
+     * <p>The Tail operation is handled in memory by TailBatchCollector for
+     * memory-efficient streaming (O(N) instead of O(total_rows)). When
+     * generating SQL for a Tail plan, we simply generate SQL for the child
+     * plan - the tail limit is applied during streaming collection.
+     *
+     * <p>This method is kept for compatibility with unit tests that
+     * call SQLGenerator directly, but the actual execution path uses
+     * TailBatchCollector instead.
+     */
+    private void visitTail(Tail plan) {
+        // Simply generate SQL for the child plan
+        // The tail operation is handled in memory by TailBatchCollector
+        visit(plan.child());
     }
 
     /**

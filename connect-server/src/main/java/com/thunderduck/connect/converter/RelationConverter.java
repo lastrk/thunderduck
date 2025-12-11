@@ -58,6 +58,8 @@ public class RelationConverter {
                 return convertSort(relation.getSort());
             case LIMIT:
                 return convertLimit(relation.getLimit());
+            case TAIL:
+                return convertTail(relation.getTail());
             case JOIN:
                 return convertJoin(relation.getJoin());
             case SET_OP:
@@ -290,6 +292,23 @@ public class RelationConverter {
 
         logger.debug("Creating Limit with value: {}", limitValue);
         return new com.thunderduck.logical.Limit(input, limitValue);
+    }
+
+    /**
+     * Converts a Tail relation.
+     *
+     * <p>Tail returns the last N rows from a DataFrame, preserving
+     * the original row order.
+     *
+     * @param tail the Tail relation
+     * @return a Tail logical plan
+     */
+    private LogicalPlan convertTail(org.apache.spark.connect.proto.Tail tail) {
+        LogicalPlan input = convert(tail.getInput());
+        int limitValue = tail.getLimit();
+
+        logger.debug("Creating Tail with value: {}", limitValue);
+        return new com.thunderduck.logical.Tail(input, limitValue);
     }
 
     /**

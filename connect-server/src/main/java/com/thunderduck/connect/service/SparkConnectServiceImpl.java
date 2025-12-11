@@ -9,6 +9,8 @@ import com.thunderduck.runtime.ArrowBatchIterator;
 import com.thunderduck.runtime.ArrowStreamingExecutor;
 import com.thunderduck.runtime.DuckDBConnectionManager;
 import com.thunderduck.runtime.QueryExecutor;
+import com.thunderduck.runtime.TailBatchCollector;
+import com.thunderduck.logical.Tail;
 import io.grpc.Context;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -177,12 +179,18 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     // Convert Protobuf plan to LogicalPlan
                     LogicalPlan logicalPlan = planConverter.convert(plan);
 
-                    // Generate SQL from LogicalPlan
-                    String generatedSQL = sqlGenerator.generate(logicalPlan);
-                    logger.info("Generated SQL from plan: {}", generatedSQL);
+                    // Check if this is a Tail plan - handle with memory-efficient streaming
+                    if (logicalPlan instanceof Tail) {
+                        Tail tailPlan = (Tail) logicalPlan;
+                        executeTailWithStreaming(tailPlan, sessionId, responseObserver);
+                    } else {
+                        // Generate SQL from LogicalPlan
+                        String generatedSQL = sqlGenerator.generate(logicalPlan);
+                        logger.info("Generated SQL from plan: {}", generatedSQL);
 
-                    // Execute the generated SQL
-                    executeSQL(generatedSQL, sessionId, responseObserver);
+                        // Execute the generated SQL
+                        executeSQL(generatedSQL, sessionId, responseObserver);
+                    }
 
                 } catch (Exception e) {
                     logger.error("Plan deserialization failed", e);
@@ -996,6 +1004,81 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             logger.error("[{}] Streaming SQL execution failed", operationId, e);
 
             // Determine appropriate gRPC status code based on exception type
+            Status status;
+            if (e instanceof java.sql.SQLException) {
+                status = Status.INVALID_ARGUMENT.withDescription("SQL error: " + e.getMessage());
+            } else if (e instanceof IllegalArgumentException) {
+                status = Status.INVALID_ARGUMENT.withDescription(e.getMessage());
+            } else {
+                status = Status.INTERNAL.withDescription("Execution failed: " + e.getMessage());
+            }
+
+            responseObserver.onError(status.asRuntimeException());
+        }
+    }
+
+    /**
+     * Execute a Tail plan using memory-efficient streaming collection.
+     *
+     * <p>Instead of using SQL window functions which require O(total_rows) memory,
+     * this method streams through all data keeping only the last N rows in memory.
+     * This is O(N) memory where N is the tail limit.
+     *
+     * <p>Algorithm:
+     * <ol>
+     *   <li>Generate SQL for just the child plan (without tail operation)</li>
+     *   <li>Stream the child query results through TailBatchCollector</li>
+     *   <li>Collector maintains circular buffer of recent batches</li>
+     *   <li>Return only the last N rows to client</li>
+     * </ol>
+     *
+     * @param tailPlan The Tail logical plan node
+     * @param sessionId Session ID for response
+     * @param responseObserver Stream observer for responses
+     */
+    private void executeTailWithStreaming(Tail tailPlan, String sessionId,
+                                          StreamObserver<ExecutePlanResponse> responseObserver) {
+        String operationId = java.util.UUID.randomUUID().toString();
+        long startTime = System.nanoTime();
+
+        try {
+            // Get the tail limit and child plan
+            int tailLimit = (int) tailPlan.limit();
+            LogicalPlan childPlan = tailPlan.child();
+
+            // Generate SQL for the child plan only (not the tail wrapper)
+            String childSQL = sqlGenerator.generate(childPlan);
+            logger.info("[{}] Executing memory-efficient tail({}) for session {}, child SQL: {}",
+                operationId, tailLimit, sessionId,
+                childSQL.length() > 100 ? childSQL.substring(0, 100) + "..." : childSQL);
+
+            // Create allocator for TailBatchCollector
+            org.apache.arrow.memory.RootAllocator allocator = new org.apache.arrow.memory.RootAllocator();
+
+            try {
+                // Execute child query with streaming and collect tail
+                try (ArrowBatchIterator iterator = streamingExecutor.executeStreaming(childSQL)) {
+                    TailBatchCollector collector = new TailBatchCollector(allocator, tailLimit);
+                    org.apache.arrow.vector.VectorSchemaRoot tailResult = collector.collect(iterator);
+
+                    try {
+                        // Stream the tail result to the client
+                        streamArrowResults(tailResult, sessionId, operationId, responseObserver);
+
+                        long durationMs = (System.nanoTime() - startTime) / 1_000_000;
+                        logger.info("[{}] Streaming tail({}) completed in {}ms, {} rows",
+                            operationId, tailLimit, durationMs, tailResult.getRowCount());
+                    } finally {
+                        tailResult.close();
+                    }
+                }
+            } finally {
+                allocator.close();
+            }
+
+        } catch (Exception e) {
+            logger.error("[{}] Tail execution failed", operationId, e);
+
             Status status;
             if (e instanceof java.sql.SQLException) {
                 status = Status.INVALID_ARGUMENT.withDescription("SQL error: " + e.getMessage());
