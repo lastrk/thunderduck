@@ -18,12 +18,12 @@ This document provides a detailed gap analysis between Spark Connect 3.5.3's pro
 
 | Category | Total Operators | Implemented | Partial | Coverage |
 |----------|----------------|-------------|---------|----------|
-| Relations | 40 | 27 | 1 | **67.5-70%** |
+| Relations | 40 | 28 | 0 | **70%** |
 | Expressions | 16 | 9 | 0 | **56.25%** |
 | Commands | 10 | 2 | 1 | **25-30%** |
 | Catalog | 26 | 0 | 0 | **0%** |
 
-*Partial implementations*: SubqueryAlias (needs explicit handling), WriteOperation (local paths only, S3/cloud needs httpfs extension)
+*Partial implementations*: WriteOperation (local paths only, S3/cloud needs httpfs extension)
 
 ---
 
@@ -57,7 +57,7 @@ Relations are the core building blocks of Spark Connect query plans. They repres
 | **WithColumnsRenamed** | `with_columns_renamed` | ✅ Implemented | `df.withColumnRenamed("old", "new")` - uses EXCLUDE+alias (M19) |
 | **Offset** | `offset` | ✅ Implemented | `df.offset(n)` - uses existing Limit class (M20) |
 | **ToDF** | `to_df` | ✅ Implemented | `df.toDF("a", "b", "c")` - uses positional aliasing (M20) |
-| **SubqueryAlias** | `subquery_alias` | ⚠️ Partial | Need explicit handling |
+| **SubqueryAlias** | `subquery_alias` | ✅ Implemented | `df.alias("t")` - via subquery wrapping (M28). Qualifier field not yet supported. |
 | **Tail** | `tail` | ✅ Implemented | `df.tail(n)` - ACTION, O(N) memory via TailBatchCollector (M21) |
 | **Sample** | `sample` | ✅ Implemented | `df.sample(fraction, seed)` - Bernoulli sampling via DuckDB USING SAMPLE (M23) |
 | **Hint** | `hint` | ✅ Implemented | `df.hint("BROADCAST")` - no-op pass-through (M25). DuckDB optimizer handles automatically. |
@@ -314,9 +314,9 @@ These are commonly used operations that users will expect to work:
 2. ~~**Hint** - Query optimization hints~~ ✅ Implemented (M25)
 3. ~~**Repartition**, **RepartitionByExpression** - Partitioning~~ ✅ Implemented (M25)
 4. ~~**Unpivot** - Data reshaping~~ ✅ Implemented (M27, 2025-12-12)
-5. **SubqueryAlias** - Proper alias handling
+5. ~~**SubqueryAlias** - Proper alias handling~~ ✅ Implemented (M28, 2025-12-12)
 
-**Phase 2 mostly complete!**
+**Phase 2 COMPLETE!**
 
 ### Phase 3: Complex Types & Expressions (Medium Priority)
 
@@ -402,6 +402,7 @@ Features intentionally not supported due to Spark/DuckDB architectural differenc
 | `df.sample(withReplacement=True)` | DuckDB has no Poisson sampling; throws `PlanConversionException` |
 | `df.hint("BROADCAST")` etc. | Accepted but ignored (no-op); DuckDB optimizer handles join strategies |
 | `df.repartition(n)` / `df.repartition(col)` | Accepted but ignored (no-op); meaningless in single-node DuckDB |
+| `df.alias("t")` with qualifier | Qualifier field not yet supported (multi-catalog scenarios); ignored |
 | Streaming operations | DuckDB is not a streaming engine |
 | Python/Scala UDFs | Requires JVM/Python interop not available in DuckDB |
 | Bucketing | No DuckDB equivalent |
@@ -461,6 +462,8 @@ df.na.fill({"col1": 0, "col2": "default"})    # NAFill (M26) - per-column fills
 df.na.replace("old", "new")                   # NAReplace (M26) - replace values
 df.unpivot(["id"], ["val1", "val2"], "var", "value")  # Unpivot (M27) - wide to long format
 df.unpivot(["id"], None, "var", "value")      # Unpivot (M27) - auto-infer value columns
+df.alias("t")                                 # SubqueryAlias (M28) - DataFrame aliasing
+df.alias("a").join(df.alias("b"), ...)        # SubqueryAlias (M28) - self-joins
 
 # ACTIONS (trigger execution, return values to driver):
 df.tail(n)                                    # Tail (M21) - returns List[Row], O(N) memory
@@ -515,7 +518,7 @@ spark.catalog.listTables()                    # Catalog operations
 
 ---
 
-**Document Version:** 2.1
+**Document Version:** 2.2
 **Last Updated:** 2025-12-12
 **Author:** Analysis generated from Spark Connect 3.5.3 protobuf definitions
 **M19 Update:** Added Drop, WithColumns, WithColumnsRenamed implementations
@@ -529,3 +532,4 @@ spark.catalog.listTables()                    # Catalog operations
 **v1.9 Update:** Added Hint, Repartition, RepartitionByExpression (M25) - no-op pass-throughs for distributed ops
 **v2.0 Update:** Added NADrop, NAFill, NAReplace (M26) - df.na.drop/fill/replace via schema inference + SQL generation
 **v2.1 Update:** Added Unpivot (M27) - df.unpivot() via DuckDB native UNPIVOT syntax with schema inference for values=None
+**v2.2 Update:** Added SubqueryAlias (M28) - df.alias() via subquery wrapping. Phase 2 complete! 28/40 relations (70%)

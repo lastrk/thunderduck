@@ -125,6 +125,8 @@ public class RelationConverter {
                 return convertNAReplace(relation.getReplace());
             case UNPIVOT:
                 return convertUnpivot(relation.getUnpivot());
+            case SUBQUERY_ALIAS:
+                return convertSubqueryAlias(relation.getSubqueryAlias());
             default:
                 throw new PlanConversionException("Unsupported relation type: " + relation.getRelTypeCase());
         }
@@ -1263,5 +1265,53 @@ public class RelationConverter {
         }
         logger.warn("Unpivot: expected column reference but got: {}", expr.getExprTypeCase());
         return null;
+    }
+
+    /**
+     * Converts a SubqueryAlias relation to a LogicalPlan.
+     *
+     * <p>SubqueryAlias provides a name for a relation, enabling:
+     * <ul>
+     *   <li>Column qualification: {@code df.alias("t").select("t.col1")}</li>
+     *   <li>Self-joins: {@code df.alias("a").join(df.alias("b"), ...)}</li>
+     *   <li>Disambiguation in complex queries</li>
+     * </ul>
+     *
+     * <p>Implementation wraps the input SQL in a subquery with the specified alias:
+     * <pre>
+     * SELECT * FROM (input_sql) AS alias_name
+     * </pre>
+     *
+     * <p><b>Limitation:</b> The optional {@code qualifier} field (for multi-catalog
+     * scenarios) is not yet supported and is ignored.
+     *
+     * @param subqueryAlias the SubqueryAlias protobuf message
+     * @return a SQLRelation with the aliased subquery
+     * @throws PlanConversionException if the alias is null or empty
+     */
+    private LogicalPlan convertSubqueryAlias(SubqueryAlias subqueryAlias) {
+        LogicalPlan input = convert(subqueryAlias.getInput());
+        String alias = subqueryAlias.getAlias();
+
+        // Validate alias
+        if (alias == null || alias.isEmpty()) {
+            throw new PlanConversionException("SubqueryAlias requires a non-empty alias");
+        }
+
+        // Log qualifier if present (not yet supported)
+        if (subqueryAlias.getQualifierCount() > 0) {
+            logger.warn("SubqueryAlias: qualifier field is not yet supported, ignoring: {}",
+                subqueryAlias.getQualifierList());
+        }
+
+        // Generate SQL with explicit alias
+        SQLGenerator generator = new SQLGenerator();
+        String inputSql = generator.generate(input);
+
+        String sql = String.format("SELECT * FROM (%s) AS %s",
+            inputSql, SQLQuoting.quoteIdentifier(alias));
+
+        logger.debug("Creating SubqueryAlias SQL with alias '{}': {}", alias, sql);
+        return new SQLRelation(sql);
     }
 }
