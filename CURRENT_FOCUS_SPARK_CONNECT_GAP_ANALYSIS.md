@@ -18,7 +18,7 @@ This document provides a detailed gap analysis between Spark Connect 3.5.3's pro
 
 | Category | Total Operators | Implemented | Partial | Coverage |
 |----------|----------------|-------------|---------|----------|
-| Relations | 40 | 26 | 1 | **65-67.5%** |
+| Relations | 40 | 27 | 1 | **67.5-70%** |
 | Expressions | 16 | 9 | 0 | **56.25%** |
 | Commands | 10 | 2 | 1 | **25-30%** |
 | Catalog | 26 | 0 | 0 | **0%** |
@@ -66,6 +66,7 @@ Relations are the core building blocks of Spark Connect query plans. They repres
 | **NADrop** | `drop_na` | ✅ Implemented | `df.na.drop()` - via WHERE IS NOT NULL (M26). Schema inference for empty cols. |
 | **NAFill** | `fill_na` | ✅ Implemented | `df.na.fill(value)` - via COALESCE (M26). Schema inference for empty cols. |
 | **NAReplace** | `replace` | ✅ Implemented | `df.na.replace(old, new)` - via CASE WHEN (M26). Schema inference for empty cols. |
+| **Unpivot** | `unpivot` | ✅ Implemented | `df.unpivot()` - via DuckDB native UNPIVOT (M27). Schema inference for values=None. |
 
 ### 1.2 Not Implemented Relations
 
@@ -73,7 +74,6 @@ Relations are the core building blocks of Spark Connect query plans. They repres
 
 | Relation | Proto Field | Priority | Use Case |
 |----------|-------------|----------|----------|
-| **Unpivot** | `unpivot` | 🟡 MEDIUM | Wide-to-long transformation |
 | **ToSchema** | `to_schema` | 🟡 MEDIUM | Schema enforcement |
 
 #### Lower Priority (Statistics - Return DataFrames)
@@ -313,7 +313,7 @@ These are commonly used operations that users will expect to work:
 1. ~~**NAFill**, **NADrop**, **NAReplace** - Null handling~~ ✅ Implemented (M26, 2025-12-12)
 2. ~~**Hint** - Query optimization hints~~ ✅ Implemented (M25)
 3. ~~**Repartition**, **RepartitionByExpression** - Partitioning~~ ✅ Implemented (M25)
-4. **Unpivot** - Data reshaping
+4. ~~**Unpivot** - Data reshaping~~ ✅ Implemented (M27, 2025-12-12)
 5. **SubqueryAlias** - Proper alias handling
 
 **Phase 2 mostly complete!**
@@ -459,6 +459,8 @@ df.na.drop(subset=["col1", "col2"])           # NADrop (M26) - specific columns
 df.na.fill(0)                                 # NAFill (M26) - fill nulls with value
 df.na.fill({"col1": 0, "col2": "default"})    # NAFill (M26) - per-column fills
 df.na.replace("old", "new")                   # NAReplace (M26) - replace values
+df.unpivot(["id"], ["val1", "val2"], "var", "value")  # Unpivot (M27) - wide to long format
+df.unpivot(["id"], None, "var", "value")      # Unpivot (M27) - auto-infer value columns
 
 # ACTIONS (trigger execution, return values to driver):
 df.tail(n)                                    # Tail (M21) - returns List[Row], O(N) memory
@@ -484,7 +486,6 @@ df.write.parquet("s3://bucket/path")          # S3 writes need httpfs extension
 df.write.csv("s3://bucket/path")              # S3 writes need httpfs extension
 
 # TRANSFORMATIONS not yet implemented (return DataFrames):
-df.unpivot(...)                               # Unpivot
 df.describe()                                 # StatDescribe - returns DataFrame!
 df.summary()                                  # StatSummary - returns DataFrame!
 
@@ -514,7 +515,7 @@ spark.catalog.listTables()                    # Catalog operations
 
 ---
 
-**Document Version:** 2.0
+**Document Version:** 2.1
 **Last Updated:** 2025-12-12
 **Author:** Analysis generated from Spark Connect 3.5.3 protobuf definitions
 **M19 Update:** Added Drop, WithColumns, WithColumnsRenamed implementations
@@ -527,3 +528,4 @@ spark.catalog.listTables()                    # Catalog operations
 **v1.8 Update:** Added WriteOperation (M24) - df.write.parquet/csv/json support
 **v1.9 Update:** Added Hint, Repartition, RepartitionByExpression (M25) - no-op pass-throughs for distributed ops
 **v2.0 Update:** Added NADrop, NAFill, NAReplace (M26) - df.na.drop/fill/replace via schema inference + SQL generation
+**v2.1 Update:** Added Unpivot (M27) - df.unpivot() via DuckDB native UNPIVOT syntax with schema inference for values=None

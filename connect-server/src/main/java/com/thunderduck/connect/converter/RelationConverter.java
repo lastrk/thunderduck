@@ -123,6 +123,8 @@ public class RelationConverter {
                 return convertNAFill(relation.getFillNa());
             case REPLACE:
                 return convertNAReplace(relation.getReplace());
+            case UNPIVOT:
+                return convertUnpivot(relation.getUnpivot());
             default:
                 throw new PlanConversionException("Unsupported relation type: " + relation.getRelTypeCase());
         }
@@ -1136,5 +1138,130 @@ public class RelationConverter {
             return ((com.thunderduck.expression.Literal) expr).toSQL();
         }
         throw new PlanConversionException("Expected Literal expression");
+    }
+
+    /**
+     * Converts an Unpivot relation to a LogicalPlan.
+     *
+     * <p>Unpivot transforms a DataFrame from wide format to long format by rotating
+     * value columns into rows. This is the inverse of pivot.
+     *
+     * <p>Example:
+     * <pre>
+     * Input:  id | sales_q1 | sales_q2
+     *         1  | 100      | 200
+     *
+     * Output (unpivot sales_q1, sales_q2): id | quarter  | sales
+     *                                      1  | sales_q1 | 100
+     *                                      1  | sales_q2 | 200
+     * </pre>
+     *
+     * <p>Uses DuckDB's native UNPIVOT syntax:
+     * <pre>
+     * SELECT * FROM (input) UNPIVOT (
+     *     value_col FOR variable_col IN (col1, col2, ...)
+     * )
+     * </pre>
+     *
+     * @param unpivot the Unpivot protobuf message
+     * @return a SQLRelation with DuckDB UNPIVOT syntax
+     */
+    private LogicalPlan convertUnpivot(Unpivot unpivot) {
+        LogicalPlan input = convert(unpivot.getInput());
+
+        // Get ID columns (columns to keep as identifiers)
+        List<String> idCols = new ArrayList<>();
+        for (org.apache.spark.connect.proto.Expression expr : unpivot.getIdsList()) {
+            String colName = extractColumnName(expr);
+            if (colName != null) {
+                idCols.add(colName);
+            }
+        }
+
+        // Get value columns (columns to unpivot)
+        List<String> valueCols = new ArrayList<>();
+        if (unpivot.hasValues()) {
+            for (org.apache.spark.connect.proto.Expression expr : unpivot.getValues().getValuesList()) {
+                String colName = extractColumnName(expr);
+                if (colName != null) {
+                    valueCols.add(colName);
+                }
+            }
+        }
+
+        // Get output column names
+        String variableColumnName = unpivot.getVariableColumnName();
+        String valueColumnName = unpivot.getValueColumnName();
+
+        // Default column names if not specified
+        if (variableColumnName == null || variableColumnName.isEmpty()) {
+            variableColumnName = "variable";
+        }
+        if (valueColumnName == null || valueColumnName.isEmpty()) {
+            valueColumnName = "value";
+        }
+
+        // Generate SQL for input
+        SQLGenerator generator = new SQLGenerator();
+        String inputSql = generator.generate(input);
+
+        // If valueCols is empty, we need to infer all non-ID columns
+        if (valueCols.isEmpty()) {
+            if (schemaInferrer == null) {
+                throw new PlanConversionException(
+                    "Unpivot with empty values requires schema inference, but no connection available");
+            }
+
+            StructType schema = schemaInferrer.inferSchema(inputSql);
+            for (StructField field : schema.fields()) {
+                String colName = field.name();
+                // Include all columns except ID columns
+                if (!idCols.contains(colName)) {
+                    valueCols.add(colName);
+                }
+            }
+            logger.debug("Unpivot: inferred {} value columns from schema", valueCols.size());
+        }
+
+        if (valueCols.isEmpty()) {
+            throw new PlanConversionException("Unpivot requires at least one value column to unpivot");
+        }
+
+        // Build the UNPIVOT SQL
+        // SELECT * FROM (input) UNPIVOT (value_col FOR variable_col IN (col1, col2, ...))
+        StringBuilder valueColList = new StringBuilder();
+        for (int i = 0; i < valueCols.size(); i++) {
+            if (i > 0) {
+                valueColList.append(", ");
+            }
+            valueColList.append(SQLQuoting.quoteIdentifier(valueCols.get(i)));
+        }
+
+        String sql = String.format(
+            "SELECT * FROM (%s) UNPIVOT (%s FOR %s IN (%s))",
+            inputSql,
+            SQLQuoting.quoteIdentifier(valueColumnName),
+            SQLQuoting.quoteIdentifier(variableColumnName),
+            valueColList.toString()
+        );
+
+        logger.debug("Creating Unpivot SQL: {}", sql);
+        return new SQLRelation(sql);
+    }
+
+    /**
+     * Extracts the column name from a Spark Connect Expression.
+     *
+     * <p>Supports UnresolvedAttribute expressions which contain column names.
+     *
+     * @param expr the expression
+     * @return the column name, or null if not a column reference
+     */
+    private String extractColumnName(org.apache.spark.connect.proto.Expression expr) {
+        if (expr.hasUnresolvedAttribute()) {
+            return expr.getUnresolvedAttribute().getUnparsedIdentifier();
+        }
+        logger.warn("Unpivot: expected column reference but got: {}", expr.getExprTypeCase());
+        return null;
     }
 }
