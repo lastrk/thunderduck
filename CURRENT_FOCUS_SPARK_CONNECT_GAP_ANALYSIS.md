@@ -1,6 +1,6 @@
 # Spark Connect 3.5.3 Gap Analysis for Thunderduck
 
-**Version:** 1.9
+**Version:** 2.0
 **Date:** 2025-12-12
 **Purpose:** Comprehensive analysis of Spark Connect operator support in Thunderduck
 
@@ -18,7 +18,7 @@ This document provides a detailed gap analysis between Spark Connect 3.5.3's pro
 
 | Category | Total Operators | Implemented | Partial | Coverage |
 |----------|----------------|-------------|---------|----------|
-| Relations | 40 | 23 | 1 | **57.5-60%** |
+| Relations | 40 | 26 | 1 | **65-67.5%** |
 | Expressions | 16 | 9 | 0 | **56.25%** |
 | Commands | 10 | 2 | 1 | **25-30%** |
 | Catalog | 26 | 0 | 0 | **0%** |
@@ -63,6 +63,9 @@ Relations are the core building blocks of Spark Connect query plans. They repres
 | **Hint** | `hint` | ✅ Implemented | `df.hint("BROADCAST")` - no-op pass-through (M25). DuckDB optimizer handles automatically. |
 | **Repartition** | `repartition` | ✅ Implemented | `df.repartition(n)` - no-op in single-node DuckDB (M25) |
 | **RepartitionByExpression** | `repartition_by_expression` | ✅ Implemented | `df.repartition(col("x"))` - no-op in single-node DuckDB (M25) |
+| **NADrop** | `drop_na` | ✅ Implemented | `df.na.drop()` - via WHERE IS NOT NULL (M26). Schema inference for empty cols. |
+| **NAFill** | `fill_na` | ✅ Implemented | `df.na.fill(value)` - via COALESCE (M26). Schema inference for empty cols. |
+| **NAReplace** | `replace` | ✅ Implemented | `df.na.replace(old, new)` - via CASE WHEN (M26). Schema inference for empty cols. |
 
 ### 1.2 Not Implemented Relations
 
@@ -72,14 +75,6 @@ Relations are the core building blocks of Spark Connect query plans. They repres
 |----------|-------------|----------|----------|
 | **Unpivot** | `unpivot` | 🟡 MEDIUM | Wide-to-long transformation |
 | **ToSchema** | `to_schema` | 🟡 MEDIUM | Schema enforcement |
-
-#### Lower Priority (NA Functions)
-
-| Relation | Proto Field | Priority | Returns | Use Case |
-|----------|-------------|----------|---------|----------|
-| **NAFill** | `fill_na` | 🟡 MEDIUM | DataFrame | `df.na.fill()` - fill nulls |
-| **NADrop** | `drop_na` | 🟡 MEDIUM | DataFrame | `df.na.drop()` - drop nulls |
-| **NAReplace** | `replace` | 🟡 MEDIUM | DataFrame | `df.na.replace()` - replace values |
 
 #### Lower Priority (Statistics - Return DataFrames)
 
@@ -313,15 +308,15 @@ These are commonly used operations that users will expect to work:
 
 **Phase 1 Complete!**
 
-### Phase 2: DataFrame NA/Stat Functions (Medium Priority)
+### Phase 2: DataFrame Stat Functions (Medium Priority)
 
-1. **NAFill**, **NADrop**, **NAReplace** - Null handling
-2. **Hint** - Query optimization hints
-3. **Repartition**, **RepartitionByExpression** - Partitioning
+1. ~~**NAFill**, **NADrop**, **NAReplace** - Null handling~~ ✅ Implemented (M26, 2025-12-12)
+2. ~~**Hint** - Query optimization hints~~ ✅ Implemented (M25)
+3. ~~**Repartition**, **RepartitionByExpression** - Partitioning~~ ✅ Implemented (M25)
 4. **Unpivot** - Data reshaping
 5. **SubqueryAlias** - Proper alias handling
 
-**Estimated effort:** 1-2 weeks
+**Phase 2 mostly complete!**
 
 ### Phase 3: Complex Types & Expressions (Medium Priority)
 
@@ -384,7 +379,9 @@ These are all implemented. However, production workloads often include:
 - `df.drop()` - ✅ Implemented (M19)
 - `df.sample()` - ✅ Implemented (M23)
 - `df.write.parquet()` - ✅ Implemented (M24)
-- `df.na.fill()` - NOT implemented
+- `df.na.fill()` - ✅ Implemented (M26)
+- `df.na.drop()` - ✅ Implemented (M26)
+- `df.na.replace()` - ✅ Implemented (M26)
 
 ### Compatibility Concerns
 
@@ -457,6 +454,11 @@ df.sample(0.1, seed=42)                       # Sample (M23)
 df.hint("BROADCAST")                          # Hint (M25) - no-op, DuckDB optimizes automatically
 df.repartition(10)                            # Repartition (M25) - no-op in single-node DuckDB
 df.repartition(col("x"))                      # RepartitionByExpression (M25) - no-op
+df.na.drop()                                  # NADrop (M26) - drop rows with nulls
+df.na.drop(subset=["col1", "col2"])           # NADrop (M26) - specific columns
+df.na.fill(0)                                 # NAFill (M26) - fill nulls with value
+df.na.fill({"col1": 0, "col2": "default"})    # NAFill (M26) - per-column fills
+df.na.replace("old", "new")                   # NAReplace (M26) - replace values
 
 # ACTIONS (trigger execution, return values to driver):
 df.tail(n)                                    # Tail (M21) - returns List[Row], O(N) memory
@@ -482,8 +484,6 @@ df.write.parquet("s3://bucket/path")          # S3 writes need httpfs extension
 df.write.csv("s3://bucket/path")              # S3 writes need httpfs extension
 
 # TRANSFORMATIONS not yet implemented (return DataFrames):
-df.na.fill(0)                                 # NAFill  - returns DataFrame
-df.na.drop()                                  # NADrop  - returns DataFrame
 df.unpivot(...)                               # Unpivot
 df.describe()                                 # StatDescribe - returns DataFrame!
 df.summary()                                  # StatSummary - returns DataFrame!
@@ -514,7 +514,7 @@ spark.catalog.listTables()                    # Catalog operations
 
 ---
 
-**Document Version:** 1.8
+**Document Version:** 2.0
 **Last Updated:** 2025-12-12
 **Author:** Analysis generated from Spark Connect 3.5.3 protobuf definitions
 **M19 Update:** Added Drop, WithColumns, WithColumnsRenamed implementations
@@ -526,3 +526,4 @@ spark.catalog.listTables()                    # Catalog operations
 **v1.7 Update:** Added Sample (M23) - Bernoulli sampling via USING SAMPLE
 **v1.8 Update:** Added WriteOperation (M24) - df.write.parquet/csv/json support
 **v1.9 Update:** Added Hint, Repartition, RepartitionByExpression (M25) - no-op pass-throughs for distributed ops
+**v2.0 Update:** Added NADrop, NAFill, NAReplace (M26) - df.na.drop/fill/replace via schema inference + SQL generation

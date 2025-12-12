@@ -39,7 +39,6 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
     private final SessionManager sessionManager;
     private final DuckDBConnectionManager connectionManager;
-    private final PlanConverter planConverter;
     private final SQLGenerator sqlGenerator;
     private final ArrowStreamingExecutor streamingExecutor;
 
@@ -53,11 +52,28 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                                   DuckDBConnectionManager connectionManager) {
         this.sessionManager = sessionManager;
         this.connectionManager = connectionManager;
-        this.planConverter = new PlanConverter();
         this.sqlGenerator = new SQLGenerator();
         this.streamingExecutor = new ArrowStreamingExecutor(connectionManager);
 
         logger.info("SparkConnectServiceImpl initialized with plan deserialization support");
+    }
+
+    /**
+     * Creates a PlanConverter with optional schema inference capability.
+     *
+     * <p>Schema inference is needed for NA functions (dropna, fillna, replace)
+     * when column lists are not explicitly specified.
+     *
+     * @return a PlanConverter instance
+     */
+    private PlanConverter createPlanConverter() {
+        try {
+            // Borrow connection for schema inference
+            return new PlanConverter(connectionManager.getConnection());
+        } catch (java.sql.SQLException e) {
+            logger.warn("Failed to get connection for schema inference, using basic converter: {}", e.getMessage());
+            return new PlanConverter();
+        }
     }
 
     /**
@@ -124,7 +140,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     } else {
                         // Deserialize non-SQL relation and generate SQL
                         try {
-                            LogicalPlan innerPlan = planConverter.convertRelation(input);
+                            LogicalPlan innerPlan = createPlanConverter().convertRelation(input);
                             sql = sqlGenerator.generate(innerPlan);
                             logger.debug("Generated SQL from ShowString.input: {}", sql);
                         } catch (Exception e) {
@@ -178,7 +194,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
                 try {
                     // Convert Protobuf plan to LogicalPlan
-                    LogicalPlan logicalPlan = planConverter.convert(plan);
+                    LogicalPlan logicalPlan = createPlanConverter().convert(plan);
 
                     // Check if this is a Tail plan - handle with memory-efficient streaming
                     if (logicalPlan instanceof Tail) {
@@ -252,7 +268,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 logger.info("Creating temp view: '{}' (replace={})", viewName, replace);
 
                 // Convert input relation to LogicalPlan
-                LogicalPlan logicalPlan = planConverter.convertRelation(input);
+                LogicalPlan logicalPlan = createPlanConverter().convertRelation(input);
 
                 // Get session and register view
                 Session session = sessionManager.getSession(sessionId);
@@ -371,7 +387,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
                     } else {
                         // Regular plan - deserialize and extract schema
-                        LogicalPlan logicalPlan = planConverter.convert(plan);
+                        LogicalPlan logicalPlan = createPlanConverter().convert(plan);
                         schema = logicalPlan.schema();
 
                         if (schema == null) {
@@ -1497,7 +1513,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             }
 
             // 5. Convert input relation to SQL
-            LogicalPlan inputPlan = planConverter.convertRelation(writeOp.getInput());
+            LogicalPlan inputPlan = createPlanConverter().convertRelation(writeOp.getInput());
             String inputSQL = sqlGenerator.generate(inputPlan);
             logger.debug("WriteOperation input SQL: {}", inputSQL);
 
@@ -1580,7 +1596,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                                     StreamObserver<ExecutePlanResponse> responseObserver) {
         try {
             // Convert input relation to SQL
-            LogicalPlan inputPlan = planConverter.convertRelation(writeOp.getInput());
+            LogicalPlan inputPlan = createPlanConverter().convertRelation(writeOp.getInput());
             String newDataSQL = sqlGenerator.generate(inputPlan);
 
             // Build union query: existing + new
