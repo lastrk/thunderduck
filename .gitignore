@@ -48,6 +48,10 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 .eggs/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 # Claude Code authentication (auto-generated, keep secret)
 .devcontainer/.claude-token
 .devcontainer/.claude-oauth.json

@@ -64,8 +64,20 @@ class ThunderduckE2ETestBase(unittest.TestCase):
                 "Run 'mvn package' first."
             )
 
+        # Required JVM flags for Apache Arrow (all platforms)
+        # See: https://arrow.apache.org/docs/java/install.html
+        # Using the exact format recommended by Arrow's error message
+        cmd = [
+            "java",
+            "--add-opens=java.base/java.nio=ALL-UNNAMED",
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+            "-jar",
+            jar_path
+        ]
+
+        # Don't capture stderr so we can see server errors in real-time
         process = subprocess.Popen(
-            ["java", "-jar", jar_path],
+            cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )

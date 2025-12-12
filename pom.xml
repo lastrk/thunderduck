@@ -22,10 +22,10 @@
         <!-- Upgraded from 1.4.1.0 to 1.4.3.0 LTS (Dec 2025) for bug fixes -->
         <duckdb.version>1.4.3.0</duckdb.version>
         <arrow.version>17.0.0</arrow.version>
-        <spark.version>3.5.3</spark.version>
-        <!-- Downgraded to match Spark 3.5.3 exactly for binary compatibility -->
-        <grpc.version>1.56.0</grpc.version>
-        <protobuf.version>3.23.4</protobuf.version>
+        <spark.version>4.0.1</spark.version>
+        <!-- Updated to match Spark 4.0.1 for binary compatibility -->
+        <grpc.version>1.62.2</grpc.version>
+        <protobuf.version>3.25.1</protobuf.version>
         <junit.version>5.10.0</junit.version>
         <assertj.version>3.24.2</assertj.version>
         <slf4j.version>2.0.9</slf4j.version>
@@ -35,6 +35,9 @@
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
         <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
+        <maven-checkstyle-plugin.version>3.3.1</maven-checkstyle-plugin.version>
+        <spotbugs-maven-plugin.version>4.8.3.0</spotbugs-maven-plugin.version>
+        <maven-pmd-plugin.version>3.21.2</maven-pmd-plugin.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -214,6 +217,55 @@
                             </configuration>
                         </execution>
                     </executions>
+                </plugin>
+
+                <!-- Checkstyle Plugin (Code Style) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>${maven-checkstyle-plugin.version}</version>
+                    <configuration>
+                        <configLocation>checkstyle.xml</configLocation>
+                        <consoleOutput>true</consoleOutput>
+                        <failOnViolation>false</failOnViolation>
+                        <violationSeverity>warning</violationSeverity>
+                        <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                            <artifactId>checkstyle</artifactId>
+                            <version>10.12.5</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+
+                <!-- SpotBugs Plugin (Bug Detection) -->
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>${spotbugs-maven-plugin.version}</version>
+                    <configuration>
+                        <effort>Max</effort>
+                        <threshold>Medium</threshold>
+                        <xmlOutput>true</xmlOutput>
+                        <failOnError>false</failOnError>
+                    </configuration>
+                </plugin>
+
+                <!-- PMD Plugin (Code Analysis) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>${maven-pmd-plugin.version}</version>
+                    <configuration>
+                        <linkXRef>false</linkXRef>
+                        <failOnViolation>false</failOnViolation>
+                        <printFailingErrors>true</printFailingErrors>
+                        <rulesets>
+                            <ruleset>/rulesets/java/quickstart.xml</ruleset>
+                        </rulesets>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
