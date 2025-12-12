@@ -1,7 +1,7 @@
 # thunderduck
 
 [![Maven Build](https://img.shields.io/badge/maven-3.9+-blue.svg)](https://maven.apache.org/)
-[![Java](https://img.shields.io/badge/java-11-orange.svg)](https://openjdk.java.net/)
+[![Java](https://img.shields.io/badge/java-17-orange.svg)](https://openjdk.java.net/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 
 **thunderduck** is a high-performance embedded execution engine that translates Spark DataFrame operations to DuckDB SQL, delivering 5-10x faster query execution than Spark local mode with 6-8x better memory efficiency.
