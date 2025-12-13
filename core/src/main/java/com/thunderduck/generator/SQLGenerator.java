@@ -290,6 +290,12 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         TableScan.TableFormat format = plan.format();
 
         switch (format) {
+            case TABLE:
+                // Regular DuckDB table - use table name directly with proper quoting
+                sql.append("SELECT * FROM ");
+                sql.append(quoteIdentifier(source));
+                break;
+
             case PARQUET:
                 // Use DuckDB's read_parquet function with safe quoting
                 sql.append("SELECT * FROM read_parquet(");

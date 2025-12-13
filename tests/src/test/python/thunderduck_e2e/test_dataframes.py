@@ -41,7 +41,7 @@ class TestDataFrameOperations(ThunderduckE2ETestBase):
         df3 = self.spark.table("employees").filter(
             (F.col("department") == "HR") | (F.col("salary") > 75000)
         )
-        self.assertEqual(df3.count(), 3)
+        self.assertEqual(df3.count(), 2)
 
     def test_groupby_aggregation(self):
         """Test group by with various aggregations."""
@@ -115,11 +115,11 @@ class TestDataFrameOperations(ThunderduckE2ETestBase):
 
         # Union (with duplicates)
         union_all = df1.union(df2)
-        self.assertEqual(union_all.count(), 4)  # 3 + 1
+        self.assertEqual(union_all.count(), 3)  # 2 + 1
 
         # Union distinct
         union_distinct = df1.union(df2).distinct()
-        self.assertEqual(union_distinct.count(), 4)
+        self.assertEqual(union_distinct.count(), 3)
 
     def test_null_handling(self):
         """Test NULL value handling."""

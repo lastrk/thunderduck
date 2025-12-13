@@ -4,6 +4,7 @@ import com.thunderduck.logical.*;
 import com.thunderduck.expression.Expression;
 import com.thunderduck.expression.FunctionCall;
 import com.thunderduck.expression.AliasExpression;
+import com.thunderduck.expression.UnresolvedColumn;
 import com.thunderduck.logical.LocalDataRelation;
 import com.thunderduck.logical.RangeRelation;
 import com.thunderduck.generator.SQLQuoting;
@@ -190,8 +191,8 @@ public class RelationConverter {
             Read.NamedTable namedTable = read.getNamedTable();
             String tableName = namedTable.getUnparsedIdentifier();
             logger.debug("Creating TableScan for table: {}", tableName);
-            // For named tables, assume parquet format (will be enhanced later)
-            return new TableScan(tableName, TableScan.TableFormat.PARQUET, null);
+            // For named tables, use TABLE format (regular DuckDB table)
+            return new TableScan(tableName, TableScan.TableFormat.TABLE, null);
         } else {
             throw new PlanConversionException("Read relation must have either data_source or named_table");
         }
@@ -214,13 +215,35 @@ public class RelationConverter {
             input = new SingleRowRelation();
         }
 
-        // Convert projection expressions
-        List<Expression> expressions = project.getExpressionsList().stream()
+        // Convert projection expressions and extract aliases
+        List<Expression> convertedExpressions = project.getExpressionsList().stream()
                 .map(expressionConverter::convert)
                 .collect(Collectors.toList());
 
+        // Extract aliases and unwrap AliasExpressions
+        List<Expression> expressions = new ArrayList<>();
+        List<String> aliases = new ArrayList<>();
+
+        for (Expression expr : convertedExpressions) {
+            if (expr instanceof AliasExpression) {
+                // Explicit alias provided
+                AliasExpression aliasExpr = (AliasExpression) expr;
+                expressions.add(aliasExpr.expression());
+                aliases.add(aliasExpr.alias());
+            } else if (expr instanceof UnresolvedColumn) {
+                // Simple column selection: use column name as alias
+                UnresolvedColumn col = (UnresolvedColumn) expr;
+                expressions.add(expr);
+                aliases.add(col.columnName());
+            } else {
+                // Complex expression without alias
+                expressions.add(expr);
+                aliases.add(null);  // No alias
+            }
+        }
+
         logger.debug("Creating Project with {} expressions", expressions.size());
-        return new com.thunderduck.logical.Project(input, expressions);
+        return new com.thunderduck.logical.Project(input, expressions, aliases);
     }
 
     /**

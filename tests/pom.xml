@@ -163,7 +163,6 @@
                             <arguments>
                                 <argument>install</argument>
                                 <argument>--quiet</argument>
-                                <argument>--user</argument>
                                 <argument>-r</argument>
                                 <argument>${project.basedir}/src/test/python/requirements.txt</argument>
                             </arguments>
