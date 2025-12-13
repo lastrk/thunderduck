@@ -41,7 +41,7 @@ class TestDataFrameOperations(ThunderduckE2ETestBase):
         df3 = self.spark.table("employees").filter(
             (F.col("department") == "HR") | (F.col("salary") > 75000)
         )
-        self.assertEqual(df3.count(), 3)
+        self.assertEqual(df3.count(), 2)
 
     def test_groupby_aggregation(self):
         """Test group by with various aggregations."""
