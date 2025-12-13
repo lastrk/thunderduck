@@ -156,8 +156,17 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 }
             } else if (plan.hasCommand() && plan.getCommand().hasSqlCommand()) {
                 // SQL command (e.g., spark.sql(...))
-                sql = plan.getCommand().getSqlCommand().getSql();
-                logger.debug("Found SQL command: {}", sql);
+                SqlCommand sqlCommand = plan.getCommand().getSqlCommand();
+
+                // In Spark 4.0.1, the 'sql' field is deprecated and replaced with 'input' relation
+                if (sqlCommand.hasInput() && sqlCommand.getInput().hasSql()) {
+                    sql = sqlCommand.getInput().getSql().getQuery();
+                    logger.debug("Found SQL command (from input relation): {}", sql);
+                } else if (!sqlCommand.getSql().isEmpty()) {
+                    // Fallback for older clients or backward compatibility
+                    sql = sqlCommand.getSql();
+                    logger.debug("Found SQL command (legacy): {}", sql);
+                }
             } else if (plan.hasCommand()) {
                 // Handle non-SQL commands (CreateTempView, DropTempView, etc.)
                 Command command = plan.getCommand();
@@ -380,7 +389,16 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
                     } else if (plan.hasCommand() && plan.getCommand().hasSqlCommand()) {
                         // SQL command - infer schema
-                        sql = plan.getCommand().getSqlCommand().getSql();
+                        SqlCommand sqlCommand = plan.getCommand().getSqlCommand();
+
+                        // In Spark 4.0.1, the 'sql' field is deprecated and replaced with 'input' relation
+                        if (sqlCommand.hasInput() && sqlCommand.getInput().hasSql()) {
+                            sql = sqlCommand.getInput().getSql().getQuery();
+                        } else if (!sqlCommand.getSql().isEmpty()) {
+                            // Fallback for older clients or backward compatibility
+                            sql = sqlCommand.getSql();
+                        }
+
                         // Apply SQL preprocessing for Spark compatibility
                         sql = preprocessSQL(sql);
                         logger.debug("Analyzing SQL command schema: {}", sql.substring(0, Math.min(100, sql.length())));

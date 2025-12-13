@@ -39,33 +39,38 @@ mvn clean install
 
 ### Run Server
 
-#### ⚠️ CRITICAL: Apache Arrow on ARM64 Platforms
-If running on **ARM64** (AWS Graviton, Apple Silicon), you MUST include JVM flags for Apache Arrow:
+#### ⚠️ CRITICAL: Apache Arrow JVM Flags (All Platforms)
+Apache Arrow requires special JVM flags to access internal Java NIO classes. This is **required on all platforms** (x86_64, ARM64):
 
 ```bash
-# ARM64 REQUIRED: Add --add-opens flag for Apache Arrow
-java --add-opens=java.base/java.nio=ALL-UNNAMED \
-  -jar connect-server/target/thunderduck-connect-server-0.1.0-SNAPSHOT.jar
+# REQUIRED: Add --add-opens flags for Apache Arrow
+java --add-opens=java.base/sun.nio.ch=ALL-UNNAMED \
+     --add-opens=java.base/java.nio=org.ALL-UNNAMED \
+     -jar connect-server/target/thunderduck-connect-server-0.1.0-SNAPSHOT.jar
 
-# Without this flag on ARM64, you'll get:
+# Without these flags, you'll get:
 # java.lang.RuntimeException: Failed to initialize MemoryUtil
 ```
+
+**Why is this needed?**
+- Apache Arrow uses direct memory access for zero-copy data interchange
+- Java 17+ restricts access to internal JVM classes by default
+- The `--add-opens` flags explicitly allow Arrow to access `java.nio` internals
+- Required regardless of CPU architecture (x86_64, ARM64, etc.)
 
 #### Standard Startup Commands
 
 ```bash
-# Option 1: Using start-server.sh script (RECOMMENDED - includes ARM64 flags)
-./start-server.sh
+# Option 1: Using start-server.sh script (RECOMMENDED - includes required flags)
+./tests/scripts/start-server.sh
 
-# Option 2: Direct JAR execution (ARM64 - AWS Graviton, Apple Silicon)
-java --add-opens=java.base/java.nio=ALL-UNNAMED \
-  -jar connect-server/target/thunderduck-connect-server-0.1.0-SNAPSHOT.jar
+# Option 2: Direct JAR execution (with required Arrow flags)
+java --add-opens=java.base/sun.nio.ch=ALL-UNNAMED \
+     --add-opens=java.base/java.nio=ALL-UNNAMED \
+     -jar connect-server/target/thunderduck-connect-server-0.1.0-SNAPSHOT.jar
 
-# Option 3: Direct JAR execution (x86_64)
-java -jar connect-server/target/thunderduck-connect-server-0.1.0-SNAPSHOT.jar
-
-# Option 4: Using Maven exec plugin (set MAVEN_OPTS first)
-export MAVEN_OPTS="--add-opens=java.base/java.nio=ALL-UNNAMED"
+# Option 3: Using Maven exec plugin (set MAVEN_OPTS first)
+export MAVEN_OPTS="--add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
 mvn exec:java -pl connect-server \
   -Dexec.mainClass="com.thunderduck.connect.server.SparkConnectServer"
 ```
