@@ -263,12 +263,19 @@ public class DuckDBConnectionManager implements AutoCloseable {
     /**
      * Builds the JDBC URL from configuration.
      *
+     * <p>For in-memory databases, uses DuckDB's named in-memory database feature
+     * (:memory:thunderduck) to ensure all pooled connections share the same
+     * database instance. Without this, each connection to jdbc:duckdb: creates
+     * an isolated database, making views/tables invisible across connections.
+     *
      * @param config the configuration
      * @return the JDBC URL
      */
     private String buildJdbcUrl(Configuration config) {
         if (config.inMemory) {
-            return "jdbc:duckdb:";
+            // Use named in-memory database so all connections share the same instance
+            // Without this, each connection gets an isolated in-memory database
+            return "jdbc:duckdb::memory:thunderduck";
         } else {
             return "jdbc:duckdb:" + config.databasePath;
         }

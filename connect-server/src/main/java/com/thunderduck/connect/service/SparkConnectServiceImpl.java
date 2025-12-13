@@ -59,21 +59,19 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     }
 
     /**
-     * Creates a PlanConverter with optional schema inference capability.
+     * Creates a PlanConverter without schema inference to avoid connection leaks.
      *
-     * <p>Schema inference is needed for NA functions (dropna, fillna, replace)
-     * when column lists are not explicitly specified.
+     * <p>Note: Schema inference for NA functions (dropna, fillna, replace) is
+     * currently disabled to prevent connection pool exhaustion. Most DataFrame
+     * operations don't require schema inference.
      *
      * @return a PlanConverter instance
      */
     private PlanConverter createPlanConverter() {
-        try {
-            // Borrow connection for schema inference
-            return new PlanConverter(connectionManager.getConnection());
-        } catch (java.sql.SQLException e) {
-            logger.warn("Failed to get connection for schema inference, using basic converter: {}", e.getMessage());
-            return new PlanConverter();
-        }
+        // Create converter without connection to avoid leaking connections from pool.
+        // Schema inference can be added back when we implement proper connection
+        // lifecycle management (e.g., passing DuckDBConnectionManager to PlanConverter).
+        return new PlanConverter();
     }
 
     /**
@@ -289,21 +287,24 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
                 session.registerTempView(viewName, logicalPlan);
 
-                // Generate SQL from the plan and create DuckDB temp view
+                // Generate SQL from the plan and create DuckDB view
+                // NOTE: We use non-temp views because DuckDB temp views are connection-scoped,
+                // and our connection pool means different requests may use different connections.
+                // Non-temp views are visible across all connections to the same database instance.
                 String viewSQL = sqlGenerator.generate(logicalPlan);
-                String createViewSQL = String.format("CREATE OR REPLACE TEMP VIEW %s AS %s",
+                String createViewSQL = String.format("CREATE OR REPLACE VIEW %s AS %s",
                     quoteIdentifier(viewName), viewSQL);
 
-                logger.debug("Creating DuckDB temp view: {}", createViewSQL);
+                logger.debug("Creating DuckDB view: {}", createViewSQL);
 
                 // Execute the CREATE VIEW statement in DuckDB
                 QueryExecutor executor = new QueryExecutor(connectionManager);
                 try {
                     executor.execute(createViewSQL);
                 } catch (Exception e) {
-                    logger.error("Failed to create DuckDB temp view", e);
+                    logger.error("Failed to create DuckDB view", e);
                     responseObserver.onError(Status.INTERNAL
-                        .withDescription("Failed to create DuckDB temp view: " + e.getMessage())
+                        .withDescription("Failed to create DuckDB view: " + e.getMessage())
                         .asRuntimeException());
                     return;
                 }
@@ -318,7 +319,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 responseObserver.onNext(response);
                 responseObserver.onCompleted();
 
-                logger.info("✓ Temp view created in DuckDB: '{}' (session: {})", viewName, sessionId);
+                logger.info("✓ View created in DuckDB: '{}' (session: {})", viewName, sessionId);
 
             } else if (command.hasWriteOperation()) {
                 // Handle df.write.parquet(), df.write.csv(), etc.

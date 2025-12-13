@@ -196,8 +196,25 @@ public class ArrowBatchStream implements ArrowBatchIterator {
     }
 
     private void ensureInitialized() {
-        if (!initialized && hasMoreBatches && !closed) {
-            hasNext();  // This will initialize schema
+        if (!initialized && !closed) {
+            // Try to get schema from VectorSchemaRoot - DuckDB Arrow export
+            // provides schema even when there are no rows (empty result set)
+            try {
+                VectorSchemaRoot root = reader.getVectorSchemaRoot();
+                if (root != null) {
+                    schema = root.getSchema();
+                    initialized = true;
+                    logger.debug("Schema initialized from VectorSchemaRoot: {} fields",
+                                 schema != null ? schema.getFields().size() : 0);
+                }
+            } catch (IOException e) {
+                logger.debug("Could not get schema from VectorSchemaRoot: {}", e.getMessage());
+            }
+
+            // Fallback: try loading first batch
+            if (schema == null && hasMoreBatches) {
+                hasNext();  // This will initialize schema
+            }
         }
         if (schema == null) {
             throw new IllegalStateException("Schema not available - no batches loaded");
