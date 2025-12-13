@@ -4,22 +4,34 @@ Pytest-based integration tests for Thunderduck Spark Connect server using real P
 
 ## Overview
 
-This test suite validates the Spark Connect server implementation by executing TPC-H queries and DataFrame operations through a real PySpark Spark Connect client. Tests cover both SQL and DataFrame API approaches.
+This test suite validates the Spark Connect server implementation by executing TPC-H and TPC-DS queries and DataFrame operations through a real PySpark Spark Connect client. Tests cover both SQL and DataFrame API approaches.
 
 ## Directory Structure
 
 ```
 tests/integration/
-├── README.md                   # This file
-├── conftest.py                 # pytest configuration and fixtures
-├── test_tpch_queries.py        # TPC-H integration tests
-├── test_simple_sql.py          # Basic SQL connectivity tests
-├── utils/                      # Test utilities
+├── README.md                       # This file
+├── conftest.py                     # pytest configuration and fixtures
+├── test_simple_sql.py              # Basic SQL connectivity tests (3 tests)
+├── test_tpch_queries.py            # TPC-H query tests - Q1, Q3, Q5, Q6 + basic ops (17 tests)
+├── test_tpch_dataframe.py          # TPC-H DataFrame comprehensive tests
+├── test_tpch_tier2.py              # TPC-H tier 2 query tests
+├── test_tpcds_batch1.py            # TPC-DS query tests (~103 tests)
+├── test_temp_views.py              # Temp view functionality tests (6 tests)
+├── test_differential_tpch.py       # Differential tests (Spark vs Thunderduck)
+├── test_differential_simple.py     # Simple differential tests
+├── test_correctness_q1.py          # Q1 correctness validation
+├── test_value_correctness.py       # Value correctness tests (22 tests)
+├── validate_correctness.py         # Correctness validation utilities
+├── generate_spark_reference.py     # Spark reference data generator
+├── generate_new_references.py      # New reference generator
+├── utils/                          # Test utilities
 │   ├── __init__.py
-│   ├── server_manager.py       # Server lifecycle management
-│   └── result_validator.py     # Result validation utilities
-├── logs/                       # Server logs (auto-created)
-└── expected_results/           # Expected query results
+│   ├── server_manager.py           # Server lifecycle management
+│   └── result_validator.py         # Result validation utilities
+├── tpcds_dataframe/                # TPC-DS DataFrame query implementations
+├── expected_results/               # Expected query results (Parquet/JSON)
+└── logs/                           # Server logs (auto-created)
 ```
 
 ## Quick Start
@@ -126,10 +138,12 @@ class TestTPCHQuery1:
         # Execute both approaches and compare
 ```
 
-**Current Coverage**:
-- ✅ Q1: Pricing Summary Report (scan, filter, aggregate, sort)
-- ✅ Q3: Shipping Priority (3-way joins, filtering, aggregation, limit)
-- ✅ Q6: Forecasting Revenue Change (complex filters, aggregate)
+**Current Coverage** (17 tests total - 16 pass, 1 xfail):
+- ✅ Q1: Pricing Summary Report (scan, filter, aggregate, sort) - SQL + DataFrame + comparison
+- ✅ Q3: Shipping Priority (3-way joins, filtering, aggregation, limit) - SQL + DataFrame
+- ✅ Q5: Local Supplier Volume (6-way join) - DataFrame only
+- ✅ Q6: Forecasting Revenue Change (complex filters, aggregate) - SQL + DataFrame + comparison
+- ⚠️ Window Functions: ROW_NUMBER test (xfail - ORDER BY translation bug)
 
 ### 2. Basic DataFrame Operations
 
@@ -446,11 +460,12 @@ To run tests in CI:
 
 - [ ] Add performance regression detection
 - [ ] Implement expected result caching
-- [ ] Add more TPC-H queries (Q2, Q4, Q5, Q7-Q22)
+- [ ] Add more TPC-H queries (Q2, Q4, Q7-Q22)
+- [ ] Fix window function ORDER BY translation (DESCENDING -> DESC)
 - [ ] Create HTML test report generation
 - [ ] Add memory profiling
 - [ ] Implement query plan validation
-- [ ] Add distributed testing support
+- [ ] Add E2E tests for M19-M28 DataFrame operations (drop, withColumn, sample, etc.)
 
 ## Resources
 
@@ -461,5 +476,5 @@ To run tests in CI:
 
 ---
 
-**Last Updated**: 2025-10-25
-**Version**: 1.0
+**Last Updated**: 2025-12-13
+**Version**: 1.1

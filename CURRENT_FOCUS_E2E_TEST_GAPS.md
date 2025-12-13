@@ -13,8 +13,8 @@ The E2E test suite (`/workspace/tests/integration/`) has ~291 tests. After the *
 | Test Category | Tests | Status |
 |--------------|-------|--------|
 | Simple SQL | 3 | ALL PASS |
-| TPC-H Queries | 15 | **ALL PASS** |
-| TPC-H DataFrame | 7 | 2 PASS (window functions) |
+| TPC-H Queries | 17 | **16 PASS, 1 XFAIL** |
+| TPC-DS Queries | 102 | **100 PASS, 2 FAIL** |
 | Basic DataFrame Ops | 7 | ALL PASS |
 | Temp Views | 6 | ALL PASS (manual test) |
 
@@ -89,12 +89,29 @@ for table in ['customer', 'lineitem', 'nation', 'orders', 'part', 'partsupp', 'r
 
 **Note**: `test_tpch_dataframe_poc.py` was merged into `test_tpch_queries.py` (Q5 and window function tests added). The window function test is marked `xfail` due to ORDER BY translation bug (`DESCENDING` instead of `DESC`).
 
-### Remaining Test Files (Need Retest)
+### TPC-DS Test Results (Retested 2025-12-13)
 | File | Tests | Status | Notes |
 |------|-------|--------|-------|
-| `test_tpcds_batch1.py` | 103 | Needs retest | May pass now with fixes |
-| `test_differential_tpch.py` | 4 | Needs retest | Requires Spark reference server |
-| `test_value_correctness.py` | 22 | Needs retest | May have expression gaps |
+| `test_tpcds_batch1.py` | 102 | **100 PASS, 2 FAIL** | Q17, Q23b fail (empty result) |
+
+**Failing TPC-DS Queries:**
+- Q17: `AssertionError: assert table is not None` - query returns empty result
+- Q23b: `AssertionError: assert table is not None` - query returns empty result
+
+### Differential Test Results (Retested 2025-12-13)
+| File | Tests | Status | Notes |
+|------|-------|--------|-------|
+| `test_differential_tpch.py` | 22 | **1 PASS, 21 ERROR** | Missing `spark_local` fixture |
+
+**Note:** Differential tests require a `spark_local` fixture (real Spark server) which is not configured. Only Q1 test uses available fixtures.
+
+### Value Correctness Test Results (Partial - 2025-12-13)
+| File | Tests | Status | Notes |
+|------|-------|--------|-------|
+| `test_value_correctness.py` | 22 | **8+ PASS, ~14 UNTESTED** | Q2 hangs (complex query), stopped test |
+
+**Passing value correctness tests**: Q1, Q3, Q5, Q6, Q10, Q12, Q13, Q18
+**Note**: Test hung on Q2 - likely a very complex correlated subquery that takes too long or hangs.
 
 ---
 
