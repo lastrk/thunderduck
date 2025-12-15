@@ -25,6 +25,14 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Connect server dependency for NA functions tests -->
+        <dependency>
+            <groupId>com.thunderduck</groupId>
+            <artifactId>thunderduck-connect-server</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- DuckDB JDBC Driver -->
         <dependency>
             <groupId>org.duckdb</groupId>

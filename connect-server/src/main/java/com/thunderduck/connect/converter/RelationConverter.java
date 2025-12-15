@@ -9,6 +9,9 @@ import com.thunderduck.logical.LocalDataRelation;
 import com.thunderduck.logical.RangeRelation;
 import com.thunderduck.generator.SQLQuoting;
 import com.thunderduck.generator.SQLGenerator;
+import com.thunderduck.schema.SchemaInferrer;
+import com.thunderduck.types.StructType;
+import com.thunderduck.types.StructField;
 
 import org.apache.spark.connect.proto.*;
 import org.slf4j.Logger;
@@ -29,9 +32,24 @@ public class RelationConverter {
     private static final Logger logger = LoggerFactory.getLogger(RelationConverter.class);
 
     private final ExpressionConverter expressionConverter;
+    private final SchemaInferrer schemaInferrer;
 
+    /**
+     * Creates a RelationConverter without schema inference capability.
+     */
     public RelationConverter(ExpressionConverter expressionConverter) {
+        this(expressionConverter, null);
+    }
+
+    /**
+     * Creates a RelationConverter with optional schema inference capability.
+     *
+     * @param expressionConverter the expression converter
+     * @param schemaInferrer the schema inferrer (nullable)
+     */
+    public RelationConverter(ExpressionConverter expressionConverter, SchemaInferrer schemaInferrer) {
         this.expressionConverter = expressionConverter;
+        this.schemaInferrer = schemaInferrer;
     }
 
     /**
@@ -59,6 +77,8 @@ public class RelationConverter {
                 return convertSort(relation.getSort());
             case LIMIT:
                 return convertLimit(relation.getLimit());
+            case TAIL:
+                return convertTail(relation.getTail());
             case JOIN:
                 return convertJoin(relation.getJoin());
             case SET_OP:
@@ -67,8 +87,10 @@ public class RelationConverter {
                 // Direct SQL relation - we'll handle this as a special case
                 return new SQLRelation(relation.getSql().getQuery());
             case SHOW_STRING:
-                // ShowString wraps another relation - just unwrap and convert the inner relation
-                return convert(relation.getShowString().getInput());
+                // ShowString is handled at root level in SparkConnectServiceImpl.executeShowString()
+                // If we reach here, something is wrong - ShowString should never be nested
+                throw new PlanConversionException(
+                    "ShowString should be handled at root level, not in RelationConverter");
             case DEDUPLICATE:
                 // Handle distinct() operation
                 return convertDeduplicate(relation.getDeduplicate());
@@ -84,6 +106,28 @@ public class RelationConverter {
                 return convertOffset(relation.getOffset());
             case TO_DF:
                 return convertToDF(relation.getToDf());
+            case SAMPLE:
+                return convertSample(relation.getSample());
+            case HINT:
+                // Hints are no-ops in DuckDB - pass through to child relation
+                // DuckDB's optimizer handles join ordering and strategies automatically
+                return convert(relation.getHint().getInput());
+            case REPARTITION:
+                // Repartition is a no-op in single-node DuckDB
+                return convert(relation.getRepartition().getInput());
+            case REPARTITION_BY_EXPRESSION:
+                // RepartitionByExpression is a no-op in single-node DuckDB
+                return convert(relation.getRepartitionByExpression().getInput());
+            case DROP_NA:
+                return convertNADrop(relation.getDropNa());
+            case FILL_NA:
+                return convertNAFill(relation.getFillNa());
+            case REPLACE:
+                return convertNAReplace(relation.getReplace());
+            case UNPIVOT:
+                return convertUnpivot(relation.getUnpivot());
+            case SUBQUERY_ALIAS:
+                return convertSubqueryAlias(relation.getSubqueryAlias());
             default:
                 throw new PlanConversionException("Unsupported relation type: " + relation.getRelTypeCase());
         }
@@ -313,6 +357,23 @@ public class RelationConverter {
 
         logger.debug("Creating Limit with value: {}", limitValue);
         return new com.thunderduck.logical.Limit(input, limitValue);
+    }
+
+    /**
+     * Converts a Tail relation.
+     *
+     * <p>Tail returns the last N rows from a DataFrame, preserving
+     * the original row order.
+     *
+     * @param tail the Tail relation
+     * @return a Tail logical plan
+     */
+    private LogicalPlan convertTail(org.apache.spark.connect.proto.Tail tail) {
+        LogicalPlan input = convert(tail.getInput());
+        int limitValue = tail.getLimit();
+
+        logger.debug("Creating Tail with value: {}", limitValue);
+        return new com.thunderduck.logical.Tail(input, limitValue);
     }
 
     /**
@@ -710,6 +771,570 @@ public class RelationConverter {
             inputSql, columnList.toString());
 
         logger.debug("Creating ToDF SQL: {}", sql);
+        return new SQLRelation(sql);
+    }
+
+    /**
+     * Converts a Sample relation to a LogicalPlan.
+     *
+     * <p>Sample returns a random subset of rows from the input using Bernoulli
+     * sampling to match Spark's per-row probability algorithm.
+     *
+     * <p>The Spark Connect protocol uses lower_bound/upper_bound to specify the
+     * sampling fraction. Typically lower_bound=0.0 and upper_bound is the fraction.
+     *
+     * <p>IMPORTANT: withReplacement=true is NOT supported. DuckDB does not have
+     * an equivalent to Spark's Poisson sampling, so we fail fast with an error.
+     *
+     * @param sample the Sample protobuf message
+     * @return a Sample logical plan
+     * @throws PlanConversionException if withReplacement=true is requested
+     */
+    private LogicalPlan convertSample(org.apache.spark.connect.proto.Sample sample) {
+        LogicalPlan input = convert(sample.getInput());
+
+        // Check for unsupported withReplacement=true
+        if (sample.hasWithReplacement() && sample.getWithReplacement()) {
+            throw new PlanConversionException(
+                "sample() with withReplacement=true is not supported. " +
+                "DuckDB does not support sampling with replacement.");
+        }
+
+        // The fraction is specified via upper_bound (lower_bound is typically 0.0)
+        double fraction = sample.getUpperBound();
+
+        // Check for seed
+        java.util.OptionalLong seed;
+        if (sample.hasSeed()) {
+            seed = java.util.OptionalLong.of(sample.getSeed());
+            logger.debug("Creating Sample with fraction: {}, seed: {}", fraction, sample.getSeed());
+        } else {
+            seed = java.util.OptionalLong.empty();
+            logger.debug("Creating Sample with fraction: {} (no seed)", fraction);
+        }
+
+        return new com.thunderduck.logical.Sample(input, fraction, seed);
+    }
+
+    /**
+     * Converts an NADrop relation to a LogicalPlan.
+     *
+     * <p>NADrop removes rows containing null values based on the specified columns
+     * and minimum non-null count threshold.
+     *
+     * <p>Behavior:
+     * <ul>
+     *   <li>If cols is empty, considers all columns (requires schema inference)</li>
+     *   <li>If min_non_nulls is not set, all specified columns must be non-null (how='any')</li>
+     *   <li>If min_non_nulls=1, at least one column must be non-null (how='all')</li>
+     *   <li>Otherwise, at least min_non_nulls columns must be non-null</li>
+     * </ul>
+     *
+     * @param naDrop the NADrop protobuf message
+     * @return a Filter logical plan that drops rows with nulls
+     */
+    private LogicalPlan convertNADrop(NADrop naDrop) {
+        LogicalPlan input = convert(naDrop.getInput());
+
+        // Get columns to consider
+        List<String> cols = naDrop.getColsList();
+
+        // If cols is empty, we need to get all columns via schema inference
+        if (cols.isEmpty()) {
+            if (schemaInferrer == null) {
+                throw new PlanConversionException(
+                    "NADrop with empty cols requires schema inference, but no connection available");
+            }
+
+            // Generate SQL for input to infer schema
+            SQLGenerator generator = new SQLGenerator();
+            String inputSql = generator.generate(input);
+
+            StructType schema = schemaInferrer.inferSchema(inputSql);
+            cols = new ArrayList<>();
+            for (StructField field : schema.fields()) {
+                cols.add(field.name());
+            }
+            logger.debug("NADrop: inferred {} columns from schema", cols.size());
+        }
+
+        if (cols.isEmpty()) {
+            // No columns to check, return input unchanged
+            logger.debug("NADrop: no columns to check, returning input as-is");
+            return input;
+        }
+
+        // Determine min_non_nulls threshold
+        // If not set, default is the column count (all must be non-null, i.e., how='any')
+        // If set to 1, at least one must be non-null (how='all')
+        int minNonNulls = naDrop.hasMinNonNulls() ? naDrop.getMinNonNulls() : cols.size();
+
+        logger.debug("NADrop: cols={}, minNonNulls={}", cols, minNonNulls);
+
+        // Generate the filter SQL
+        SQLGenerator generator = new SQLGenerator();
+        String inputSql = generator.generate(input);
+
+        String filterCondition;
+        if (minNonNulls >= cols.size()) {
+            // All columns must be non-null: col1 IS NOT NULL AND col2 IS NOT NULL ...
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < cols.size(); i++) {
+                if (i > 0) {
+                    sb.append(" AND ");
+                }
+                sb.append(SQLQuoting.quoteIdentifier(cols.get(i)));
+                sb.append(" IS NOT NULL");
+            }
+            filterCondition = sb.toString();
+        } else if (minNonNulls == 1) {
+            // At least one column must be non-null: col1 IS NOT NULL OR col2 IS NOT NULL ...
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < cols.size(); i++) {
+                if (i > 0) {
+                    sb.append(" OR ");
+                }
+                sb.append(SQLQuoting.quoteIdentifier(cols.get(i)));
+                sb.append(" IS NOT NULL");
+            }
+            filterCondition = sb.toString();
+        } else {
+            // At least minNonNulls columns must be non-null
+            // Use: (CASE WHEN col1 IS NOT NULL THEN 1 ELSE 0 END + ...) >= minNonNulls
+            StringBuilder sb = new StringBuilder("(");
+            for (int i = 0; i < cols.size(); i++) {
+                if (i > 0) {
+                    sb.append(" + ");
+                }
+                sb.append("CASE WHEN ");
+                sb.append(SQLQuoting.quoteIdentifier(cols.get(i)));
+                sb.append(" IS NOT NULL THEN 1 ELSE 0 END");
+            }
+            sb.append(") >= ");
+            sb.append(minNonNulls);
+            filterCondition = sb.toString();
+        }
+
+        String sql = String.format("SELECT * FROM (%s) AS _nadrop_subquery WHERE %s",
+            inputSql, filterCondition);
+
+        logger.debug("Creating NADrop SQL: {}", sql);
+        return new SQLRelation(sql);
+    }
+
+    /**
+     * Converts an NAFill relation to a LogicalPlan.
+     *
+     * <p>NAFill replaces null values with specified fill values using COALESCE.
+     *
+     * <p>Behavior:
+     * <ul>
+     *   <li>If cols is empty, applies to all columns (requires schema inference)</li>
+     *   <li>If values has one value, uses it for all specified columns</li>
+     *   <li>If values has multiple values, each col[i] gets values[i]</li>
+     * </ul>
+     *
+     * @param naFill the NAFill protobuf message
+     * @return a Project logical plan with COALESCE for null replacement
+     */
+    private LogicalPlan convertNAFill(NAFill naFill) {
+        LogicalPlan input = convert(naFill.getInput());
+
+        // Get columns and values
+        List<String> cols = naFill.getColsList();
+        List<org.apache.spark.connect.proto.Expression.Literal> values = naFill.getValuesList();
+
+        if (values.isEmpty()) {
+            throw new PlanConversionException("NAFill requires at least one fill value");
+        }
+
+        // If cols is empty, we need to get all columns via schema inference
+        if (cols.isEmpty()) {
+            if (schemaInferrer == null) {
+                throw new PlanConversionException(
+                    "NAFill with empty cols requires schema inference, but no connection available");
+            }
+
+            SQLGenerator generator = new SQLGenerator();
+            String inputSql = generator.generate(input);
+
+            StructType schema = schemaInferrer.inferSchema(inputSql);
+            cols = new ArrayList<>();
+            for (StructField field : schema.fields()) {
+                cols.add(field.name());
+            }
+            logger.debug("NAFill: inferred {} columns from schema", cols.size());
+        }
+
+        if (cols.isEmpty()) {
+            logger.debug("NAFill: no columns to fill, returning input as-is");
+            return input;
+        }
+
+        // Convert fill values to SQL literals
+        List<String> fillValuesSql = new ArrayList<>();
+        for (org.apache.spark.connect.proto.Expression.Literal literal : values) {
+            com.thunderduck.expression.Expression expr = expressionConverter.convert(
+                org.apache.spark.connect.proto.Expression.newBuilder()
+                    .setLiteral(literal)
+                    .build());
+            if (expr instanceof com.thunderduck.expression.Literal) {
+                fillValuesSql.add(((com.thunderduck.expression.Literal) expr).toSQL());
+            } else {
+                throw new PlanConversionException("Expected Literal expression for NAFill value");
+            }
+        }
+
+        logger.debug("NAFill: cols={}, values={}", cols, fillValuesSql);
+
+        // Generate SQL with COALESCE for fill columns
+        SQLGenerator generator = new SQLGenerator();
+        String inputSql = generator.generate(input);
+
+        // We need schema to know all columns
+        // For columns being filled: COALESCE(col, value) AS col
+        // For other columns: col
+        StructType schema;
+        if (schemaInferrer != null) {
+            schema = schemaInferrer.inferSchema(inputSql);
+        } else {
+            throw new PlanConversionException(
+                "NAFill requires schema inference, but no connection available");
+        }
+
+        StringBuilder selectList = new StringBuilder();
+        for (int i = 0; i < schema.fields().size(); i++) {
+            if (i > 0) {
+                selectList.append(", ");
+            }
+            String colName = schema.fieldAt(i).name();
+            int colIndex = cols.indexOf(colName);
+
+            if (colIndex >= 0) {
+                // This column should be filled
+                String fillValue;
+                if (values.size() == 1) {
+                    // Single value for all columns
+                    fillValue = fillValuesSql.get(0);
+                } else if (colIndex < fillValuesSql.size()) {
+                    // Multiple values matched by position
+                    fillValue = fillValuesSql.get(colIndex);
+                } else {
+                    // Not enough values, don't fill this column
+                    selectList.append(SQLQuoting.quoteIdentifier(colName));
+                    continue;
+                }
+                selectList.append("COALESCE(");
+                selectList.append(SQLQuoting.quoteIdentifier(colName));
+                selectList.append(", ");
+                selectList.append(fillValue);
+                selectList.append(") AS ");
+                selectList.append(SQLQuoting.quoteIdentifier(colName));
+            } else {
+                // Column not in fill list, pass through
+                selectList.append(SQLQuoting.quoteIdentifier(colName));
+            }
+        }
+
+        String sql = String.format("SELECT %s FROM (%s) AS _nafill_subquery",
+            selectList.toString(), inputSql);
+
+        logger.debug("Creating NAFill SQL: {}", sql);
+        return new SQLRelation(sql);
+    }
+
+    /**
+     * Converts an NAReplace relation to a LogicalPlan.
+     *
+     * <p>NAReplace replaces specific values with new values using CASE WHEN expressions.
+     *
+     * <p>Behavior:
+     * <ul>
+     *   <li>If cols is empty, applies to all type-compatible columns (requires schema inference)</li>
+     *   <li>Each replacement specifies an old_value and new_value pair</li>
+     *   <li>Generates CASE WHEN col = old_value THEN new_value ... ELSE col END</li>
+     * </ul>
+     *
+     * @param naReplace the NAReplace protobuf message
+     * @return a Project logical plan with CASE WHEN for value replacement
+     */
+    private LogicalPlan convertNAReplace(NAReplace naReplace) {
+        LogicalPlan input = convert(naReplace.getInput());
+
+        // Get columns and replacements
+        List<String> cols = naReplace.getColsList();
+        List<NAReplace.Replacement> replacements = naReplace.getReplacementsList();
+
+        if (replacements.isEmpty()) {
+            logger.debug("NAReplace: no replacements, returning input as-is");
+            return input;
+        }
+
+        // Generate SQL for input
+        SQLGenerator generator = new SQLGenerator();
+        String inputSql = generator.generate(input);
+
+        // We always need schema to enumerate columns
+        if (schemaInferrer == null) {
+            throw new PlanConversionException(
+                "NAReplace requires schema inference, but no connection available");
+        }
+
+        StructType schema = schemaInferrer.inferSchema(inputSql);
+
+        // If cols is empty, apply to all columns
+        if (cols.isEmpty()) {
+            cols = new ArrayList<>();
+            for (StructField field : schema.fields()) {
+                cols.add(field.name());
+            }
+            logger.debug("NAReplace: applying to all {} columns", cols.size());
+        }
+
+        // Convert replacement values to SQL
+        List<String[]> replacementsSql = new ArrayList<>();
+        for (NAReplace.Replacement repl : replacements) {
+            String oldValueSql = convertLiteralToSQL(repl.getOldValue());
+            String newValueSql = convertLiteralToSQL(repl.getNewValue());
+            replacementsSql.add(new String[]{oldValueSql, newValueSql});
+        }
+
+        logger.debug("NAReplace: cols={}, replacements={}", cols, replacementsSql.size());
+
+        // Build SELECT list with CASE WHEN for replaced columns
+        StringBuilder selectList = new StringBuilder();
+        for (int i = 0; i < schema.fields().size(); i++) {
+            if (i > 0) {
+                selectList.append(", ");
+            }
+            String colName = schema.fieldAt(i).name();
+            String quotedCol = SQLQuoting.quoteIdentifier(colName);
+
+            if (cols.contains(colName)) {
+                // This column should have replacements applied
+                // Build nested CASE WHEN
+                selectList.append("CASE");
+                for (String[] repl : replacementsSql) {
+                    String oldVal = repl[0];
+                    String newVal = repl[1];
+                    if ("NULL".equals(oldVal)) {
+                        selectList.append(" WHEN ");
+                        selectList.append(quotedCol);
+                        selectList.append(" IS NULL THEN ");
+                        selectList.append(newVal);
+                    } else {
+                        selectList.append(" WHEN ");
+                        selectList.append(quotedCol);
+                        selectList.append(" = ");
+                        selectList.append(oldVal);
+                        selectList.append(" THEN ");
+                        selectList.append(newVal);
+                    }
+                }
+                selectList.append(" ELSE ");
+                selectList.append(quotedCol);
+                selectList.append(" END AS ");
+                selectList.append(quotedCol);
+            } else {
+                // Column not in replace list, pass through
+                selectList.append(quotedCol);
+            }
+        }
+
+        String sql = String.format("SELECT %s FROM (%s) AS _nareplace_subquery",
+            selectList.toString(), inputSql);
+
+        logger.debug("Creating NAReplace SQL: {}", sql);
+        return new SQLRelation(sql);
+    }
+
+    /**
+     * Converts a proto Literal to its SQL string representation.
+     *
+     * @param literal the proto literal
+     * @return the SQL string
+     */
+    private String convertLiteralToSQL(org.apache.spark.connect.proto.Expression.Literal literal) {
+        com.thunderduck.expression.Expression expr = expressionConverter.convert(
+            org.apache.spark.connect.proto.Expression.newBuilder()
+                .setLiteral(literal)
+                .build());
+        if (expr instanceof com.thunderduck.expression.Literal) {
+            return ((com.thunderduck.expression.Literal) expr).toSQL();
+        }
+        throw new PlanConversionException("Expected Literal expression");
+    }
+
+    /**
+     * Converts an Unpivot relation to a LogicalPlan.
+     *
+     * <p>Unpivot transforms a DataFrame from wide format to long format by rotating
+     * value columns into rows. This is the inverse of pivot.
+     *
+     * <p>Example:
+     * <pre>
+     * Input:  id | sales_q1 | sales_q2
+     *         1  | 100      | 200
+     *
+     * Output (unpivot sales_q1, sales_q2): id | quarter  | sales
+     *                                      1  | sales_q1 | 100
+     *                                      1  | sales_q2 | 200
+     * </pre>
+     *
+     * <p>Uses DuckDB's native UNPIVOT syntax:
+     * <pre>
+     * SELECT * FROM (input) UNPIVOT (
+     *     value_col FOR variable_col IN (col1, col2, ...)
+     * )
+     * </pre>
+     *
+     * @param unpivot the Unpivot protobuf message
+     * @return a SQLRelation with DuckDB UNPIVOT syntax
+     */
+    private LogicalPlan convertUnpivot(Unpivot unpivot) {
+        LogicalPlan input = convert(unpivot.getInput());
+
+        // Get ID columns (columns to keep as identifiers)
+        List<String> idCols = new ArrayList<>();
+        for (org.apache.spark.connect.proto.Expression expr : unpivot.getIdsList()) {
+            String colName = extractColumnName(expr);
+            if (colName != null) {
+                idCols.add(colName);
+            }
+        }
+
+        // Get value columns (columns to unpivot)
+        List<String> valueCols = new ArrayList<>();
+        if (unpivot.hasValues()) {
+            for (org.apache.spark.connect.proto.Expression expr : unpivot.getValues().getValuesList()) {
+                String colName = extractColumnName(expr);
+                if (colName != null) {
+                    valueCols.add(colName);
+                }
+            }
+        }
+
+        // Get output column names
+        String variableColumnName = unpivot.getVariableColumnName();
+        String valueColumnName = unpivot.getValueColumnName();
+
+        // Default column names if not specified
+        if (variableColumnName == null || variableColumnName.isEmpty()) {
+            variableColumnName = "variable";
+        }
+        if (valueColumnName == null || valueColumnName.isEmpty()) {
+            valueColumnName = "value";
+        }
+
+        // Generate SQL for input
+        SQLGenerator generator = new SQLGenerator();
+        String inputSql = generator.generate(input);
+
+        // If valueCols is empty, we need to infer all non-ID columns
+        if (valueCols.isEmpty()) {
+            if (schemaInferrer == null) {
+                throw new PlanConversionException(
+                    "Unpivot with empty values requires schema inference, but no connection available");
+            }
+
+            StructType schema = schemaInferrer.inferSchema(inputSql);
+            for (StructField field : schema.fields()) {
+                String colName = field.name();
+                // Include all columns except ID columns
+                if (!idCols.contains(colName)) {
+                    valueCols.add(colName);
+                }
+            }
+            logger.debug("Unpivot: inferred {} value columns from schema", valueCols.size());
+        }
+
+        if (valueCols.isEmpty()) {
+            throw new PlanConversionException("Unpivot requires at least one value column to unpivot");
+        }
+
+        // Build the UNPIVOT SQL
+        // SELECT * FROM (input) UNPIVOT (value_col FOR variable_col IN (col1, col2, ...))
+        StringBuilder valueColList = new StringBuilder();
+        for (int i = 0; i < valueCols.size(); i++) {
+            if (i > 0) {
+                valueColList.append(", ");
+            }
+            valueColList.append(SQLQuoting.quoteIdentifier(valueCols.get(i)));
+        }
+
+        String sql = String.format(
+            "SELECT * FROM (%s) UNPIVOT (%s FOR %s IN (%s))",
+            inputSql,
+            SQLQuoting.quoteIdentifier(valueColumnName),
+            SQLQuoting.quoteIdentifier(variableColumnName),
+            valueColList.toString()
+        );
+
+        logger.debug("Creating Unpivot SQL: {}", sql);
+        return new SQLRelation(sql);
+    }
+
+    /**
+     * Extracts the column name from a Spark Connect Expression.
+     *
+     * <p>Supports UnresolvedAttribute expressions which contain column names.
+     *
+     * @param expr the expression
+     * @return the column name, or null if not a column reference
+     */
+    private String extractColumnName(org.apache.spark.connect.proto.Expression expr) {
+        if (expr.hasUnresolvedAttribute()) {
+            return expr.getUnresolvedAttribute().getUnparsedIdentifier();
+        }
+        logger.warn("Unpivot: expected column reference but got: {}", expr.getExprTypeCase());
+        return null;
+    }
+
+    /**
+     * Converts a SubqueryAlias relation to a LogicalPlan.
+     *
+     * <p>SubqueryAlias provides a name for a relation, enabling:
+     * <ul>
+     *   <li>Column qualification: {@code df.alias("t").select("t.col1")}</li>
+     *   <li>Self-joins: {@code df.alias("a").join(df.alias("b"), ...)}</li>
+     *   <li>Disambiguation in complex queries</li>
+     * </ul>
+     *
+     * <p>Implementation wraps the input SQL in a subquery with the specified alias:
+     * <pre>
+     * SELECT * FROM (input_sql) AS alias_name
+     * </pre>
+     *
+     * <p><b>Limitation:</b> The optional {@code qualifier} field (for multi-catalog
+     * scenarios) is not yet supported and is ignored.
+     *
+     * @param subqueryAlias the SubqueryAlias protobuf message
+     * @return a SQLRelation with the aliased subquery
+     * @throws PlanConversionException if the alias is null or empty
+     */
+    private LogicalPlan convertSubqueryAlias(SubqueryAlias subqueryAlias) {
+        LogicalPlan input = convert(subqueryAlias.getInput());
+        String alias = subqueryAlias.getAlias();
+
+        // Validate alias
+        if (alias == null || alias.isEmpty()) {
+            throw new PlanConversionException("SubqueryAlias requires a non-empty alias");
+        }
+
+        // Log qualifier if present (not yet supported)
+        if (subqueryAlias.getQualifierCount() > 0) {
+            logger.warn("SubqueryAlias: qualifier field is not yet supported, ignoring: {}",
+                subqueryAlias.getQualifierList());
+        }
+
+        // Generate SQL with explicit alias
+        SQLGenerator generator = new SQLGenerator();
+        String inputSql = generator.generate(input);
+
+        String sql = String.format("SELECT * FROM (%s) AS %s",
+            inputSql, SQLQuoting.quoteIdentifier(alias));
+
+        logger.debug("Creating SubqueryAlias SQL with alias '{}': {}", alias, sql);
         return new SQLRelation(sql);
     }
 }

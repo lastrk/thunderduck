@@ -173,11 +173,13 @@ public class SparkConnectServer {
         } else {
             config = DuckDBConnectionManager.Configuration.inMemory();
         }
-        config.withPoolSize(1); // Single connection for single-session model
+        // Use default auto-detect pool size (min of CPUs, 8) for concurrent operations
+        // Pool size 1 causes connection exhaustion during concurrent schema analysis
+        // See: Connection pool exhausted - timeout after 30 seconds
 
         // Create connection manager
         connectionManager = new DuckDBConnectionManager(config);
-        logger.info("DuckDB connection manager created with pool size 1");
+        logger.info("DuckDB connection manager created with pool size {}", connectionManager.getPoolSize());
 
         // Test connection
         try (var pooled = connectionManager.borrowConnection()) {

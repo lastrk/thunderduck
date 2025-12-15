@@ -1,7 +1,7 @@
 # Spark Connect 3.5.3 Gap Analysis for Thunderduck
 
-**Version:** 1.1
-**Date:** 2025-12-10
+**Version:** 2.0
+**Date:** 2025-12-12
 **Purpose:** Comprehensive analysis of Spark Connect operator support in Thunderduck
 
 ---
@@ -16,18 +16,24 @@ This document provides a detailed gap analysis between Spark Connect 3.5.3's pro
 
 ### Overall Coverage
 
-| Category | Total Operators | Implemented | Coverage |
-|----------|----------------|-------------|----------|
-| Relations | 40 | 19 | **47.5%** |
-| Expressions | 16 | 9 | **56.25%** |
-| Commands | 10 | 2 | **20%** |
-| Catalog | 26 | 0 | **0%** |
+| Category | Total Operators | Implemented | Partial | Coverage |
+|----------|----------------|-------------|---------|----------|
+| Relations | 40 | 28 | 0 | **70%** |
+| Expressions | 16 | 9 | 0 | **56.25%** |
+| Commands | 10 | 2 | 1 | **25-30%** |
+| Catalog | 26 | 0 | 0 | **0%** |
+
+*Partial implementations*: WriteOperation (local paths only, S3/cloud needs httpfs extension)
 
 ---
 
 ## 1. Relations (Logical Plan Operators)
 
 Relations are the core building blocks of Spark Connect query plans. They represent data transformations and sources.
+
+**Note on Actions vs Transformations**: Most Relations are **transformations** (lazy, return DataFrame). However, some Relations are **action-like** and trigger immediate execution:
+- **Tail** - Must scan all data to find last N rows (M21)
+- **ShowString** - Executes and returns formatted ASCII table string (M22)
 
 ### 1.1 Implemented Relations
 
@@ -44,49 +50,49 @@ Relations are the core building blocks of Spark Connect query plans. They repres
 | **SQL** | `sql` | ✅ Implemented | Direct SQL queries |
 | **LocalRelation** | `local_relation` | ✅ Implemented | Arrow IPC data (recent addition) |
 | **Deduplicate** | `deduplicate` | ✅ Implemented | DISTINCT operations |
-| **ShowString** | `show_string` | ✅ Implemented | Passthrough to input relation |
+| **ShowString** | `show_string` | ✅ Implemented | `df.show()` - formats as ASCII table (M22) |
 | **Range** | `range` | ✅ Implemented | `spark.range(start, end, step)` |
 | **Drop** | `drop` | ✅ Implemented | `df.drop("col")` - uses DuckDB EXCLUDE (M19) |
 | **WithColumns** | `with_columns` | ✅ Implemented | `df.withColumn("name", expr)` - uses REPLACE/append (M19) |
 | **WithColumnsRenamed** | `with_columns_renamed` | ✅ Implemented | `df.withColumnRenamed("old", "new")` - uses EXCLUDE+alias (M19) |
 | **Offset** | `offset` | ✅ Implemented | `df.offset(n)` - uses existing Limit class (M20) |
 | **ToDF** | `to_df` | ✅ Implemented | `df.toDF("a", "b", "c")` - uses positional aliasing (M20) |
-| **SubqueryAlias** | `subquery_alias` | ⚠️ Partial | Need explicit handling |
+| **SubqueryAlias** | `subquery_alias` | ✅ Implemented | `df.alias("t")` - via subquery wrapping (M28). Qualifier field not yet supported. |
+| **Tail** | `tail` | ✅ Implemented | `df.tail(n)` - ACTION, O(N) memory via TailBatchCollector (M21) |
+| **Sample** | `sample` | ✅ Implemented | `df.sample(fraction, seed)` - Bernoulli sampling via DuckDB USING SAMPLE (M23) |
+| **Hint** | `hint` | ✅ Implemented | `df.hint("BROADCAST")` - no-op pass-through (M25). DuckDB optimizer handles automatically. |
+| **Repartition** | `repartition` | ✅ Implemented | `df.repartition(n)` - no-op in single-node DuckDB (M25) |
+| **RepartitionByExpression** | `repartition_by_expression` | ✅ Implemented | `df.repartition(col("x"))` - no-op in single-node DuckDB (M25) |
+| **NADrop** | `drop_na` | ✅ Implemented | `df.na.drop()` - via WHERE IS NOT NULL (M26). Schema inference for empty cols. |
+| **NAFill** | `fill_na` | ✅ Implemented | `df.na.fill(value)` - via COALESCE (M26). Schema inference for empty cols. |
+| **NAReplace** | `replace` | ✅ Implemented | `df.na.replace(old, new)` - via CASE WHEN (M26). Schema inference for empty cols. |
+| **Unpivot** | `unpivot` | ✅ Implemented | `df.unpivot()` - via DuckDB native UNPIVOT (M27). Schema inference for values=None. |
 
 ### 1.2 Not Implemented Relations
-
-#### High Priority (Common DataFrame Operations)
-
-| Relation | Proto Field | Priority | Use Case |
-|----------|-------------|----------|----------|
-| **Tail** | `tail` | 🔴 HIGH | `df.tail(n)` - last n rows |
-| **Sample** | `sample` | 🔴 HIGH | `df.sample(0.1)` - random sampling |
 
 #### Medium Priority (Advanced Operations)
 
 | Relation | Proto Field | Priority | Use Case |
 |----------|-------------|----------|----------|
-| **Hint** | `hint` | 🟡 MEDIUM | Query hints (BROADCAST, MERGE, etc.) |
-| **Repartition** | `repartition` | 🟡 MEDIUM | `df.repartition(n)` |
-| **RepartitionByExpression** | `repartition_by_expression` | 🟡 MEDIUM | `df.repartition(col("x"))` |
-| **Unpivot** | `unpivot` | 🟡 MEDIUM | Wide-to-long transformation |
 | **ToSchema** | `to_schema` | 🟡 MEDIUM | Schema enforcement |
 
-#### Lower Priority (NA Functions / Statistics)
+#### Lower Priority (Statistics - Return DataFrames)
 
-| Relation | Proto Field | Priority | Use Case |
-|----------|-------------|----------|----------|
-| **NAFill** | `fill_na` | 🟡 MEDIUM | `df.na.fill()` |
-| **NADrop** | `drop_na` | 🟡 MEDIUM | `df.na.drop()` |
-| **NAReplace** | `replace` | 🟡 MEDIUM | `df.na.replace()` |
-| **StatSummary** | `summary` | 🟢 LOW | `df.summary()` |
-| **StatDescribe** | `describe` | 🟢 LOW | `df.describe()` |
-| **StatCrosstab** | `crosstab` | 🟢 LOW | `df.stat.crosstab()` |
-| **StatCov** | `cov` | 🟢 LOW | `df.stat.cov()` |
-| **StatCorr** | `corr` | 🟢 LOW | `df.stat.corr()` |
-| **StatApproxQuantile** | `approx_quantile` | 🟢 LOW | `df.stat.approxQuantile()` |
-| **StatFreqItems** | `freq_items` | 🟢 LOW | `df.stat.freqItems()` |
-| **StatSampleBy** | `sample_by` | 🟢 LOW | `df.stat.sampleBy()` |
+| Relation | Proto Field | Priority | Returns | Use Case |
+|----------|-------------|----------|---------|----------|
+| **StatSummary** | `summary` | 🟢 LOW | DataFrame | `df.summary()` - stats as rows |
+| **StatDescribe** | `describe` | 🟢 LOW | DataFrame | `df.describe()` - count/mean/std/min/max |
+| **StatCrosstab** | `crosstab` | 🟢 LOW | DataFrame | `df.stat.crosstab()` - contingency table |
+| **StatFreqItems** | `freq_items` | 🟢 LOW | DataFrame | `df.stat.freqItems()` - frequent items |
+| **StatSampleBy** | `sample_by` | 🟢 LOW | DataFrame | `df.stat.sampleBy()` - stratified sample |
+
+#### Lower Priority (Statistics - Return Scalars)
+
+| Relation | Proto Field | Priority | Returns | Use Case |
+|----------|-------------|----------|---------|----------|
+| **StatCov** | `cov` | 🟢 LOW | Double | `df.stat.cov()` - covariance |
+| **StatCorr** | `corr` | 🟢 LOW | Double | `df.stat.corr()` - correlation |
+| **StatApproxQuantile** | `approx_quantile` | 🟢 LOW | Array[Double] | `df.stat.approxQuantile()` |
 
 #### Streaming / UDF (Future)
 
@@ -176,7 +182,7 @@ Commands are operations that don't return result data directly but perform side 
 
 | Command | Proto Field | Status | Priority | Use Case |
 |---------|-------------|--------|----------|----------|
-| **WriteOperation** | `write_operation` | ❌ Not Implemented | 🔴 HIGH | `df.write.parquet()` |
+| **WriteOperation** | `write_operation` | ⚠️ Partial | - | `df.write.parquet()`, `.csv()`, `.json()` - local paths only (M24). S3/cloud not yet supported. |
 | **CreateDataFrameViewCommand** | `create_dataframe_view` | ✅ Implemented | - | `df.createOrReplaceTempView()` |
 | **SqlCommand** | `sql_command` | ✅ Implemented | - | `spark.sql()` (DDL + queries) |
 | **WriteOperationV2** | `write_operation_v2` | ❌ Not Implemented | 🟡 MEDIUM | Table writes |
@@ -297,20 +303,20 @@ These are commonly used operations that users will expect to work:
 6. ~~**WithColumnsRenamed** - Rename columns~~ ✅ Implemented (M19, 2025-12-10)
 7. ~~**Offset** - Required for pagination~~ ✅ Implemented (M20, 2025-12-10)
 8. ~~**ToDF** - Rename all columns~~ ✅ Implemented (M20, 2025-12-10)
-9. **Sample** - Random sampling
-10. **WriteOperation** - Write to files/tables
+9. ~~**Sample** - Random sampling~~ ✅ Implemented (M23, 2025-12-12)
+10. ~~**WriteOperation** - Write to files/tables~~ ✅ Implemented (M24, 2025-12-12)
 
-**Estimated effort:** 1 week
+**Phase 1 Complete!**
 
-### Phase 2: DataFrame NA/Stat Functions (Medium Priority)
+### Phase 2: DataFrame Stat Functions (Medium Priority)
 
-1. **NAFill**, **NADrop**, **NAReplace** - Null handling
-2. **Hint** - Query optimization hints
-3. **Repartition**, **RepartitionByExpression** - Partitioning
-4. **Unpivot** - Data reshaping
-5. **SubqueryAlias** - Proper alias handling
+1. ~~**NAFill**, **NADrop**, **NAReplace** - Null handling~~ ✅ Implemented (M26, 2025-12-12)
+2. ~~**Hint** - Query optimization hints~~ ✅ Implemented (M25)
+3. ~~**Repartition**, **RepartitionByExpression** - Partitioning~~ ✅ Implemented (M25)
+4. ~~**Unpivot** - Data reshaping~~ ✅ Implemented (M27, 2025-12-12)
+5. ~~**SubqueryAlias** - Proper alias handling~~ ✅ Implemented (M28, 2025-12-12)
 
-**Estimated effort:** 1-2 weeks
+**Phase 2 COMPLETE!**
 
 ### Phase 3: Complex Types & Expressions (Medium Priority)
 
@@ -371,8 +377,11 @@ The current implementation successfully handles TPC-H and TPC-DS queries because
 These are all implemented. However, production workloads often include:
 - `df.withColumn()` - ✅ Implemented (M19)
 - `df.drop()` - ✅ Implemented (M19)
-- `df.sample()` - NOT implemented
-- `df.na.fill()` - NOT implemented
+- `df.sample()` - ✅ Implemented (M23)
+- `df.write.parquet()` - ✅ Implemented (M24)
+- `df.na.fill()` - ✅ Implemented (M26)
+- `df.na.drop()` - ✅ Implemented (M26)
+- `df.na.replace()` - ✅ Implemented (M26)
 
 ### Compatibility Concerns
 
@@ -384,7 +393,23 @@ These are all implemented. However, production workloads often include:
 
 ---
 
-## 8. Source Files
+## 8. Intentional Incompatibilities
+
+Features intentionally not supported due to Spark/DuckDB architectural differences:
+
+| Feature | Reason |
+|---------|--------|
+| `df.sample(withReplacement=True)` | DuckDB has no Poisson sampling; throws `PlanConversionException` |
+| `df.hint("BROADCAST")` etc. | Accepted but ignored (no-op); DuckDB optimizer handles join strategies |
+| `df.repartition(n)` / `df.repartition(col)` | Accepted but ignored (no-op); meaningless in single-node DuckDB |
+| `df.alias("t")` with qualifier | Qualifier field not yet supported (multi-catalog scenarios); ignored |
+| Streaming operations | DuckDB is not a streaming engine |
+| Python/Scala UDFs | Requires JVM/Python interop not available in DuckDB |
+| Bucketing | No DuckDB equivalent |
+
+---
+
+## 9. Source Files
 
 ### Protocol Definitions
 
@@ -408,7 +433,7 @@ These are all implemented. However, production workloads often include:
 ## Appendix A: Quick Reference - What Works
 
 ```python
-# These operations work:
+# TRANSFORMATIONS (lazy, return DataFrame, chainable):
 df = spark.read.parquet("data.parquet")      # Read
 df.select("col1", "col2")                     # Project
 df.filter(df.col > 10)                        # Filter
@@ -419,37 +444,92 @@ df.join(df2, "key")                           # Join
 df.union(df2)                                 # SetOperation
 df.distinct()                                 # Deduplicate
 spark.sql("SELECT * FROM ...")                # SQL
-spark.sql("CREATE TEMP VIEW ...")             # DDL via SqlCommand
 spark.createDataFrame([(1,2),(3,4)])          # LocalRelation
 spark.range(0, 100)                           # Range
-df.createOrReplaceTempView("view")            # CreateDataFrameViewCommand
 df.drop("col")                                # Drop (M19)
 df.withColumn("new", expr)                    # WithColumns (M19)
 df.withColumnRenamed("old", "new")            # WithColumnsRenamed (M19)
 df.offset(n)                                  # Offset (M20)
 df.toDF("a", "b", "c")                        # ToDF (M20)
+df.sample(0.1, seed=42)                       # Sample (M23)
+df.hint("BROADCAST")                          # Hint (M25) - no-op, DuckDB optimizes automatically
+df.repartition(10)                            # Repartition (M25) - no-op in single-node DuckDB
+df.repartition(col("x"))                      # RepartitionByExpression (M25) - no-op
+df.na.drop()                                  # NADrop (M26) - drop rows with nulls
+df.na.drop(subset=["col1", "col2"])           # NADrop (M26) - specific columns
+df.na.fill(0)                                 # NAFill (M26) - fill nulls with value
+df.na.fill({"col1": 0, "col2": "default"})    # NAFill (M26) - per-column fills
+df.na.replace("old", "new")                   # NAReplace (M26) - replace values
+df.unpivot(["id"], ["val1", "val2"], "var", "value")  # Unpivot (M27) - wide to long format
+df.unpivot(["id"], None, "var", "value")      # Unpivot (M27) - auto-infer value columns
+df.alias("t")                                 # SubqueryAlias (M28) - DataFrame aliasing
+df.alias("a").join(df.alias("b"), ...)        # SubqueryAlias (M28) - self-joins
+
+# ACTIONS (trigger execution, return values to driver):
+df.tail(n)                                    # Tail (M21) - returns List[Row], O(N) memory
+df.show()                                     # ShowString (M22) - formats as ASCII table
+df.collect()                                  # Collect - returns all rows
+
+# COMMANDS (side effects, no result data):
+spark.sql("CREATE TEMP VIEW ...")             # DDL via SqlCommand
+df.createOrReplaceTempView("view")            # CreateDataFrameViewCommand
+df.write.parquet("/local/path")               # WriteOperation (M24) - local paths only
+df.write.csv("/local/path")                   # WriteOperation (M24) - local paths only
+df.write.json("/local/path")                  # WriteOperation (M24) - local paths only
 ```
 
 ## Appendix B: Quick Reference - What Doesn't Work
 
 ```python
-# These operations do NOT work (will throw PlanConversionException):
-df.tail(n)                                    # Tail
-df.sample(0.1)                                # Sample
-df.na.fill(0)                                 # NAFill
-df.na.drop()                                  # NADrop
-df.write.parquet("output")                    # WriteOperation
-df.hint("BROADCAST")                          # Hint
-df.repartition(10)                            # Repartition
-df.unpivot(...)                               # Unpivot
-df.stat.describe()                            # StatDescribe
+# INTENTIONALLY NOT SUPPORTED (see Section 8):
+df.sample(withReplacement=True, fraction=0.5) # Poisson sampling not available in DuckDB
+
+# COMMANDS partially implemented:
+df.write.parquet("s3://bucket/path")          # S3 writes need httpfs extension
+df.write.csv("s3://bucket/path")              # S3 writes need httpfs extension
+
+# TRANSFORMATIONS not yet implemented (return DataFrames):
+df.describe()                                 # StatDescribe - returns DataFrame!
+df.summary()                                  # StatSummary - returns DataFrame!
+
+# CATALOG not yet implemented:
 spark.catalog.listTables()                    # Catalog operations
 ```
 
+## Appendix C: Actions vs Transformations
+
+**Understanding the Distinction**:
+
+| Type | Behavior | Returns | Chainable? |
+|------|----------|---------|------------|
+| **Transformation** | Lazy, builds plan | DataFrame | Yes |
+| **Action** | Eager, executes | List/Value | No (terminal) |
+| **Command** | Side effect | None/Result | N/A |
+
+**Key Action-Like Relations** (trigger execution):
+- `tail(n)` - Must scan all data to find last N rows, returns `List[Row]`
+- `show()` / ShowString - Executes and formats output, returns String
+- `collect()` - Returns all rows to driver
+- `count()` - Returns single Long value
+
+**Important**: Most "stat" operations (`describe()`, `summary()`, `crosstab()`) return **DataFrames**, not scalar values! They are transformations, not actions.
+
+**Protocol vs Semantics**: In Spark Connect protocol, both transformations AND actions are represented as Relations. The distinction is semantic (lazy vs eager), not protocol-based.
+
 ---
 
-**Document Version:** 1.3
-**Last Updated:** 2025-12-10
+**Document Version:** 2.2
+**Last Updated:** 2025-12-12
 **Author:** Analysis generated from Spark Connect 3.5.3 protobuf definitions
 **M19 Update:** Added Drop, WithColumns, WithColumnsRenamed implementations
 **M20 Update:** Added Offset, ToDF implementations
+**M21 Update:** Added Tail implementation (memory-efficient O(N) via TailBatchCollector)
+**M22 Update:** ShowString confirmed fully implemented (was incorrectly marked partial)
+**v1.5 Update:** Clarified actions vs transformations; added semantic classification
+**v1.6 Update:** Corrected ShowString to fully implemented (19 relations, 1 partial)
+**v1.7 Update:** Added Sample (M23) - Bernoulli sampling via USING SAMPLE
+**v1.8 Update:** Added WriteOperation (M24) - df.write.parquet/csv/json support
+**v1.9 Update:** Added Hint, Repartition, RepartitionByExpression (M25) - no-op pass-throughs for distributed ops
+**v2.0 Update:** Added NADrop, NAFill, NAReplace (M26) - df.na.drop/fill/replace via schema inference + SQL generation
+**v2.1 Update:** Added Unpivot (M27) - df.unpivot() via DuckDB native UNPIVOT syntax with schema inference for values=None
+**v2.2 Update:** Added SubqueryAlias (M28) - df.alias() via subquery wrapping. Phase 2 complete! 28/40 relations (70%)

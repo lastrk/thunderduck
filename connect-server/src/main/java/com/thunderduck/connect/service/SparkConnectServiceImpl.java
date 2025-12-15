@@ -5,8 +5,12 @@ import com.thunderduck.connect.session.Session;
 import com.thunderduck.connect.session.SessionManager;
 import com.thunderduck.generator.SQLGenerator;
 import com.thunderduck.logical.LogicalPlan;
+import com.thunderduck.runtime.ArrowBatchIterator;
+import com.thunderduck.runtime.ArrowStreamingExecutor;
 import com.thunderduck.runtime.DuckDBConnectionManager;
 import com.thunderduck.runtime.QueryExecutor;
+import com.thunderduck.runtime.TailBatchCollector;
+import com.thunderduck.logical.Tail;
 import io.grpc.Context;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -19,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 import static com.thunderduck.generator.SQLQuoting.quoteIdentifier;
+import static com.thunderduck.generator.SQLQuoting.quoteFilePath;
 
 /**
  * Implementation of Spark Connect gRPC service.
@@ -34,8 +39,8 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
     private final SessionManager sessionManager;
     private final DuckDBConnectionManager connectionManager;
-    private final PlanConverter planConverter;
     private final SQLGenerator sqlGenerator;
+    private final ArrowStreamingExecutor streamingExecutor;
 
     /**
      * Create Spark Connect service with session manager and DuckDB connection manager.
@@ -47,9 +52,26 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                                   DuckDBConnectionManager connectionManager) {
         this.sessionManager = sessionManager;
         this.connectionManager = connectionManager;
-        this.planConverter = new PlanConverter();
         this.sqlGenerator = new SQLGenerator();
+        this.streamingExecutor = new ArrowStreamingExecutor(connectionManager);
+
         logger.info("SparkConnectServiceImpl initialized with plan deserialization support");
+    }
+
+    /**
+     * Creates a PlanConverter without schema inference to avoid connection leaks.
+     *
+     * <p>Note: Schema inference for NA functions (dropna, fillna, replace) is
+     * currently disabled to prevent connection pool exhaustion. Most DataFrame
+     * operations don't require schema inference.
+     *
+     * @return a PlanConverter instance
+     */
+    private PlanConverter createPlanConverter() {
+        // Create converter without connection to avoid leaking connections from pool.
+        // Schema inference can be added back when we implement proper connection
+        // lifecycle management (e.g., passing DuckDBConnectionManager to PlanConverter).
+        return new PlanConverter();
     }
 
     /**
@@ -116,7 +138,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     } else {
                         // Deserialize non-SQL relation and generate SQL
                         try {
-                            LogicalPlan innerPlan = planConverter.convertRelation(input);
+                            LogicalPlan innerPlan = createPlanConverter().convertRelation(input);
                             sql = sqlGenerator.generate(innerPlan);
                             logger.debug("Generated SQL from ShowString.input: {}", sql);
                         } catch (Exception e) {
@@ -179,14 +201,20 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
                 try {
                     // Convert Protobuf plan to LogicalPlan
-                    LogicalPlan logicalPlan = planConverter.convert(plan);
+                    LogicalPlan logicalPlan = createPlanConverter().convert(plan);
 
-                    // Generate SQL from LogicalPlan
-                    String generatedSQL = sqlGenerator.generate(logicalPlan);
-                    logger.info("Generated SQL from plan: {}", generatedSQL);
+                    // Check if this is a Tail plan - handle with memory-efficient streaming
+                    if (logicalPlan instanceof Tail) {
+                        Tail tailPlan = (Tail) logicalPlan;
+                        executeTailWithStreaming(tailPlan, sessionId, responseObserver);
+                    } else {
+                        // Generate SQL from LogicalPlan
+                        String generatedSQL = sqlGenerator.generate(logicalPlan);
+                        logger.info("Generated SQL from plan: {}", generatedSQL);
 
-                    // Execute the generated SQL
-                    executeSQL(generatedSQL, sessionId, responseObserver);
+                        // Execute the generated SQL
+                        executeSQL(generatedSQL, sessionId, responseObserver);
+                    }
 
                 } catch (Exception e) {
                     logger.error("Plan deserialization failed", e);
@@ -247,7 +275,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 logger.info("Creating temp view: '{}' (replace={})", viewName, replace);
 
                 // Convert input relation to LogicalPlan
-                LogicalPlan logicalPlan = planConverter.convertRelation(input);
+                LogicalPlan logicalPlan = createPlanConverter().convertRelation(input);
 
                 // Get session and register view
                 Session session = sessionManager.getSession(sessionId);
@@ -268,21 +296,24 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
                 session.registerTempView(viewName, logicalPlan);
 
-                // Generate SQL from the plan and create DuckDB temp view
+                // Generate SQL from the plan and create DuckDB view
+                // NOTE: We use non-temp views because DuckDB temp views are connection-scoped,
+                // and our connection pool means different requests may use different connections.
+                // Non-temp views are visible across all connections to the same database instance.
                 String viewSQL = sqlGenerator.generate(logicalPlan);
-                String createViewSQL = String.format("CREATE OR REPLACE TEMP VIEW %s AS %s",
+                String createViewSQL = String.format("CREATE OR REPLACE VIEW %s AS %s",
                     quoteIdentifier(viewName), viewSQL);
 
-                logger.debug("Creating DuckDB temp view: {}", createViewSQL);
+                logger.debug("Creating DuckDB view: {}", createViewSQL);
 
                 // Execute the CREATE VIEW statement in DuckDB
                 QueryExecutor executor = new QueryExecutor(connectionManager);
                 try {
                     executor.execute(createViewSQL);
                 } catch (Exception e) {
-                    logger.error("Failed to create DuckDB temp view", e);
+                    logger.error("Failed to create DuckDB view", e);
                     responseObserver.onError(Status.INTERNAL
-                        .withDescription("Failed to create DuckDB temp view: " + e.getMessage())
+                        .withDescription("Failed to create DuckDB view: " + e.getMessage())
                         .asRuntimeException());
                     return;
                 }
@@ -297,7 +328,11 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 responseObserver.onNext(response);
                 responseObserver.onCompleted();
 
-                logger.info("✓ Temp view created in DuckDB: '{}' (session: {})", viewName, sessionId);
+                logger.info("✓ View created in DuckDB: '{}' (session: {})", viewName, sessionId);
+
+            } else if (command.hasWriteOperation()) {
+                // Handle df.write.parquet(), df.write.csv(), etc.
+                executeWriteOperation(command.getWriteOperation(), sessionId, responseObserver);
 
             } else {
                 // Unsupported command type
@@ -371,7 +406,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
                     } else {
                         // Regular plan - deserialize and extract schema
-                        LogicalPlan logicalPlan = planConverter.convert(plan);
+                        LogicalPlan logicalPlan = createPlanConverter().convert(plan);
                         schema = logicalPlan.schema();
 
                         if (schema == null) {
@@ -954,57 +989,188 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
      * <p>Handles both queries (SELECT) and DDL statements (CREATE, DROP, ALTER, etc.).
      * DDL statements return an empty result set with success status.
      *
+     * <p>If streaming is enabled (via -Dthunderduck.streaming.enabled=true), uses
+     * the new ArrowStreamingExecutor for batch-by-batch streaming. Otherwise, uses
+     * the legacy full-materialization path.
+     *
      * @param sql SQL query string
      * @param sessionId Session ID
      * @param responseObserver Response stream
      */
     private void executeSQL(String sql, String sessionId,
                            StreamObserver<ExecutePlanResponse> responseObserver) {
+        // DDL statements don't return results - handle separately
+        if (isDDLStatement(sql)) {
+            executeDDL(sql, sessionId, responseObserver);
+            return;
+        }
+
+        // All queries use streaming (zero-copy Arrow batch iteration)
+        executeSQLStreaming(sql, sessionId, responseObserver);
+    }
+
+    /**
+     * Execute SQL query using streaming Arrow batch iteration.
+     *
+     * <p>Uses DuckDB's native arrowExportStream() for zero-copy batch streaming.
+     * Each batch is serialized to Arrow IPC format and sent immediately to the client.
+     *
+     * @param sql SQL query string
+     * @param sessionId Session ID
+     * @param responseObserver Response stream
+     */
+    private void executeSQLStreaming(String sql, String sessionId,
+                                     StreamObserver<ExecutePlanResponse> responseObserver) {
         String operationId = java.util.UUID.randomUUID().toString();
         long startTime = System.nanoTime();
 
         try {
-            logger.info("[{}] Executing SQL for session {}: {}", operationId, sessionId, sql);
+            logger.info("[{}] Executing streaming SQL for session {}: {}",
+                operationId, sessionId,
+                sql.length() > 100 ? sql.substring(0, 100) + "..." : sql);
+
+            // Execute with streaming
+            try (ArrowBatchIterator iterator = streamingExecutor.executeStreaming(sql)) {
+                StreamingResultHandler handler = new StreamingResultHandler(
+                    responseObserver, sessionId, operationId);
+                handler.streamResults(iterator);
+
+                long durationMs = (System.nanoTime() - startTime) / 1_000_000;
+                logger.info("[{}] Streaming query completed in {}ms, {} batches, {} rows",
+                    operationId, durationMs, handler.getBatchCount(), handler.getTotalRows());
+            }
+
+        } catch (Exception e) {
+            logger.error("[{}] Streaming SQL execution failed", operationId, e);
+
+            // Determine appropriate gRPC status code based on exception type
+            Status status;
+            if (e instanceof java.sql.SQLException) {
+                status = Status.INVALID_ARGUMENT.withDescription("SQL error: " + e.getMessage());
+            } else if (e instanceof IllegalArgumentException) {
+                status = Status.INVALID_ARGUMENT.withDescription(e.getMessage());
+            } else {
+                status = Status.INTERNAL.withDescription("Execution failed: " + e.getMessage());
+            }
+
+            responseObserver.onError(status.asRuntimeException());
+        }
+    }
+
+    /**
+     * Execute a Tail plan using memory-efficient streaming collection.
+     *
+     * <p>Instead of using SQL window functions which require O(total_rows) memory,
+     * this method streams through all data keeping only the last N rows in memory.
+     * This is O(N) memory where N is the tail limit.
+     *
+     * <p>Algorithm:
+     * <ol>
+     *   <li>Generate SQL for just the child plan (without tail operation)</li>
+     *   <li>Stream the child query results through TailBatchCollector</li>
+     *   <li>Collector maintains circular buffer of recent batches</li>
+     *   <li>Return only the last N rows to client</li>
+     * </ol>
+     *
+     * @param tailPlan The Tail logical plan node
+     * @param sessionId Session ID for response
+     * @param responseObserver Stream observer for responses
+     */
+    private void executeTailWithStreaming(Tail tailPlan, String sessionId,
+                                          StreamObserver<ExecutePlanResponse> responseObserver) {
+        String operationId = java.util.UUID.randomUUID().toString();
+        long startTime = System.nanoTime();
+
+        try {
+            // Get the tail limit and child plan
+            int tailLimit = (int) tailPlan.limit();
+            LogicalPlan childPlan = tailPlan.child();
+
+            // Generate SQL for the child plan only (not the tail wrapper)
+            String childSQL = sqlGenerator.generate(childPlan);
+            logger.info("[{}] Executing memory-efficient tail({}) for session {}, child SQL: {}",
+                operationId, tailLimit, sessionId,
+                childSQL.length() > 100 ? childSQL.substring(0, 100) + "..." : childSQL);
+
+            // Create allocator for TailBatchCollector
+            org.apache.arrow.memory.RootAllocator allocator = new org.apache.arrow.memory.RootAllocator();
+
+            try {
+                // Execute child query with streaming and collect tail
+                try (ArrowBatchIterator iterator = streamingExecutor.executeStreaming(childSQL)) {
+                    TailBatchCollector collector = new TailBatchCollector(allocator, tailLimit);
+                    org.apache.arrow.vector.VectorSchemaRoot tailResult = collector.collect(iterator);
+
+                    try {
+                        // Stream the tail result to the client
+                        streamArrowResults(tailResult, sessionId, operationId, responseObserver);
+
+                        long durationMs = (System.nanoTime() - startTime) / 1_000_000;
+                        logger.info("[{}] Streaming tail({}) completed in {}ms, {} rows",
+                            operationId, tailLimit, durationMs, tailResult.getRowCount());
+                    } finally {
+                        tailResult.close();
+                    }
+                }
+            } finally {
+                allocator.close();
+            }
+
+        } catch (Exception e) {
+            logger.error("[{}] Tail execution failed", operationId, e);
+
+            Status status;
+            if (e instanceof java.sql.SQLException) {
+                status = Status.INVALID_ARGUMENT.withDescription("SQL error: " + e.getMessage());
+            } else if (e instanceof IllegalArgumentException) {
+                status = Status.INVALID_ARGUMENT.withDescription(e.getMessage());
+            } else {
+                status = Status.INTERNAL.withDescription("Execution failed: " + e.getMessage());
+            }
+
+            responseObserver.onError(status.asRuntimeException());
+        }
+    }
+
+    /**
+     * Execute DDL statement (CREATE, DROP, ALTER, etc.).
+     *
+     * <p>DDL statements don't return results - they return an empty success response.
+     *
+     * @param sql DDL statement
+     * @param sessionId Session ID
+     * @param responseObserver Response stream
+     */
+    private void executeDDL(String sql, String sessionId,
+                            StreamObserver<ExecutePlanResponse> responseObserver) {
+        String operationId = java.util.UUID.randomUUID().toString();
+        long startTime = System.nanoTime();
+
+        try {
+            logger.info("[{}] Executing DDL for session {}: {}", operationId, sessionId, sql);
 
             // Create QueryExecutor with connection manager
             QueryExecutor executor = new QueryExecutor(connectionManager);
 
-            // Check if this is a DDL statement (doesn't return results)
-            if (isDDLStatement(sql)) {
-                // Execute DDL using executeUpdate (no ResultSet)
-                executor.executeUpdate(sql);
-
-                long durationMs = (System.nanoTime() - startTime) / 1_000_000;
-                logger.info("[{}] DDL completed in {}ms", operationId, durationMs);
-
-                // Return empty success response for DDL
-                ExecutePlanResponse response = ExecutePlanResponse.newBuilder()
-                    .setSessionId(sessionId)
-                    .setOperationId(operationId)
-                    .setResponseId(java.util.UUID.randomUUID().toString())
-                    .setResultComplete(ExecutePlanResponse.ResultComplete.newBuilder().build())
-                    .build();
-
-                responseObserver.onNext(response);
-                responseObserver.onCompleted();
-                return;
-            }
-
-            // Execute query and get Arrow results
-            org.apache.arrow.vector.VectorSchemaRoot results = executor.executeQuery(sql);
-
-            // Stream Arrow results
-            streamArrowResults(results, sessionId, operationId, responseObserver);
+            // Execute DDL using executeUpdate (no ResultSet)
+            executor.executeUpdate(sql);
 
             long durationMs = (System.nanoTime() - startTime) / 1_000_000;
-            logger.info("[{}] Query completed in {}ms, {} rows",
-                operationId, durationMs, results.getRowCount());
+            logger.info("[{}] DDL completed in {}ms", operationId, durationMs);
 
-            // Clean up Arrow resources
-            results.close();
+            // Return empty success response for DDL
+            ExecutePlanResponse response = ExecutePlanResponse.newBuilder()
+                .setSessionId(sessionId)
+                .setOperationId(operationId)
+                .setResponseId(java.util.UUID.randomUUID().toString())
+                .setResultComplete(ExecutePlanResponse.ResultComplete.newBuilder().build())
+                .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
 
         } catch (Exception e) {
-            logger.error("[{}] SQL execution failed", operationId, e);
+            logger.error("[{}] DDL execution failed", operationId, e);
 
             // Determine appropriate gRPC status code based on exception type
             Status status;
@@ -1277,5 +1443,224 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         // Default to string for unknown types
         logger.warn("Unknown Arrow type: {}, defaulting to STRING", arrowType.getClass().getSimpleName());
         return com.thunderduck.types.StringType.get();
+    }
+
+    /**
+     * Execute a WriteOperation command (df.write.parquet(), df.write.csv(), etc.).
+     *
+     * Generates a DuckDB COPY statement based on the WriteOperation parameters.
+     * Supports:
+     * - Formats: parquet, csv, json (via source parameter)
+     * - Modes: OVERWRITE, ERROR_IF_EXISTS, IGNORE, APPEND
+     * - Partitioning: via partitioning_columns
+     * - Compression and other options via options map
+     *
+     * @param writeOp The WriteOperation proto message
+     * @param sessionId The session ID
+     * @param responseObserver Stream observer for responses
+     */
+    private void executeWriteOperation(WriteOperation writeOp, String sessionId,
+                                       StreamObserver<ExecutePlanResponse> responseObserver) {
+        try {
+            // 1. Validate required fields
+            if (!writeOp.hasInput()) {
+                responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("WriteOperation requires an input relation")
+                    .asRuntimeException());
+                return;
+            }
+
+            // 2. Get output path (only path writes supported for now)
+            String outputPath;
+            if (writeOp.hasPath()) {
+                outputPath = writeOp.getPath();
+            } else if (writeOp.hasTable()) {
+                responseObserver.onError(Status.UNIMPLEMENTED
+                    .withDescription("WriteOperation to table is not yet supported. Use df.write.parquet('/path') instead.")
+                    .asRuntimeException());
+                return;
+            } else {
+                responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("WriteOperation requires a path or table destination")
+                    .asRuntimeException());
+                return;
+            }
+
+            // 3. Determine format (default to parquet)
+            String format = writeOp.hasSource() ? writeOp.getSource().toLowerCase() : "parquet";
+            if (!format.equals("parquet") && !format.equals("csv") && !format.equals("json")) {
+                responseObserver.onError(Status.UNIMPLEMENTED
+                    .withDescription("Unsupported write format: " + format + ". Supported formats: parquet, csv, json")
+                    .asRuntimeException());
+                return;
+            }
+
+            // 4. Handle SaveMode
+            WriteOperation.SaveMode mode = writeOp.getMode();
+            boolean fileExists = checkFileExists(outputPath);
+
+            switch (mode) {
+                case SAVE_MODE_ERROR_IF_EXISTS:
+                    if (fileExists) {
+                        responseObserver.onError(Status.ALREADY_EXISTS
+                            .withDescription("Path already exists: " + outputPath)
+                            .asRuntimeException());
+                        return;
+                    }
+                    break;
+                case SAVE_MODE_IGNORE:
+                    if (fileExists) {
+                        // Return success without writing
+                        logger.info("WriteOperation IGNORE mode: path exists, skipping write: {}", outputPath);
+                        sendWriteSuccessResponse(sessionId, responseObserver);
+                        return;
+                    }
+                    break;
+                case SAVE_MODE_APPEND:
+                    // APPEND requires special handling - read existing + union + write
+                    if (fileExists && format.equals("parquet")) {
+                        executeAppendWrite(writeOp, outputPath, sessionId, responseObserver);
+                        return;
+                    }
+                    // If file doesn't exist, fall through to normal write
+                    break;
+                case SAVE_MODE_OVERWRITE:
+                case SAVE_MODE_UNSPECIFIED:
+                default:
+                    // OVERWRITE is DuckDB's default behavior - just write
+                    break;
+            }
+
+            // 5. Convert input relation to SQL
+            LogicalPlan inputPlan = createPlanConverter().convertRelation(writeOp.getInput());
+            String inputSQL = sqlGenerator.generate(inputPlan);
+            logger.debug("WriteOperation input SQL: {}", inputSQL);
+
+            // 6. Build COPY statement
+            StringBuilder copySQL = new StringBuilder();
+            copySQL.append("COPY (").append(inputSQL).append(") TO ");
+            copySQL.append(quoteFilePath(outputPath));
+            copySQL.append(" (FORMAT ").append(format.toUpperCase());
+
+            // Add compression if specified in options
+            Map<String, String> options = writeOp.getOptionsMap();
+            if (options.containsKey("compression")) {
+                copySQL.append(", COMPRESSION ").append(options.get("compression").toUpperCase());
+            } else if (format.equals("parquet")) {
+                copySQL.append(", COMPRESSION SNAPPY"); // Default for parquet
+            }
+
+            // Add partitioning if specified
+            if (writeOp.getPartitioningColumnsCount() > 0) {
+                copySQL.append(", PARTITION_BY (");
+                for (int i = 0; i < writeOp.getPartitioningColumnsCount(); i++) {
+                    if (i > 0) copySQL.append(", ");
+                    copySQL.append(quoteIdentifier(writeOp.getPartitioningColumns(i)));
+                }
+                copySQL.append(")");
+            }
+
+            // Add CSV-specific options
+            if (format.equals("csv")) {
+                if (options.containsKey("header")) {
+                    copySQL.append(", HEADER ").append(options.get("header").toLowerCase().equals("true"));
+                } else {
+                    copySQL.append(", HEADER true"); // Default to header for CSV
+                }
+                if (options.containsKey("delimiter") || options.containsKey("sep")) {
+                    String delimiter = options.getOrDefault("delimiter", options.get("sep"));
+                    copySQL.append(", DELIMITER '").append(delimiter).append("'");
+                }
+            }
+
+            copySQL.append(")");
+
+            logger.info("Executing WriteOperation: {}", copySQL);
+
+            // 7. Execute the COPY statement
+            QueryExecutor executor = new QueryExecutor(connectionManager);
+            executor.execute(copySQL.toString());
+
+            // 8. Return success response
+            sendWriteSuccessResponse(sessionId, responseObserver);
+            logger.info("✓ WriteOperation completed: {} rows written to {}", "unknown", outputPath);
+
+        } catch (Exception e) {
+            logger.error("WriteOperation failed", e);
+            responseObserver.onError(Status.INTERNAL
+                .withDescription("WriteOperation failed: " + e.getMessage())
+                .withCause(e)
+                .asRuntimeException());
+        }
+    }
+
+    /**
+     * Check if a file or directory exists.
+     * Supports local paths and potentially cloud paths if extensions loaded.
+     */
+    private boolean checkFileExists(String path) {
+        try {
+            java.io.File file = new java.io.File(path);
+            return file.exists();
+        } catch (Exception e) {
+            // For cloud paths, assume doesn't exist (let DuckDB handle errors)
+            return false;
+        }
+    }
+
+    /**
+     * Execute an APPEND write by reading existing data, unioning with new data, and writing back.
+     */
+    private void executeAppendWrite(WriteOperation writeOp, String outputPath, String sessionId,
+                                    StreamObserver<ExecutePlanResponse> responseObserver) {
+        try {
+            // Convert input relation to SQL
+            LogicalPlan inputPlan = createPlanConverter().convertRelation(writeOp.getInput());
+            String newDataSQL = sqlGenerator.generate(inputPlan);
+
+            // Build union query: existing + new
+            String unionSQL = String.format(
+                "SELECT * FROM read_parquet(%s) UNION ALL %s",
+                quoteFilePath(outputPath),
+                newDataSQL
+            );
+
+            // Build COPY statement
+            StringBuilder copySQL = new StringBuilder();
+            copySQL.append("COPY (").append(unionSQL).append(") TO ");
+            copySQL.append(quoteFilePath(outputPath));
+            copySQL.append(" (FORMAT PARQUET, COMPRESSION SNAPPY)");
+
+            logger.info("Executing WriteOperation APPEND: {}", copySQL);
+
+            // Execute
+            QueryExecutor executor = new QueryExecutor(connectionManager);
+            executor.execute(copySQL.toString());
+
+            sendWriteSuccessResponse(sessionId, responseObserver);
+            logger.info("✓ WriteOperation APPEND completed to {}", outputPath);
+
+        } catch (Exception e) {
+            logger.error("WriteOperation APPEND failed", e);
+            responseObserver.onError(Status.INTERNAL
+                .withDescription("WriteOperation APPEND failed: " + e.getMessage())
+                .withCause(e)
+                .asRuntimeException());
+        }
+    }
+
+    /**
+     * Send a success response for WriteOperation.
+     */
+    private void sendWriteSuccessResponse(String sessionId,
+                                          StreamObserver<ExecutePlanResponse> responseObserver) {
+        String operationId = java.util.UUID.randomUUID().toString();
+        ExecutePlanResponse response = ExecutePlanResponse.newBuilder()
+            .setSessionId(sessionId)
+            .setOperationId(operationId)
+            .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 }

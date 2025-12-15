@@ -322,6 +322,101 @@ class TestTPCHQuery6:
         print(f"\n✓ TPC-H Q6: SQL and DataFrame API produce identical results (revenue={sql_revenue:.2f})")
 
 
+class TestTPCHQuery5:
+    """TPC-H Q5: Local Supplier Volume
+
+    Tests: 6-way join, complex predicates, group by region
+    Complexity: High (multi-way joins)
+    """
+
+    @pytest.mark.tpch
+    @pytest.mark.dataframe
+    @pytest.mark.timeout(60)
+    def test_q5_dataframe_api(self, spark, tpch_data_dir, validator):
+        """Test TPC-H Q5 via DataFrame API - 6-way join"""
+        # Load all required tables
+        region = spark.read.parquet(str(tpch_data_dir / "region.parquet"))
+        nation = spark.read.parquet(str(tpch_data_dir / "nation.parquet"))
+        customer = spark.read.parquet(str(tpch_data_dir / "customer.parquet"))
+        orders = spark.read.parquet(str(tpch_data_dir / "orders.parquet"))
+        lineitem = spark.read.parquet(str(tpch_data_dir / "lineitem.parquet"))
+        supplier = spark.read.parquet(str(tpch_data_dir / "supplier.parquet"))
+
+        # Implement Q5 using DataFrame API - 6-way join
+        result = (region
+            .filter(col("r_name") == "ASIA")
+            .join(nation, col("r_regionkey") == col("n_regionkey"))
+            .join(customer, col("n_nationkey") == col("c_nationkey"))
+            .join(orders, col("c_custkey") == col("o_custkey"))
+            .filter(
+                (col("o_orderdate") >= "1994-01-01") &
+                (col("o_orderdate") < "1995-01-01")
+            )
+            .join(lineitem, col("o_orderkey") == col("l_orderkey"))
+            .join(
+                supplier,
+                (col("l_suppkey") == col("s_suppkey")) &
+                (col("s_nationkey") == col("n_nationkey"))
+            )
+            .groupBy("n_name")
+            .agg(
+                _sum(col("l_extendedprice") * (1 - col("l_discount"))).alias("revenue")
+            )
+            .orderBy(col("revenue").desc())
+        )
+
+        # Collect results
+        rows = result.collect()
+
+        # ASIA has 5 nations
+        assert len(rows) == 5, f"Expected 5 nations in ASIA, got {len(rows)}"
+
+        # Validate results are ordered by revenue DESC
+        if len(rows) > 1:
+            for i in range(len(rows) - 1):
+                assert rows[i]['revenue'] >= rows[i + 1]['revenue'], \
+                    "Results not properly ordered by revenue DESC"
+
+        # Check that revenue is positive for all nations
+        for row in rows:
+            assert row['revenue'] > 0, f"Revenue for {row['n_name']} should be positive"
+
+        print(f"\n✓ TPC-H Q5 (DataFrame API) passed: {len(rows)} nations")
+
+
+class TestWindowFunctions:
+    """Test window functions using DataFrame API"""
+
+    @pytest.mark.dataframe
+    @pytest.mark.timeout(60)
+    @pytest.mark.xfail(reason="Window function ORDER BY translation uses 'DESCENDING' instead of 'DESC'")
+    def test_window_row_number(self, spark, tpch_data_dir):
+        """Test ROW_NUMBER() window function"""
+        from pyspark.sql.window import Window
+
+        # Load orders table
+        orders = spark.read.parquet(str(tpch_data_dir / "orders.parquet"))
+
+        # Define window specification
+        window_spec = Window.partitionBy("o_custkey").orderBy(col("o_totalprice").desc())
+
+        # Add rank column using row_number
+        result = (orders
+            .select(
+                "*",
+                F.row_number().over(window_spec).alias("rank")
+            )
+            .filter(col("rank") <= 3)  # Top 3 orders per customer
+            .groupBy("o_custkey")
+            .agg(_count("*").alias("top_orders_count"))
+            .limit(10)
+        )
+
+        rows = result.collect()
+        assert len(rows) > 0, "Window function result should not be empty"
+        print(f"\n✓ Window Function (ROW_NUMBER) passed: {len(rows)} customers")
+
+
 class TestBasicDataFrameOperations:
     """Basic DataFrame API operations to ensure fundamentals work"""
 

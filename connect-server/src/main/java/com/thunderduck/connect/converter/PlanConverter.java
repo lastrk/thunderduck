@@ -2,12 +2,14 @@ package com.thunderduck.connect.converter;
 
 import com.thunderduck.logical.LogicalPlan;
 import com.thunderduck.expression.Expression;
+import com.thunderduck.schema.SchemaInferrer;
 
 import org.apache.spark.connect.proto.Plan;
 import org.apache.spark.connect.proto.Relation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,9 +26,23 @@ public class PlanConverter {
     private final RelationConverter relationConverter;
     private final ExpressionConverter expressionConverter;
 
+    /**
+     * Creates a PlanConverter without schema inference capability.
+     * NA functions requiring schema inference will fail.
+     */
     public PlanConverter() {
+        this(null);
+    }
+
+    /**
+     * Creates a PlanConverter with schema inference capability.
+     *
+     * @param connection the DuckDB connection for schema inference (nullable)
+     */
+    public PlanConverter(Connection connection) {
         this.expressionConverter = new ExpressionConverter();
-        this.relationConverter = new RelationConverter(expressionConverter);
+        SchemaInferrer schemaInferrer = connection != null ? new SchemaInferrer(connection) : null;
+        this.relationConverter = new RelationConverter(expressionConverter, schemaInferrer);
     }
 
     /**
