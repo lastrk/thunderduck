@@ -63,6 +63,9 @@ public class SessionManager {
     /** Flag to track shutdown state */
     private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
 
+    /** Cache of sessions by session ID - ensures same session ID reuses same DuckDB runtime */
+    private final ConcurrentHashMap<String, Session> sessionCache = new ConcurrentHashMap<>();
+
     /**
      * Create SessionManager with default configuration.
      */
@@ -149,8 +152,8 @@ public class SessionManager {
             ExecutionState current = executionState.get();
 
             if (current.isIdle()) {
-                // Idle - acquire slot with new or reused session
-                Session session = new Session(sessionId);
+                // Idle - acquire slot with cached or new session
+                Session session = getOrCreateCachedSession(sessionId);
                 ExecutionState next = ExecutionState.executing(sessionId, session);
 
                 if (executionState.compareAndSet(current, next)) {
@@ -171,6 +174,22 @@ public class SessionManager {
             // Different session and busy - need to wait
             return null;
         }
+    }
+
+    /**
+     * Get or create a cached session for the given session ID.
+     *
+     * <p>Sessions are cached by ID to ensure the same DuckDB runtime is reused
+     * for all requests with the same session ID.
+     *
+     * @param sessionId Session ID
+     * @return Cached or newly created session
+     */
+    private Session getOrCreateCachedSession(String sessionId) {
+        return sessionCache.computeIfAbsent(sessionId, id -> {
+            logger.debug("Creating new cached session: {}", id);
+            return new Session(id);
+        });
     }
 
     /**
@@ -398,9 +417,9 @@ public class SessionManager {
             return current.getSession();
         }
 
-        // Return a new session for metadata operations
-        // This doesn't affect execution state - it's just for config/analyze
-        return new Session(sessionId);
+        // Return cached or new session for metadata operations
+        // This ensures temp views and other session state persist
+        return getOrCreateCachedSession(sessionId);
     }
 
     /**

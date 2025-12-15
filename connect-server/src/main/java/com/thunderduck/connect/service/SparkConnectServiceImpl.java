@@ -371,7 +371,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         // Apply SQL preprocessing for Spark compatibility
                         sql = preprocessSQL(sql);
                         logger.debug("Analyzing SQL query schema: {}", sql.substring(0, Math.min(100, sql.length())));
-                        schema = inferSchemaFromDuckDB(sql);
+                        schema = inferSchemaFromDuckDB(sql, sessionId);
 
                     } else if (plan.hasCommand() && plan.getCommand().hasSqlCommand()) {
                         // SQL command - infer schema
@@ -388,7 +388,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         // Apply SQL preprocessing for Spark compatibility
                         sql = preprocessSQL(sql);
                         logger.debug("Analyzing SQL command schema: {}", sql.substring(0, Math.min(100, sql.length())));
-                        schema = inferSchemaFromDuckDB(sql);
+                        schema = inferSchemaFromDuckDB(sql, sessionId);
 
                     } else {
                         // Regular plan - deserialize and extract schema
@@ -398,7 +398,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         if (schema == null) {
                             // Infer schema from generated SQL
                             sql = sqlGenerator.generate(logicalPlan);
-                            schema = inferSchemaFromDuckDB(sql);
+                            schema = inferSchemaFromDuckDB(sql, sessionId);
                         }
                     }
 
@@ -1360,12 +1360,13 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
     /**
      * Infers schema from DuckDB by executing LIMIT 0 query.
+     *
+     * @param sql The SQL query to infer schema from
+     * @param sessionId The session ID to use for accessing DuckDB runtime with temp views
      */
-    private com.thunderduck.types.StructType inferSchemaFromDuckDB(String sql) throws Exception {
-        // Note: This method is called from analyzePlan which has its own session context
-        // For now, we'll need to keep using a default runtime until we refactor analyzePlan
-        // TODO: Pass session object to this method
-        QueryExecutor executor = new QueryExecutor(sessionManager.getOrCreateSessionForMetadata("default").getRuntime());
+    private com.thunderduck.types.StructType inferSchemaFromDuckDB(String sql, String sessionId) throws Exception {
+        // Use the session's DuckDB runtime to access temp views registered in that session
+        QueryExecutor executor = new QueryExecutor(sessionManager.getOrCreateSessionForMetadata(sessionId).getRuntime());
         String schemaQuery = "SELECT * FROM (" + sql + ") AS schema_infer LIMIT 0";
 
         logger.debug("Inferring schema from SQL: {}", schemaQuery);
