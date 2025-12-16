@@ -1,244 +1,236 @@
 # E2E Testing Gap Analysis for Thunderduck
 
-**Version:** 1.8
+**Version:** 2.0
 **Date:** 2025-12-16
-**Purpose:** Catalog E2E test failures and gaps for Thunderduck Spark Connect
+**Purpose:** Catalog E2E test coverage and gaps for Thunderduck Spark Connect
 
 ---
 
 ## Executive Summary
 
-The E2E test suite (`/workspace/tests/integration/`) has ~291 tests. After the **Spark 4.0.1 upgrade** (merged PR #2) and subsequent fixes (M31-M38), **ALL core tests now pass**.
+The E2E test suite has comprehensive coverage with **153 differential tests** comparing Thunderduck against Apache Spark 4.0.1. **ALL TESTS PASS**.
 
 | Test Category | Tests | Status |
 |--------------|-------|--------|
-| Simple SQL | 3 | ALL PASS |
-| TPC-H Queries | 17 | **ALL PASS** |
-| TPC-DS Queries | 102 | **ALL PASS** |
-| Basic DataFrame Ops | 7 | ALL PASS |
-| Temp Views | 7 | ALL PASS |
+| TPC-H SQL (Differential) | 23 | ✅ ALL PASS |
+| TPC-H DataFrame API (Differential) | 4 | ✅ ALL PASS |
+| TPC-DS SQL (Differential) | 102 | ✅ ALL PASS |
+| TPC-DS DataFrame API (Differential) | 24 | ✅ ALL PASS |
+| **Total Differential Tests** | **153** | ✅ **ALL PASS** |
 
-**Spark Version:** 4.0.1 (upgraded from 3.5.3 on 2025-12-15)
+**Spark Version:** 4.0.1
+**Test Framework:** Differential testing (Spark 4.0.1 Reference vs Thunderduck)
 
 ---
 
-## P0 Issue: FIXED (M29)
+## Differential Testing Framework (M39)
 
-### Root Causes (All Fixed)
+### Overview
 
-1. **Isolated in-memory databases** - Each connection to `jdbc:duckdb:` created its own database
-   - **Fix**: Changed to `jdbc:duckdb::memory:thunderduck` for shared named database
+The differential testing framework runs queries on both Apache Spark 4.0.1 and Thunderduck, comparing results row-by-row to ensure exact compatibility.
 
-2. **Connection leak in createPlanConverter** - `getConnection()` borrowed but never released
-   - **Fix**: Removed connection borrowing from `createPlanConverter()`
-
-3. **Temp view scope** - DuckDB `TEMP VIEW` is connection-scoped
-   - **Fix**: Changed to regular `VIEW` for cross-connection visibility
-
-### Files Modified
-- `core/src/main/java/com/thunderduck/runtime/DuckDBConnectionManager.java:275-278`
-- `connect-server/src/main/java/com/thunderduck/connect/service/SparkConnectServiceImpl.java:70-74, 292-300`
-- `core/src/main/java/com/thunderduck/runtime/ArrowBatchStream.java` (LIMIT 0 schema fix)
-
-### Test Results After Fix
 ```
-Loading TPC-H tables and creating temp views...
-  ✓ lineitem: 60,175 rows
-  ✓ orders: 15,000 rows
-  ✓ customer: 1,500 rows
-  ✓ part: 2,000 rows
-  ✓ supplier: 100 rows
-  ✓ partsupp: 8,000 rows
-  ✓ nation: 25 rows
-  ✓ region: 5 rows
-✓ All 8 TPC-H tables registered as temp views
+┌──────────────────────────────────────────────────────────────┐
+│                    Test Suite (Pytest)                        │
+│        test_differential_v2.py / test_tpcds_differential.py   │
+└───────────────────┬────────────────┬─────────────────────────┘
+                    │                │
+        ┌───────────▼──────┐  ┌──────▼──────────┐
+        │  Spark Reference │  │  Thunderduck    │
+        │  4.0.1 (Native)  │  │  Connect Server │
+        │  Port: 15003     │  │  Port: 15002    │
+        └──────────────────┘  └──────────────────┘
 ```
 
+### Test Coverage
+
+**TPC-H (23 SQL + 4 DataFrame = 27 tests):**
+- Q1-Q22 SQL queries
+- Q1, Q3, Q6, Q12 DataFrame API implementations
+- Sanity test
+
+**TPC-DS (102 SQL + 24 DataFrame = 126 tests):**
+- Q1-Q99 SQL queries (Q36 excluded - DuckDB limitation)
+- Variant queries: Q14a/b, Q23a/b, Q24a/b, Q39a/b
+- 24 DataFrame API implementations (Q3, Q7, Q12, Q13, Q15, Q19, Q20, Q26, Q37, Q41, Q42, Q43, Q45, Q48, Q50, Q52, Q55, Q62, Q82, Q84, Q91, Q96, Q98, Q99)
+
+### DataFrame API Operations Tested
+
+**TPC-DS DataFrame Tests (24 queries):**
+Q3, Q7, Q12, Q13, Q15, Q19, Q20, Q26, Q37, Q41, Q42, Q43, Q45, Q48, Q50, Q52, Q55, Q62, Q82, Q84, Q91, Q96, Q98, Q99
+
+| Operation | Coverage |
+|-----------|----------|
+| `filter()` | All 28 DataFrame tests |
+| `groupBy().agg()` | Q1, Q3, Q6, Q7, Q12, Q13, Q15, Q19, Q20, Q26, Q37, Q42, Q43, Q45, Q48, Q50, Q52, Q55, Q62, Q82, Q84, Q91, Q96, Q98, Q99 |
+| `join()` (multi-table) | Q3, Q7, Q12, Q13, Q15, Q19, Q20, Q26, Q37, Q43, Q45, Q48, Q50, Q62, Q82, Q84, Q91, Q96, Q99 |
+| `orderBy()` / `limit()` | Most queries |
+| `F.sum()`, `F.avg()`, `F.count()` | Q1, Q3, Q6, Q7, Q12, Q13, Q20, Q26, Q43, Q52, Q55, Q62, Q91, Q98, Q99 |
+| `F.when().otherwise()` | Q12, Q43, Q62, Q99 (conditional aggregation) |
+| `F.col().isin()` | Q7, Q12, Q15, Q20, Q26, Q37, Q41, Q45, Q82, Q91 |
+| Window functions | Q12, Q20, Q98 (partition by, revenue ratio) |
+| `F.substring()` | Q19, Q62, Q99 |
+| `F.concat_ws()` | Q84 |
+| `distinct()` | Q41, Q84 |
+| Left joins | Q37, Q82 |
+
 ---
 
-## P1 Issue: FIXED - TPC-H Data Regenerated
+## How to Run Tests
 
-### Problem
-The test data in `/workspace/data/tpch_sf001/` had been corrupted/replaced with a tiny 8-row sample. The reference data was generated from proper TPC-H SF0.01 data (~60K rows).
+### Quick Start (Recommended)
 
-### Fix
-Regenerated proper TPC-H SF0.01 data using DuckDB's built-in TPC-H generator:
-```python
-import duckdb
-con = duckdb.connect()
-con.execute('INSTALL tpch; LOAD tpch;')
-con.execute('CALL dbgen(sf=0.01);')
-# Export to parquet
-for table in ['customer', 'lineitem', 'nation', 'orders', 'part', 'partsupp', 'region', 'supplier']:
-    con.execute(f"COPY {table} TO '/workspace/data/tpch_sf001/{table}.parquet' (FORMAT PARQUET)")
+```bash
+# One-time setup (downloads Spark 4.0.1, creates venv)
+./tests/scripts/setup-differential-testing.sh
+
+# Run all differential tests
+./tests/scripts/run-differential-tests-v2.sh
 ```
 
-### Result
-- Before: Q1 returned 3 groups (8 rows total) - **FAIL**
-- After: Q1 returns 4 groups (60,175 lineitem rows) - **PASS**
-- **All 15 TPC-H tests now pass**
+### Run Specific Test Suites
 
----
+```bash
+# Activate venv
+source tests/integration/.venv/bin/activate
+cd tests/integration
 
-## Current Test Status
+# TPC-H SQL tests (~20 seconds)
+python -m pytest test_differential_v2.py -v
 
-### Passing Tests (Post Spark 4.0.1 Upgrade + M31-M38 Fixes)
-| File | Tests | Status | Notes |
-|------|-------|--------|-------|
-| `test_simple_sql.py` | 3 | ALL PASS | Direct SQL |
-| `test_tpch_queries.py` | 17 | **ALL PASS** | Window function fixed in M38 |
-| `test_temp_views.py` | 7 | ALL PASS | create, query, replace, multiple |
+# TPC-H DataFrame tests
+python -m pytest test_differential_v2.py::TestTPCH_DataFrame_Differential -v
 
-**Spark 4.0.1 Regression - FIXED (M31)**: Q3 and Q5 DataFrame API tests previously failed with schema inference error. Fixed by:
-1. Session caching in `SessionManager` to ensure same session ID reuses same DuckDB database
-2. Fixed `inferSchemaFromDuckDB()` to use correct session ID
-3. Fixed `Join.inferSchema()` to handle null child schemas gracefully
+# TPC-DS SQL tests (~5 minutes)
+python -m pytest test_tpcds_differential.py -k "Batch" -v
 
-**Window Function Fix (M38)**: The window function test was previously `xfail` due to ORDER BY translation bug (`DESCENDING` instead of `DESC`). Fixed by:
-1. Removed `toString()` override in `WindowFunction.java` that output Java enum names instead of SQL keywords
-2. Implemented `dataType()` method that was returning null
+# TPC-DS DataFrame tests
+python -m pytest test_tpcds_differential.py::TestTPCDS_DataFrame_Differential -v
 
-### TPC-DS Test Results (Retested 2025-12-16)
-| File | Tests | Status | Notes |
-|------|-------|--------|-------|
-| `test_tpcds_batch1.py` | 102 | **ALL PASS** | Q17, Q23b now pass |
-
-**Previously Failing TPC-DS Queries (Now Fixed):**
-- Q17: Was returning empty result - now passes
-- Q23b: Was returning empty result - now passes
-
-### Differential Test Results (Retested 2025-12-13)
-| File | Tests | Status | Notes |
-|------|-------|--------|-------|
-| `test_differential_tpch.py` | 22 | **1 PASS, 21 ERROR** | Missing `spark_local` fixture |
-
-**Note:** Differential tests require a `spark_local` fixture (real Spark server) which is not configured. Only Q1 test uses available fixtures.
-
-### Value Correctness Test Results (Partial - 2025-12-13)
-| File | Tests | Status | Notes |
-|------|-------|--------|-------|
-| `test_value_correctness.py` | 22 | **8+ PASS, ~14 UNTESTED** | Q2 hangs (complex query), stopped test |
-
-**Passing value correctness tests**: Q1, Q3, Q5, Q6, Q10, Q12, Q13, Q18
-**Note**: Test hung on Q2 - likely a very complex correlated subquery that takes too long or hangs.
-
----
-
-## Priority Fix List (Updated)
-
-| Priority | Issue | Impact | Status |
-|----------|-------|--------|--------|
-| **P0** | ~~Fix createOrReplaceTempView~~ | ~~Unblocks ALL TPC-H/TPC-DS tests~~ | **FIXED** |
-| **P1** | ~~Fix Q1/Q6 data issues~~ | ~~Accurate TPC-H validation~~ | **FIXED** |
-| **P2** | ~~Add `DropTempView` catalog operation~~ | ~~Proper view cleanup~~ | **FIXED** (M34) |
-| **P3** | ~~Add E2E tests for M19-M28 operations~~ | ~~Coverage for new features~~ | **DONE** |
-
----
-
-## E2E Test Coverage for M19-M28 Operations
-
-Operations implemented (M19-M28) now have E2E tests in `test_dataframe_operations.py`:
-
-| Feature | Milestone | PySpark API | Status | Notes |
-|---------|-----------|-------------|--------|-------|
-| Drop columns | M19 | `df.drop("col")` | **PASS** | Fixed in M32 |
-| WithColumn (new) | M19 | `df.withColumn("new", expr)` | **PASS** | Fixed in M32 |
-| WithColumn (replace) | M19 | `df.withColumn("old", expr)` | **PASS** | Fixed in M37 (COLUMNS lambda) |
-| WithColumnRenamed | M19 | `df.withColumnRenamed("old", "new")` | **PASS** | Fixed in M35 (PySpark 4.0 renames field) |
-| Offset | M20 | `df.offset(n)` | **PASS** | |
-| ToDF | M20 | `df.toDF("a", "b")` | **PASS** | Fixed in M32 |
-| Tail | M21 | `df.tail(n)` | **PASS** | Fixed in M33 |
-| Sample | M23 | `df.sample(0.1)` | **PASS** | |
-| WriteOperation | M24 | `df.write.parquet()` | **PASS** | All formats work |
-| Hint | M25 | `df.hint("BROADCAST")` | **PASS** | No-op passthrough |
-| Repartition | M25 | `df.repartition(n)` | **PASS** | No-op passthrough |
-| NADrop | M26 | `df.na.drop()` | **PASS** | Fixed in M37 (schema inference) |
-| NAFill | M26 | `df.na.fill()` | **PASS** | Fixed in M37 (schema inference) |
-| NAReplace | M26 | `df.na.replace()` | **PASS** | Fixed in M37 (schema inference) |
-| Unpivot | M27 | `df.unpivot()` | **PASS** | Fixed in M32 |
-| SubqueryAlias | M28 | `df.alias("t")` | **PASS** | Basic alias works |
-
-**Test Results**: 26 passed, 2 xfailed (expected failures documented)
-
----
-
-## Test Infrastructure Overview
-
-### Directory Structure
+# All DataFrame tests
+python -m pytest -k "dataframe" -v
 ```
-tests/integration/
-├── conftest.py                 # pytest fixtures (SESSION-SCOPED!)
-├── utils/
-│   ├── server_manager.py       # Server lifecycle
-│   └── result_validator.py     # Result validation
-├── test_simple_sql.py          # WORKS
-├── test_tpch_queries.py        # WORKS (10/15 pass)
-├── test_temp_views.py          # WORKS (after fix)
-├── test_tpcds_batch1.py        # Needs retest
-└── expected_results/           # Reference data (Parquet)
+
+---
+
+## Known Limitations
+
+### TPC-DS Q36 (Excluded)
+- Uses `GROUPING()` in window `PARTITION BY` clause
+- DuckDB does not support this pattern
+- A rewritten version exists (`q36_rewritten.sql`) using UNION ALL
+
+### TPC-DS Queries Incompatible with DataFrame API
+65 TPC-DS queries require SQL-specific features:
+- CTEs (WITH clauses): 26 queries
+- Subqueries in FROM clause: 36 queries
+- ROLLUP/GROUPING SETS: 10 queries
+- EXISTS/NOT EXISTS: 5 queries
+- INTERSECT/EXCEPT: 3 queries
+
+---
+
+## Test Infrastructure
+
+### File Structure
+```
+tests/
+├── scripts/
+│   ├── setup-differential-testing.sh     # One-time setup
+│   ├── run-differential-tests-v2.sh      # Run all tests
+│   ├── start-spark-4.0.1-reference.sh    # Start Spark reference
+│   └── stop-spark-4.0.1-reference.sh     # Stop Spark reference
+│
+├── integration/
+│   ├── .venv/                            # Python virtual environment
+│   ├── conftest.py                       # Pytest fixtures
+│   ├── test_differential_v2.py           # TPC-H differential tests
+│   ├── test_tpcds_differential.py        # TPC-DS differential tests
+│   └── utils/
+│       ├── dual_server_manager.py        # Server orchestration
+│       └── dataframe_diff.py             # Row-by-row comparison
 ```
 
 ### Key Fixtures
-- `server_manager` - Starts/stops Thunderduck server
-- `spark_session` - PySpark Spark Connect session
-- `tpch_tables` - **WORKING** - Creates temp views for TPC-H tables
-- `tpcds_tables` - Needs retest
-
-### How to Run Tests
-```bash
-# Start server first (required for tests)
-pkill -9 -f "thunderduck-connect-server"  # Kill any existing
-java --add-opens=java.base/java.nio=ALL-UNNAMED \
-  -jar /workspace/connect-server/target/thunderduck-connect-server-0.1.0-SNAPSHOT.jar &
-sleep 5
-
-# Run tests
-cd /workspace/tests/integration
-python3 -m pytest test_simple_sql.py -v           # Quick sanity check
-python3 -m pytest test_tpch_queries.py -v         # TPC-H tests
-python3 -m pytest test_tpch_dataframe_poc.py -v   # DataFrame operations
-```
+- `dual_server_manager` - Starts both Spark 4.0.1 and Thunderduck servers
+- `spark_reference` - PySpark session to Spark 4.0.1 (port 15003)
+- `spark_thunderduck` - PySpark session to Thunderduck (port 15002)
+- `tpch_tables_reference` / `tpch_tables_thunderduck` - TPC-H temp views
+- `tpcds_tables_reference` / `tpcds_tables_thunderduck` - TPC-DS temp views
 
 ---
 
-## Next Steps
+## Historical Issues (All Fixed)
 
-1. **~~Retest all TPC-H/TPC-DS tests~~** - DONE (2025-12-15 with Spark 4.0.1)
-2. **~~Fix Spark 4.0.1 schema inference regression~~** - DONE (M31)
-   - Fixed session caching in `SessionManager`
-   - Fixed `inferSchemaFromDuckDB()` to use correct session ID
-   - Fixed `Join.inferSchema()` null handling
-3. **~~Add E2E tests for M19-M28~~** - DONE (`test_dataframe_operations.py` - 13 pass, 15 xfail)
-4. **~~Investigate TPC-DS Q17/Q23b~~** - DONE - now pass (likely fixed by M31-M38 changes)
-5. **~~Fix window function ORDER BY bug~~** - DONE (M38) - removed bad toString() override
+| Issue | Milestone | Status |
+|-------|-----------|--------|
+| Temp view isolation | M29 | ✅ FIXED |
+| TPC-H data corruption | M29 | ✅ FIXED |
+| Spark 4.0.1 schema inference | M31 | ✅ FIXED |
+| Window function ORDER BY | M38 | ✅ FIXED |
+| NA functions schema inference | M37 | ✅ FIXED |
+| withColumn replace existing | M37 | ✅ FIXED |
 
 ---
 
-## Spark 4.0.1 Upgrade Details (2025-12-15)
+## Remaining Gaps / Future Work
 
-**PR**: lastrk/thunderduck#2 (by andreAmorimF)
+### Infrastructure
+| Priority | Item | Status |
+|----------|------|--------|
+| P1 | CI/CD integration for differential tests | TODO |
+| P3 | HTML test report generation | TODO |
+| P3 | Performance benchmarking reports | TODO |
 
-**Changes:**
-- Spark version: 3.5.3 → 4.0.1
-- PySpark version: 3.5.3 → 4.0.1
-- Java requirement: 11 → 17
-- New protos: `ml.proto`, `ml_common.proto`
-- Updated SQL extraction for backward compatibility with new `input` relation
+### Additional Test Suites (from Research)
 
-**Known Regression - FIXED (M31):**
-- Q3, Q5 DataFrame API tests were failing due to schema inference for `NamedTable`
-- Error: `Schema analysis failed: Cannot invoke "StructType.fields()" because schema is null`
-- Fix: Session caching + `Join.inferSchema()` null handling
+Based on research of public Spark test suites, these areas would improve coverage:
+
+| Priority | Test Suite | Operations | Status |
+|----------|------------|------------|--------|
+| P1 | Complex Data Types | `explode`, `collect_list`, `array_contains`, `flatten`, nested structs, maps | TODO |
+| P2 | Window Functions | `rank`, `dense_rank`, `row_number`, `lag`, `lead`, `first`, `last`, frame specs | TODO |
+| P2 | Multi-dimensional Aggregations | `pivot`, `unpivot`, `cube`, `rollup` | TODO |
+| P3 | Apache Spark DataFrameFunctionsSuite | Official function parity tests | TODO |
+
+**Details:**
+
+1. **Complex Data Types** (P1)
+   - Arrays: `explode`, `explode_outer`, `collect_list`, `collect_set`, `array_contains`, `flatten`
+   - Structs: Nested field access with dot notation, `withField`, `dropFields`
+   - Maps: `map_from_entries`, `explode` on maps, key-value operations
+   - Source: [Spark Complex Types](https://docs.databricks.com/en/optimizations/complex-types.html)
+
+2. **Window Functions** (P2)
+   - Ranking: `rank()`, `dense_rank()`, `row_number()`, `ntile()`
+   - Analytic: `lag()`, `lead()`, `first()`, `last()`
+   - Frame specs: `ROWS BETWEEN`, `RANGE BETWEEN`
+   - Source: [Spark Window Functions](https://spark.apache.org/docs/latest/sql-ref-syntax-qry-select-window.html)
+
+3. **Multi-dimensional Aggregations** (P2)
+   - `pivot()` - Rotate rows to columns with aggregation
+   - `unpivot()` - Rotate columns to rows (Spark 3.4+)
+   - `cube()` - All combinations of grouping columns
+   - `rollup()` - Hierarchical aggregations with subtotals
+
+4. **DataFrameFunctionsSuite** (P3)
+   - Source: `github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/DataFrameFunctionsSuite.scala`
+   - Comprehensive function parity tests from Apache Spark
+
+**Resources:**
+- [spark-fast-tests](https://github.com/mrpowers-io/spark-fast-tests) - Community testing library
+- [PySpark Testing Utils](https://spark.apache.org/docs/latest/api/python/getting_started/testing_pyspark.html) - Built-in Spark 3.5+
+- [spark-sql-perf](https://github.com/databricks/spark-sql-perf) - Databricks performance benchmarks
 
 ---
 
 ## References
 
-- Fix Details: `/workspace/docs/dev_journal/M29_TEMP_VIEW_FIX.md`
-- Gap Analysis: `/workspace/docs/SPARK_CONNECT_GAP_ANALYSIS.md`
-- Server Implementation: `/workspace/connect-server/src/main/java/com/thunderduck/connect/`
+- [Differential Testing Architecture](/workspace/docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
+- [Session Management Architecture](/workspace/docs/architect/SESSION_MANAGEMENT_ARCHITECTURE.md)
+- [M39 Dev Journal](/workspace/docs/dev_journal/M39_DIFFERENTIAL_TESTING_V2.md)
 
 ---
 
-**Document Version:** 1.8
-**Last Updated:** 2025-12-16 (Updated after M38 - All TPC-H and TPC-DS tests now pass)
+**Document Version:** 2.2
+**Last Updated:** 2025-12-16 (153 differential tests, organized future test suite TODOs)
