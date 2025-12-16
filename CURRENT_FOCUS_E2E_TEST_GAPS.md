@@ -142,7 +142,7 @@ Operations implemented (M19-M28) now have E2E tests in `test_dataframe_operation
 | Drop columns | M19 | `df.drop("col")` | **PASS** | Fixed in M32 |
 | WithColumn (new) | M19 | `df.withColumn("new", expr)` | **PASS** | Fixed in M32 |
 | WithColumn (replace) | M19 | `df.withColumn("old", expr)` | XFAIL | Value calculation issue |
-| WithColumnRenamed | M19 | `df.withColumnRenamed("old", "new")` | XFAIL | Schema still shows old name |
+| WithColumnRenamed | M19 | `df.withColumnRenamed("old", "new")` | **PASS** | Fixed in M35 (PySpark 4.0 renames field) |
 | Offset | M20 | `df.offset(n)` | **PASS** | |
 | ToDF | M20 | `df.toDF("a", "b")` | **PASS** | Fixed in M32 |
 | Tail | M21 | `df.tail(n)` | **PASS** | Fixed in M33 |
@@ -156,7 +156,7 @@ Operations implemented (M19-M28) now have E2E tests in `test_dataframe_operation
 | Unpivot | M27 | `df.unpivot()` | **PASS** | Fixed in M32 |
 | SubqueryAlias | M28 | `df.alias("t")` | **PASS** | Basic alias works |
 
-**Test Results**: 20 passed, 8 xfailed (expected failures documented)
+**Test Results**: 21 passed, 7 xfailed (expected failures documented)
 
 ---
 

@@ -71,7 +71,6 @@ class TestColumnOperations:
             assert row["n_nationkey"] == original_rows[i]["n_nationkey"] + 100
         print(f"withColumn replace: modified n_nationkey column")
 
-    @pytest.mark.xfail(reason="df.columns returns empty list - schema not returned")
     @pytest.mark.timeout(30)
     def test_with_column_renamed(self, spark, tpch_data_dir):
         """Test renaming a column"""

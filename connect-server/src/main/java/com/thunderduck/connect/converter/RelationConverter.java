@@ -586,7 +586,17 @@ public class RelationConverter {
     private LogicalPlan convertWithColumnsRenamed(org.apache.spark.connect.proto.WithColumnsRenamed withColumnsRenamed) {
         LogicalPlan input = convert(withColumnsRenamed.getInput());
 
-        Map<String, String> renameMap = withColumnsRenamed.getRenameColumnsMapMap();
+        // Build rename map from both the deprecated map and the new renames list
+        // PySpark 4.0+ uses the renames list, older versions use rename_columns_map
+        Map<String, String> renameMap = new java.util.LinkedHashMap<>();
+
+        // Add from deprecated map (for backward compatibility with older clients)
+        renameMap.putAll(withColumnsRenamed.getRenameColumnsMapMap());
+
+        // Add from new renames list (PySpark 4.0+)
+        for (org.apache.spark.connect.proto.WithColumnsRenamed.Rename rename : withColumnsRenamed.getRenamesList()) {
+            renameMap.put(rename.getColName(), rename.getNewColName());
+        }
 
         if (renameMap.isEmpty()) {
             logger.debug("WithColumnsRenamed: no columns to rename, returning input as-is");
