@@ -4,12 +4,20 @@ Pytest-based integration tests for Thunderduck Spark Connect server using PySpar
 
 ## Overview
 
-This test suite validates the Spark Connect server implementation by executing TPC-H and TPC-DS queries and DataFrame operations through a real PySpark Spark Connect client. Tests cover both SQL and DataFrame API approaches.
+This test suite validates the Spark Connect server implementation by executing TPC-H and TPC-DS queries, DataFrame operations, and function parity tests through a real PySpark Spark Connect client. Tests compare Thunderduck results against Apache Spark 4.0.1 reference.
 
-**Differential Test Coverage:**
-- **TPC-H**: 23 tests (Q1-Q22 + sanity test) - ALL PASSING
-- **TPC-DS**: 102 tests (94 standard queries + 8 variants) - ALL PASSING
-- **Total**: 125+ differential tests validating Spark 4.0.1 parity
+**Differential Test Coverage (266 tests - ALL PASSING):**
+
+| Test Suite | Tests | Description |
+|------------|-------|-------------|
+| TPC-H SQL | 23 | Q1-Q22 + sanity test |
+| TPC-H DataFrame | 4 | Q1, Q3, Q6, Q12 via DataFrame API |
+| TPC-DS SQL | 102 | Q1-Q99 (Q36 excluded) + variants |
+| TPC-DS DataFrame | 24 | 24 queries via DataFrame API |
+| Function Parity | 57 | Array, Map, Null, String, Math functions |
+| Multi-dim Aggregations | 21 | pivot, unpivot, cube, rollup |
+| Window Functions | 35 | rank, lag/lead, frame specs |
+| **Total** | **266** | **All passing against Spark 4.0.1** |
 
 ## Quick Start (Differential Tests)
 
@@ -19,8 +27,18 @@ The recommended way to run integration tests is via the differential testing fra
 # One-time setup (installs Spark 4.0.1, creates venv with all dependencies)
 ./tests/scripts/setup-differential-testing.sh
 
-# Run all differential tests
+# Run ALL differential tests (266 tests)
 ./tests/scripts/run-differential-tests-v2.sh
+
+# Run specific test group
+./tests/scripts/run-differential-tests-v2.sh tpch         # TPC-H tests (27 tests)
+./tests/scripts/run-differential-tests-v2.sh tpcds        # TPC-DS tests (126 tests)
+./tests/scripts/run-differential-tests-v2.sh functions    # Function parity (57 tests)
+./tests/scripts/run-differential-tests-v2.sh aggregations # Multi-dim aggregations (21 tests)
+./tests/scripts/run-differential-tests-v2.sh window       # Window functions (35 tests)
+
+# Show help
+./tests/scripts/run-differential-tests-v2.sh --help
 ```
 
 See [Differential Testing Architecture](../../docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md) for details.
@@ -34,10 +52,16 @@ tests/integration/
 ├── .venv/                          # Python virtual environment (created by setup script)
 ├── .env                            # Environment configuration
 │
-├── test_differential_v2.py         # TPC-H Differential tests - 23 tests
-├── test_tpcds_differential.py      # TPC-DS Differential tests - 102 tests
+│── # Differential Test Suites (266 tests total)
+├── test_differential_v2.py         # TPC-H SQL + DataFrame tests (27 tests)
+├── test_tpcds_differential.py      # TPC-DS SQL + DataFrame tests (126 tests)
+├── test_dataframe_functions.py     # Function parity tests (57 tests)
+├── test_multidim_aggregations.py   # pivot, unpivot, cube, rollup (21 tests)
+├── test_window_functions.py        # Window function tests (35 tests)
+│
+│── # Legacy/Utility Tests
 ├── test_simple_sql.py              # Basic SQL connectivity tests
-├── test_tpch_queries.py            # TPC-H query tests
+├── test_tpch_queries.py            # TPC-H query tests (standalone)
 ├── test_dataframe_operations.py    # DataFrame operation tests
 ├── test_temp_views.py              # Temp view functionality tests
 │
@@ -129,11 +153,16 @@ pytest tests/integration/ -v --timeout=120
 
 The test suite uses custom pytest markers to categorize tests:
 
+- `@pytest.mark.differential` - Differential tests (Spark vs Thunderduck)
 - `@pytest.mark.tpch` - TPC-H benchmark tests
+- `@pytest.mark.tpcds` - TPC-DS benchmark tests
 - `@pytest.mark.dataframe` - Tests using DataFrame API
 - `@pytest.mark.sql` - Tests using SQL
+- `@pytest.mark.functions` - DataFrame function parity tests
+- `@pytest.mark.aggregations` - Multi-dimensional aggregation tests
+- `@pytest.mark.window` - Window function tests
 - `@pytest.mark.slow` - Tests that take >10 seconds
-- `@pytest.mark.timeout(N)` - Tests with custom timeout
+- `@pytest.mark.quick` - Quick sanity tests
 
 Markers are automatically assigned based on test names.
 
@@ -164,11 +193,12 @@ class TestTPCHQuery1:
         # Execute both approaches and compare
 ```
 
-**Current Coverage** (125+ differential tests - all passing):
-- ✅ All TPC-H Q1-Q22 differential tests pass (23 tests)
-- ✅ All TPC-DS Q1-Q99 differential tests pass (102 tests, Q36 excluded)
-- ✅ TPC-DS variants: Q14a/b, Q23a/b, Q24a/b, Q39a/b
-- ✅ Window functions fully working (fixed in M38)
+**Current Coverage** (266 differential tests - all passing):
+- ✅ TPC-H: 27 tests (Q1-Q22 SQL + 4 DataFrame API)
+- ✅ TPC-DS: 126 tests (102 SQL + 24 DataFrame API, Q36 excluded)
+- ✅ Function Parity: 57 tests (array, map, null, string, math functions)
+- ✅ Multi-dim Aggregations: 21 tests (pivot, unpivot, cube, rollup)
+- ✅ Window Functions: 35 tests (ranking, analytic, frame specs)
 
 ### 2. Basic DataFrame Operations
 
@@ -483,7 +513,12 @@ To run tests in CI:
 
 ## Future Enhancements
 
-- [x] Add TPC-DS differential tests (102 tests, all passing)
+- [x] Add TPC-DS differential tests (126 tests, all passing)
+- [x] Add DataFrame function parity tests (57 tests)
+- [x] Add multi-dimensional aggregation tests (21 tests)
+- [x] Add window function tests (35 tests)
+- [x] Add test runner with named test groups
+- [ ] Add complex data types tests (nested structs, advanced array/map)
 - [ ] Add performance regression detection
 - [ ] Create HTML test report generation
 - [ ] Integrate into CI/CD pipeline

@@ -2,22 +2,33 @@
 
 **Last Updated:** 2025-12-16
 **Status:** Production Ready
+**Spark Version:** 4.0.1
 
 ## Overview
 
 The differential testing framework compares Thunderduck against Apache Spark 4.0.1 to ensure exact compatibility. Both systems run via Spark Connect protocol for fair comparison.
 
-**Test Coverage:**
-- **TPC-H**: 23 differential tests (Q1-Q22 + sanity test) - ALL PASSING
-- **TPC-DS**: 102 differential tests (94 standard queries + 8 variants) - ALL PASSING
-- **Total**: 125+ differential tests validating Spark parity
+**Test Coverage (266 tests - ALL PASSING):**
+
+| Test Category | Tests | Status |
+|--------------|-------|--------|
+| TPC-H SQL (Differential) | 23 | ✅ ALL PASS |
+| TPC-H DataFrame API (Differential) | 4 | ✅ ALL PASS |
+| TPC-DS SQL (Differential) | 102 | ✅ ALL PASS |
+| TPC-DS DataFrame API (Differential) | 24 | ✅ ALL PASS |
+| DataFrame Function Parity (Differential) | 57 | ✅ ALL PASS |
+| Multi-dimensional Aggregations (Differential) | 21 | ✅ ALL PASS |
+| Window Functions (Differential) | 35 | ✅ ALL PASS |
+| **Total Differential Tests** | **266** | ✅ **ALL PASS** |
 
 ## Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                    Test Suite (Pytest)                        │
-│                  test_differential_v2.py                      │
+│        test_differential_v2.py / test_tpcds_differential.py   │
+│        test_dataframe_functions.py / test_multidim_agg.py     │
+│                   test_window_functions.py                    │
 └───────────────────┬────────────────┬─────────────────────────┘
                     │                │
         ┌───────────▼──────┐  ┌──────▼──────────┐
@@ -153,7 +164,7 @@ Test runner that:
 tests/
 ├── scripts/
 │   ├── setup-differential-testing.sh     # One-time setup
-│   ├── run-differential-tests-v2.sh      # Run tests
+│   ├── run-differential-tests-v2.sh      # Run tests with named groups
 │   ├── start-spark-4.0.1-reference.sh    # Start Spark
 │   └── stop-spark-4.0.1-reference.sh     # Stop Spark
 │
@@ -161,13 +172,19 @@ tests/
 │   ├── .venv/                            # Python virtual environment
 │   ├── .env                              # Environment config
 │   ├── conftest.py                       # Pytest fixtures
-│   ├── test_differential_v2.py           # TPC-H differential tests (23 tests)
-│   ├── test_tpcds_differential.py        # TPC-DS differential tests (102 tests)
+│   │
+│   │── # Differential Test Suites (266 tests total)
+│   ├── test_differential_v2.py           # TPC-H SQL + DataFrame tests (27 tests)
+│   ├── test_tpcds_differential.py        # TPC-DS SQL + DataFrame tests (126 tests)
+│   ├── test_dataframe_functions.py       # Function parity tests (57 tests)
+│   ├── test_multidim_aggregations.py     # pivot, unpivot, cube, rollup (21 tests)
+│   ├── test_window_functions.py          # Window function tests (35 tests)
+│   │
 │   └── utils/
 │       ├── dual_server_manager.py        # Server orchestration
-│       ├── dataframe_diff.py             # Comparison utility
+│       ├── dataframe_diff.py             # Row-by-row comparison utility
 │       ├── server_manager.py             # Single server manager
-│       └── result_validator.py           # Legacy validator
+│       └── result_validator.py           # Result validation utilities
 
 benchmarks/
 ├── tpch_queries/                         # TPC-H SQL queries (Q1-Q22)
@@ -182,11 +199,32 @@ benchmarks/
 # One-time setup
 ./tests/scripts/setup-differential-testing.sh
 
-# Run all tests
+# Run ALL differential tests (266 tests)
 ./tests/scripts/run-differential-tests-v2.sh
 ```
 
-### Running Specific Tests
+### Running by Test Group
+
+The test runner supports named test groups for targeted testing:
+
+```bash
+# Run specific test group
+./tests/scripts/run-differential-tests-v2.sh tpch         # TPC-H tests (27 tests)
+./tests/scripts/run-differential-tests-v2.sh tpcds        # TPC-DS tests (126 tests)
+./tests/scripts/run-differential-tests-v2.sh functions    # Function parity (57 tests)
+./tests/scripts/run-differential-tests-v2.sh aggregations # Multi-dim aggregations (21 tests)
+./tests/scripts/run-differential-tests-v2.sh window       # Window functions (35 tests)
+./tests/scripts/run-differential-tests-v2.sh all          # All tests (default)
+
+# With additional pytest args
+./tests/scripts/run-differential-tests-v2.sh window -x    # Stop on first failure
+./tests/scripts/run-differential-tests-v2.sh all --tb=long # Verbose traceback
+
+# Show help
+./tests/scripts/run-differential-tests-v2.sh --help
+```
+
+### Running with Pytest Directly
 
 ```bash
 # Activate venv first
@@ -199,15 +237,22 @@ python -m pytest test_differential_v2.py -v
 # Run all TPC-DS tests (~5 minutes)
 python -m pytest test_tpcds_differential.py -k "Batch" -v
 
+# Run function parity tests
+python -m pytest test_dataframe_functions.py -v
+
+# Run aggregation tests
+python -m pytest test_multidim_aggregations.py -v
+
+# Run window function tests
+python -m pytest test_window_functions.py -v
+
 # Run specific TPC-H query
 python -m pytest test_differential_v2.py::TestTPCH_Q1_Differential -v -s
 
-# Run specific TPC-DS batch
-python -m pytest test_tpcds_differential.py::TestTPCDS_Batch1 -v
-
-# Run sanity tests
-python -m pytest test_differential_v2.py::TestDifferential_Sanity -v -s
-python -m pytest test_tpcds_differential.py::TestTPCDS_Sanity -v -s
+# Run by marker
+python -m pytest -m "differential" -v  # All differential tests
+python -m pytest -m "window" -v        # Window function tests
+python -m pytest -m "functions" -v     # Function parity tests
 ```
 
 ## Test Output
@@ -295,19 +340,95 @@ source tests/integration/.venv/bin/activate
 python -c "import pyspark; print(pyspark.__version__)"
 ```
 
+## Detailed Test Coverage
+
+### TPC-H Tests (27 tests)
+
+- **SQL Tests**: Q1-Q22 (23 queries)
+- **DataFrame API Tests**: Q1, Q3, Q6, Q12 (4 queries)
+- Sanity test
+
+### TPC-DS Tests (126 tests)
+
+- **SQL Tests**: Q1-Q99 (102 queries, Q36 excluded)
+- **Variant queries**: Q14a/b, Q23a/b, Q24a/b, Q39a/b
+- **DataFrame API Tests**: 24 queries (Q3, Q7, Q12, Q13, Q15, Q19, Q20, Q26, Q37, Q41, Q42, Q43, Q45, Q48, Q50, Q52, Q55, Q62, Q82, Q84, Q91, Q96, Q98, Q99)
+- **Q36 Excluded**: Uses `GROUPING()` in window `PARTITION BY`, unsupported by DuckDB
+
+### DataFrame Function Parity Tests (57 tests)
+
+| Test Class | Tests | Functions Covered |
+|------------|-------|-------------------|
+| TestArrayFunctions | 17 | `array_contains`, `array_size`, `sort_array`, `array_distinct`, `array_union`, `array_intersect`, `array_except`, `arrays_overlap`, `array_position`, `element_at`, `explode`, `explode_outer`, `flatten`, `reverse`, `slice`, `array_join` |
+| TestMapFunctions | 7 | `map_keys`, `map_values`, `map_entries`, `size`, `element_at`, `map_from_arrays`, `explode` on maps |
+| TestNullFunctions | 8 | `coalesce`, `isnull`, `isnotnull`, `ifnull`, `nvl`, `nvl2`, `nullif`, `nanvl` |
+| TestStringFunctions | 14 | `concat`, `concat_ws`, `upper`, `lower`, `trim`, `ltrim`, `rtrim`, `length`, `substring`, `instr`, `locate`, `lpad`, `rpad`, `repeat`, `reverse`, `split`, `replace`, `initcap` |
+| TestMathFunctions | 11 | `abs`, `ceil`, `floor`, `round`, `sqrt`, `pow`, `mod`, `pmod`, `greatest`, `least`, `log`, `exp`, `sign` |
+
+### Multi-dimensional Aggregation Tests (21 tests)
+
+| Test Class | Tests | Operations Covered |
+|------------|-------|--------------------|
+| TestPivotFunctions | 6 | `pivot` with sum, avg, max/min, multiple aggregations, explicit values, multiple groupBy |
+| TestUnpivotFunctions | 3 | `unpivot`, `melt`, subset columns |
+| TestCubeFunctions | 4 | `cube` with single/two columns, `grouping()`, `grouping_id()` |
+| TestRollupFunctions | 5 | `rollup` with single/two/three columns, `grouping()`, with filter |
+| TestAdvancedAggregations | 3 | cube vs rollup comparison, pivot then aggregate, multiple aggregations |
+
+### Window Function Tests (35 tests)
+
+| Test Class | Tests | Functions Covered |
+|------------|-------|-------------------|
+| TestRankingFunctions | 7 | `row_number`, `rank`, `dense_rank`, `ntile`, `percent_rank`, `cume_dist`, multiple ranking |
+| TestAnalyticFunctions | 10 | `lag`, `lead` (with offset/default), `first`, `last`, `nth_value`, combined lag/lead |
+| TestFrameSpecifications | 7 | `ROWS BETWEEN`, `RANGE BETWEEN` with various boundaries (unbounded, fixed, current) |
+| TestAggregateWindowFunctions | 6 | `sum`, `avg`, `min`, `max`, `count`, `stddev` over windows, ratio to partition |
+| TestAdvancedWindowFunctions | 5 | multiple windows, window with filter, running difference, cumulative metrics, global window |
+
+### DataFrame API Operations Tested
+
+| Operation | Coverage |
+|-----------|----------|
+| `filter()` | All 28 DataFrame tests |
+| `groupBy().agg()` | Q1, Q3, Q6, Q7, Q12, Q13, Q15, Q19, Q20, Q26, Q37, Q42, Q43, Q45, Q48, Q50, Q52, Q55, Q62, Q82, Q84, Q91, Q96, Q98, Q99 |
+| `join()` (multi-table) | Q3, Q7, Q12, Q13, Q15, Q19, Q20, Q26, Q37, Q43, Q45, Q48, Q50, Q62, Q82, Q84, Q91, Q96, Q99 |
+| `orderBy()` / `limit()` | Most queries |
+| `F.sum()`, `F.avg()`, `F.count()` | Q1, Q3, Q6, Q7, Q12, Q13, Q20, Q26, Q43, Q52, Q55, Q62, Q91, Q98, Q99 |
+| `F.when().otherwise()` | Q12, Q43, Q62, Q99 (conditional aggregation) |
+| `F.col().isin()` | Q7, Q12, Q15, Q20, Q26, Q37, Q41, Q45, Q82, Q91 |
+| Window functions | Q12, Q20, Q98 (partition by, revenue ratio) |
+| `F.substring()` | Q19, Q62, Q99 |
+| `F.concat_ws()` | Q84 |
+| `distinct()` | Q41, Q84 |
+| Left joins | Q37, Q82 |
+
 ## Future Work
 
-1. ~~Add TPC-DS differential tests~~ ✅ DONE (102 tests passing)
-2. Add performance benchmarking and reporting
-3. Integrate into CI/CD pipeline
-4. Add more detailed performance metrics collection
+1. ~~Add TPC-DS differential tests~~ ✅ DONE (126 tests)
+2. ~~Add DataFrame function parity tests~~ ✅ DONE (57 tests)
+3. ~~Add multi-dimensional aggregation tests~~ ✅ DONE (21 tests)
+4. ~~Add window function tests~~ ✅ DONE (35 tests)
+5. Add complex data types tests (nested structs, advanced array/map) - TODO
+6. Add performance benchmarking and reporting - TODO
+7. Integrate into CI/CD pipeline - TODO
+8. Create HTML test report generation - TODO
 
-## TPC-DS Coverage Notes
+## Known Limitations
 
-TPC-DS differential tests cover 94/99 standard queries:
-- **Excluded:** Q36 (uses `GROUPING()` in window `PARTITION BY`, unsupported by DuckDB)
-- **Variants included:** Q14a/b, Q23a/b, Q24a/b, Q39a/b
-- **Total coverage:** 98/99 unique query patterns (99%)
+### TPC-DS Q36 (Excluded)
+
+- Uses `GROUPING()` in window `PARTITION BY` clause
+- DuckDB does not support this pattern
+- A rewritten version exists (`q36_rewritten.sql`) using UNION ALL
+
+### TPC-DS Queries Incompatible with DataFrame API
+
+65 TPC-DS queries require SQL-specific features:
+- CTEs (WITH clauses): 26 queries
+- Subqueries in FROM clause: 36 queries
+- ROLLUP/GROUPING SETS: 10 queries
+- EXISTS/NOT EXISTS: 5 queries
+- INTERSECT/EXCEPT: 3 queries
 
 ---
 

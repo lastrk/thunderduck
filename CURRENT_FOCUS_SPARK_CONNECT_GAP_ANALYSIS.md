@@ -1,8 +1,9 @@
 # Spark Connect 4.0.x Gap Analysis for Thunderduck
 
-**Version:** 3.0
-**Date:** 2025-12-15
+**Version:** 3.1
+**Date:** 2025-12-16
 **Purpose:** Comprehensive analysis of Spark Connect operator support in Thunderduck
+**Validation:** 266 differential tests (all passing) - see [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
 
 ---
 
@@ -267,9 +268,11 @@ These functions have explicit mappings in `ExpressionConverter.mapFunctionName()
 
 ### 5.2 Window Functions
 
-Supported window functions:
-- `ROW_NUMBER`, `RANK`, `DENSE_RANK`, `PERCENT_RANK`, `NTILE`, `CUME_DIST`
-- `LAG`, `LEAD`, `FIRST_VALUE`, `LAST_VALUE`, `NTH_VALUE`
+Supported window functions (validated by 35 differential tests):
+- **Ranking**: `ROW_NUMBER`, `RANK`, `DENSE_RANK`, `PERCENT_RANK`, `NTILE`, `CUME_DIST`
+- **Analytic**: `LAG`, `LEAD`, `FIRST_VALUE`, `LAST_VALUE`, `NTH_VALUE`
+- **Aggregate over windows**: `SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `STDDEV`
+- **Frame specifications**: `ROWS BETWEEN`, `RANGE BETWEEN` with unbounded/fixed/current boundaries
 
 ### 5.3 Binary/Unary Operators
 
@@ -286,6 +289,28 @@ Fully supported:
 | `ISIN` / `IN` | ✅ | Converted to SQL IN clause |
 | `WHEN` / `CASE_WHEN` | ✅ | Converted to CASE statement |
 | `OTHERWISE` | ✅ | ELSE clause handling |
+
+### 5.5 Validated Functions (57 Differential Tests)
+
+The following functions are validated by differential tests comparing Thunderduck against Spark 4.0.1:
+
+| Category | Functions Validated |
+|----------|---------------------|
+| **Array** (17 tests) | `array_contains`, `array_size`, `sort_array`, `array_distinct`, `array_union`, `array_intersect`, `array_except`, `arrays_overlap`, `array_position`, `element_at`, `explode`, `explode_outer`, `flatten`, `reverse`, `slice`, `array_join` |
+| **Map** (7 tests) | `map_keys`, `map_values`, `map_entries`, `size`, `element_at`, `map_from_arrays`, `explode` on maps |
+| **Null** (8 tests) | `coalesce`, `isnull`, `isnotnull`, `ifnull`, `nvl`, `nvl2`, `nullif`, `nanvl` |
+| **String** (14 tests) | `concat`, `concat_ws`, `upper`, `lower`, `trim`, `ltrim`, `rtrim`, `length`, `substring`, `instr`, `locate`, `lpad`, `rpad`, `repeat`, `reverse`, `split`, `replace`, `initcap` |
+| **Math** (11 tests) | `abs`, `ceil`, `floor`, `round`, `sqrt`, `pow`, `mod`, `pmod`, `greatest`, `least`, `log`, `exp`, `sign` |
+
+### 5.6 Multi-dimensional Aggregations (21 Differential Tests)
+
+| Operation | Tests | Notes |
+|-----------|-------|-------|
+| `pivot` | 6 | With sum, avg, max/min, multiple aggregations, explicit values |
+| `unpivot` / `melt` | 3 | Wide to long format transformation |
+| `cube` | 4 | With grouping(), grouping_id() |
+| `rollup` | 5 | Hierarchical aggregation with grouping() |
+| Advanced | 3 | Cube vs rollup, pivot then aggregate |
 
 ---
 
@@ -518,18 +543,21 @@ spark.catalog.listTables()                    # Catalog operations
 
 ---
 
-**Document Version:** 3.0
-**Last Updated:** 2025-12-15
+**Document Version:** 3.1
+**Last Updated:** 2025-12-16
 **Author:** Analysis generated from Spark Connect 4.0.x protobuf definitions
-**M19 Update:** Added Drop, WithColumns, WithColumnsRenamed implementations
-**M20 Update:** Added Offset, ToDF implementations
-**M21 Update:** Added Tail implementation (memory-efficient O(N) via TailBatchCollector)
-**M22 Update:** ShowString confirmed fully implemented (was incorrectly marked partial)
-**v1.5 Update:** Clarified actions vs transformations; added semantic classification
-**v1.6 Update:** Corrected ShowString to fully implemented (19 relations, 1 partial)
-**v1.7 Update:** Added Sample (M23) - Bernoulli sampling via USING SAMPLE
-**v1.8 Update:** Added WriteOperation (M24) - df.write.parquet/csv/json support
-**v1.9 Update:** Added Hint, Repartition, RepartitionByExpression (M25) - no-op pass-throughs for distributed ops
-**v2.0 Update:** Added NADrop, NAFill, NAReplace (M26) - df.na.drop/fill/replace via schema inference + SQL generation
-**v2.1 Update:** Added Unpivot (M27) - df.unpivot() via DuckDB native UNPIVOT syntax with schema inference for values=None
-**v2.2 Update:** Added SubqueryAlias (M28) - df.alias() via subquery wrapping. Phase 2 complete! 28/40 relations (70%)
+
+### Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| v3.1 | 2025-12-16 | Added differential test validation (266 tests). Expanded function support with validated functions (57 tests), window functions (35 tests), multi-dim aggregations (21 tests). |
+| v3.0 | 2025-12-15 | Added SubqueryAlias (M28). Phase 2 complete! 28/40 relations (70%) |
+| v2.1 | 2025-12-12 | Added Unpivot (M27) via DuckDB native UNPIVOT |
+| v2.0 | 2025-12-12 | Added NADrop, NAFill, NAReplace (M26) |
+| v1.9 | 2025-12-12 | Added Hint, Repartition, RepartitionByExpression (M25) - no-op pass-throughs |
+| v1.8 | 2025-12-12 | Added WriteOperation (M24) - df.write.parquet/csv/json |
+| v1.7 | 2025-12-12 | Added Sample (M23) - Bernoulli sampling |
+| v1.6 | 2025-12-10 | Corrected ShowString to fully implemented |
+| v1.5 | 2025-12-10 | Clarified actions vs transformations |
+| v1.0-1.4 | 2025-12-10 | Initial analysis, M19-M22 implementations |

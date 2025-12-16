@@ -287,6 +287,12 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "functions: mark test as DataFrame function parity test"
     )
+    config.addinivalue_line(
+        "markers", "aggregations: mark test as multi-dimensional aggregation test"
+    )
+    config.addinivalue_line(
+        "markers", "window: mark test as window function test"
+    )
 
 
 def pytest_collection_modifyitems(config, items):
