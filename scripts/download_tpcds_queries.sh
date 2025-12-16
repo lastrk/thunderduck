@@ -1,5 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Download all 99 TPC-DS queries from databricks/spark-sql-perf
+#
+# Compatible with both bash and zsh
 
 mkdir -p /workspace/benchmarks/tpcds_queries
 cd /workspace/benchmarks/tpcds_queries

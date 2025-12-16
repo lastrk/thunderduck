@@ -1,11 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Setup script for Differential Testing V2
 # Creates a reproducible environment for running differential tests
 # between Apache Spark 4.0.1 and Thunderduck
+#
+# Compatible with both bash and zsh
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Detect shell and get script directory
+if [ -n "$ZSH_VERSION" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
+elif [ -n "$BASH_VERSION" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+    # Fallback for POSIX shells
+    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+fi
 WORKSPACE_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SPARK_VERSION="4.0.1"
 SPARK_INSTALL_DIR="${SPARK_INSTALL_DIR:-$HOME/spark}"

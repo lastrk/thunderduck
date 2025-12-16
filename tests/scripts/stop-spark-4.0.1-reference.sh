@@ -1,5 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Stop Apache Spark 4.0.1 Connect reference server
+#
+# Compatible with both bash and zsh
 
 SPARK_HOME="${SPARK_HOME:-/home/vscode/spark/current}"
 SPARK_PORT=15003

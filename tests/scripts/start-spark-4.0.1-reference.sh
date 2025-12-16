@@ -1,5 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Start Apache Spark 4.0.1 Connect server on port 15003 for differential testing
+#
+# Compatible with both bash and zsh
 
 set -e
 

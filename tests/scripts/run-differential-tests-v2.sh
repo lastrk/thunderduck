@@ -1,6 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Run differential tests using the V2 framework
 # This script activates the venv, runs tests, and ensures proper cleanup
+#
+# Compatible with both bash 4+ and zsh
 #
 # Usage:
 #   ./run-differential-tests-v2.sh [test-group] [pytest-args...]
@@ -18,9 +20,29 @@
 #   ./run-differential-tests-v2.sh tpch         # Run only TPC-H tests
 #   ./run-differential-tests-v2.sh window -x    # Run window tests, stop on first failure
 
+# Detect shell and set compatibility mode
+if [ -n "$ZSH_VERSION" ]; then
+    # Running in zsh - enable bash-like array behavior
+    emulate -L sh
+    setopt SH_WORD_SPLIT
+    SCRIPT_PATH="${(%):-%x}"
+elif [ -n "$BASH_VERSION" ]; then
+    # Running in bash - check version
+    if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+        echo "ERROR: This script requires bash 4.0 or later (found: $BASH_VERSION)"
+        echo "Please upgrade bash or run on a system with bash 4+"
+        exit 1
+    fi
+    SCRIPT_PATH="${BASH_SOURCE[0]}"
+else
+    echo "ERROR: This script requires bash 4+ or zsh"
+    echo "Please run with: bash $0 $* (or zsh $0 $*)"
+    exit 1
+fi
+
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 WORKSPACE_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 VENV_DIR="$WORKSPACE_DIR/tests/integration/.venv"
 SPARK_HOME="${SPARK_HOME:-$HOME/spark/current}"
@@ -33,23 +55,59 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# Test group definitions
-declare -A TEST_GROUPS
-TEST_GROUPS[tpch]="test_differential_v2.py"
-TEST_GROUPS[tpcds]="test_tpcds_differential.py"
-TEST_GROUPS[functions]="test_dataframe_functions.py"
-TEST_GROUPS[aggregations]="test_multidim_aggregations.py"
-TEST_GROUPS[window]="test_window_functions.py"
-TEST_GROUPS[all]="test_differential_v2.py test_tpcds_differential.py test_dataframe_functions.py test_multidim_aggregations.py test_window_functions.py"
+# Test group definitions - shell-portable approach
+# Format: "group:files:description"
+get_test_files() {
+    case "$1" in
+        tpch)
+            echo "test_differential_v2.py"
+            ;;
+        tpcds)
+            echo "test_tpcds_differential.py"
+            ;;
+        functions)
+            echo "test_dataframe_functions.py"
+            ;;
+        aggregations)
+            echo "test_multidim_aggregations.py"
+            ;;
+        window)
+            echo "test_window_functions.py"
+            ;;
+        all)
+            echo "test_differential_v2.py test_tpcds_differential.py test_dataframe_functions.py test_multidim_aggregations.py test_window_functions.py"
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
+}
 
-# Test group descriptions for help
-declare -A TEST_DESCRIPTIONS
-TEST_DESCRIPTIONS[tpch]="TPC-H SQL and DataFrame tests"
-TEST_DESCRIPTIONS[tpcds]="TPC-DS SQL and DataFrame tests"
-TEST_DESCRIPTIONS[functions]="DataFrame function parity tests"
-TEST_DESCRIPTIONS[aggregations]="Multi-dimensional aggregation tests"
-TEST_DESCRIPTIONS[window]="Window function tests"
-TEST_DESCRIPTIONS[all]="All differential tests"
+get_test_description() {
+    case "$1" in
+        tpch)
+            echo "TPC-H SQL and DataFrame tests"
+            ;;
+        tpcds)
+            echo "TPC-DS SQL and DataFrame tests"
+            ;;
+        functions)
+            echo "DataFrame function parity tests"
+            ;;
+        aggregations)
+            echo "Multi-dimensional aggregation tests"
+            ;;
+        window)
+            echo "Window function tests"
+            ;;
+        all)
+            echo "All differential tests"
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
+}
 
 # Track if we started servers (for cleanup)
 SPARK_STARTED=false
@@ -200,24 +258,24 @@ TEST_GROUP="${1:-all}"
 PYTEST_ARGS="${@:2}"
 
 # Check if first arg is a valid test group or a pytest arg
-if [[ -z "${TEST_GROUPS[$TEST_GROUP]}" ]]; then
+TEST_FILES="$(get_test_files "$TEST_GROUP")"
+if [ -z "$TEST_FILES" ]; then
     # Not a known test group - might be a pytest arg or file path
     if [[ "$TEST_GROUP" == -* || "$TEST_GROUP" == *.py ]]; then
         # It's a pytest arg or file, use 'all' as default group
         PYTEST_ARGS="$@"
         TEST_GROUP="all"
+        TEST_FILES="$(get_test_files "$TEST_GROUP")"
     else
         echo -e "${RED}ERROR: Unknown test group '$TEST_GROUP'${NC}"
         echo ""
         echo "Available test groups:"
         for group in tpch tpcds functions aggregations window all; do
-            echo "  $group - ${TEST_DESCRIPTIONS[$group]}"
+            echo "  $group - $(get_test_description "$group")"
         done
         exit 1
     fi
 fi
-
-TEST_FILES="${TEST_GROUPS[$TEST_GROUP]}"
 
 # ------------------------------------------------------------------------------
 # Run tests
@@ -225,7 +283,7 @@ TEST_FILES="${TEST_GROUPS[$TEST_GROUP]}"
 echo ""
 echo -e "${BLUE}[4/4] Running tests...${NC}"
 echo ""
-echo -e "  ${CYAN}Test group:${NC} $TEST_GROUP (${TEST_DESCRIPTIONS[$TEST_GROUP]})"
+echo -e "  ${CYAN}Test group:${NC} $TEST_GROUP ($(get_test_description "$TEST_GROUP"))"
 echo -e "  ${CYAN}Test files:${NC} $TEST_FILES"
 if [ -n "$PYTEST_ARGS" ]; then
     echo -e "  ${CYAN}Pytest args:${NC} $PYTEST_ARGS"
