@@ -295,4 +295,47 @@ public class StreamingResultHandler {
         // Send completion marker
         sendResultComplete();
     }
+
+    /**
+     * Stream a VectorSchemaRoot result directly to the client.
+     *
+     * <p>This is used for catalog operations like listTables that return
+     * table-like results constructed programmatically.
+     *
+     * @param root the VectorSchemaRoot containing results
+     * @throws IOException if serialization fails
+     */
+    public void streamArrowResult(VectorSchemaRoot root) throws IOException {
+        // Serialize to Arrow IPC format
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (ArrowStreamWriter writer = new ArrowStreamWriter(
+                root, null, Channels.newChannel(out))) {
+            writer.start();
+            writer.writeBatch();
+            writer.end();
+        }
+
+        byte[] arrowData = out.toByteArray();
+
+        // Build gRPC response with Arrow batch
+        ExecutePlanResponse response = ExecutePlanResponse.newBuilder()
+            .setSessionId(sessionId)
+            .setOperationId(operationId)
+            .setResponseId(UUID.randomUUID().toString())
+            .setArrowBatch(ExecutePlanResponse.ArrowBatch.newBuilder()
+                .setRowCount(root.getRowCount())
+                .setData(ByteString.copyFrom(arrowData))
+                .build())
+            .build();
+
+        responseObserver.onNext(response);
+        batchIndex++;
+        totalRows += root.getRowCount();
+
+        logger.debug("[{}] Sent Arrow result: {} rows, {} bytes",
+            operationId, root.getRowCount(), arrowData.length);
+
+        // Send completion marker
+        sendResultComplete();
+    }
 }

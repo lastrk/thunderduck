@@ -1,6 +1,6 @@
 # Spark Connect 4.0.x Gap Analysis for Thunderduck
 
-**Version:** 3.1
+**Version:** 3.2
 **Date:** 2025-12-16
 **Purpose:** Comprehensive analysis of Spark Connect operator support in Thunderduck
 **Validation:** 266 differential tests (all passing) - see [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
@@ -22,9 +22,11 @@ This document provides a detailed gap analysis between Spark Connect 4.0.x's pro
 | Relations | 40 | 28 | 0 | **70%** |
 | Expressions | 16 | 9 | 0 | **56.25%** |
 | Commands | 10 | 2 | 1 | **25-30%** |
-| Catalog | 26 | 0 | 0 | **0%** |
+| Catalog | 26 | 8 | 0 | **31%** |
 
 *Partial implementations*: WriteOperation (local paths only, S3/cloud needs httpfs extension)
+
+*Catalog Note*: 8 high-value operations implemented (M41). Remaining operations are mostly no-ops for DuckDB.
 
 ---
 
@@ -202,36 +204,41 @@ Catalog operations allow interaction with Spark's metadata catalog.
 
 ### 4.1 Implementation Status
 
-All catalog operations are **NOT IMPLEMENTED**:
+**Implemented (M41, 2025-12-16):**
+
+| Operation | Proto Message | Status | Use Case |
+|-----------|---------------|--------|----------|
+| **DropTempView** | `drop_temp_view` | ✅ Implemented | `spark.catalog.dropTempView` |
+| **TableExists** | `table_exists` | ✅ Implemented | `spark.catalog.tableExists` |
+| **DatabaseExists** | `database_exists` | ✅ Implemented | `spark.catalog.databaseExists` |
+| **ListTables** | `list_tables` | ✅ Implemented | `spark.catalog.listTables` |
+| **ListColumns** | `list_columns` | ✅ Implemented | `spark.catalog.listColumns` |
+| **ListDatabases** | `list_databases` | ✅ Implemented | `spark.catalog.listDatabases` |
+| **CurrentDatabase** | `current_database` | ✅ Implemented | `spark.catalog.currentDatabase` |
+| **SetCurrentDatabase** | `set_current_database` | ✅ Implemented | `spark.catalog.setCurrentDatabase` |
+
+**Not Implemented:**
 
 | Operation | Proto Message | Priority | Use Case |
 |-----------|---------------|----------|----------|
-| **CurrentDatabase** | `current_database` | 🟡 MEDIUM | `spark.catalog.currentDatabase` |
-| **SetCurrentDatabase** | `set_current_database` | 🟡 MEDIUM | `spark.catalog.setCurrentDatabase` |
-| **ListDatabases** | `list_databases` | 🟡 MEDIUM | `spark.catalog.listDatabases` |
-| **ListTables** | `list_tables` | 🟡 MEDIUM | `spark.catalog.listTables` |
 | **ListFunctions** | `list_functions` | 🟢 LOW | `spark.catalog.listFunctions` |
-| **ListColumns** | `list_columns` | 🟡 MEDIUM | `spark.catalog.listColumns` |
 | **GetDatabase** | `get_database` | 🟢 LOW | `spark.catalog.getDatabase` |
 | **GetTable** | `get_table` | 🟢 LOW | `spark.catalog.getTable` |
 | **GetFunction** | `get_function` | 🟢 LOW | `spark.catalog.getFunction` |
-| **DatabaseExists** | `database_exists` | 🟡 MEDIUM | `spark.catalog.databaseExists` |
-| **TableExists** | `table_exists` | 🟡 MEDIUM | `spark.catalog.tableExists` |
 | **FunctionExists** | `function_exists` | 🟢 LOW | `spark.catalog.functionExists` |
 | **CreateExternalTable** | `create_external_table` | 🟡 MEDIUM | `spark.catalog.createExternalTable` |
 | **CreateTable** | `create_table` | 🟡 MEDIUM | `spark.catalog.createTable` |
-| **DropTempView** | `drop_temp_view` | 🔴 HIGH | `spark.catalog.dropTempView` |
 | **DropGlobalTempView** | `drop_global_temp_view` | 🟡 MEDIUM | `spark.catalog.dropGlobalTempView` |
-| **RecoverPartitions** | `recover_partitions` | 🟢 LOW | `spark.catalog.recoverPartitions` |
-| **IsCached** | `is_cached` | 🟢 LOW | `spark.catalog.isCached` |
-| **CacheTable** | `cache_table` | 🟢 LOW | `spark.catalog.cacheTable` |
-| **UncacheTable** | `uncache_table` | 🟢 LOW | `spark.catalog.uncacheTable` |
-| **ClearCache** | `clear_cache` | 🟢 LOW | `spark.catalog.clearCache` |
-| **RefreshTable** | `refresh_table` | 🟢 LOW | `spark.catalog.refreshTable` |
-| **RefreshByPath** | `refresh_by_path` | 🟢 LOW | `spark.catalog.refreshByPath` |
-| **CurrentCatalog** | `current_catalog` | 🟢 LOW | `spark.catalog.currentCatalog` |
-| **SetCurrentCatalog** | `set_current_catalog` | 🟢 LOW | `spark.catalog.setCurrentCatalog` |
-| **ListCatalogs** | `list_catalogs` | 🟢 LOW | `spark.catalog.listCatalogs` |
+| **RecoverPartitions** | `recover_partitions` | 🟢 LOW | No-op in DuckDB |
+| **IsCached** | `is_cached` | 🟢 LOW | No-op (always false) |
+| **CacheTable** | `cache_table` | 🟢 LOW | No-op in DuckDB |
+| **UncacheTable** | `uncache_table` | 🟢 LOW | No-op in DuckDB |
+| **ClearCache** | `clear_cache` | 🟢 LOW | No-op in DuckDB |
+| **RefreshTable** | `refresh_table` | 🟢 LOW | No-op in DuckDB |
+| **RefreshByPath** | `refresh_by_path` | 🟢 LOW | No-op in DuckDB |
+| **CurrentCatalog** | `current_catalog` | 🟢 LOW | Returns "default" |
+| **SetCurrentCatalog** | `set_current_catalog` | 🟢 LOW | Only "default" supported |
+| **ListCatalogs** | `list_catalogs` | 🟢 LOW | Returns ["default"] |
 
 ---
 
@@ -354,12 +361,18 @@ These are commonly used operations that users will expect to work:
 
 ### Phase 4: Catalog Operations (Medium Priority)
 
-1. **DropTempView** - Critical for view management
-2. **TableExists**, **DatabaseExists** - Existence checks
-3. **ListTables**, **ListDatabases** - Metadata queries
-4. **CreateTable**, **CreateExternalTable** - Table creation
+**Phase 4A - High Value (Implemented M41, 2025-12-16):**
+1. ~~**DropTempView** - Critical for view management~~ ✅ Implemented
+2. ~~**TableExists**, **DatabaseExists** - Existence checks~~ ✅ Implemented
+3. ~~**ListTables**, **ListDatabases**, **ListColumns** - Metadata queries~~ ✅ Implemented
+4. ~~**CurrentDatabase**, **SetCurrentDatabase** - Session state~~ ✅ Implemented
 
-**Estimated effort:** 2-3 weeks
+**Phase 4B - Remaining (Not yet implemented):**
+5. **CreateTable**, **CreateExternalTable** - Table creation
+6. **ListFunctions**, **FunctionExists** - Function discovery
+7. Cache operations (no-op implementations)
+
+See [docs/architect/CATALOG_OPERATIONS.md](docs/architect/CATALOG_OPERATIONS.md) for implementation details.
 
 ### Phase 5: Statistical Functions (Lower Priority)
 

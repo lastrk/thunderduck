@@ -38,6 +38,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
     private final SessionManager sessionManager;
     private final SQLGenerator sqlGenerator;
+    private final CatalogOperationHandler catalogHandler;
 
     /**
      * Create Spark Connect service with session manager.
@@ -49,6 +50,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     public SparkConnectServiceImpl(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
         this.sqlGenerator = new SQLGenerator();
+        this.catalogHandler = new CatalogOperationHandler();
 
         logger.info("SparkConnectServiceImpl initialized with session-scoped DuckDB runtimes");
     }
@@ -346,10 +348,17 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     }
 
     /**
-     * Execute a Catalog operation (dropTempView, tableExists, etc.).
+     * Execute a Catalog operation (dropTempView, tableExists, listTables, etc.).
      *
-     * Currently handles:
+     * Delegates to CatalogOperationHandler which handles:
      * - DropTempView (spark.catalog.dropTempView)
+     * - TableExists (spark.catalog.tableExists)
+     * - ListTables (spark.catalog.listTables)
+     * - ListColumns (spark.catalog.listColumns)
+     * - ListDatabases (spark.catalog.listDatabases)
+     * - DatabaseExists (spark.catalog.databaseExists)
+     * - CurrentDatabase (spark.catalog.currentDatabase)
+     * - SetCurrentDatabase (spark.catalog.setCurrentDatabase)
      *
      * @param catalog The catalog operation to execute
      * @param session Session object
@@ -357,64 +366,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
      */
     private void executeCatalogOperation(Catalog catalog, Session session,
                                         StreamObserver<ExecutePlanResponse> responseObserver) {
-        try {
-            logger.debug("Handling CATALOG operation: {}", catalog.getCatTypeCase());
-
-            switch (catalog.getCatTypeCase()) {
-                case DROP_TEMP_VIEW:
-                    DropTempView dropTempView = catalog.getDropTempView();
-                    String viewName = dropTempView.getViewName();
-                    logger.info("Dropping temp view: '{}'", viewName);
-
-                    // Remove from session's temp view registry
-                    boolean existed = session.dropTempView(viewName);
-
-                    // Drop the view from DuckDB (we use non-temp views for cross-connection visibility)
-                    String dropViewSQL = String.format("DROP VIEW IF EXISTS %s", quoteIdentifier(viewName));
-                    logger.debug("Executing DuckDB: {}", dropViewSQL);
-
-                    QueryExecutor executor = new QueryExecutor(session.getRuntime());
-                    try {
-                        executor.execute(dropViewSQL);
-                    } catch (Exception e) {
-                        logger.error("Failed to drop DuckDB view", e);
-                        responseObserver.onError(Status.INTERNAL
-                            .withDescription("Failed to drop DuckDB view: " + e.getMessage())
-                            .asRuntimeException());
-                        return;
-                    }
-
-                    // Return success response with the result (true if existed, false otherwise)
-                    // The response for dropTempView should be an Arrow batch with boolean
-                    String operationId = java.util.UUID.randomUUID().toString();
-                    StreamingResultHandler resultHandler = new StreamingResultHandler(
-                        responseObserver, session.getSessionId(), operationId);
-
-                    try {
-                        resultHandler.streamBooleanResult(existed);
-                        logger.info("✓ View dropped from DuckDB: '{}' (existed={}, session: {})",
-                            viewName, existed, session.getSessionId());
-                    } catch (java.io.IOException e) {
-                        logger.error("Failed to send dropTempView result", e);
-                        responseObserver.onError(Status.INTERNAL
-                            .withDescription("Failed to send result: " + e.getMessage())
-                            .asRuntimeException());
-                    }
-                    break;
-
-                default:
-                    responseObserver.onError(Status.UNIMPLEMENTED
-                        .withDescription("Unsupported catalog operation: " + catalog.getCatTypeCase())
-                        .asRuntimeException());
-            }
-
-        } catch (Exception e) {
-            logger.error("Catalog operation failed", e);
-            responseObserver.onError(Status.INTERNAL
-                .withDescription("Catalog operation failed: " + e.getMessage())
-                .withCause(e)
-                .asRuntimeException());
-        }
+        catalogHandler.execute(catalog, session, responseObserver);
     }
 
     /**
