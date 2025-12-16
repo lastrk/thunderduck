@@ -198,3 +198,40 @@ pkill -9 -f java
 **Last Updated**: 2025-12-16
 **Fix Applied**: See `/workspace/docs/PROTOBUF_FIX_REPORT.md` for detailed resolution history
 - Always do a full clean and rebuild before testing, you keep making the mistake to test with old build and be surprised that code changes have had no effect
+
+## Git Commit Workflow
+
+**Critical Rule**: NEVER commit code without user review first.
+
+### Commit Process
+
+1. **Show changes first**: Always show the user a summary of changes before committing
+2. **Wait for approval**: Do NOT commit until the user explicitly approves
+3. **Only commit when asked**: The user must explicitly request a commit (e.g., "commit this", "let's commit")
+
+### What This Means
+
+- After implementing features or making changes, STOP and summarize what was done
+- Let the user review the code/changes before committing
+- If the user says "commit" or asks to commit, THEN proceed with the commit
+- Do NOT assume that completing a task means you should commit
+
+### Examples
+
+**WRONG**:
+```
+User: "Add function X"
+Claude: *implements function X*
+Claude: *immediately commits without asking*
+```
+
+**CORRECT**:
+```
+User: "Add function X"
+Claude: *implements function X*
+Claude: "I've added function X. Here's what changed: [summary]. Let me know when you'd like to commit."
+User: "looks good, commit it"
+Claude: *commits the changes*
+```
+
+**Last Updated**: 2025-12-16
