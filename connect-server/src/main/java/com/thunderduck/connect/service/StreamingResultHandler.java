@@ -232,4 +232,67 @@ public class StreamingResultHandler {
     public long getTotalRows() {
         return totalRows;
     }
+
+    /**
+     * Stream a single boolean result to the client.
+     *
+     * <p>This is used for catalog operations like dropTempView that return a boolean
+     * indicating success or whether an entity existed.
+     *
+     * @param value the boolean value to return
+     * @throws IOException if serialization fails
+     */
+    public void streamBooleanResult(boolean value) throws IOException {
+        // Create Arrow schema with single boolean field
+        org.apache.arrow.vector.types.pojo.Field field =
+            new org.apache.arrow.vector.types.pojo.Field(
+                "value",
+                org.apache.arrow.vector.types.pojo.FieldType.nullable(
+                    org.apache.arrow.vector.types.pojo.ArrowType.Bool.INSTANCE),
+                null);
+        Schema schema = new Schema(java.util.Collections.singletonList(field));
+
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE);
+             VectorSchemaRoot root = VectorSchemaRoot.create(schema, allocator)) {
+
+            // Set the boolean value
+            org.apache.arrow.vector.BitVector vector =
+                (org.apache.arrow.vector.BitVector) root.getVector("value");
+            vector.allocateNew(1);
+            vector.set(0, value ? 1 : 0);
+            vector.setValueCount(1);
+            root.setRowCount(1);
+
+            // Serialize to Arrow IPC format
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try (ArrowStreamWriter writer = new ArrowStreamWriter(
+                    root, null, Channels.newChannel(out))) {
+                writer.start();
+                writer.writeBatch();
+                writer.end();
+            }
+
+            byte[] arrowData = out.toByteArray();
+
+            // Build gRPC response with Arrow batch
+            ExecutePlanResponse response = ExecutePlanResponse.newBuilder()
+                .setSessionId(sessionId)
+                .setOperationId(operationId)
+                .setResponseId(UUID.randomUUID().toString())
+                .setArrowBatch(ExecutePlanResponse.ArrowBatch.newBuilder()
+                    .setRowCount(1)
+                    .setData(ByteString.copyFrom(arrowData))
+                    .build())
+                .build();
+
+            responseObserver.onNext(response);
+            batchIndex++;
+            totalRows++;
+
+            logger.debug("[{}] Sent boolean result: {}", operationId, value);
+        }
+
+        // Send completion marker
+        sendResultComplete();
+    }
 }

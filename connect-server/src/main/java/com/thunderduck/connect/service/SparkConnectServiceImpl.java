@@ -116,7 +116,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
             if (plan.hasRoot()) {
                 Relation root = plan.getRoot();
-                logger.debug("Root relation type: {}", root.getRelTypeCase());
+                logger.info("Root relation type: {} (hasCatalog={})", root.getRelTypeCase(), root.hasCatalog());
 
                 // Check for ShowString wrapping any relation
                 if (root.hasShowString() && root.getShowString().hasInput()) {
@@ -148,6 +148,10 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     // Direct SQL relation
                     sql = root.getSql().getQuery();
                     logger.debug("Found direct SQL relation: {}", sql);
+                } else if (root.hasCatalog()) {
+                    // Handle catalog operations (dropTempView, etc.)
+                    executeCatalogOperation(root.getCatalog(), session, responseObserver);
+                    return;
                 }
             } else if (plan.hasCommand() && plan.getCommand().hasSqlCommand()) {
                 // SQL command (e.g., spark.sql(...))
@@ -331,6 +335,78 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             logger.error("Command execution failed", e);
             responseObserver.onError(Status.INTERNAL
                 .withDescription("Command execution failed: " + e.getMessage())
+                .withCause(e)
+                .asRuntimeException());
+        }
+    }
+
+    /**
+     * Execute a Catalog operation (dropTempView, tableExists, etc.).
+     *
+     * Currently handles:
+     * - DropTempView (spark.catalog.dropTempView)
+     *
+     * @param catalog The catalog operation to execute
+     * @param session Session object
+     * @param responseObserver Stream observer for responses
+     */
+    private void executeCatalogOperation(Catalog catalog, Session session,
+                                        StreamObserver<ExecutePlanResponse> responseObserver) {
+        try {
+            logger.debug("Handling CATALOG operation: {}", catalog.getCatTypeCase());
+
+            switch (catalog.getCatTypeCase()) {
+                case DROP_TEMP_VIEW:
+                    DropTempView dropTempView = catalog.getDropTempView();
+                    String viewName = dropTempView.getViewName();
+                    logger.info("Dropping temp view: '{}'", viewName);
+
+                    // Remove from session's temp view registry
+                    boolean existed = session.dropTempView(viewName);
+
+                    // Drop the view from DuckDB (we use non-temp views for cross-connection visibility)
+                    String dropViewSQL = String.format("DROP VIEW IF EXISTS %s", quoteIdentifier(viewName));
+                    logger.debug("Executing DuckDB: {}", dropViewSQL);
+
+                    QueryExecutor executor = new QueryExecutor(session.getRuntime());
+                    try {
+                        executor.execute(dropViewSQL);
+                    } catch (Exception e) {
+                        logger.error("Failed to drop DuckDB view", e);
+                        responseObserver.onError(Status.INTERNAL
+                            .withDescription("Failed to drop DuckDB view: " + e.getMessage())
+                            .asRuntimeException());
+                        return;
+                    }
+
+                    // Return success response with the result (true if existed, false otherwise)
+                    // The response for dropTempView should be an Arrow batch with boolean
+                    String operationId = java.util.UUID.randomUUID().toString();
+                    StreamingResultHandler resultHandler = new StreamingResultHandler(
+                        responseObserver, session.getSessionId(), operationId);
+
+                    try {
+                        resultHandler.streamBooleanResult(existed);
+                        logger.info("✓ View dropped from DuckDB: '{}' (existed={}, session: {})",
+                            viewName, existed, session.getSessionId());
+                    } catch (java.io.IOException e) {
+                        logger.error("Failed to send dropTempView result", e);
+                        responseObserver.onError(Status.INTERNAL
+                            .withDescription("Failed to send result: " + e.getMessage())
+                            .asRuntimeException());
+                    }
+                    break;
+
+                default:
+                    responseObserver.onError(Status.UNIMPLEMENTED
+                        .withDescription("Unsupported catalog operation: " + catalog.getCatTypeCase())
+                        .asRuntimeException());
+            }
+
+        } catch (Exception e) {
+            logger.error("Catalog operation failed", e);
+            responseObserver.onError(Status.INTERNAL
+                .withDescription("Catalog operation failed: " + e.getMessage())
                 .withCause(e)
                 .asRuntimeException());
         }

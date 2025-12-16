@@ -128,7 +128,7 @@ for table in ['customer', 'lineitem', 'nation', 'orders', 'part', 'partsupp', 'r
 |----------|-------|--------|--------|
 | **P0** | ~~Fix createOrReplaceTempView~~ | ~~Unblocks ALL TPC-H/TPC-DS tests~~ | **FIXED** |
 | **P1** | ~~Fix Q1/Q6 data issues~~ | ~~Accurate TPC-H validation~~ | **FIXED** |
-| **P2** | Add `DropTempView` catalog operation | Proper view cleanup | Open |
+| **P2** | ~~Add `DropTempView` catalog operation~~ | ~~Proper view cleanup~~ | **FIXED** (M34) |
 | **P3** | ~~Add E2E tests for M19-M28 operations~~ | ~~Coverage for new features~~ | **DONE** |
 
 ---
@@ -237,5 +237,5 @@ python3 -m pytest test_tpch_dataframe_poc.py -v   # DataFrame operations
 
 ---
 
-**Document Version:** 1.5
-**Last Updated:** 2025-12-16 (Updated after M33 - Tail operation fixed)
+**Document Version:** 1.6
+**Last Updated:** 2025-12-16 (Updated after M34 - DropTempView catalog operation implemented)
