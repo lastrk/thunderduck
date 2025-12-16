@@ -101,7 +101,7 @@ public class TailTest extends TestBase {
         @DisplayName("Should generate child plan SQL (tail handled in memory)")
         void testSimpleTailSQL() {
             // SQLGenerator now just generates the child plan's SQL
-            // The tail operation is handled in memory by TailBatchCollector
+            // The tail operation is handled in memory by TailBatchIterator
             RangeRelation range = new RangeRelation(0, 10, 1);
             Tail tail = new Tail(range, 3);
             String sql = generator.generate(tail);
@@ -134,7 +134,7 @@ public class TailTest extends TestBase {
             Tail tail = new Tail(range, 25);
             String sql = generator.generate(tail);
 
-            // Limit should not be in SQL - it's handled by TailBatchCollector
+            // Limit should not be in SQL - it's handled by TailBatchIterator
             assertThat(sql).doesNotContain("25");
             assertThat(sql).doesNotContain("EXCLUDE");
         }
@@ -158,9 +158,8 @@ public class TailTest extends TestBase {
     }
 
     // NOTE: DuckDB Execution Tests were removed because tail() is now handled
-    // in memory by TailBatchCollector (O(N) memory) instead of SQL window
-    // functions (O(total_rows) memory). The TailBatchCollector is tested
-    // separately in TailBatchCollectorTest, and end-to-end behavior is tested
+    // in memory by TailBatchIterator (O(N) memory) instead of SQL window
+    // functions (O(total_rows) memory). End-to-end behavior is tested
     // via the Spark Connect server integration tests.
 
     @Nested

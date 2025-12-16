@@ -27,7 +27,7 @@ import java.util.Objects;
  * WHERE _rn > _total - n
  * </pre>
  *
- * <p>For memory-efficient streaming execution, see {@link com.thunderduck.runtime.TailBatchCollector}
+ * <p>For memory-efficient streaming execution, see {@link com.thunderduck.runtime.TailBatchIterator}
  * which uses a circular buffer to collect only the last N rows while streaming.
  */
 public class Tail extends LogicalPlan {

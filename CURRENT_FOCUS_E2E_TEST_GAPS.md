@@ -1,7 +1,7 @@
 # E2E Testing Gap Analysis for Thunderduck
 
-**Version:** 1.4
-**Date:** 2025-12-15
+**Version:** 1.5
+**Date:** 2025-12-16
 **Purpose:** Catalog E2E test failures and gaps for Thunderduck Spark Connect
 
 ---
@@ -145,7 +145,7 @@ Operations implemented (M19-M28) now have E2E tests in `test_dataframe_operation
 | WithColumnRenamed | M19 | `df.withColumnRenamed("old", "new")` | XFAIL | Schema still shows old name |
 | Offset | M20 | `df.offset(n)` | **PASS** | |
 | ToDF | M20 | `df.toDF("a", "b")` | **PASS** | Fixed in M32 |
-| Tail | M21 | `df.tail(n)` | XFAIL | Arrow memory leak |
+| Tail | M21 | `df.tail(n)` | **PASS** | Fixed in M33 |
 | Sample | M23 | `df.sample(0.1)` | **PASS** | |
 | WriteOperation | M24 | `df.write.parquet()` | **PASS** | All formats work |
 | Hint | M25 | `df.hint("BROADCAST")` | **PASS** | No-op passthrough |
@@ -156,7 +156,7 @@ Operations implemented (M19-M28) now have E2E tests in `test_dataframe_operation
 | Unpivot | M27 | `df.unpivot()` | **PASS** | Fixed in M32 |
 | SubqueryAlias | M28 | `df.alias("t")` | **PASS** | Basic alias works |
 
-**Test Results**: 18 passed, 10 xfailed (expected failures documented)
+**Test Results**: 20 passed, 8 xfailed (expected failures documented)
 
 ---
 
@@ -237,5 +237,5 @@ python3 -m pytest test_tpch_dataframe_poc.py -v   # DataFrame operations
 
 ---
 
-**Document Version:** 1.4
-**Last Updated:** 2025-12-15 (Updated after M31 schema inference fixes)
+**Document Version:** 1.5
+**Last Updated:** 2025-12-16 (Updated after M33 - Tail operation fixed)

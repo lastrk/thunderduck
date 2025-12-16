@@ -8,7 +8,7 @@ import com.thunderduck.logical.LogicalPlan;
 import com.thunderduck.runtime.ArrowBatchIterator;
 import com.thunderduck.runtime.ArrowStreamingExecutor;
 import com.thunderduck.runtime.QueryExecutor;
-import com.thunderduck.runtime.TailBatchCollector;
+import com.thunderduck.runtime.TailBatchIterator;
 import com.thunderduck.logical.Tail;
 import io.grpc.Context;
 import io.grpc.Status;
@@ -29,9 +29,9 @@ import static com.thunderduck.generator.SQLQuoting.quoteFilePath;
  *
  * This service bridges Spark Connect protocol to DuckDB via thunderduck.
  * Key features:
- * - Single-session management (DuckDB is single-user)
- * - SQL query execution via QueryExecutor
- * - Minimal viable implementation for MVP
+ * - Session management with per-session DuckDB runtime
+ * - Zero-copy Arrow streaming via DuckDB's arrowExportStream
+ * - SQL query execution and DataFrame plan deserialization
  */
 public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnectServiceImplBase {
     private static final Logger logger = LoggerFactory.getLogger(SparkConnectServiceImpl.class);
@@ -107,7 +107,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             Plan plan = request.getPlan();
             logger.debug("Plan type: {}", plan.getOpTypeCase());
 
-            // For MVP, handle SQL queries (both direct and command-wrapped)
+            // Handle SQL queries (both direct and command-wrapped)
             String sql = null;
             boolean isShowString = false;
             int showStringNumRows = 20;  // default
@@ -198,15 +198,15 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     // Convert Protobuf plan to LogicalPlan
                     LogicalPlan logicalPlan = createPlanConverter().convert(plan);
 
-                    // Check if this is a Tail plan - handle with memory-efficient streaming
+                    // Generate SQL from LogicalPlan
+                    String generatedSQL = sqlGenerator.generate(logicalPlan);
+                    logger.info("Generated SQL from plan: {}", generatedSQL);
+
+                    // Check if this is a Tail plan - use TailBatchIterator wrapper
                     if (logicalPlan instanceof Tail) {
                         Tail tailPlan = (Tail) logicalPlan;
-                        executeTailWithStreaming(tailPlan, session, responseObserver);
+                        executeSQLStreaming(generatedSQL, session, responseObserver, (int) tailPlan.limit());
                     } else {
-                        // Generate SQL from LogicalPlan
-                        String generatedSQL = sqlGenerator.generate(logicalPlan);
-                        logger.info("Generated SQL from plan: {}", generatedSQL);
-
                         // Execute the generated SQL
                         executeSQL(generatedSQL, session, responseObserver);
                     }
@@ -338,8 +338,6 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
     /**
      * Analyze a plan and return metadata (schema, execution plan, etc.).
-     *
-     * For MVP, return minimal response.
      *
      * @param request AnalyzePlanRequest
      * @param responseObserver Response observer
@@ -603,8 +601,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     /**
      * Get or set configuration values.
      *
-     * For MVP: Handle GetWithDefault operations by returning the default values.
-     * This is required for PySpark client compatibility.
+     * Handles GetWithDefault and Get operations for PySpark client compatibility.
      *
      * @param request ConfigRequest
      * @param responseObserver Response observer
@@ -690,47 +687,47 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
     /**
      * Add artifacts (JARs, files) to session.
-     * NOT IMPLEMENTED in MVP.
+     * Not implemented - DuckDB doesn't support dynamic artifact loading.
      */
     @Override
     public StreamObserver<AddArtifactsRequest> addArtifacts(
             StreamObserver<AddArtifactsResponse> responseObserver) {
         responseObserver.onError(Status.UNIMPLEMENTED
-            .withDescription("Artifact management not implemented in MVP")
+            .withDescription("Artifact management not supported")
             .asRuntimeException());
         return null;
     }
 
     /**
      * Check artifact status.
-     * NOT IMPLEMENTED in MVP.
+     * Not implemented - DuckDB doesn't support dynamic artifact loading.
      */
     @Override
     public void artifactStatus(ArtifactStatusesRequest request,
                               StreamObserver<ArtifactStatusesResponse> responseObserver) {
         responseObserver.onError(Status.UNIMPLEMENTED
-            .withDescription("Artifact status not implemented in MVP")
+            .withDescription("Artifact status not supported")
             .asRuntimeException());
     }
 
     /**
      * Interrupt running execution.
-     * NOT IMPLEMENTED in MVP (single-threaded execution for now).
+     * Not implemented - requires async execution tracking.
      */
     @Override
     public void interrupt(InterruptRequest request,
                          StreamObserver<InterruptResponse> responseObserver) {
         responseObserver.onError(Status.UNIMPLEMENTED
-            .withDescription("Query interruption not implemented in MVP")
+            .withDescription("Query interruption not supported")
             .asRuntimeException());
     }
 
     /**
      * Reattach to existing execution.
      *
-     * For MVP: Since we execute queries synchronously and don't maintain execution state,
-     * we return NOT_FOUND to indicate the execution has already completed.
-     * This allows clients with reattachable execution enabled to work properly.
+     * Since queries complete synchronously, this returns an empty stream with
+     * ResultComplete to indicate the execution has already finished.
+     * This allows PySpark clients with reattachable execution to work properly.
      */
     @Override
     public void reattachExecute(ReattachExecuteRequest request,
@@ -741,9 +738,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         logger.info("reattachExecute called for session: {}, operation: {}",
             sessionId, operationId);
 
-        // For MVP, we don't maintain execution state. Queries complete immediately.
-        // Return empty stream with ResultComplete to indicate execution is done.
-        // This allows PySpark clients with reattachable execution to work properly.
+        // Queries complete synchronously, so return ResultComplete to indicate done.
 
         ExecutePlanResponse response = ExecutePlanResponse.newBuilder()
             .setSessionId(sessionId)
@@ -760,8 +755,8 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     /**
      * Release reattachable execution.
      *
-     * For MVP: Since we don't maintain execution state (queries complete immediately),
-     * this is a no-op that returns success to satisfy the client cleanup flow.
+     * Since queries complete synchronously, this is a no-op that returns
+     * success to satisfy the PySpark client cleanup flow.
      */
     @Override
     public void releaseExecute(ReleaseExecuteRequest request,
@@ -772,7 +767,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         logger.info("releaseExecute called for session: {}, operation: {}",
             sessionId, operationId);
 
-        // Return success response (no-op, we don't maintain execution state)
+        // Return success response (no-op since queries complete synchronously)
         ReleaseExecuteResponse response = ReleaseExecuteResponse.newBuilder()
             .setSessionId(sessionId)
             .setOperationId(operationId)
@@ -781,7 +776,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
-        logger.debug("Released operation: {} (no-op in MVP)", operationId);
+        logger.debug("Released operation: {}", operationId);
     }
 
     // ========== Helper Methods ==========
@@ -1008,104 +1003,59 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
      */
     private void executeSQLStreaming(String sql, Session session,
                                      StreamObserver<ExecutePlanResponse> responseObserver) {
+        executeSQLStreaming(sql, session, responseObserver, -1);
+    }
+
+    /**
+     * Execute SQL query with streaming Arrow batches, optionally with tail collection.
+     *
+     * <p>When tailLimit > 0, the results are wrapped in a {@link TailBatchIterator}
+     * that collects all batches and returns only the last N rows. This is memory-efficient
+     * with O(N) memory where N is the tail limit.
+     *
+     * @param sql SQL query string
+     * @param session Session object
+     * @param responseObserver Response stream
+     * @param tailLimit if > 0, return only the last tailLimit rows
+     */
+    private void executeSQLStreaming(String sql, Session session,
+                                     StreamObserver<ExecutePlanResponse> responseObserver,
+                                     int tailLimit) {
         String operationId = java.util.UUID.randomUUID().toString();
         long startTime = System.nanoTime();
 
         try {
-            logger.info("[{}] Executing streaming SQL for session {}: {}",
-                operationId, session.getSessionId(),
+            String opDesc = tailLimit > 0 ? "streaming tail(" + tailLimit + ")" : "streaming";
+            logger.info("[{}] Executing {} SQL for session {}: {}",
+                operationId, opDesc, session.getSessionId(),
                 sql.length() > 100 ? sql.substring(0, 100) + "..." : sql);
 
-            // Execute with streaming
-            try (ArrowBatchIterator iterator = new ArrowStreamingExecutor(session.getRuntime()).executeStreaming(sql)) {
-                StreamingResultHandler handler = new StreamingResultHandler(
-                    responseObserver, session.getSessionId(), operationId);
-                handler.streamResults(iterator);
+            // Create executor and get base iterator
+            ArrowStreamingExecutor executor = new ArrowStreamingExecutor(session.getRuntime());
+            try (ArrowBatchIterator baseIterator = executor.executeStreaming(sql)) {
+                // Wrap with TailBatchIterator if tail operation requested
+                ArrowBatchIterator iterator = baseIterator;
+                if (tailLimit >= 0) {
+                    // TailBatchIterator needs the allocator from executor to share root
+                    // tailLimit >= 0 because tail(0) should return empty result, not all rows
+                    iterator = new TailBatchIterator(baseIterator, executor.getAllocator(), tailLimit);
+                }
 
-                long durationMs = (System.nanoTime() - startTime) / 1_000_000;
-                logger.info("[{}] Streaming query completed in {}ms, {} batches, {} rows",
-                    operationId, durationMs, handler.getBatchCount(), handler.getTotalRows());
+                try (ArrowBatchIterator effectiveIterator = iterator) {
+                    StreamingResultHandler handler = new StreamingResultHandler(
+                        responseObserver, session.getSessionId(), operationId);
+                    handler.streamResults(effectiveIterator);
+
+                    long durationMs = (System.nanoTime() - startTime) / 1_000_000;
+                    logger.info("[{}] {} query completed in {}ms, {} batches, {} rows",
+                        operationId, opDesc, durationMs, handler.getBatchCount(), handler.getTotalRows());
+                }
             }
 
         } catch (Exception e) {
             logger.error("[{}] Streaming SQL execution failed", operationId, e);
 
             // Determine appropriate gRPC status code based on exception type
-            Status status;
-            if (e instanceof java.sql.SQLException) {
-                status = Status.INVALID_ARGUMENT.withDescription("SQL error: " + e.getMessage());
-            } else if (e instanceof IllegalArgumentException) {
-                status = Status.INVALID_ARGUMENT.withDescription(e.getMessage());
-            } else {
-                status = Status.INTERNAL.withDescription("Execution failed: " + e.getMessage());
-            }
-
-            responseObserver.onError(status.asRuntimeException());
-        }
-    }
-
-    /**
-     * Execute a Tail plan using memory-efficient streaming collection.
-     *
-     * <p>Instead of using SQL window functions which require O(total_rows) memory,
-     * this method streams through all data keeping only the last N rows in memory.
-     * This is O(N) memory where N is the tail limit.
-     *
-     * <p>Algorithm:
-     * <ol>
-     *   <li>Generate SQL for just the child plan (without tail operation)</li>
-     *   <li>Stream the child query results through TailBatchCollector</li>
-     *   <li>Collector maintains circular buffer of recent batches</li>
-     *   <li>Return only the last N rows to client</li>
-     * </ol>
-     *
-     * @param tailPlan The Tail logical plan node
-     * @param session Session object
-     * @param responseObserver Stream observer for responses
-     */
-    private void executeTailWithStreaming(Tail tailPlan, Session session,
-                                          StreamObserver<ExecutePlanResponse> responseObserver) {
-        String operationId = java.util.UUID.randomUUID().toString();
-        long startTime = System.nanoTime();
-
-        try {
-            // Get the tail limit and child plan
-            int tailLimit = (int) tailPlan.limit();
-            LogicalPlan childPlan = tailPlan.child();
-
-            // Generate SQL for the child plan only (not the tail wrapper)
-            String childSQL = sqlGenerator.generate(childPlan);
-            logger.info("[{}] Executing memory-efficient tail({}) for session {}, child SQL: {}",
-                operationId, tailLimit, session.getSessionId(),
-                childSQL.length() > 100 ? childSQL.substring(0, 100) + "..." : childSQL);
-
-            // Create allocator for TailBatchCollector
-            org.apache.arrow.memory.RootAllocator allocator = new org.apache.arrow.memory.RootAllocator();
-
-            try {
-                // Execute child query with streaming and collect tail
-                try (ArrowBatchIterator iterator = new ArrowStreamingExecutor(session.getRuntime()).executeStreaming(childSQL)) {
-                    TailBatchCollector collector = new TailBatchCollector(allocator, tailLimit);
-                    org.apache.arrow.vector.VectorSchemaRoot tailResult = collector.collect(iterator);
-
-                    try {
-                        // Stream the tail result to the client
-                        streamArrowResults(tailResult, session.getSessionId(), operationId, responseObserver);
-
-                        long durationMs = (System.nanoTime() - startTime) / 1_000_000;
-                        logger.info("[{}] Streaming tail({}) completed in {}ms, {} rows",
-                            operationId, tailLimit, durationMs, tailResult.getRowCount());
-                    } finally {
-                        tailResult.close();
-                    }
-                }
-            } finally {
-                allocator.close();
-            }
-
-        } catch (Exception e) {
-            logger.error("[{}] Tail execution failed", operationId, e);
-
             Status status;
             if (e instanceof java.sql.SQLException) {
                 status = Status.INVALID_ARGUMENT.withDescription("SQL error: " + e.getMessage());
@@ -1210,10 +1160,10 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     }
 
     /**
-     * Stream Arrow results to client.
+     * Stream a single Arrow batch to client.
      *
-     * For MVP, we stream all results in a single batch.
-     * Multi-batch streaming will be added in Week 12.
+     * Used for small result sets like ShowString or Tail operations.
+     * For large result sets, use StreamingResultHandler with ArrowBatchIterator.
      *
      * @param root Arrow VectorSchemaRoot with results
      * @param sessionId Session ID

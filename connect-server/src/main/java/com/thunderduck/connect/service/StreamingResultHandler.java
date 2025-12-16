@@ -5,8 +5,11 @@ import com.thunderduck.runtime.ArrowBatchIterator;
 import io.grpc.Context;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
+import org.apache.arrow.vector.types.pojo.Schema;
 import org.apache.spark.connect.proto.ExecutePlanResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +68,9 @@ public class StreamingResultHandler {
      * <p>Iterates through all batches, serializing each to Arrow IPC format
      * and sending via gRPC. Handles client cancellation and iteration errors.
      *
+     * <p>If there are no batches (empty result), sends an empty batch with just
+     * the schema so that PySpark can construct an empty DataFrame.
+     *
      * @param iterator Arrow batch iterator
      * @throws IOException if streaming fails
      */
@@ -87,6 +93,12 @@ public class StreamingResultHandler {
             // Check for iteration errors
             if (iterator.hasError()) {
                 throw new IOException("Batch iteration failed", iterator.getError());
+            }
+
+            // If no batches were streamed, send an empty batch with schema
+            // This is required for PySpark to construct an empty DataFrame
+            if (batchIndex == 0) {
+                sendEmptyBatchWithSchema(iterator.getSchema());
             }
 
             // Send completion marker
@@ -144,6 +156,52 @@ public class StreamingResultHandler {
 
         logger.debug("[{}] Sent batch {}: {} rows, {} bytes",
             operationId, batchIndex, batch.getRowCount(), arrowData.length);
+    }
+
+    /**
+     * Send an empty batch with just the schema.
+     *
+     * <p>This is required when there are no results (e.g., tail(0) or a query that
+     * returns zero rows). PySpark needs at least one Arrow batch with the schema
+     * to construct an empty DataFrame.
+     *
+     * @param schema the Arrow schema
+     * @throws IOException if serialization fails
+     */
+    private void sendEmptyBatchWithSchema(Schema schema) throws IOException {
+        // Create empty VectorSchemaRoot with the schema
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE);
+             VectorSchemaRoot emptyRoot = VectorSchemaRoot.create(schema, allocator)) {
+
+            emptyRoot.setRowCount(0);
+
+            // Serialize to Arrow IPC format
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try (ArrowStreamWriter writer = new ArrowStreamWriter(
+                    emptyRoot, null, Channels.newChannel(out))) {
+                writer.start();
+                writer.writeBatch();
+                writer.end();
+            }
+
+            byte[] arrowData = out.toByteArray();
+
+            // Build gRPC response
+            ExecutePlanResponse response = ExecutePlanResponse.newBuilder()
+                .setSessionId(sessionId)
+                .setOperationId(operationId)
+                .setResponseId(UUID.randomUUID().toString())
+                .setArrowBatch(ExecutePlanResponse.ArrowBatch.newBuilder()
+                    .setRowCount(0)
+                    .setData(ByteString.copyFrom(arrowData))
+                    .build())
+                .build();
+
+            responseObserver.onNext(response);
+            batchIndex++;
+
+            logger.debug("[{}] Sent empty batch with schema: {} bytes", operationId, arrowData.length);
+        }
     }
 
     /**

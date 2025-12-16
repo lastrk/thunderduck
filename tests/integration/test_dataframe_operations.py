@@ -127,12 +127,11 @@ class TestOffsetAndToDF:
 
 
 class TestTail:
-    """M21: Tail operation
+    """M21: Tail operation - Fixed in M33
 
-    Known issue: Tail operation causes Arrow memory leak error.
+    Memory leak issue was resolved by proper ArrowBatchStream cleanup.
     """
 
-    @pytest.mark.xfail(reason="Memory leak error from Arrow allocator")
     @pytest.mark.timeout(30)
     def test_tail(self, spark, tpch_data_dir):
         """Test tail operation returns last N rows"""
@@ -146,7 +145,6 @@ class TestTail:
         assert rows[-1]["n_nationkey"] == 24
         print(f"tail(5): got last 5 rows, last nationkey={rows[-1]['n_nationkey']}")
 
-    @pytest.mark.xfail(reason="Memory leak error from Arrow allocator")
     @pytest.mark.timeout(30)
     def test_tail_more_than_rows(self, spark, tpch_data_dir):
         """Test tail with n > row count"""

@@ -381,18 +381,18 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
     /**
      * Visits a Tail node.
      *
-     * <p>The Tail operation is handled in memory by TailBatchCollector for
+     * <p>The Tail operation is handled in memory by TailBatchIterator for
      * memory-efficient streaming (O(N) instead of O(total_rows)). When
      * generating SQL for a Tail plan, we simply generate SQL for the child
-     * plan - the tail limit is applied during streaming collection.
+     * plan - the tail limit is applied during streaming via the iterator wrapper.
      *
      * <p>This method is kept for compatibility with unit tests that
      * call SQLGenerator directly, but the actual execution path uses
-     * TailBatchCollector instead.
+     * TailBatchIterator instead.
      */
     private void visitTail(Tail plan) {
         // Simply generate SQL for the child plan
-        // The tail operation is handled in memory by TailBatchCollector
+        // The tail operation is handled in memory by TailBatchIterator
         visit(plan.child());
     }
 
