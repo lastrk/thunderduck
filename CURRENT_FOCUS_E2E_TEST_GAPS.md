@@ -141,7 +141,7 @@ Operations implemented (M19-M28) now have E2E tests in `test_dataframe_operation
 |---------|-----------|-------------|--------|-------|
 | Drop columns | M19 | `df.drop("col")` | **PASS** | Fixed in M32 |
 | WithColumn (new) | M19 | `df.withColumn("new", expr)` | **PASS** | Fixed in M32 |
-| WithColumn (replace) | M19 | `df.withColumn("old", expr)` | XFAIL | Value calculation issue |
+| WithColumn (replace) | M19 | `df.withColumn("old", expr)` | **PASS** | Fixed in M37 (COLUMNS lambda) |
 | WithColumnRenamed | M19 | `df.withColumnRenamed("old", "new")` | **PASS** | Fixed in M35 (PySpark 4.0 renames field) |
 | Offset | M20 | `df.offset(n)` | **PASS** | |
 | ToDF | M20 | `df.toDF("a", "b")` | **PASS** | Fixed in M32 |
@@ -150,13 +150,13 @@ Operations implemented (M19-M28) now have E2E tests in `test_dataframe_operation
 | WriteOperation | M24 | `df.write.parquet()` | **PASS** | All formats work |
 | Hint | M25 | `df.hint("BROADCAST")` | **PASS** | No-op passthrough |
 | Repartition | M25 | `df.repartition(n)` | **PASS** | No-op passthrough |
-| NADrop | M26 | `df.na.drop()` | PARTIAL | subset works, any/all fail |
-| NAFill | M26 | `df.na.fill()` | XFAIL | createDataFrame issue |
-| NAReplace | M26 | `df.na.replace()` | XFAIL | createDataFrame issue |
+| NADrop | M26 | `df.na.drop()` | **PASS** | Fixed in M37 (schema inference) |
+| NAFill | M26 | `df.na.fill()` | **PASS** | Fixed in M37 (schema inference) |
+| NAReplace | M26 | `df.na.replace()` | **PASS** | Fixed in M37 (schema inference) |
 | Unpivot | M27 | `df.unpivot()` | **PASS** | Fixed in M32 |
 | SubqueryAlias | M28 | `df.alias("t")` | **PASS** | Basic alias works |
 
-**Test Results**: 21 passed, 7 xfailed (expected failures documented)
+**Test Results**: 26 passed, 2 xfailed (expected failures documented)
 
 ---
 
@@ -237,5 +237,5 @@ python3 -m pytest test_tpch_dataframe_poc.py -v   # DataFrame operations
 
 ---
 
-**Document Version:** 1.6
-**Last Updated:** 2025-12-16 (Updated after M34 - DropTempView catalog operation implemented)
+**Document Version:** 1.7
+**Last Updated:** 2025-12-16 (Updated after M37 - NA functions and withColumn replace fixed)

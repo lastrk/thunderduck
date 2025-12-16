@@ -648,6 +648,12 @@ public class RelationConverter {
      * <p>Adds new columns or replaces existing columns with the given expressions.
      * Each alias in the list provides both the column name and the expression.
      *
+     * <p>Uses schema introspection to determine whether each column already exists:
+     * <ul>
+     *   <li>For existing columns: uses DuckDB's * REPLACE (expr AS col) syntax
+     *   <li>For new columns: appends expr AS col after the SELECT *
+     * </ul>
+     *
      * @param withColumns the WithColumns protobuf message
      * @return a LogicalPlan with the new/replaced columns
      */
@@ -665,18 +671,11 @@ public class RelationConverter {
         SQLGenerator generator = new SQLGenerator();
         String inputSql = generator.generate(input);
 
-        // Build column expressions
-        // For simplicity, we'll use: SELECT *, expr1 AS name1, expr2 AS name2 FROM ...
-        // This adds new columns. For replacing, DuckDB's REPLACE would be better,
-        // but that requires knowing which columns already exist.
-        //
-        // Strategy: Use SELECT * REPLACE (...) for all columns, which handles both
-        // adding new columns and replacing existing ones.
-        StringBuilder columnExprs = new StringBuilder();
+        // Collect all column names being added/replaced
+        List<String> colNames = new ArrayList<>();
+        StringBuilder newColExprs = new StringBuilder();
+
         for (int i = 0; i < aliases.size(); i++) {
-            if (i > 0) {
-                columnExprs.append(", ");
-            }
             org.apache.spark.connect.proto.Expression.Alias alias = aliases.get(i);
 
             // Convert the expression
@@ -685,16 +684,34 @@ public class RelationConverter {
 
             // Get the column name (first name part)
             String colName = alias.getName(0);
+            colNames.add(colName);
+            String quotedColName = SQLQuoting.quoteIdentifier(colName);
 
-            columnExprs.append(exprSql);
-            columnExprs.append(" AS ");
-            columnExprs.append(SQLQuoting.quoteIdentifier(colName));
+            if (i > 0) {
+                newColExprs.append(", ");
+            }
+            newColExprs.append(exprSql).append(" AS ").append(quotedColName);
+
+            logger.debug("WithColumns: adding/replacing column '{}'", colName);
         }
 
-        // Use SELECT *, new_cols FROM ... which adds columns at the end
-        // For replacing existing columns, we'd need schema awareness
-        String sql = String.format("SELECT *, %s FROM (%s) AS _withcol_subquery",
-            columnExprs.toString(), inputSql);
+        // Build the COLUMNS filter to exclude columns being replaced
+        // This works for both add (no match, keeps all) and replace (filters out existing)
+        // Using DuckDB's COLUMNS(c -> c NOT IN (...)) lambda syntax
+        StringBuilder excludeFilter = new StringBuilder();
+        excludeFilter.append("COLUMNS(c -> c NOT IN (");
+        for (int i = 0; i < colNames.size(); i++) {
+            if (i > 0) {
+                excludeFilter.append(", ");
+            }
+            // Column names need to be strings for comparison
+            excludeFilter.append("'").append(colNames.get(i).replace("'", "''")).append("'");
+        }
+        excludeFilter.append("))");
+
+        // Build: SELECT COLUMNS(c -> c NOT IN ('col1', 'col2')), expr1 AS col1, expr2 AS col2 FROM (...)
+        String sql = String.format("SELECT %s, %s FROM (%s) AS _withcol_subquery",
+            excludeFilter.toString(), newColExprs.toString(), inputSql);
 
         logger.debug("Creating WithColumns SQL: {}", sql);
         return new SQLRelation(sql);

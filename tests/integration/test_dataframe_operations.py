@@ -57,7 +57,6 @@ class TestColumnOperations:
             assert row["doubled_key"] == row["n_nationkey"] * 2
         print(f"withColumn new: added doubled_key column")
 
-    @pytest.mark.xfail(reason="withColumn value calculation incorrect")
     @pytest.mark.timeout(30)
     def test_with_column_replace(self, spark, tpch_data_dir):
         """Test replacing an existing column with withColumn"""
@@ -286,7 +285,6 @@ class TestNAFunctions:
             (5, None, None),
         ], ["id", "name", "value"])
 
-    @pytest.mark.xfail(reason="NA functions error - likely createDataFrame or na.drop issue")
     @pytest.mark.timeout(30)
     def test_na_drop_any(self, spark, df_with_nulls):
         """Test dropping rows with any NULL"""
@@ -298,7 +296,7 @@ class TestNAFunctions:
         assert row["id"] == 1
         print(f"na.drop('any'): 5 -> {result.count()} rows")
 
-    @pytest.mark.xfail(reason="NA functions error - likely createDataFrame or na.drop issue")
+    @pytest.mark.xfail(reason="Union operation with createDataFrame has separate issue")
     @pytest.mark.timeout(30)
     def test_na_drop_all(self, spark, df_with_nulls):
         """Test dropping rows where all values are NULL"""
@@ -320,7 +318,6 @@ class TestNAFunctions:
         assert result.count() == 3
         print(f"na.drop(subset=['name']): 5 -> {result.count()} rows")
 
-    @pytest.mark.xfail(reason="NA functions error - likely createDataFrame or na.fill issue")
     @pytest.mark.timeout(30)
     def test_na_fill_value(self, spark, df_with_nulls):
         """Test filling NULL values with a scalar"""
@@ -332,7 +329,6 @@ class TestNAFunctions:
             assert row["value"] is not None
         print(f"na.fill: filled NULLs with defaults")
 
-    @pytest.mark.xfail(reason="NA functions error - likely createDataFrame or na.replace issue")
     @pytest.mark.timeout(30)
     def test_na_replace(self, spark, df_with_nulls):
         """Test replacing specific values"""
@@ -425,7 +421,6 @@ class TestSubqueryAlias:
 class TestChainedOperations:
     """Test chaining multiple operations"""
 
-    @pytest.mark.xfail(reason="Chained drop/withColumn operations fail - schema not returned")
     @pytest.mark.timeout(60)
     def test_complex_chain(self, spark, tpch_data_dir):
         """Test chaining multiple M19-M28 operations"""
