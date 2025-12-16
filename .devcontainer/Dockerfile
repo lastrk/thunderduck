@@ -105,6 +105,8 @@ RUN su vscode -c 'curl -fsSL https://pkgx.sh | sh' && \
 # Each block is independent and can be enabled separately.
 # After uncommenting, rebuild the container: F1 → "Dev Containers: Rebuild Container"
 # ==============================================================================
+# Podman (Docker)
+RUN apt-get update && apt-get install -y podman
 
 # ------------------------------------------------------------------------------
 # Java Development Environment
