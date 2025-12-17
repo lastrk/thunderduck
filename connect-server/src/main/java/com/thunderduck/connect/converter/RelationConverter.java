@@ -130,6 +130,8 @@ public class RelationConverter {
                 return convertSubqueryAlias(relation.getSubqueryAlias());
             case SAMPLE_BY:
                 return convertSampleBy(relation.getSampleBy());
+            case TO_SCHEMA:
+                return convertToSchema(relation.getToSchema());
             default:
                 throw new PlanConversionException("Unsupported relation type: " + relation.getRelTypeCase());
         }
@@ -1414,6 +1416,58 @@ public class RelationConverter {
         );
 
         logger.debug("Creating SampleBy SQL: {}", sql);
+        return new SQLRelation(sql);
+    }
+
+    /**
+     * Converts a ToSchema relation to a LogicalPlan.
+     *
+     * <p>ToSchema reconciles a DataFrame to match a specified schema by:
+     * <ul>
+     *   <li>Reordering columns by name to match target schema order</li>
+     *   <li>Projecting away columns not in target schema</li>
+     *   <li>Casting columns to match target data types</li>
+     * </ul>
+     *
+     * <p>The generated SQL has the form:
+     * <pre>SELECT CAST(col1 AS type1) AS col1, CAST(col2 AS type2) AS col2, ... FROM (input)</pre>
+     *
+     * @param toSchema the ToSchema protobuf message
+     * @return a SQLRelation with the schema transformation
+     * @throws PlanConversionException if the schema is not a StructType
+     */
+    private LogicalPlan convertToSchema(org.apache.spark.connect.proto.ToSchema toSchema) {
+        LogicalPlan input = convert(toSchema.getInput());
+
+        // Validate that we have a StructType schema
+        if (!toSchema.hasSchema() || !toSchema.getSchema().hasStruct()) {
+            throw new PlanConversionException("ToSchema requires a StructType schema");
+        }
+
+        org.apache.spark.connect.proto.DataType.Struct targetStruct =
+            toSchema.getSchema().getStruct();
+
+        // Build SELECT list with column order and casts
+        List<String> selectItems = new ArrayList<>();
+        for (org.apache.spark.connect.proto.DataType.StructField field :
+             targetStruct.getFieldsList()) {
+            String colName = field.getName();
+            String quotedCol = SQLQuoting.quoteIdentifier(colName);
+
+            // Generate CAST expression to ensure type matches target
+            String duckdbType = SparkDataTypeConverter.toDuckDBType(field.getDataType());
+            selectItems.add(String.format("CAST(%s AS %s) AS %s",
+                quotedCol, duckdbType, quotedCol));
+        }
+
+        // Generate final SQL
+        SQLGenerator generator = new SQLGenerator();
+        String inputSQL = generator.generate(input);
+        String sql = String.format("SELECT %s FROM (%s)",
+            String.join(", ", selectItems),
+            inputSQL);
+
+        logger.debug("Creating ToSchema SQL: {}", sql);
         return new SQLRelation(sql);
     }
 }
