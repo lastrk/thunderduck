@@ -1,10 +1,10 @@
-# thunderduck
+# Thunderduck
 
 [![Maven Build](https://img.shields.io/badge/maven-3.9+-blue.svg)](https://maven.apache.org/)
 [![Java](https://img.shields.io/badge/java-17-orange.svg)](https://openjdk.java.net/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 
-**thunderduck** is a high-performance embedded execution engine that translates Spark DataFrame operations to DuckDB SQL, delivering 5-10x faster query execution than Spark local mode with 6-8x better memory efficiency.
+**Thunderduck** is a high-performance embedded execution engine that translates Spark DataFrame operations to DuckDB SQL, delivering 5-10x faster query execution than Spark local mode with 6-8x better memory efficiency.
 
 ## Table of Contents
 
@@ -21,38 +21,53 @@
 
 ## Overview
 
-thunderduck provides a Spark-compatible API that translates DataFrame operations into optimized DuckDB SQL for embedded execution. It combines the familiar Spark programming model with the high-performance vectorized execution of DuckDB.
+Thunderduck provides a Spark-compatible API that translates DataFrame operations into optimized DuckDB SQL for embedded execution. It combines the familiar Spark programming model with the high-performance vectorized execution of DuckDB.
 
 ### Key Features
 
+- **Spark Connect Server** for remote client connectivity (PySpark 4.0.x, Scala Spark)
 - **5-10x faster** than Spark local mode
 - **6-8x better memory efficiency**
 - **Multi-architecture support**: x86_64 (Intel/AMD) and ARM64 (AWS Graviton, Apple Silicon)
 - **Zero-copy Arrow data paths** for efficient data interchange
-- **Format support**: Parquet, Delta Lake, Iceberg
+- **Format support**: Parquet, Delta Lake (PLANNED), Iceberg (PLANNED)
 - **Comprehensive Spark API compatibility** with 266 differential tests
-- **SQL introspection** via EXPLAIN statements
-- **TPC-H benchmark framework** for performance validation
-- **Spark Connect Server** for remote client connectivity (PySpark 4.0.x, Scala Spark)
+- **Query plan introspection** via EXPLAIN statements
 
-### Why thunderduck?
+### Why Thunderduck?
 
-Spark's local mode has significant performance limitations for single-node workloads:
-- JVM overhead and row-based processing
-- High memory consumption (6-8x more than necessary)
-- Poor single-node CPU/memory utilization
+> **TL;DR**: Most Spark workloads fit on one machine. Thunderduck lets you keep your Spark code while getting 5-10x better performance from DuckDB's vectorized engine.
 
-thunderduck addresses these issues by:
-- Direct translation to DuckDB SQL (vectorized, SIMD-optimized execution)
-- Hardware-aware optimization:
-  - **x86_64**: Intel AVX-512, AVX2 SIMD instructions
-  - **ARM64**: ARM NEON SIMD instructions (AWS Graviton, Apple Silicon)
-- Zero-copy Arrow data interchange
-- Native format readers (Parquet, Delta, Iceberg)
+**Most Spark workloads don't need distributed computing.** They'd run faster and cheaper on a single large node.
+
+We analyzed hundreds of thousands of real-world Spark jobs and found this matches what [practitioners have observed](https://motherduck.com/blog/big-data-is-dead/) across the industry.
+
+#### The Economics Have Shifted
+
+| Era | Hardware Scaling | Implication |
+|-----|------------------|-------------|
+| **2010s** | 2x resources = 4x+ cost | Distribute to save money |
+| **Today** | Linear pricing | Single 200-CPU/1TB node is cost-effective |
+
+Single-node compute eliminates shuffles, network bottlenecks, and coordination overhead—enabling near-100% CPU utilization.
+
+#### Why Not Spark Local Mode?
+
+Spark local mode exists but underperforms on single nodes:
+- JVM overhead and row-based (not vectorized) processing
+- High memory consumption
+- Poor CPU utilization
+
+#### How Thunderduck Fixes This
+
+- **Vectorized execution**: DuckDB uses SIMD-optimized columnar processing
+- **Morsel parallelism**: Saturates all available CPUs efficiently
+- **Zero-copy Arrow**: No serialization overhead between layers
+- **Hardware-aware**: Auto-detects hardware-specific vector instructions
 
 ### Platform Support
 
-thunderduck is designed and tested for **both x86_64 and ARM64 architectures**:
+Thunderduck is designed and tested for **both x86_64 and ARM64 architectures**:
 
 | Platform | Architecture | Status | Use Cases |
 |----------|--------------|--------|-----------|
@@ -68,17 +83,17 @@ thunderduck is designed and tested for **both x86_64 and ARM64 architectures**:
 
 ## Architecture
 
-thunderduck uses a three-layer architecture:
+Thunderduck uses a three-layer architecture:
 
 ```
 ┌─────────────────────────────────────────────────────┐
 │         Spark API Facade (DataFrame/Dataset)        │
-│              Lazy Plan Construction                  │
+│              Lazy Plan Construction                 │
 └─────────────────────────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────┐
-│      Translation & Optimization Engine              │
+│                Translation Engine                   │
 │   Logical Plan → DuckDB SQL Translation             │
 │   Expression Mapping, Type Conversion               │
 └─────────────────────────────────────────────────────┘
@@ -99,7 +114,7 @@ thunderduck uses a three-layer architecture:
 - **Type Mapping** (`core/types/`): Spark ↔ DuckDB type conversion
 - **Function Registry** (`core/functions/`): 500+ function mappings
 - **Runtime Execution** (`core/runtime/`): Session-scoped DuckDB runtime, Arrow streaming
-- **Format Readers** (`core/io/`): Parquet, Delta Lake, Iceberg support
+- **Format Readers** (`core/io/`): Parquet, (PLANNED) Delta Lake, (PLANNED) Iceberg support
 
 **Note**: thunderduck relies on **DuckDB's world-class query optimizer** rather than implementing custom optimization rules. DuckDB automatically performs filter pushdown, column pruning, join reordering, and many other optimizations.
 
@@ -249,27 +264,7 @@ thunderduck/
 
 ### Performance Targets
 
-Based on TPC-H benchmark at scale factor 10 (10GB):
-
-| Metric | Target | Baseline (Spark 4.0.x) |
-|--------|--------|------------------------|
-| Query execution speed | 5-10x faster | 1x |
-| Memory efficiency | 6-8x less | 1x |
-| TPC-H Q1 (Scan + Agg) | 0.55s | 3.0s (5.5x speedup) |
-| TPC-H Q6 (Selective Scan) | 0.12s | 1.0s (8.3x speedup) |
-| TPC-H Q3 (Join + Agg) | 1.4s | 8.0s (5.7x speedup) |
-
-### Performance Characteristics
-
-- **Overhead vs Native DuckDB**: 10-20%
-  - Logical plan construction: ~50ms
-  - SQL generation: ~20ms
-  - Arrow materialization: 5-10% of query time
-
-- **Vectorized Execution**: SIMD-optimized operations (Intel AVX-512, ARM NEON)
-- **Zero-Copy Arrow**: Efficient data interchange between layers
-- **Parallel Parquet**: Multi-threaded column reading
-- **Predicate Pushdown**: Filter pushdown to format readers
+TBD
 
 ## Testing
 
@@ -311,7 +306,7 @@ open tests/target/site/jacoco/index.html
 
 ## Differential Testing (Spark Parity Validation)
 
-The differential testing framework compares thunderduck results against Apache Spark 4.0.1 to ensure exact compatibility. Both systems run via Spark Connect protocol for fair comparison.
+The differential testing framework compares Thunderduck results against Apache Spark 4.0.1 to ensure exact compatibility. Both systems run via Spark Connect protocol for fair comparison.
 
 ### Quick Start
 
@@ -372,7 +367,7 @@ python -m pytest -m "window" -v                       # Window function tests
 
 ### Test Results
 
-All 266 differential tests pass with thunderduck consistently faster than Spark:
+All 266 differential tests pass with Thunderduck consistently faster than Spark:
 - **TPC-H Q1**: ~6x faster
 - **Full test suite**: ~3 minutes
 
@@ -380,17 +375,17 @@ See [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCH
 
 ## End-to-End Testing (E2E)
 
-The E2E test suite validates the complete pipeline: **PySpark client → Spark Connect protocol → thunderduck server → DuckDB execution**. This ensures thunderduck works correctly as a drop-in replacement for Spark.
+The E2E test suite validates the complete pipeline: **PySpark client → Spark Connect protocol → Thunderduck server → DuckDB execution**. This ensures thunderduck works correctly as a drop-in replacement for Spark.
 
 ### Prerequisites
 
 1. **Python 3.8+** with pip
 2. **PySpark 4.0.1** (automatically installed)
-3. **thunderduck server** JAR built
+3. **Thunderduck server** JAR built
 
 ### Starting the Spark Connect Server
 
-Before running E2E tests, start the thunderduck Spark Connect server:
+Before running E2E tests, start the Thunderduck Spark Connect server:
 
 ```bash
 # Build the server if not already built
@@ -416,7 +411,7 @@ INFO SparkConnectServer - Server started successfully
 
 #### Method 1: Maven Integration (Recommended)
 
-**Note:** Maven automatically starts and stops the thunderduck server for you!
+**Note:** Maven automatically starts and stops the Thunderduck server for you!
 
 ```bash
 # Build server JAR first (required once)
@@ -528,7 +523,7 @@ python -m pytest tests/src/test/python/thunderduck_e2e/test_tpch.py -k "q01" -v
 Environment variables for test configuration:
 
 ```bash
-# Specify thunderduck server location (default: localhost:15002)
+# Specify Thunderduck server location (default: localhost:15002)
 export THUNDERDUCK_URL="sc://localhost:15002"
 
 # Specify TPC-H data path (default: ./data/tpch_sf001)
@@ -547,7 +542,7 @@ The E2E tests are integrated into CI/CD pipelines:
 
 ```yaml
 # Example GitHub Actions workflow
-- name: Start thunderduck Server
+- name: Start Thunderduck Server
   run: |
     ./tests/scripts/start-server.sh &
     sleep 5  # Wait for server startup
@@ -609,21 +604,10 @@ All PRs must meet these criteria:
 
 ### Technical Documentation
 
-- **[TPC-H Benchmark Guide](docs/TPC_H_BENCHMARK.md)**: Data generation and query execution
-- **[Session Management](docs/architect/SESSION_MANAGEMENT_ARCHITECTURE.md)**: Session-scoped DuckDB runtime architecture
-- **[Arrow Streaming](docs/architect/ARROW_STREAMING_ARCHITECTURE.md)**: Zero-copy Arrow streaming from DuckDB
+- **[Architecture Docs](docs/architect/)**: Documenting key architectural aspects of Thunderduck
 - **[Differential Testing](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)**: Spark parity validation framework (266 tests)
 - **[Protocol Specification](docs/SPARK_CONNECT_PROTOCOL_SPEC.md)**: Spark Connect protocol details
 - **[Dev Journal](docs/dev_journal/)**: Milestone completion reports
-
-### API Documentation
-
-Generate Javadoc:
-
-```bash
-mvn javadoc:javadoc
-open core/target/site/apidocs/index.html
-```
 
 ## Contributing
 
@@ -659,24 +643,6 @@ git push origin feature/my-new-feature
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
-
-## Status
-
-**Current Phase**: Week 9 Complete (SQL Introspection & TPC-H Demonstration)
-
-### Completed Milestones
-
-- ✅ **Week 1-3**: Core infrastructure, SQL generation, DataFrame API
-- ✅ **Week 4**: Complex expressions and joins
-- ✅ **Week 5**: Aggregations and window functions
-- ✅ **Week 7**: Differential testing framework (50 tests, 100% passing)
-- ✅ **Week 8**: Comprehensive differential testing (200 tests, 100% parity)
-- ✅ **Week 9**: SQL introspection (EXPLAIN) and TPC-H demonstration
-
-### Next Steps
-
-- **Week 10-12**: Spark Connect server (gRPC, Arrow streaming, multi-client support)
-- **Phase 5+**: Performance optimization, large-scale benchmarking (TPC-H SF=100, TPC-DS)
 
 ## Acknowledgments
 
