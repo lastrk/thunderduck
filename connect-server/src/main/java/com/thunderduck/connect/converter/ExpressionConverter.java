@@ -120,6 +120,40 @@ public class ExpressionConverter {
                 return new com.thunderduck.expression.Literal(
                     decimal.getValue(),
                     new DecimalType(decimal.getPrecision(), decimal.getScale()));
+
+            // ==================== Type Literals (M48) ====================
+
+            case TIMESTAMP_NTZ:
+                // TimestampNTZ is stored as microseconds since epoch, same as TIMESTAMP
+                // DuckDB's TIMESTAMP is already without timezone
+                return new com.thunderduck.expression.Literal(
+                    literal.getTimestampNtz(), TimestampType.get());
+
+            case YEAR_MONTH_INTERVAL:
+                // YearMonthInterval is stored as total months
+                return new RawSQLExpression(
+                    String.format("INTERVAL '%d' MONTH", literal.getYearMonthInterval()));
+
+            case DAY_TIME_INTERVAL:
+                // DayTimeInterval is stored as total microseconds
+                return new RawSQLExpression(buildDayTimeIntervalSQL(literal.getDayTimeInterval()));
+
+            case CALENDAR_INTERVAL:
+                // CalendarInterval has months, days, and microseconds components
+                org.apache.spark.connect.proto.Expression.Literal.CalendarInterval cal =
+                    literal.getCalendarInterval();
+                return new RawSQLExpression(buildCalendarIntervalSQL(
+                    cal.getMonths(), cal.getDays(), cal.getMicroseconds()));
+
+            case ARRAY:
+                return convertArrayLiteral(literal.getArray());
+
+            case MAP:
+                return convertMapLiteral(literal.getMap());
+
+            case STRUCT:
+                return convertStructLiteral(literal.getStruct());
+
             default:
                 throw new PlanConversionException("Unsupported literal type: " + literal.getLiteralTypeCase());
         }
@@ -1451,5 +1485,165 @@ public class ExpressionConverter {
         // Dynamic index: (expr) + 1
         com.thunderduck.expression.Expression one = new com.thunderduck.expression.Literal(1, IntegerType.get());
         return BinaryExpression.add(index, one);
+    }
+
+    // ==================== Type Literal Helpers (M48) ====================
+
+    /**
+     * Builds a DuckDB INTERVAL SQL string from day-time interval microseconds.
+     *
+     * <p>Decomposes total microseconds into days, hours, minutes, and seconds,
+     * then builds a composite interval expression using addition.
+     *
+     * @param totalMicroseconds total microseconds (can be negative)
+     * @return SQL string like "INTERVAL '1' DAY + INTERVAL '2' HOUR + INTERVAL '30' MINUTE"
+     */
+    private String buildDayTimeIntervalSQL(long totalMicroseconds) {
+        boolean negative = totalMicroseconds < 0;
+        long absMicros = Math.abs(totalMicroseconds);
+
+        long days = absMicros / 86_400_000_000L;
+        long remainingMicros = absMicros % 86_400_000_000L;
+
+        long hours = remainingMicros / 3_600_000_000L;
+        remainingMicros = remainingMicros % 3_600_000_000L;
+
+        long minutes = remainingMicros / 60_000_000L;
+        remainingMicros = remainingMicros % 60_000_000L;
+
+        double seconds = remainingMicros / 1_000_000.0;
+
+        List<String> parts = new ArrayList<>();
+
+        if (days != 0) {
+            parts.add(String.format("INTERVAL '%s%d' DAY", negative ? "-" : "", days));
+        }
+        if (hours != 0) {
+            parts.add(String.format("INTERVAL '%s%d' HOUR", negative && parts.isEmpty() ? "-" : "", hours));
+        }
+        if (minutes != 0) {
+            parts.add(String.format("INTERVAL '%s%d' MINUTE", negative && parts.isEmpty() ? "-" : "", minutes));
+        }
+        if (seconds != 0 || parts.isEmpty()) {
+            parts.add(String.format("INTERVAL '%s%.6f' SECOND",
+                negative && parts.isEmpty() ? "-" : "", seconds));
+        }
+
+        return String.join(" + ", parts);
+    }
+
+    /**
+     * Builds a DuckDB INTERVAL SQL string from calendar interval components.
+     *
+     * @param months total months
+     * @param days total days
+     * @param microseconds total microseconds
+     * @return SQL string like "INTERVAL '12' MONTH + INTERVAL '3' DAY + INTERVAL '1.5' SECOND"
+     */
+    private String buildCalendarIntervalSQL(int months, int days, long microseconds) {
+        List<String> parts = new ArrayList<>();
+
+        if (months != 0) {
+            parts.add(String.format("INTERVAL '%d' MONTH", months));
+        }
+        if (days != 0) {
+            parts.add(String.format("INTERVAL '%d' DAY", days));
+        }
+        if (microseconds != 0) {
+            double seconds = microseconds / 1_000_000.0;
+            parts.add(String.format("INTERVAL '%.6f' SECOND", seconds));
+        }
+
+        if (parts.isEmpty()) {
+            return "INTERVAL '0' SECOND";
+        }
+
+        return String.join(" + ", parts);
+    }
+
+    /**
+     * Converts an Array literal to DuckDB list syntax.
+     *
+     * @param array the proto array literal
+     * @return expression representing [elem1, elem2, ...]
+     */
+    private com.thunderduck.expression.Expression convertArrayLiteral(
+            org.apache.spark.connect.proto.Expression.Literal.Array array) {
+
+        List<String> elementSQLs = new ArrayList<>();
+        for (org.apache.spark.connect.proto.Expression.Literal elem : array.getElementsList()) {
+            com.thunderduck.expression.Expression elemExpr = convertLiteral(elem);
+            elementSQLs.add(elemExpr.toSQL());
+        }
+
+        String listSQL = "[" + String.join(", ", elementSQLs) + "]";
+        return new RawSQLExpression(listSQL);
+    }
+
+    /**
+     * Converts a Map literal to DuckDB map syntax.
+     *
+     * @param map the proto map literal
+     * @return expression representing MAP([keys], [values])
+     */
+    private com.thunderduck.expression.Expression convertMapLiteral(
+            org.apache.spark.connect.proto.Expression.Literal.Map map) {
+
+        if (map.getKeysCount() != map.getValuesCount()) {
+            throw new PlanConversionException(
+                "Map literal keys and values must have same length: " +
+                map.getKeysCount() + " keys vs " + map.getValuesCount() + " values");
+        }
+
+        List<String> keySQLs = new ArrayList<>();
+        List<String> valueSQLs = new ArrayList<>();
+
+        for (int i = 0; i < map.getKeysCount(); i++) {
+            keySQLs.add(convertLiteral(map.getKeys(i)).toSQL());
+            valueSQLs.add(convertLiteral(map.getValues(i)).toSQL());
+        }
+
+        String keysList = "[" + String.join(", ", keySQLs) + "]";
+        String valuesList = "[" + String.join(", ", valueSQLs) + "]";
+        String mapSQL = "MAP(" + keysList + ", " + valuesList + ")";
+
+        return new RawSQLExpression(mapSQL);
+    }
+
+    /**
+     * Converts a Struct literal to DuckDB struct syntax.
+     *
+     * @param struct the proto struct literal
+     * @return expression representing {'field1': val1, 'field2': val2}
+     */
+    private com.thunderduck.expression.Expression convertStructLiteral(
+            org.apache.spark.connect.proto.Expression.Literal.Struct struct) {
+
+        org.apache.spark.connect.proto.DataType structType = struct.getStructType();
+
+        if (!structType.hasStruct()) {
+            throw new PlanConversionException("Struct literal must have struct type definition");
+        }
+
+        org.apache.spark.connect.proto.DataType.Struct typeInfo = structType.getStruct();
+
+        if (typeInfo.getFieldsCount() != struct.getElementsCount()) {
+            throw new PlanConversionException(
+                "Struct literal field count mismatch: " +
+                typeInfo.getFieldsCount() + " fields vs " + struct.getElementsCount() + " values");
+        }
+
+        List<String> fieldPairs = new ArrayList<>();
+        for (int i = 0; i < typeInfo.getFieldsCount(); i++) {
+            String fieldName = typeInfo.getFields(i).getName();
+            String valueSQL = convertLiteral(struct.getElements(i)).toSQL();
+
+            // Use single quotes for field names in DuckDB struct syntax
+            String quotedName = "'" + fieldName.replace("'", "''") + "'";
+            fieldPairs.add(quotedName + ": " + valueSQL);
+        }
+
+        String structSQL = "{" + String.join(", ", fieldPairs) + "}";
+        return new RawSQLExpression(structSQL);
     }
 }
