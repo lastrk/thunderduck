@@ -2,7 +2,6 @@ package com.thunderduck.generator;
 
 import com.thunderduck.expression.BinaryExpression;
 import com.thunderduck.expression.ExtractValueExpression;
-import com.thunderduck.expression.Literal;
 import com.thunderduck.expression.UnresolvedColumn;
 import com.thunderduck.logical.Join;
 import com.thunderduck.logical.TableScan;
