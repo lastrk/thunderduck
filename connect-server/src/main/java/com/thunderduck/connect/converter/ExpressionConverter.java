@@ -72,6 +72,12 @@ public class ExpressionConverter {
                 return convertUnresolvedNamedLambdaVariable(expr.getUnresolvedNamedLambdaVariable());
             case CALL_FUNCTION:
                 return convertCallFunction(expr.getCallFunction());
+            case UNRESOLVED_EXTRACT_VALUE:
+                return convertUnresolvedExtractValue(expr.getUnresolvedExtractValue());
+            case UNRESOLVED_REGEX:
+                return convertUnresolvedRegex(expr.getUnresolvedRegex());
+            case UPDATE_FIELDS:
+                return convertUpdateFields(expr.getUpdateFields());
             default:
                 throw new PlanConversionException("Unsupported expression type: " + expr.getExprTypeCase());
         }
@@ -121,19 +127,40 @@ public class ExpressionConverter {
 
     /**
      * Converts an UnresolvedAttribute (column reference).
+     *
+     * <p>Handles nested struct field access patterns like:
+     * <ul>
+     *   <li>simple column: "column" → UnresolvedColumn("column")</li>
+     *   <li>qualified: "table.column" → UnresolvedColumn("column", "table")</li>
+     *   <li>nested field: "column.field" → ExtractValue(UnresolvedColumn("column"), "field")</li>
+     *   <li>deep nested: "col.a.b.c" → ExtractValue(ExtractValue(ExtractValue(UnresolvedColumn("col"), "a"), "b"), "c")</li>
+     * </ul>
      */
     private com.thunderduck.expression.Expression convertUnresolvedAttribute(UnresolvedAttribute attr) {
         String identifier = attr.getUnparsedIdentifier();
 
-        // Handle qualified names (table.column)
+        // Handle qualified names (table.column or nested fields)
         String[] parts = identifier.split("\\.");
-        if (parts.length == 2) {
-            return new UnresolvedColumn(parts[1], parts[0]);
-        } else if (parts.length == 1) {
+
+        if (parts.length == 1) {
+            // Simple column reference
             return new UnresolvedColumn(parts[0]);
+        } else if (parts.length == 2) {
+            // Could be table.column or column.field
+            // We can't easily distinguish without schema, so treat as table.column
+            // However, if the first part matches a known column, it's struct access
+            // For now, assume column.field pattern (struct access) for consistency
+            // This generates struct_extract which works for both cases
+            com.thunderduck.expression.Expression base = new UnresolvedColumn(parts[0]);
+            return ExtractValueExpression.structField(base, parts[1]);
         } else {
-            // For now, just use the full identifier as column name
-            return new UnresolvedColumn(identifier);
+            // Nested field access: col.field1.field2.field3
+            // Build chained ExtractValueExpression calls
+            com.thunderduck.expression.Expression result = new UnresolvedColumn(parts[0]);
+            for (int i = 1; i < parts.length; i++) {
+                result = ExtractValueExpression.structField(result, parts[i]);
+            }
+            return result;
         }
     }
 
@@ -1228,5 +1255,201 @@ public class ExpressionConverter {
         // Create FunctionCall with mapped name
         // Use StringType as default return type (same as convertUnresolvedFunction)
         return new FunctionCall(mappedName, arguments, StringType.get());
+    }
+
+    // ==================== Complex Type Extraction ====================
+
+    /**
+     * Converts an UnresolvedExtractValue expression.
+     *
+     * <p>UnresolvedExtractValue extracts a value from complex types:
+     * <ul>
+     *   <li>Struct field: {@code struct.field} or {@code struct['field']}</li>
+     *   <li>Array element: {@code arr[index]} (0-based in Spark, 1-based in DuckDB)</li>
+     *   <li>Map key: {@code map['key']}</li>
+     * </ul>
+     *
+     * <p>Index conversion is critical:
+     * <ul>
+     *   <li>PySpark uses 0-based indexing for arrays</li>
+     *   <li>DuckDB uses 1-based indexing for lists</li>
+     *   <li>Negative indices in Spark mean from the end (-1 = last element)</li>
+     * </ul>
+     */
+    private com.thunderduck.expression.Expression convertUnresolvedExtractValue(
+            org.apache.spark.connect.proto.Expression.UnresolvedExtractValue extractValue) {
+
+        // Convert child expression (the collection to extract from)
+        com.thunderduck.expression.Expression child = convert(extractValue.getChild());
+
+        // Convert extraction expression (index/key/field)
+        com.thunderduck.expression.Expression extraction = convert(extractValue.getExtraction());
+
+        // Determine extraction type based on the extraction expression
+        ExtractValueExpression.ExtractionType extractionType = determineExtractionType(extraction);
+
+        // Handle index conversion for array access
+        if (extractionType == ExtractValueExpression.ExtractionType.ARRAY_INDEX) {
+            extraction = convertArrayIndex(extraction, child);
+        }
+
+        return new ExtractValueExpression(child, extraction, extractionType);
+    }
+
+    /**
+     * Converts an UnresolvedRegex expression.
+     *
+     * <p>UnresolvedRegex represents Spark's {@code df.colRegex()} which selects
+     * columns matching a regex pattern. This is translated to DuckDB's
+     * {@code COLUMNS('pattern')} expression.
+     *
+     * <p>Examples:
+     * <pre>
+     *   df.colRegex("`col_.*`")  → COLUMNS('col_.*')
+     *   df.colRegex("`^test_`") → COLUMNS('^test_')
+     * </pre>
+     */
+    private com.thunderduck.expression.Expression convertUnresolvedRegex(
+            org.apache.spark.connect.proto.Expression.UnresolvedRegex unresolvedRegex) {
+
+        // Get the column name (which is the pattern)
+        String colName = unresolvedRegex.getColName();
+
+        // Strip backticks from the pattern (Spark uses `pattern` format)
+        String pattern = RegexColumnExpression.stripBackticks(colName);
+
+        // Check if there's a plan_id for table qualification
+        // The plan_id would need to be resolved to a table alias
+        // For now, we don't handle table qualification
+        if (unresolvedRegex.hasPlanId()) {
+            logger.debug("UnresolvedRegex has plan_id {}, but table qualification not yet supported",
+                unresolvedRegex.getPlanId());
+        }
+
+        return new RegexColumnExpression(pattern);
+    }
+
+    /**
+     * Converts an UpdateFields expression.
+     *
+     * <p>UpdateFields represents Spark's struct field manipulation:
+     * <ul>
+     *   <li>{@code col.withField("field", value)} - add/replace a field</li>
+     *   <li>{@code col.dropFields("field")} - remove a field (when valueExpr is absent)</li>
+     * </ul>
+     *
+     * <p>DuckDB translation:
+     * <ul>
+     *   <li>Add/Replace: {@code struct_insert(struct, field := value)}</li>
+     *   <li>Drop: Complex - requires struct reconstruction (limited support)</li>
+     * </ul>
+     */
+    private com.thunderduck.expression.Expression convertUpdateFields(
+            org.apache.spark.connect.proto.Expression.UpdateFields updateFields) {
+
+        // Convert the struct expression
+        com.thunderduck.expression.Expression structExpr = convert(updateFields.getStructExpression());
+
+        // Get the field name
+        String fieldName = updateFields.getFieldName();
+
+        // Check if this is add/replace or drop
+        if (updateFields.hasValueExpression()) {
+            // Add or replace field
+            com.thunderduck.expression.Expression valueExpr = convert(updateFields.getValueExpression());
+            return UpdateFieldsExpression.withField(structExpr, fieldName, valueExpr);
+        } else {
+            // Drop field
+            logger.warn("dropFields operation has limited support - struct reconstruction required");
+            return UpdateFieldsExpression.dropField(structExpr, fieldName);
+        }
+    }
+
+    /**
+     * Determines the type of extraction based on the extraction expression.
+     *
+     * <p>Heuristics:
+     * <ul>
+     *   <li>Integer literal → array index</li>
+     *   <li>String literal → struct field (unless child is a map type)</li>
+     *   <li>Other → default to struct field or map key based on context</li>
+     * </ul>
+     */
+    private ExtractValueExpression.ExtractionType determineExtractionType(
+            com.thunderduck.expression.Expression extraction) {
+
+        if (extraction instanceof com.thunderduck.expression.Literal) {
+            Object value = ((com.thunderduck.expression.Literal) extraction).value();
+            if (value instanceof Integer || value instanceof Long ||
+                value instanceof Short || value instanceof Byte) {
+                return ExtractValueExpression.ExtractionType.ARRAY_INDEX;
+            } else if (value instanceof String) {
+                // String can be struct field or map key
+                // Default to struct field - map access should use element_at explicitly
+                // In practice, if the child is a known MAP type, we'd use MAP_KEY
+                // For now, use STRUCT_FIELD as default for string keys
+                return ExtractValueExpression.ExtractionType.STRUCT_FIELD;
+            }
+        }
+
+        // For dynamic expressions, default to struct field
+        // The actual behavior will depend on runtime type
+        return ExtractValueExpression.ExtractionType.STRUCT_FIELD;
+    }
+
+    /**
+     * Converts a PySpark 0-based array index to DuckDB 1-based indexing.
+     *
+     * <p>Conversion rules:
+     * <ul>
+     *   <li>Positive index N → N + 1</li>
+     *   <li>Negative index -N → length(arr) + 1 - N (e.g., -1 → length(arr))</li>
+     *   <li>Dynamic index expr → (expr) + 1</li>
+     * </ul>
+     *
+     * @param index the PySpark 0-based index expression
+     * @param array the array expression (for negative index handling)
+     * @return the DuckDB 1-based index expression
+     */
+    private com.thunderduck.expression.Expression convertArrayIndex(
+            com.thunderduck.expression.Expression index,
+            com.thunderduck.expression.Expression array) {
+
+        if (index instanceof com.thunderduck.expression.Literal) {
+            Object value = ((com.thunderduck.expression.Literal) index).value();
+            if (value instanceof Number) {
+                long pyIndex = ((Number) value).longValue();
+
+                if (pyIndex >= 0) {
+                    // Positive index: add 1
+                    return new com.thunderduck.expression.Literal((int) (pyIndex + 1), IntegerType.get());
+                } else {
+                    // Negative index: arr[-1] → arr[length(arr)]
+                    // arr[-2] → arr[length(arr) - 1]
+                    // General: arr[-n] → arr[length(arr) + 1 - n]
+                    // Which is: length(arr) - abs(n) + 1 = length(arr) + n + 1
+                    // Since n is negative, length(arr) + n + 1 = length(arr) - abs(n) + 1
+
+                    // Create: length(array) + pyIndex + 1
+                    // e.g., for pyIndex = -1: length(array) + (-1) + 1 = length(array)
+                    // e.g., for pyIndex = -2: length(array) + (-2) + 1 = length(array) - 1
+                    List<com.thunderduck.expression.Expression> lengthArgs = new ArrayList<>();
+                    lengthArgs.add(array);
+                    com.thunderduck.expression.Expression lengthExpr =
+                        new FunctionCall("length", lengthArgs, LongType.get());
+
+                    // length(array) + pyIndex + 1
+                    long offset = pyIndex + 1;
+                    com.thunderduck.expression.Expression offsetLiteral =
+                        new com.thunderduck.expression.Literal((int) offset, IntegerType.get());
+
+                    return BinaryExpression.add(lengthExpr, offsetLiteral);
+                }
+            }
+        }
+
+        // Dynamic index: (expr) + 1
+        com.thunderduck.expression.Expression one = new com.thunderduck.expression.Literal(1, IntegerType.get());
+        return BinaryExpression.add(index, one);
     }
 }

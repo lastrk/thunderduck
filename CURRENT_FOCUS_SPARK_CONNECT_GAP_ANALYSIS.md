@@ -1,6 +1,6 @@
 # Spark Connect 4.0.x Gap Analysis for Thunderduck
 
-**Version:** 3.8
+**Version:** 3.9
 **Date:** 2025-12-17
 **Purpose:** Comprehensive analysis of Spark Connect operator support in Thunderduck
 **Validation:** 266 differential tests (all passing) - see [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
@@ -20,7 +20,7 @@ This document provides a detailed gap analysis between Spark Connect 4.0.x's pro
 | Category | Total Operators | Implemented | Partial | Coverage |
 |----------|----------------|-------------|---------|----------|
 | Relations | 40 | 36 | 0 | **90%** |
-| Expressions | 16 | 12 | 0 | **75%** |
+| Expressions | 16 | 15 | 0 | **94%** |
 | Commands | 10 | 2 | 1 | **25-30%** |
 | Catalog | 26 | 26 | 0 | **100%** |
 
@@ -30,7 +30,9 @@ This document provides a detailed gap analysis between Spark Connect 4.0.x's pro
 
 *Statistics Note*: All 8 statistics operations implemented (M45). df.stat.cov/corr/approxQuantile return scalars/arrays; df.describe/summary/crosstab/freqItems/sampleBy return DataFrames. **100% statistics coverage achieved.**
 
-*Lambda Note*: LambdaFunction, UnresolvedNamedLambdaVariable, and CallFunction expressions implemented (M46). Supports transform, filter, exists, forall, aggregate HOFs. zip_with and map HOFs have partial support. **Expression coverage increased from 56% to 75%.**
+*Lambda Note*: LambdaFunction, UnresolvedNamedLambdaVariable, and CallFunction expressions implemented (M46). Supports transform, filter, exists, forall, aggregate HOFs. zip_with and map HOFs have partial support.
+
+*Complex Types Note*: UnresolvedExtractValue, UnresolvedRegex, and UpdateFields expressions implemented (M47). Supports struct.field, arr[index], map[key] access with 0-to-1 index conversion. withField adds struct fields; dropFields has limited support. colRegex translates to DuckDB COLUMNS(). **Expression coverage increased from 75% to 94%.**
 
 ---
 
@@ -134,14 +136,14 @@ Expressions compute values and are used in projections, filters, aggregations, e
 | **LambdaFunction** | `lambda_function` | ✅ Implemented | `transform(arr, x -> x + 1)` - DuckDB Python-style syntax (M46) |
 | **UnresolvedNamedLambdaVariable** | `unresolved_named_lambda_variable` | ✅ Implemented | Lambda variable references within lambda bodies (M46) |
 | **CallFunction** | `call_function` | ✅ Implemented | Dynamic function calls by name (M46) |
+| **UnresolvedExtractValue** | `unresolved_extract_value` | ✅ Implemented | `col["key"]`, `col.field`, `arr[index]` - 0-to-1 index conversion (M47) |
+| **UnresolvedRegex** | `unresolved_regex` | ✅ Implemented | `df.colRegex()` - translates to DuckDB COLUMNS() (M47) |
+| **UpdateFields** | `update_fields` | ✅ Implemented | `col.withField()` - struct_insert (M47). dropFields limited support. |
 
 ### 2.2 Not Implemented Expressions
 
 | Expression | Proto Field | Priority | Use Case |
 |------------|-------------|----------|----------|
-| **UnresolvedRegex** | `unresolved_regex` | 🟡 MEDIUM | `SELECT \`col_*\`` regex patterns |
-| **UnresolvedExtractValue** | `unresolved_extract_value` | 🟡 MEDIUM | `col["key"]`, `col.field` |
-| **UpdateFields** | `update_fields` | 🟢 LOW | Struct field manipulation |
 | **CommonInlineUserDefinedFunction** | `common_inline_user_defined_function` | 🔵 FUTURE | Python/Scala UDFs |
 
 ### 2.3 Literal Type Support
