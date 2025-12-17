@@ -4,6 +4,8 @@
 [![Java](https://img.shields.io/badge/java-17-orange.svg)](https://openjdk.java.net/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 
+> **⚠️ Alpha Software**: Despite extensive test coverage, Thunderduck is currently alpha quality software and will undergo extensive testing with real-world workloads before production readiness.
+
 **Thunderduck** is a high-performance embedded execution engine that translates Spark DataFrame operations to DuckDB SQL, delivering 5-10x faster query execution than Spark local mode with 6-8x better memory efficiency.
 
 ## Table of Contents

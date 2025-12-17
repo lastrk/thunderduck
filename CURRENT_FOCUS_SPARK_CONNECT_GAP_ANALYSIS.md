@@ -1,6 +1,6 @@
 # Spark Connect 4.0.x Gap Analysis for Thunderduck
 
-**Version:** 3.9
+**Version:** 4.1
 **Date:** 2025-12-17
 **Purpose:** Comprehensive analysis of Spark Connect operator support in Thunderduck
 **Validation:** 266 differential tests (all passing) - see [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
@@ -19,7 +19,7 @@ This document provides a detailed gap analysis between Spark Connect 4.0.x's pro
 
 | Category | Total Operators | Implemented | Partial | Coverage |
 |----------|----------------|-------------|---------|----------|
-| Relations | 40 | 36 | 0 | **90%** |
+| Relations | 40 | 38 | 0 | **95%** |
 | Expressions | 16 | 15 | 0 | **94%** |
 | Commands | 10 | 2 | 1 | **25-30%** |
 | Catalog | 26 | 26 | 0 | **100%** |
@@ -33,6 +33,10 @@ This document provides a detailed gap analysis between Spark Connect 4.0.x's pro
 *Lambda Note*: LambdaFunction, UnresolvedNamedLambdaVariable, and CallFunction expressions implemented (M46). Supports transform, filter, exists, forall, aggregate HOFs. zip_with and map HOFs have partial support.
 
 *Complex Types Note*: UnresolvedExtractValue, UnresolvedRegex, and UpdateFields expressions implemented (M47). Supports struct.field, arr[index], map[key] access with 0-to-1 index conversion. withField adds struct fields; dropFields has limited support. colRegex translates to DuckDB COLUMNS(). **Expression coverage increased from 75% to 94%.**
+
+*Type Literals Note*: All type literals implemented (M48). TimestampNTZ, CalendarInterval, YearMonthInterval, DayTimeInterval, Array, Map, Struct literals now supported. **100% literal type coverage achieved.**
+
+*ToSchema Note*: ToSchema relation implemented (M49). DataFrame.to(schema) supports column reordering, projection, and type casting. **Relation coverage: 95% (38/40).**
 
 ---
 
@@ -84,14 +88,9 @@ Relations are the core building blocks of Spark Connect query plans. They repres
 | **StatCrosstab** | `crosstab` | ✅ Implemented | `df.stat.crosstab()` - contingency table via PIVOT (M45) |
 | **StatFreqItems** | `freq_items` | ✅ Implemented | `df.stat.freqItems()` - frequent items via LIST aggregation (M45) |
 | **StatSampleBy** | `sample_by` | ✅ Implemented | `df.stat.sampleBy()` - stratified sampling with fractions (M45) |
+| **ToSchema** | `to_schema` | ✅ Implemented | `df.to(schema)` - column reordering, projection, type casting (M49) |
 
 ### 1.2 Not Implemented Relations
-
-#### Medium Priority (Advanced Operations)
-
-| Relation | Proto Field | Priority | Use Case |
-|----------|-------------|----------|----------|
-| **ToSchema** | `to_schema` | 🟡 MEDIUM | Schema enforcement |
 
 #### Streaming / UDF (Future)
 
@@ -163,13 +162,15 @@ Expressions compute values and are used in projections, filters, aggregations, e
 | String | `string` | ✅ | |
 | Date | `date` | ✅ | Days since epoch |
 | Timestamp | `timestamp` | ✅ | Microseconds since epoch |
-| TimestampNtz | `timestamp_ntz` | ❌ | Needs implementation |
-| CalendarInterval | `calendar_interval` | ❌ | Needs implementation |
-| YearMonthInterval | `year_month_interval` | ❌ | Needs implementation |
-| DayTimeInterval | `day_time_interval` | ❌ | Needs implementation |
-| Array | `array` | ❌ | Complex type literal |
-| Map | `map` | ❌ | Complex type literal |
-| Struct | `struct` | ❌ | Complex type literal |
+| TimestampNtz | `timestamp_ntz` | ✅ | (M48) Timezone-naive timestamp |
+| CalendarInterval | `calendar_interval` | ✅ | (M48) TO_MONTHS/TO_DAYS/TO_MICROS |
+| YearMonthInterval | `year_month_interval` | ✅ | (M48) TO_MONTHS() |
+| DayTimeInterval | `day_time_interval` | ✅ | (M48) TO_MICROSECONDS() |
+| Array | `array` | ✅ | (M48) list_value() with elements |
+| Map | `map` | ✅ | (M48) MAP([keys], [values]) |
+| Struct | `struct` | ✅ | (M48) STRUCT_PACK with fields |
+
+**100% literal type coverage achieved (M48).**
 
 ---
 
@@ -370,12 +371,13 @@ These are commonly used operations that users will expect to work:
 
 ### Phase 3: Complex Types & Expressions (Medium Priority)
 
-1. **UnresolvedExtractValue** - Struct/Array/Map access
+1. ~~**UnresolvedExtractValue** - Struct/Array/Map access~~ ✅ Implemented (M47, 2025-12-17)
 2. ~~**LambdaFunction** - Array transform operations~~ ✅ Implemented (M46, 2025-12-17)
-3. **Complex literal types** (Array, Map, Struct)
-4. **Interval types** (CalendarInterval, etc.)
+3. ~~**Complex literal types** (Array, Map, Struct)~~ ✅ Implemented (M48, 2025-12-17)
+4. ~~**Interval types** (CalendarInterval, etc.)~~ ✅ Implemented (M48, 2025-12-17)
+5. ~~**ToSchema** - Schema enforcement~~ ✅ Implemented (M49, 2025-12-17)
 
-**LambdaFunction Complete!** Supports transform, filter, exists, forall, aggregate with 18 E2E tests passing.
+**Phase 3 COMPLETE!** All complex type expressions and literals implemented with 66+ E2E tests passing.
 
 ### Phase 4: Catalog Operations (Medium Priority)
 
@@ -388,10 +390,12 @@ These are commonly used operations that users will expect to work:
 **Phase 4B - Table Creation (M42, 2025-12-16):**
 5. ~~**CreateTable**~~ ✅ Implemented - Internal tables with per-session persistent databases
 
-**Phase 4C - Remaining (Not yet implemented):**
-6. **CreateExternalTable** - External table creation (parquet, csv, etc.)
-7. **ListFunctions**, **FunctionExists** - Function discovery
-8. Cache operations (no-op implementations)
+**Phase 4C - Remaining (Implemented M43-M44):**
+6. ~~**CreateExternalTable** - External table creation (parquet, csv, etc.)~~ ✅ Implemented (M44)
+7. ~~**ListFunctions**, **FunctionExists** - Function discovery~~ ✅ Implemented (M43-M44)
+8. ~~Cache operations (no-op implementations)~~ ✅ Implemented (M43)
+
+**Phase 4 COMPLETE!** All 26 catalog operations implemented.
 
 See [docs/architect/CATALOG_OPERATIONS.md](docs/architect/CATALOG_OPERATIONS.md) for implementation details.
 
@@ -525,6 +529,7 @@ df.unpivot(["id"], ["val1", "val2"], "var", "value")  # Unpivot (M27) - wide to 
 df.unpivot(["id"], None, "var", "value")      # Unpivot (M27) - auto-infer value columns
 df.alias("t")                                 # SubqueryAlias (M28) - DataFrame aliasing
 df.alias("a").join(df.alias("b"), ...)        # SubqueryAlias (M28) - self-joins
+df.to(schema)                                 # ToSchema (M49) - column reorder, projection, casting
 
 # ACTIONS (trigger execution, return values to driver):
 df.tail(n)                                    # Tail (M21) - returns List[Row], O(N) memory
@@ -585,8 +590,9 @@ df.sample(withReplacement=True, fraction=0.5) # Poisson sampling not available i
 df.write.parquet("s3://bucket/path")          # S3 writes need httpfs extension
 df.write.csv("s3://bucket/path")              # S3 writes need httpfs extension
 
-# RELATIONS not yet implemented:
-df.toSchema(schema)                           # Schema enforcement
+# RELATIONS not yet implemented (2 remaining):
+# Parse - CSV/JSON parsing
+# CollectMetrics - Metrics collection
 
 # LAMBDA FUNCTIONS - PARTIAL SUPPORT:
 F.zip_with(arr1, arr2, lambda x, y: x + y)    # Returns zipped list, lambda not applied
@@ -620,7 +626,7 @@ spark.udf.register(...)                       # User-defined functions not suppo
 
 ---
 
-**Document Version:** 3.8
+**Document Version:** 4.1
 **Last Updated:** 2025-12-17
 **Author:** Analysis generated from Spark Connect 4.0.x protobuf definitions
 
@@ -628,6 +634,9 @@ spark.udf.register(...)                       # User-defined functions not suppo
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v4.1 | 2025-12-17 | Added ToSchema relation (M49). DataFrame.to(schema) for column reordering, projection, type casting. 13 E2E tests. **Relation coverage: 95% (38/40).** |
+| v4.0 | 2025-12-17 | Added all remaining type literals (M48): TimestampNTZ, CalendarInterval, YearMonthInterval, DayTimeInterval, Array, Map, Struct. 32 E2E tests. **100% literal type coverage achieved.** |
+| v3.9 | 2025-12-17 | Added UnresolvedExtractValue, UnresolvedRegex, UpdateFields expressions (M47). Supports struct.field, arr[index], map[key] access. 21 E2E tests. **Expression coverage: 94% (15/16).** |
 | v3.8 | 2025-12-17 | Added LambdaFunction, UnresolvedNamedLambdaVariable, CallFunction expressions (M46). Supports transform, filter, exists, forall, aggregate HOFs. zip_with and map HOFs have partial support. 18 E2E tests. **Expression coverage: 75% (12/16).** |
 | v3.7 | 2025-12-16 | Added all 8 statistics operations (M45): StatCov, StatCorr, StatApproxQuantile, StatDescribe, StatSummary, StatCrosstab, StatFreqItems, StatSampleBy. **Relations coverage: 90% (36/40). Statistics 100% complete.** |
 | v3.6 | 2025-12-16 | Added CreateExternalTable (delegates to CreateTable). **Catalog 100% complete (26/26 operations)**. |
