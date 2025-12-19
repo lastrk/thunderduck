@@ -618,7 +618,7 @@ We welcome contributions! Please see the following guidelines:
 1. **Fork the repository** and create a feature branch
 2. **Write tests** for new functionality
 3. **Ensure quality gates pass**: `mvn verify -Pcoverage`
-4. **Run differential tests**: All 266 tests must pass
+4. **Run differential tests**: All tests must pass
 5. **Submit a pull request** with clear description
 
 ### Development Workflow

@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mvn clean compile:*)"
+      "Bash(mvn clean compile:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.nvidia.com)",
+      "WebFetch(domain:www.informatik.tu-darmstadt.de)",
+      "WebFetch(domain:aws.amazon.com)",
+      "WebFetch(domain:www.ernestchiang.com)"
     ],
     "deny": [],
     "ask": []
