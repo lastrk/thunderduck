@@ -3,6 +3,8 @@ package com.thunderduck.generator;
 import com.thunderduck.exception.SQLGenerationException;
 import com.thunderduck.logical.*;
 import com.thunderduck.expression.Expression;
+import com.thunderduck.expression.BinaryExpression;
+import com.thunderduck.expression.UnresolvedColumn;
 import java.util.*;
 
 import static com.thunderduck.generator.SQLQuoting.*;
@@ -488,6 +490,10 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * Visits a Join node.
      * Builds SQL directly in buffer to avoid corruption.
      *
+     * <p>For columns with plan_id, this method qualifies column references
+     * based on which side of the join they belong to. This enables proper
+     * handling of joins where both tables have columns with the same name.
+     *
      * For semi-joins and anti-joins, uses EXISTS/NOT EXISTS patterns
      * since DuckDB doesn't support LEFT SEMI JOIN syntax directly.
      */
@@ -502,32 +508,46 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             String leftAlias = generateSubqueryAlias();
             String rightAlias = generateSubqueryAlias();
 
-            // Start with SELECT * FROM left
-            sql.append("SELECT * FROM (");
-            subqueryDepth++;
-            visit(plan.left());
-            subqueryDepth--;
-            sql.append(") AS ").append(leftAlias);
+            // Build plan_id → alias mapping for column qualification
+            Map<Long, String> planIdToAlias = new HashMap<>();
+            collectPlanIds(plan.left(), leftAlias, planIdToAlias);
+            collectPlanIds(plan.right(), rightAlias, planIdToAlias);
+
+            // LEFT SIDE - use direct aliasing for TableScan, wrap others
+            String leftSource = getDirectlyAliasableSource(plan.left());
+            if (leftSource != null) {
+                sql.append("SELECT * FROM ").append(leftSource).append(" AS ").append(leftAlias);
+            } else {
+                sql.append("SELECT * FROM (");
+                subqueryDepth++;
+                visit(plan.left());
+                subqueryDepth--;
+                sql.append(") AS ").append(leftAlias);
+            }
 
             // Add WHERE [NOT] EXISTS
             sql.append(" WHERE ");
             if (plan.joinType() == Join.JoinType.LEFT_ANTI) {
                 sql.append("NOT ");
             }
-            sql.append("EXISTS (SELECT 1 FROM (");
 
-            // Add right side
-            subqueryDepth++;
-            visit(plan.right());
-            subqueryDepth--;
-            sql.append(") AS ").append(rightAlias);
+            // RIGHT SIDE - use direct aliasing for TableScan, wrap others
+            String rightSource = getDirectlyAliasableSource(plan.right());
+            if (rightSource != null) {
+                sql.append("EXISTS (SELECT 1 FROM ").append(rightSource).append(" AS ").append(rightAlias);
+            } else {
+                sql.append("EXISTS (SELECT 1 FROM (");
+                subqueryDepth++;
+                visit(plan.right());
+                subqueryDepth--;
+                sql.append(") AS ").append(rightAlias);
+            }
 
             // Add WHERE clause for the correlation
             if (plan.condition() != null) {
                 sql.append(" WHERE ");
-                // Need to properly handle the join condition here
-                // For now, using the condition as-is (may need column qualification)
-                sql.append(plan.condition().toSQL());
+                // Qualify columns using plan_id mapping
+                sql.append(qualifyCondition(plan.condition(), planIdToAlias));
             }
 
             sql.append(")");
@@ -535,12 +555,26 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         } else {
             // Regular joins (INNER, LEFT, RIGHT, FULL, CROSS)
 
-            // SELECT * FROM left
-            sql.append("SELECT * FROM (");
-            subqueryDepth++;
-            visit(plan.left());
-            subqueryDepth--;
-            sql.append(") AS ").append(generateSubqueryAlias());
+            // Generate aliases before visiting children
+            String leftAlias = generateSubqueryAlias();
+            String rightAlias = generateSubqueryAlias();
+
+            // Build plan_id → alias mapping for column qualification
+            Map<Long, String> planIdToAlias = new HashMap<>();
+            collectPlanIds(plan.left(), leftAlias, planIdToAlias);
+            collectPlanIds(plan.right(), rightAlias, planIdToAlias);
+
+            // LEFT SIDE - use direct aliasing for TableScan, wrap others
+            String leftSource = getDirectlyAliasableSource(plan.left());
+            if (leftSource != null) {
+                sql.append("SELECT * FROM ").append(leftSource).append(" AS ").append(leftAlias);
+            } else {
+                sql.append("SELECT * FROM (");
+                subqueryDepth++;
+                visit(plan.left());
+                subqueryDepth--;
+                sql.append(") AS ").append(leftAlias);
+            }
 
             // JOIN type
             switch (plan.joinType()) {
@@ -564,18 +598,143 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                         "Unexpected join type: " + plan.joinType());
             }
 
-            // Right side
-            sql.append("(");
-            subqueryDepth++;
-            visit(plan.right());
-            subqueryDepth--;
-            sql.append(") AS ").append(generateSubqueryAlias());
+            // RIGHT SIDE - use direct aliasing for TableScan, wrap others
+            String rightSource = getDirectlyAliasableSource(plan.right());
+            if (rightSource != null) {
+                sql.append(rightSource).append(" AS ").append(rightAlias);
+            } else {
+                sql.append("(");
+                subqueryDepth++;
+                visit(plan.right());
+                subqueryDepth--;
+                sql.append(") AS ").append(rightAlias);
+            }
 
             // ON clause (except for CROSS join)
             if (plan.joinType() != Join.JoinType.CROSS && plan.condition() != null) {
                 sql.append(" ON ");
-                sql.append(plan.condition().toSQL());
+                // Qualify columns using plan_id mapping
+                sql.append(qualifyCondition(plan.condition(), planIdToAlias));
             }
+        }
+    }
+
+    /**
+     * Collects plan_id → alias mappings from a logical plan tree.
+     *
+     * <p>Traverses the plan tree and maps each plan_id to the given alias,
+     * but only if that plan_id is not already mapped. This ensures that
+     * in self-join scenarios (where the same underlying data appears on
+     * both sides), each side's plan_ids map to the correct alias.
+     *
+     * <p>For example, in {@code data.join(data.filter(...), ...)}, both sides
+     * may share some plan_ids from the underlying data. We want:
+     * <ul>
+     *   <li>Left side's plan_ids → left alias</li>
+     *   <li>Right side's plan_ids → right alias</li>
+     *   <li>If a plan_id appears on both sides, the first mapping wins</li>
+     * </ul>
+     *
+     * @param plan the logical plan to traverse
+     * @param alias the alias to map plan_ids to
+     * @param mapping the map to populate with plan_id → alias entries
+     */
+    private void collectPlanIds(LogicalPlan plan, String alias, Map<Long, String> mapping) {
+        if (plan.planId().isPresent()) {
+            long id = plan.planId().getAsLong();
+            // Only add if not already mapped (preserves first mapping)
+            mapping.putIfAbsent(id, alias);
+        }
+        // Recursively collect from children
+        for (LogicalPlan child : plan.children()) {
+            collectPlanIds(child, alias, mapping);
+        }
+    }
+
+    /**
+     * Qualifies column references in an expression using plan_id mapping.
+     *
+     * <p>Traverses the expression tree and qualifies UnresolvedColumn references
+     * that have a plan_id with the appropriate table alias from the mapping.
+     *
+     * <p>Rules:
+     * <ul>
+     *   <li>Already qualified columns (with explicit qualifier) are preserved</li>
+     *   <li>Columns with plan_id are qualified using the mapped alias</li>
+     *   <li>Columns without plan_id are left unqualified (may cause ambiguity)</li>
+     * </ul>
+     *
+     * @param expr the expression to qualify
+     * @param planIdToAlias map from plan_id to table alias
+     * @return the SQL string with qualified column references
+     */
+    public String qualifyCondition(Expression expr, Map<Long, String> planIdToAlias) {
+        if (expr instanceof UnresolvedColumn) {
+            UnresolvedColumn col = (UnresolvedColumn) expr;
+
+            // Already qualified - return as-is
+            if (col.isQualified()) {
+                return col.toSQL();
+            }
+
+            // Use plan_id to determine alias
+            if (col.hasPlanId()) {
+                String alias = planIdToAlias.get(col.planId().getAsLong());
+                if (alias != null) {
+                    return alias + "." + SQLQuoting.quoteIdentifier(col.columnName());
+                }
+            }
+
+            // No plan_id or no mapping - return unqualified (may cause ambiguity)
+            return col.toSQL();
+        }
+
+        if (expr instanceof BinaryExpression) {
+            BinaryExpression binExpr = (BinaryExpression) expr;
+            String leftSQL = qualifyCondition(binExpr.left(), planIdToAlias);
+            String rightSQL = qualifyCondition(binExpr.right(), planIdToAlias);
+            return "(" + leftSQL + " " + binExpr.operator().symbol() + " " + rightSQL + ")";
+        }
+
+        // For other expression types, use their default SQL representation
+        // This handles literals, function calls, etc.
+        return expr.toSQL();
+    }
+
+    /**
+     * Generates a source reference that can be directly aliased in FROM clause.
+     *
+     * <p>Only TableScan nodes can be directly aliased because they represent
+     * simple table/file references. Other leaf nodes (RangeRelation, LocalDataRelation)
+     * produce SELECT statements that need subquery wrapping.
+     *
+     * <p>This optimization reduces verbose SQL like:
+     * <pre>SELECT * FROM (SELECT * FROM "table") AS alias</pre>
+     * to the cleaner:
+     * <pre>SELECT * FROM "table" AS alias</pre>
+     *
+     * @param plan the logical plan
+     * @return the source SQL if directly aliasable, or null if wrapping is needed
+     */
+    private String getDirectlyAliasableSource(LogicalPlan plan) {
+        if (!(plan instanceof TableScan)) {
+            return null;
+        }
+
+        TableScan scan = (TableScan) plan;
+        String source = scan.source();
+
+        switch (scan.format()) {
+            case TABLE:
+                return quoteIdentifier(source);
+            case PARQUET:
+                return "read_parquet(" + quoteFilePath(source) + ")";
+            case DELTA:
+                return "delta_scan(" + quoteFilePath(source) + ")";
+            case ICEBERG:
+                return "iceberg_scan(" + quoteFilePath(source) + ")";
+            default:
+                return null;
         }
     }
 

@@ -4,12 +4,16 @@ import com.thunderduck.types.StructType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.OptionalLong;
 
 /**
  * Base class for all logical plan nodes in the thunderduck translation layer.
  *
  * <p>This represents a node in the logical query plan tree. Each node can have zero or more
  * children and defines a schema (output columns and types).
+ *
+ * <p>Each plan node can optionally have a plan_id that uniquely identifies it within
+ * a Spark Connect session. This is used to resolve ambiguous column references in joins.
  *
  * <p>The logical plan is translated to DuckDB SQL by calling {@link #toSQL(SQLGenerator)}.
  *
@@ -22,6 +26,9 @@ public abstract class LogicalPlan {
 
     /** Output schema of this node */
     protected StructType schema;
+
+    /** Optional plan_id for DataFrame lineage tracking */
+    protected OptionalLong planId = OptionalLong.empty();
 
     /**
      * Creates a logical plan node with no children.
@@ -88,6 +95,27 @@ public abstract class LogicalPlan {
             schema = inferSchema();
         }
         return schema;
+    }
+
+    /**
+     * Returns the plan_id for this plan node.
+     *
+     * <p>The plan_id uniquely identifies this node within a Spark Connect session.
+     * It is used to resolve ambiguous column references in join conditions.
+     *
+     * @return the plan_id, or empty if not set
+     */
+    public OptionalLong planId() {
+        return planId;
+    }
+
+    /**
+     * Sets the plan_id for this plan node.
+     *
+     * @param id the plan_id to set
+     */
+    public void setPlanId(long id) {
+        this.planId = OptionalLong.of(id);
     }
 
     /**

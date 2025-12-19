@@ -821,3 +821,206 @@ class TestOffsetAndToDF(ThunderduckE2ETestBase):
         self.assertEqual(len(result), 5)
         nums = [r.num for r in result]
         self.assertEqual(nums, [5, 6, 7, 8, 9])
+
+
+class TestJoinAmbiguousColumns(ThunderduckE2ETestBase):
+    """Test JOIN operations with ambiguous column names.
+
+    These tests verify that Thunderduck correctly handles joins where both
+    DataFrames have columns with the same name, using DataFrame column references
+    (df1["id"] == df2["id"]) rather than string column names.
+
+    This tests the plan_id-based column qualification feature.
+    """
+
+    def test_join_same_column_name_both_tables(self):
+        """Test join where both tables have an 'id' column.
+
+        This is the core ambiguity case that requires plan_id resolution.
+        Without proper qualification, DuckDB will fail with:
+        "Ambiguous reference to column name 'id'"
+        """
+        # Create two DataFrames with same column name 'id'
+        employees = self.spark.createDataFrame([
+            (1, "Alice", 100),
+            (2, "Bob", 200),
+            (3, "Charlie", 300),
+        ], ["id", "name", "dept_id"])
+
+        departments = self.spark.createDataFrame([
+            (100, "Engineering"),
+            (200, "Marketing"),
+            (400, "HR"),  # No matching employee
+        ], ["id", "dept_name"])  # Same column name 'id' as employees!
+
+        # Join using DataFrame column references (NOT string column name)
+        # This is the pattern that triggers the ambiguity bug
+        joined = employees.join(
+            departments,
+            employees["dept_id"] == departments["id"],  # dept_id = departments.id
+            "inner"
+        )
+
+        # Should return 2 rows (Alice -> Engineering, Bob -> Marketing)
+        self.assertEqual(joined.count(), 2)
+
+        # Verify the join produced correct results
+        result = joined.select(
+            employees["name"],
+            departments["dept_name"]
+        ).orderBy("name").collect()
+
+        self.assertEqual(result[0]["name"], "Alice")
+        self.assertEqual(result[0]["dept_name"], "Engineering")
+        self.assertEqual(result[1]["name"], "Bob")
+        self.assertEqual(result[1]["dept_name"], "Marketing")
+
+    def test_join_with_select_after_ambiguous_join(self):
+        """Test selecting specific columns after a join with ambiguous column names."""
+        df1 = self.spark.createDataFrame([
+            (1, "A"),
+            (2, "B"),
+        ], ["id", "value"])
+
+        df2 = self.spark.createDataFrame([
+            (1, "X"),
+            (2, "Y"),
+        ], ["id", "data"])  # Same 'id' column
+
+        # Join on the same-named column using explicit references
+        joined = df1.join(df2, df1["id"] == df2["id"], "inner")
+
+        # Select specific columns including the ambiguous 'id' from df1
+        result = joined.select(
+            df1["id"].alias("id1"),
+            df1["value"],
+            df2["id"].alias("id2"),
+            df2["data"]
+        ).orderBy("id1").collect()
+
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]["id1"], 1)
+        self.assertEqual(result[0]["value"], "A")
+        self.assertEqual(result[0]["id2"], 1)
+        self.assertEqual(result[0]["data"], "X")
+
+    def test_self_join_with_filter(self):
+        """Test self-join where the same DataFrame is joined with a filtered version.
+
+        This is a common pattern that requires plan_id to distinguish the two
+        references to the same underlying data.
+        """
+        data = self.spark.createDataFrame([
+            (1, "Alice", 50000),
+            (2, "Bob", 75000),
+            (3, "Charlie", 60000),
+            (4, "Diana", 90000),
+        ], ["id", "name", "salary"])
+
+        # Self-join: find employees with lower salary than another employee
+        high_earners = data.filter(F.col("salary") >= 70000)
+
+        # Join the original data with filtered version
+        # This requires plan_id to distinguish data vs high_earners
+        result = data.join(
+            high_earners,
+            data["salary"] < high_earners["salary"],  # Compare salaries
+            "inner"
+        ).select(
+            data["name"].alias("lower_earner"),
+            data["salary"].alias("lower_salary"),
+            high_earners["name"].alias("higher_earner"),
+            high_earners["salary"].alias("higher_salary")
+        ).orderBy("lower_earner", "higher_earner").collect()
+
+        # Alice (50k) < Bob (75k) and Diana (90k)
+        # Charlie (60k) < Bob (75k) and Diana (90k)
+        # Bob (75k) < Diana (90k)
+        self.assertEqual(len(result), 5)  # 2 + 2 + 1 = 5 combinations
+
+    def test_join_complex_condition_with_ambiguous_columns(self):
+        """Test join with complex condition (AND/OR) involving ambiguous columns."""
+        orders = self.spark.createDataFrame([
+            (1, 100, "2024-01-01"),
+            (2, 200, "2024-01-15"),
+            (3, 100, "2024-02-01"),
+        ], ["id", "customer_id", "order_date"])
+
+        customers = self.spark.createDataFrame([
+            (100, "Alice", "premium"),
+            (200, "Bob", "standard"),
+            (300, "Charlie", "premium"),
+        ], ["id", "name", "tier"])  # Same 'id' column as orders
+
+        # Complex join condition with AND
+        joined = orders.join(
+            customers,
+            (orders["customer_id"] == customers["id"]) & (customers["tier"] == "premium"),
+            "inner"
+        )
+
+        # Should return 2 rows (orders 1 and 3 from Alice who is premium)
+        self.assertEqual(joined.count(), 2)
+
+    def test_three_way_join_with_ambiguous_columns(self):
+        """Test three-way join where multiple tables have same column name."""
+        t1 = self.spark.createDataFrame([
+            (1, "A"),
+            (2, "B"),
+        ], ["id", "v1"])
+
+        t2 = self.spark.createDataFrame([
+            (1, "X"),
+            (2, "Y"),
+        ], ["id", "v2"])  # Same 'id'
+
+        t3 = self.spark.createDataFrame([
+            (1, "P"),
+            (2, "Q"),
+        ], ["id", "v3"])  # Same 'id'
+
+        # Chain joins using DataFrame column references
+        result = t1.join(
+            t2, t1["id"] == t2["id"], "inner"
+        ).join(
+            t3, t1["id"] == t3["id"], "inner"  # Join with t3 using t1's id
+        ).select(
+            t1["id"].alias("key"),
+            t1["v1"],
+            t2["v2"],
+            t3["v3"]
+        ).orderBy("key").collect()
+
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]["key"], 1)
+        self.assertEqual(result[0]["v1"], "A")
+        self.assertEqual(result[0]["v2"], "X")
+        self.assertEqual(result[0]["v3"], "P")
+
+    def test_left_join_with_ambiguous_columns(self):
+        """Test left join with ambiguous column names."""
+        left = self.spark.createDataFrame([
+            (1, "A"),
+            (2, "B"),
+            (3, "C"),
+        ], ["id", "value"])
+
+        right = self.spark.createDataFrame([
+            (1, "X"),
+            (2, "Y"),
+        ], ["id", "data"])  # Same 'id'
+
+        # Left join - row with id=3 should have NULL for right side
+        result = left.join(
+            right, left["id"] == right["id"], "left"
+        ).select(
+            left["id"].alias("lid"),
+            left["value"],
+            right["data"]
+        ).orderBy("lid").collect()
+
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0]["lid"], 1)
+        self.assertEqual(result[0]["data"], "X")
+        self.assertEqual(result[2]["lid"], 3)
+        self.assertIsNone(result[2]["data"])  # NULL from unmatched right

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
@@ -169,28 +170,36 @@ public class ExpressionConverter {
      *   <li>nested field: "column.field" → ExtractValue(UnresolvedColumn("column"), "field")</li>
      *   <li>deep nested: "col.a.b.c" → ExtractValue(ExtractValue(ExtractValue(UnresolvedColumn("col"), "a"), "b"), "c")</li>
      * </ul>
+     *
+     * <p>The optional {@code plan_id} is extracted from the protobuf and preserved
+     * in the UnresolvedColumn. This enables proper column qualification in joins
+     * where both tables have columns with the same name.
      */
     private com.thunderduck.expression.Expression convertUnresolvedAttribute(UnresolvedAttribute attr) {
         String identifier = attr.getUnparsedIdentifier();
+
+        // Extract plan_id if present (used for DataFrame lineage tracking in joins)
+        OptionalLong planId = attr.hasPlanId()
+            ? OptionalLong.of(attr.getPlanId())
+            : OptionalLong.empty();
 
         // Handle qualified names (table.column or nested fields)
         String[] parts = identifier.split("\\.");
 
         if (parts.length == 1) {
-            // Simple column reference
-            return new UnresolvedColumn(parts[0]);
+            // Simple column reference - pass planId for join resolution
+            return new UnresolvedColumn(parts[0], null, planId);
         } else if (parts.length == 2) {
             // Could be table.column or column.field
-            // We can't easily distinguish without schema, so treat as table.column
-            // However, if the first part matches a known column, it's struct access
-            // For now, assume column.field pattern (struct access) for consistency
+            // If we have planId, this is likely struct access (table ref would be via planId)
+            // Without planId, assume struct access for consistency
             // This generates struct_extract which works for both cases
-            com.thunderduck.expression.Expression base = new UnresolvedColumn(parts[0]);
+            com.thunderduck.expression.Expression base = new UnresolvedColumn(parts[0], null, planId);
             return ExtractValueExpression.structField(base, parts[1]);
         } else {
             // Nested field access: col.field1.field2.field3
             // Build chained ExtractValueExpression calls
-            com.thunderduck.expression.Expression result = new UnresolvedColumn(parts[0]);
+            com.thunderduck.expression.Expression result = new UnresolvedColumn(parts[0], null, planId);
             for (int i = 1; i < parts.length; i++) {
                 result = ExtractValueExpression.structField(result, parts[i]);
             }
