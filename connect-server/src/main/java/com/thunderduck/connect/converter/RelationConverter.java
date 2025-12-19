@@ -1,6 +1,7 @@
 package com.thunderduck.connect.converter;
 
 import com.thunderduck.logical.*;
+import com.thunderduck.expression.BinaryExpression;
 import com.thunderduck.expression.Expression;
 import com.thunderduck.expression.FunctionCall;
 import com.thunderduck.expression.AliasExpression;
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.stream.Collectors;
 
 /**
@@ -403,6 +405,12 @@ public class RelationConverter {
     /**
      * Converts a Join relation.
      *
+     * <p>Supports two patterns:
+     * <ul>
+     *   <li>Explicit condition: {@code df1.join(df2, df1["id"] == df2["id"])}</li>
+     *   <li>USING columns: {@code df1.join(df2, "id")} or {@code df1.join(df2, ["id", "key"])}</li>
+     * </ul>
+     *
      * @param join the Join relation
      * @return a Join logical plan
      */
@@ -410,17 +418,66 @@ public class RelationConverter {
         LogicalPlan left = convert(join.getLeft());
         LogicalPlan right = convert(join.getRight());
 
-        // Convert join condition if present
         Expression condition = null;
+
+        // Pattern 1: Explicit join condition
         if (join.hasJoinCondition()) {
             condition = expressionConverter.convert(join.getJoinCondition());
+        }
+        // Pattern 2: USING columns - build equality condition from column names
+        else if (join.getUsingColumnsCount() > 0) {
+            condition = buildUsingCondition(join.getUsingColumnsList(), left, right);
         }
 
         // Map join type
         com.thunderduck.logical.Join.JoinType joinType = mapJoinType(join.getJoinType());
 
-        logger.debug("Creating Join of type: {}", joinType);
+        logger.debug("Creating Join of type: {} with {} using columns",
+                     joinType, join.getUsingColumnsCount());
         return new com.thunderduck.logical.Join(left, right, joinType, condition);
+    }
+
+    /**
+     * Builds a join condition from USING columns.
+     *
+     * <p>For USING (col1, col2), generates:
+     * {@code left.col1 = right.col1 AND left.col2 = right.col2}
+     *
+     * @param usingColumns list of column names to join on
+     * @param left the left relation (for plan_id)
+     * @param right the right relation (for plan_id)
+     * @return the combined equality condition
+     */
+    private Expression buildUsingCondition(List<String> usingColumns,
+                                           LogicalPlan left, LogicalPlan right) {
+        if (usingColumns.isEmpty()) {
+            throw new PlanConversionException("USING clause requires at least one column");
+        }
+
+        // Get plan_ids for column qualification
+        OptionalLong leftPlanId = left.planId();
+        OptionalLong rightPlanId = right.planId();
+
+        Expression combined = null;
+
+        for (String columnName : usingColumns) {
+            // Create qualified column references with plan_ids
+            UnresolvedColumn leftCol = new UnresolvedColumn(columnName, null, leftPlanId);
+            UnresolvedColumn rightCol = new UnresolvedColumn(columnName, null, rightPlanId);
+
+            // Build equality: left.col = right.col
+            Expression equality = BinaryExpression.equal(leftCol, rightCol);
+
+            // Combine with AND if multiple columns
+            if (combined == null) {
+                combined = equality;
+            } else {
+                combined = BinaryExpression.and(combined, equality);
+            }
+        }
+
+        logger.debug("Built USING condition for columns: {}", usingColumns);
+        return combined;
     }
 
     /**

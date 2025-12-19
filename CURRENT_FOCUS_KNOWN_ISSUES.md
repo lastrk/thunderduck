@@ -34,29 +34,26 @@ This document tracks known issues discovered during testing that need to be addr
 
 ---
 
-## 3. Natural Join Without Explicit Condition
+## 3. ~~Natural Join Without Explicit Condition~~ RESOLVED
 
-**Test**: `test_dataframes.py::TestLocalRelationOperations::test_join_local_dataframes`
+**Status**: Fixed in commit (pending)
 
-**Error**:
-```
-Plan deserialization failed: condition is required for non-CROSS joins
-```
+**Solution**: Updated `RelationConverter.convertJoin()` to handle the `using_columns` field from the Spark Connect protobuf. When a USING join is received (e.g., `df1.join(df2, "id")`), the converter now builds equality conditions from the using column names.
 
-**Root Cause**: When PySpark sends a join without an explicit condition (natural join or using columns), the `RelationConverter` requires a condition for non-CROSS joins.
+**Implementation**:
+- Added `buildUsingCondition()` helper method in `RelationConverter.java`
+- For single column: builds `left.col = right.col`
+- For multiple columns: builds `left.col1 = right.col1 AND left.col2 = right.col2`
+- Uses plan_id from child relations for proper column qualification
 
-**Affected Code**: `RelationConverter.convertJoin()`
+**Files Changed**:
+- `connect-server/src/main/java/com/thunderduck/connect/converter/RelationConverter.java` - Added USING handling
+- `tests/src/test/java/com/thunderduck/connect/converter/RelationConverterUsingJoinTest.java` - 7 unit tests
+- `tests/integration/test_using_joins.py` - 11 E2E tests
+- `tests/integration/test_empty_dataframe.py` - Unskipped 2 join tests
 
-**Context**: The test does:
-```python
-joined = df1.join(df2, "id")  # Join using column name
-```
-
-This is a "using" join where the condition is implicit (join on columns with same name).
-
-**Fix**: Handle `Join.UsingJoin` case in RelationConverter - generate equality condition from the using columns.
-
-**Priority**: High - Common Spark pattern
+**Before**: `df1.join(df2, "id")` - "condition is required for non-CROSS joins"
+**After**: Join works correctly, equivalent to `df1.join(df2, df1["id"] == df2["id"])`
 
 ---
 
@@ -88,7 +85,7 @@ SQL error: Catalog Error: Table with name lineitem does not exist!
 |-------|------|----------|--------|
 | ~~COUNT_DISTINCT~~ | test_distinct_operations | Medium | **RESOLVED** |
 | ~~Empty DataFrame~~ | test_count_on_empty_dataframe | Medium | **RESOLVED** |
-| Natural/Using Join | test_join_local_dataframes | High | Open |
+| ~~Natural/Using Join~~ | test_join_local_dataframes | High | **RESOLVED** |
 | TPC-H Data | test_tpch.py | Low | Test setup |
 
 ---

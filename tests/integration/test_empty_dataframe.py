@@ -270,7 +270,6 @@ class TestEmptyDataFrameWithColumn:
 class TestEmptyDataFrameJoin:
     """Tests for joining with empty DataFrames"""
 
-    @pytest.mark.skip(reason="Known Issue #3: 'Using' joins require explicit condition - see CURRENT_FOCUS_KNOWN_ISSUES.md")
     @pytest.mark.timeout(30)
     def test_join_empty_with_non_empty(self, spark, tpch_data_dir):
         """
@@ -295,7 +294,6 @@ class TestEmptyDataFrameJoin:
         assert result.count() == 0
         print("Join empty with non-empty DataFrame: 0 rows (as expected)")
 
-    @pytest.mark.skip(reason="Known Issue #3: 'Using' joins require explicit condition - see CURRENT_FOCUS_KNOWN_ISSUES.md")
     @pytest.mark.timeout(30)
     def test_join_two_empty_dataframes(self, spark):
         """
