@@ -288,6 +288,53 @@ public class FunctionRegistryTest extends TestBase {
         }
     }
 
+    // ==================== DISTINCT Aggregate Function Tests ====================
+
+    @Nested
+    @DisplayName("DISTINCT Aggregate Function Mappings")
+    class DistinctAggregateFunctionMappings {
+
+        @Test
+        @DisplayName("TC-FUNC-047: count_distinct generates COUNT(DISTINCT ...)")
+        void testCountDistinctFunctionTranslation() {
+            logStep("Translate count_distinct to COUNT(DISTINCT ...)");
+
+            String result = FunctionRegistry.translate("count_distinct", "customer_id");
+
+            assertThat(result).isEqualTo("COUNT(DISTINCT customer_id)");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-048: sum_distinct generates SUM(DISTINCT ...)")
+        void testSumDistinctFunctionTranslation() {
+            logStep("Translate sum_distinct to SUM(DISTINCT ...)");
+
+            String result = FunctionRegistry.translate("sum_distinct", "amount");
+
+            assertThat(result).isEqualTo("SUM(DISTINCT amount)");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-049: avg_distinct generates AVG(DISTINCT ...)")
+        void testAvgDistinctFunctionTranslation() {
+            logStep("Translate avg_distinct to AVG(DISTINCT ...)");
+
+            String result = FunctionRegistry.translate("avg_distinct", "price");
+
+            assertThat(result).isEqualTo("AVG(DISTINCT price)");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-050: count_distinct with multiple args joins them")
+        void testCountDistinctMultipleArgs() {
+            logStep("Translate count_distinct with multiple arguments");
+
+            String result = FunctionRegistry.translate("count_distinct", "col1", "col2");
+
+            assertThat(result).isEqualTo("COUNT(DISTINCT col1, col2)");
+        }
+    }
+
     // ==================== Function Support Tests ====================
 
     @Nested

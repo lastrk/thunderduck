@@ -278,6 +278,16 @@ public class FunctionRegistry {
         DIRECT_MAPPINGS.put("corr", "corr");
         DIRECT_MAPPINGS.put("covar_pop", "covar_pop");
         DIRECT_MAPPINGS.put("covar_samp", "covar_samp");
+
+        // DISTINCT aggregate functions - DISTINCT keyword goes inside parentheses
+        // These handle Spark's countDistinct(), sumDistinct() etc. which arrive as
+        // "count_distinct", "sum_distinct" after ExpressionConverter appends "_DISTINCT"
+        CUSTOM_TRANSLATORS.put("count_distinct", args ->
+            "COUNT(DISTINCT " + String.join(", ", args) + ")");
+        CUSTOM_TRANSLATORS.put("sum_distinct", args ->
+            "SUM(DISTINCT " + String.join(", ", args) + ")");
+        CUSTOM_TRANSLATORS.put("avg_distinct", args ->
+            "AVG(DISTINCT " + String.join(", ", args) + ")");
     }
 
     // ==================== Window Functions ====================

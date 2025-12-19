@@ -6,25 +6,14 @@ This document tracks known issues discovered during testing that need to be addr
 
 ---
 
-## 1. COUNT_DISTINCT Function Not Supported
+## 1. ~~COUNT_DISTINCT Function Not Supported~~ RESOLVED
 
-**Test**: `test_dataframes.py::TestDataFrameOperations::test_distinct_operations`
+**Status**: Fixed in commit (pending)
 
-**Error**:
-```
-SQL error: Catalog Error: Scalar Function with name count_distinct does not exist!
-Did you mean "count_if"?
+**Solution**: Added custom translators in `FunctionRegistry.java` for `count_distinct`, `sum_distinct`, and `avg_distinct` that generate proper SQL syntax with DISTINCT inside parentheses.
 
-LINE 1: SELECT COUNT_DISTINCT(department) AS "dept_count" FROM ...
-```
-
-**Root Cause**: DuckDB doesn't have a `COUNT_DISTINCT()` function. The standard SQL approach is `COUNT(DISTINCT column)`.
-
-**Affected Code**: Likely in `ExpressionConverter` or aggregate function handling.
-
-**Fix**: Transform `countDistinct(col)` to `COUNT(DISTINCT col)` during SQL generation.
-
-**Priority**: Medium - Common Spark operation
+**Before**: `COUNT_DISTINCT(department)` - Error
+**After**: `COUNT(DISTINCT department)` - Works
 
 ---
 
@@ -97,11 +86,11 @@ SQL error: Catalog Error: Table with name lineitem does not exist!
 
 ## Summary Table
 
-| Issue | Test | Priority | Complexity |
-|-------|------|----------|------------|
-| COUNT_DISTINCT | test_distinct_operations | Medium | Low |
-| Empty DataFrame | test_count_on_empty_dataframe | Medium | Medium |
-| Natural/Using Join | test_join_local_dataframes | High | Medium |
+| Issue | Test | Priority | Status |
+|-------|------|----------|--------|
+| ~~COUNT_DISTINCT~~ | test_distinct_operations | Medium | **RESOLVED** |
+| Empty DataFrame | test_count_on_empty_dataframe | Medium | Open |
+| Natural/Using Join | test_join_local_dataframes | High | Open |
 | TPC-H Data | test_tpch.py | Low | Test setup |
 
 ---
