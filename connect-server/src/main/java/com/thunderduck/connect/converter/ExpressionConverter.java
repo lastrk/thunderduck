@@ -181,10 +181,10 @@ public class ExpressionConverter {
             return new UnresolvedColumn(parts[0]);
         } else if (parts.length == 2) {
             // Could be table.column or column.field
-            // We can't easily distinguish without schema, so treat as table.column
-            // However, if the first part matches a known column, it's struct access
-            // For now, assume column.field pattern (struct access) for consistency
-            // This generates struct_extract which works for both cases
+            // We can't easily distinguish without schema, so use ExtractValueExpression
+            // which works for both cases:
+            // - In JOIN contexts, qualifyJoinCondition() interprets it as table.column
+            // - In other contexts, it generates struct_extract for struct field access
             com.thunderduck.expression.Expression base = new UnresolvedColumn(parts[0]);
             return ExtractValueExpression.structField(base, parts[1]);
         } else {

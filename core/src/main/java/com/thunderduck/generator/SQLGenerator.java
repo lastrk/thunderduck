@@ -2,7 +2,12 @@ package com.thunderduck.generator;
 
 import com.thunderduck.exception.SQLGenerationException;
 import com.thunderduck.logical.*;
+import com.thunderduck.expression.BinaryExpression;
+import com.thunderduck.expression.ColumnReference;
 import com.thunderduck.expression.Expression;
+import com.thunderduck.expression.ExtractValueExpression;
+import com.thunderduck.expression.Literal;
+import com.thunderduck.expression.UnresolvedColumn;
 import java.util.*;
 
 import static com.thunderduck.generator.SQLQuoting.*;
@@ -499,35 +504,44 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             // For semi/anti joins, we need to use WHERE EXISTS/NOT EXISTS
             // SELECT * FROM left WHERE [NOT] EXISTS (SELECT 1 FROM right WHERE condition)
 
-            String leftAlias = generateSubqueryAlias();
+            String leftAlias = getTableOrAlias(plan.left());
             String rightAlias = generateSubqueryAlias();
 
             // Start with SELECT * FROM left
-            sql.append("SELECT * FROM (");
-            subqueryDepth++;
-            visit(plan.left());
-            subqueryDepth--;
-            sql.append(") AS ").append(leftAlias);
+            sql.append("SELECT * FROM ");
+            if (isSimpleTableScan(plan.left())) {
+                sql.append(quoteIdentifier(getTableName(plan.left())));
+            } else {
+                sql.append("(");
+                subqueryDepth++;
+                visit(plan.left());
+                subqueryDepth--;
+                sql.append(")");
+            }
+            sql.append(" AS ").append(leftAlias);
 
             // Add WHERE [NOT] EXISTS
             sql.append(" WHERE ");
             if (plan.joinType() == Join.JoinType.LEFT_ANTI) {
                 sql.append("NOT ");
             }
-            sql.append("EXISTS (SELECT 1 FROM (");
+            sql.append("EXISTS (SELECT 1 FROM ");
 
-            // Add right side
-            subqueryDepth++;
-            visit(plan.right());
-            subqueryDepth--;
-            sql.append(") AS ").append(rightAlias);
+            if (isSimpleTableScan(plan.right())) {
+                sql.append(quoteIdentifier(getTableName(plan.right())));
+            } else {
+                sql.append("(");
+                subqueryDepth++;
+                visit(plan.right());
+                subqueryDepth--;
+                sql.append(")");
+            }
+            sql.append(" AS ").append(rightAlias);
 
             // Add WHERE clause for the correlation
             if (plan.condition() != null) {
                 sql.append(" WHERE ");
-                // Need to properly handle the join condition here
-                // For now, using the condition as-is (may need column qualification)
-                sql.append(plan.condition().toSQL());
+                sql.append(qualifyJoinCondition(plan.condition(), leftAlias, rightAlias, plan.left(), plan.right()));
             }
 
             sql.append(")");
@@ -535,12 +549,24 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         } else {
             // Regular joins (INNER, LEFT, RIGHT, FULL, CROSS)
 
-            // SELECT * FROM left
-            sql.append("SELECT * FROM (");
-            subqueryDepth++;
-            visit(plan.left());
-            subqueryDepth--;
-            sql.append(") AS ").append(generateSubqueryAlias());
+            String leftAlias = getTableOrAlias(plan.left());
+            String rightAlias = getTableOrAlias(plan.right());
+
+            // Use qualified star projections to avoid ambiguity when both tables have same column names
+            sql.append("SELECT ");
+            sql.append(leftAlias).append(".*, ");
+            sql.append(rightAlias).append(".*");
+            sql.append(" FROM ");
+            if (isSimpleTableScan(plan.left())) {
+                sql.append(quoteIdentifier(getTableName(plan.left())));
+            } else {
+                sql.append("(");
+                subqueryDepth++;
+                visit(plan.left());
+                subqueryDepth--;
+                sql.append(")");
+            }
+            sql.append(" AS ").append(leftAlias);
 
             // JOIN type
             switch (plan.joinType()) {
@@ -565,18 +591,163 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             }
 
             // Right side
-            sql.append("(");
-            subqueryDepth++;
-            visit(plan.right());
-            subqueryDepth--;
-            sql.append(") AS ").append(generateSubqueryAlias());
+            if (isSimpleTableScan(plan.right())) {
+                sql.append(quoteIdentifier(getTableName(plan.right())));
+            } else {
+                sql.append("(");
+                subqueryDepth++;
+                visit(plan.right());
+                subqueryDepth--;
+                sql.append(")");
+            }
+            sql.append(" AS ").append(rightAlias);
 
             // ON clause (except for CROSS join)
             if (plan.joinType() != Join.JoinType.CROSS && plan.condition() != null) {
                 sql.append(" ON ");
-                sql.append(plan.condition().toSQL());
+                sql.append(qualifyJoinCondition(plan.condition(), leftAlias, rightAlias, plan.left(), plan.right()));
             }
         }
+    }
+
+    /**
+     * Checks if a plan is a simple TableScan (SELECT * FROM table).
+     */
+    private boolean isSimpleTableScan(LogicalPlan plan) {
+        return plan instanceof TableScan &&
+               ((TableScan) plan).format() == TableScan.TableFormat.TABLE;
+    }
+
+    /**
+     * Gets the table name from a simple TableScan.
+     */
+    private String getTableName(LogicalPlan plan) {
+        if (plan instanceof TableScan) {
+            return ((TableScan) plan).source();
+        }
+        return null;
+    }
+
+    /**
+     * Gets a table name or generates an alias for a plan.
+     */
+    private String getTableOrAlias(LogicalPlan plan) {
+        if (isSimpleTableScan(plan)) {
+            return getTableName(plan);
+        }
+        return generateSubqueryAlias();
+    }
+
+    /**
+     * Qualifies column references in a join condition with the appropriate table aliases.
+     * This recursively processes expressions and ensures all column references are properly
+     * qualified with their table/alias names.
+     *
+     * Uses a heuristic approach: in a binary expression like "col1 = col2", assume col1 belongs
+     * to the left table and col2 belongs to the right table.
+     */
+    private String qualifyJoinCondition(Expression condition, String leftAlias, String rightAlias,
+                                        LogicalPlan leftPlan, LogicalPlan rightPlan) {
+        return qualifyJoinConditionSide(condition, leftAlias, rightAlias, leftPlan, rightPlan, null);
+    }
+
+    /**
+     * Internal method that qualifies join conditions with side hint for heuristic qualification.
+     * @param preferredSide "left" or "right" to indicate which table to prefer for unqualified columns, null for auto-detect
+     */
+    private String qualifyJoinConditionSide(Expression condition, String leftAlias, String rightAlias,
+                                            LogicalPlan leftPlan, LogicalPlan rightPlan, String preferredSide) {
+        if (condition instanceof BinaryExpression) {
+            BinaryExpression binary = (BinaryExpression) condition;
+            // Use heuristic: left expression belongs to left table, right expression belongs to right table
+            String leftExpr = qualifyJoinConditionSide(binary.left(), leftAlias, rightAlias, leftPlan, rightPlan, "left");
+            String rightExpr = qualifyJoinConditionSide(binary.right(), leftAlias, rightAlias, leftPlan, rightPlan, "right");
+            return String.format("(%s %s %s)", leftExpr, binary.operator().symbol(), rightExpr);
+        } else if (condition instanceof ExtractValueExpression) {
+            // ExtractValueExpression with UnresolvedColumn base represents table.column
+            // This is how the ExpressionConverter handles qualified columns
+            ExtractValueExpression extract = (ExtractValueExpression) condition;
+            Expression base = extract.child();
+            Expression extraction = extract.extraction();
+
+            if (base instanceof UnresolvedColumn &&
+                extract.extractionType() == ExtractValueExpression.ExtractionType.STRUCT_FIELD &&
+                extraction instanceof Literal) {
+
+                UnresolvedColumn baseCol = (UnresolvedColumn) base;
+                String tableName = baseCol.columnName();
+                Literal fieldLiteral = (Literal) extraction;
+                String columnName = fieldLiteral.value().toString();
+
+                // The table name in the expression should match one of our aliases
+                // Use the alias as the qualifier
+                String qualifier = tableName.equals(leftAlias) ? leftAlias :
+                                  (tableName.equals(rightAlias) ? rightAlias : tableName);
+
+                return quoteIdentifierIfNeeded(qualifier) + "." + quoteIdentifierIfNeeded(columnName);
+            }
+            // For other extract types, use default SQL generation
+            return condition.toSQL();
+        } else if (condition instanceof ColumnReference) {
+            ColumnReference col = (ColumnReference) condition;
+            // Column references should already be properly qualified
+            return col.toSQL();
+        } else if (condition instanceof UnresolvedColumn) {
+            UnresolvedColumn col = (UnresolvedColumn) condition;
+            if (col.isQualified()) {
+                // Replace qualifier with the appropriate alias
+                String qualifier = col.qualifier().equals(leftAlias) ? leftAlias :
+                                  (col.qualifier().equals(rightAlias) ? rightAlias : col.qualifier());
+                return quoteIdentifierIfNeeded(qualifier) + "." + quoteIdentifierIfNeeded(col.columnName());
+            }
+
+            // Unqualified column - use heuristic based on which side of the binary expression we're on
+            String columnName = col.columnName();
+
+            if (preferredSide != null) {
+                // We have a hint from the parent binary expression
+                String qualifier = preferredSide.equals("left") ? leftAlias : rightAlias;
+                return quoteIdentifierIfNeeded(qualifier) + "." + quoteIdentifierIfNeeded(columnName);
+            }
+
+            // No hint - try schema-based approach as fallback
+            boolean inLeft = columnExistsInPlan(leftPlan, columnName);
+            boolean inRight = columnExistsInPlan(rightPlan, columnName);
+
+            if (inLeft && !inRight) {
+                // Column only in left table
+                return quoteIdentifierIfNeeded(leftAlias) + "." + quoteIdentifierIfNeeded(columnName);
+            } else if (inRight && !inLeft) {
+                // Column only in right table
+                return quoteIdentifierIfNeeded(rightAlias) + "." + quoteIdentifierIfNeeded(columnName);
+            } else {
+                // Column in both tables or neither - cannot qualify safely
+                // Fall back to unqualified (will likely cause ambiguity error, but that's better than wrong results)
+                return col.toSQL();
+            }
+        } else {
+            // For other expressions, use the default SQL generation
+            return condition.toSQL();
+        }
+    }
+
+    /**
+     * Checks if a column exists in a logical plan's schema.
+     * For TableScan, checks the table schema. For other plans, returns false (conservative).
+     */
+    private boolean columnExistsInPlan(LogicalPlan plan, String columnName) {
+        if (plan instanceof TableScan) {
+            TableScan scan = (TableScan) plan;
+            if (scan.schema() != null) {
+                // Check if the schema has a field with this name (case-insensitive)
+                return scan.schema().fieldByName(columnName) != null ||
+                       scan.schema().fields().stream()
+                           .anyMatch(field -> field.name().equalsIgnoreCase(columnName));
+            }
+        }
+        // For non-TableScan or plans without schema, we can't determine
+        // conservatively return false
+        return false;
     }
 
     /**
