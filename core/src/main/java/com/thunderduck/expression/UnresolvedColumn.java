@@ -4,36 +4,54 @@ import com.thunderduck.types.DataType;
 import com.thunderduck.types.StringType;
 import com.thunderduck.generator.SQLQuoting;
 import java.util.Objects;
+import java.util.OptionalLong;
 
 /**
  * Expression representing an unresolved column reference.
  *
  * <p>This is used during plan conversion when the data type is not yet known.
  * The column will be resolved during query planning/optimization.
+ *
+ * <p>The optional {@code planId} field tracks which DataFrame this column
+ * reference belongs to, enabling proper qualification in join conditions
+ * where both sides have columns with the same name.
  */
 public class UnresolvedColumn extends Expression {
 
     private final String columnName;
     private final String qualifier; // Optional table/alias qualifier
+    private final OptionalLong planId; // Optional plan_id for DataFrame lineage tracking
 
     /**
-     * Creates an unresolved column reference with a qualifier.
+     * Creates an unresolved column reference with a qualifier and plan_id.
+     *
+     * @param columnName the column name
+     * @param qualifier the table or alias qualifier (may be null)
+     * @param planId the plan_id for DataFrame lineage (may be empty)
+     */
+    public UnresolvedColumn(String columnName, String qualifier, OptionalLong planId) {
+        this.columnName = Objects.requireNonNull(columnName, "columnName must not be null");
+        this.qualifier = qualifier;
+        this.planId = planId != null ? planId : OptionalLong.empty();
+    }
+
+    /**
+     * Creates an unresolved column reference with a qualifier (no plan_id).
      *
      * @param columnName the column name
      * @param qualifier the table or alias qualifier (may be null)
      */
     public UnresolvedColumn(String columnName, String qualifier) {
-        this.columnName = Objects.requireNonNull(columnName, "columnName must not be null");
-        this.qualifier = qualifier;
+        this(columnName, qualifier, OptionalLong.empty());
     }
 
     /**
-     * Creates a simple unresolved column reference without a qualifier.
+     * Creates a simple unresolved column reference without a qualifier or plan_id.
      *
      * @param columnName the column name
      */
     public UnresolvedColumn(String columnName) {
-        this(columnName, null);
+        this(columnName, null, OptionalLong.empty());
     }
 
     /**
@@ -61,6 +79,27 @@ public class UnresolvedColumn extends Expression {
      */
     public boolean isQualified() {
         return qualifier != null;
+    }
+
+    /**
+     * Returns the plan_id for this column reference.
+     *
+     * <p>The plan_id identifies which DataFrame (logical plan) this column
+     * belongs to, enabling resolution of ambiguous column names in joins.
+     *
+     * @return the plan_id, or empty if not set
+     */
+    public OptionalLong planId() {
+        return planId;
+    }
+
+    /**
+     * Returns whether this column reference has a plan_id.
+     *
+     * @return true if plan_id is present, false otherwise
+     */
+    public boolean hasPlanId() {
+        return planId.isPresent();
     }
 
     @Override
@@ -99,11 +138,12 @@ public class UnresolvedColumn extends Expression {
         if (!(obj instanceof UnresolvedColumn)) return false;
         UnresolvedColumn that = (UnresolvedColumn) obj;
         return Objects.equals(columnName, that.columnName) &&
-               Objects.equals(qualifier, that.qualifier);
+               Objects.equals(qualifier, that.qualifier) &&
+               Objects.equals(planId, that.planId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(columnName, qualifier);
+        return Objects.hash(columnName, qualifier, planId);
     }
 }

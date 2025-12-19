@@ -55,6 +55,10 @@ public class RelationConverter {
     /**
      * Converts a Spark Connect Relation to a LogicalPlan.
      *
+     * <p>Also extracts and preserves the optional plan_id from the Relation's common
+     * field. The plan_id uniquely identifies this relation within a Spark Connect
+     * session and is used to resolve ambiguous column references in joins.
+     *
      * @param relation the Protobuf relation
      * @return the converted LogicalPlan
      * @throws PlanConversionException if conversion fails
@@ -62,6 +66,22 @@ public class RelationConverter {
     public LogicalPlan convert(Relation relation) {
         logger.debug("Converting relation type: {}", relation.getRelTypeCase());
 
+        LogicalPlan result = convertInternal(relation);
+
+        // Extract and set plan_id if present in the common field
+        if (relation.hasCommon() && relation.getCommon().hasPlanId()) {
+            long planId = relation.getCommon().getPlanId();
+            result.setPlanId(planId);
+            logger.trace("Set plan_id {} on {}", planId, result.getClass().getSimpleName());
+        }
+
+        return result;
+    }
+
+    /**
+     * Internal conversion method that handles specific relation types.
+     */
+    private LogicalPlan convertInternal(Relation relation) {
         switch (relation.getRelTypeCase()) {
             case READ:
                 return convertRead(relation.getRead());
