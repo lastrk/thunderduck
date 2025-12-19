@@ -1,5 +1,6 @@
 package com.thunderduck.logical;
 
+import com.thunderduck.types.SchemaParser;
 import com.thunderduck.types.StructType;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.VectorSchemaRoot;
@@ -167,13 +168,19 @@ public class LocalDataRelation extends LogicalPlan {
             logger.warn("Schema inference from Arrow not yet implemented");
         }
 
-        // Try to parse schema string
-        if (schemaStr != null) {
-            // TODO: Parse DDL or JSON schema string
-            logger.warn("Schema parsing from string not yet implemented: {}", schemaStr);
+        // Try to parse schema string (Spark struct format: struct<name:type,...>)
+        if (schemaStr != null && !schemaStr.isEmpty()) {
+            try {
+                schema = SchemaParser.parse(schemaStr);
+                logger.debug("Parsed schema from string: {}", schema);
+                return schema;
+            } catch (Exception e) {
+                logger.warn("Failed to parse schema string '{}': {}", schemaStr, e.getMessage());
+            }
         }
 
         // Return empty schema as fallback
+        logger.warn("Could not infer schema - returning empty StructType");
         return new StructType(new java.util.ArrayList<>());
     }
 

@@ -17,22 +17,20 @@ This document tracks known issues discovered during testing that need to be addr
 
 ---
 
-## 2. Empty DataFrame Analyze Issue
+## 2. ~~Empty DataFrame Analyze Issue~~ RESOLVED
 
-**Test**: `test_dataframes.py::TestLocalRelationOperations::test_count_on_empty_dataframe`
+**Status**: Fixed in commit (pending)
 
-**Error**:
-```
-pyspark.errors.exceptions.connect.SparkConnectException: No analyze result found!
-```
+**Solution**: Implemented `SchemaParser` utility class to parse Spark's struct format schema strings (e.g., `struct<id:int,name:string>`) into `StructType` objects. Updated `LocalDataRelation.inferSchema()` to use SchemaParser when Arrow data is empty but schema string is provided.
 
-**Root Cause**: When `createDataFrame([], schema)` is called with an empty list, the analyze request doesn't return a proper result.
+**Files Changed**:
+- `core/src/main/java/com/thunderduck/types/SchemaParser.java` - New file
+- `core/src/main/java/com/thunderduck/logical/LocalDataRelation.java` - Updated inferSchema()
+- `tests/src/test/java/com/thunderduck/types/SchemaParserTest.java` - 45 unit tests
+- `tests/integration/test_empty_dataframe.py` - 15 E2E tests (13 pass, 2 skipped for known join issue)
 
-**Affected Code**: `SparkConnectServiceImpl.analyzePlan()` or schema inference for empty dataframes.
-
-**Fix**: Handle empty dataframes in analyze requests, returning proper schema without data.
-
-**Priority**: Medium - Edge case but important for testing
+**Before**: `spark.createDataFrame([], schema)` - "No analyze result found!"
+**After**: Empty DataFrame created successfully with proper schema
 
 ---
 
@@ -89,7 +87,7 @@ SQL error: Catalog Error: Table with name lineitem does not exist!
 | Issue | Test | Priority | Status |
 |-------|------|----------|--------|
 | ~~COUNT_DISTINCT~~ | test_distinct_operations | Medium | **RESOLVED** |
-| Empty DataFrame | test_count_on_empty_dataframe | Medium | Open |
+| ~~Empty DataFrame~~ | test_count_on_empty_dataframe | Medium | **RESOLVED** |
 | Natural/Using Join | test_join_local_dataframes | High | Open |
 | TPC-H Data | test_tpch.py | Low | Test setup |
 
@@ -100,3 +98,5 @@ SQL error: Catalog Error: Table with name lineitem does not exist!
 - `connect-server/src/main/java/com/thunderduck/connect/converter/ExpressionConverter.java` - Aggregate functions
 - `connect-server/src/main/java/com/thunderduck/connect/converter/RelationConverter.java` - Join handling
 - `connect-server/src/main/java/com/thunderduck/connect/service/SparkConnectServiceImpl.java` - Analyze requests
+- `core/src/main/java/com/thunderduck/types/SchemaParser.java` - Schema string parsing
+- `core/src/main/java/com/thunderduck/logical/LocalDataRelation.java` - Empty DataFrame handling
