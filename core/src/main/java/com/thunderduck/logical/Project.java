@@ -1,6 +1,9 @@
 package com.thunderduck.logical;
 
 import com.thunderduck.expression.Expression;
+import com.thunderduck.expression.FunctionCall;
+import com.thunderduck.expression.UnresolvedColumn;
+import com.thunderduck.types.DataType;
 import com.thunderduck.types.StructField;
 import com.thunderduck.types.StructType;
 import java.util.ArrayList;
@@ -118,14 +121,72 @@ public class Project extends LogicalPlan {
 
     @Override
     public StructType inferSchema() {
+        // Get child schema for resolving column types
+        StructType childSchema = child().schema();
+
         List<StructField> fields = new ArrayList<>();
         for (int i = 0; i < projections.size(); i++) {
             Expression expr = projections.get(i);
             String alias = aliases.get(i);
             String fieldName = (alias != null) ? alias : ("col_" + i);
-            fields.add(new StructField(fieldName, expr.dataType(), expr.nullable()));
+
+            // Resolve data type and nullable from child schema
+            DataType resolvedType = resolveDataType(expr, childSchema);
+            boolean resolvedNullable = resolveNullable(expr, childSchema);
+
+            fields.add(new StructField(fieldName, resolvedType, resolvedNullable));
         }
         return new StructType(fields);
+    }
+
+    /**
+     * Resolves the data type of an expression, looking up unresolved columns
+     * in the child schema.
+     */
+    private DataType resolveDataType(Expression expr, StructType childSchema) {
+        if (expr instanceof UnresolvedColumn) {
+            String colName = ((UnresolvedColumn) expr).columnName();
+            StructField field = childSchema.fieldByName(colName);
+            if (field != null) {
+                return field.dataType();
+            }
+        } else if (expr instanceof FunctionCall) {
+            // For function calls, resolve argument types first and then compute result type
+            FunctionCall func = (FunctionCall) expr;
+            // Functions like abs, sqrt, etc. typically preserve the argument type
+            // For now, try to get the type from the first argument if it's a column
+            if (!func.arguments().isEmpty()) {
+                DataType argType = resolveDataType(func.arguments().get(0), childSchema);
+                // Many numeric functions preserve the argument type
+                return argType;
+            }
+        }
+        // Fall back to expression's declared type
+        return expr.dataType();
+    }
+
+    /**
+     * Resolves the nullability of an expression, looking up unresolved columns
+     * in the child schema.
+     */
+    private boolean resolveNullable(Expression expr, StructType childSchema) {
+        if (expr instanceof UnresolvedColumn) {
+            String colName = ((UnresolvedColumn) expr).columnName();
+            StructField field = childSchema.fieldByName(colName);
+            if (field != null) {
+                return field.nullable();
+            }
+        } else if (expr instanceof FunctionCall) {
+            // Function calls are typically nullable if any argument is nullable
+            FunctionCall func = (FunctionCall) expr;
+            for (Expression arg : func.arguments()) {
+                if (resolveNullable(arg, childSchema)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return expr.nullable();
     }
 
     @Override

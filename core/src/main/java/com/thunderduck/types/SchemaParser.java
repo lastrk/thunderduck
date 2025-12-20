@@ -1,14 +1,21 @@
 package com.thunderduck.types;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Parses schema strings into StructType objects.
  *
- * <p>Supports Spark's struct format: {@code struct<name:type,name2:type2>}
+ * <p>Supports two formats:
+ * <ul>
+ *   <li>Spark DDL format: {@code struct<name:type,name2:type2>}</li>
+ *   <li>JSON format: {@code {"type":"struct","fields":[{"name":"id","type":"integer","nullable":false},...]}}</li>
+ * </ul>
  *
- * <p>Examples:
+ * <p>Examples (DDL format):
  * <ul>
  *   <li>{@code struct<id:int,name:string>}</li>
  *   <li>{@code struct<tags:array<string>>}</li>
@@ -17,10 +24,12 @@ import java.util.List;
  */
 public class SchemaParser {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     /**
      * Parses a Spark schema string into a StructType.
      *
-     * @param schemaStr the schema string in struct format
+     * @param schemaStr the schema string in DDL or JSON format
      * @return the parsed StructType
      * @throws IllegalArgumentException if the schema string is invalid
      */
@@ -31,7 +40,12 @@ public class SchemaParser {
 
         String trimmed = schemaStr.trim();
 
-        // Handle struct<...> format
+        // Handle JSON format: {"type":"struct","fields":[...]}
+        if (trimmed.startsWith("{")) {
+            return parseJsonSchema(trimmed);
+        }
+
+        // Handle struct<...> format (DDL)
         if (trimmed.toLowerCase().startsWith("struct<") && trimmed.endsWith(">")) {
             String inner = trimmed.substring(7, trimmed.length() - 1);
             return parseStructFields(inner);
@@ -39,6 +53,92 @@ public class SchemaParser {
 
         // Try parsing as simple field list (fallback)
         return parseStructFields(trimmed);
+    }
+
+    /**
+     * Parses a JSON schema string into a StructType.
+     *
+     * <p>Expected format:
+     * <pre>
+     * {
+     *   "type": "struct",
+     *   "fields": [
+     *     {"name": "id", "type": "integer", "nullable": false, "metadata": {}},
+     *     {"name": "name", "type": "string", "nullable": true, "metadata": {}}
+     *   ]
+     * }
+     * </pre>
+     *
+     * @param jsonStr the JSON schema string
+     * @return the parsed StructType
+     */
+    private static StructType parseJsonSchema(String jsonStr) {
+        try {
+            JsonNode root = objectMapper.readTree(jsonStr);
+            return parseJsonStructType(root);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to parse JSON schema: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Parses a JSON node representing a struct type.
+     */
+    private static StructType parseJsonStructType(JsonNode node) {
+        JsonNode fieldsNode = node.get("fields");
+        if (fieldsNode == null || !fieldsNode.isArray()) {
+            return new StructType(new ArrayList<>());
+        }
+
+        List<StructField> fields = new ArrayList<>();
+        for (JsonNode fieldNode : fieldsNode) {
+            String name = fieldNode.get("name").asText();
+            boolean nullable = fieldNode.has("nullable") ? fieldNode.get("nullable").asBoolean() : true;
+            DataType dataType = parseJsonDataType(fieldNode.get("type"));
+            fields.add(new StructField(name, dataType, nullable));
+        }
+
+        return new StructType(fields);
+    }
+
+    /**
+     * Parses a JSON node representing a data type.
+     * Handles both simple types (string like "integer") and complex types (object like {"type":"array",...}).
+     */
+    private static DataType parseJsonDataType(JsonNode typeNode) {
+        if (typeNode == null) {
+            throw new IllegalArgumentException("Type node cannot be null");
+        }
+
+        // Simple type as string: "integer", "string", etc.
+        if (typeNode.isTextual()) {
+            return parsePrimitiveType(typeNode.asText().toLowerCase());
+        }
+
+        // Complex type as object: {"type":"array", "elementType":...}
+        if (typeNode.isObject()) {
+            String typeName = typeNode.get("type").asText().toLowerCase();
+
+            switch (typeName) {
+                case "array":
+                    JsonNode elementType = typeNode.get("elementType");
+                    return new ArrayType(parseJsonDataType(elementType));
+
+                case "map":
+                    JsonNode keyType = typeNode.get("keyType");
+                    JsonNode valueType = typeNode.get("valueType");
+                    return new MapType(parseJsonDataType(keyType), parseJsonDataType(valueType));
+
+                case "struct":
+                    return parseJsonStructType(typeNode);
+
+                default:
+                    // Could be a primitive type in object form
+                    return parsePrimitiveType(typeName);
+            }
+        }
+
+        throw new IllegalArgumentException("Unsupported type node: " + typeNode);
     }
 
     /**

@@ -26,6 +26,7 @@
 #   SPARK_MEMORY=4g               - Spark driver memory
 #   THUNDERDUCK_MEMORY=2g         - Thunderduck JVM heap
 #   THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true  - Continue on hard errors (for CI/CD)
+#   VERBOSE_FAILURES=true             - Use long tracebacks for failures (--tb=long)
 #
 # Examples:
 #   ./run-differential-tests-v2.sh              # Run all tests
@@ -331,6 +332,7 @@ echo -e "    Thunderduck port: ${THUNDERDUCK_PORT:-15002}"
 echo -e "    Connect timeout:  ${CONNECT_TIMEOUT:-10}s"
 echo -e "    Collect timeout:  ${COLLECT_TIMEOUT:-10}s"
 echo -e "    Continue on error: ${THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR:-false}"
+echo -e "    Verbose failures:  ${VERBOSE_FAILURES:-false}"
 echo ""
 
 cd "$WORKSPACE_DIR/tests/integration"
@@ -338,12 +340,19 @@ cd "$WORKSPACE_DIR/tests/integration"
 # Export SPARK_HOME for the tests
 export SPARK_HOME
 
+# Set traceback style based on VERBOSE_FAILURES
+if [ "${VERBOSE_FAILURES:-false}" = "true" ]; then
+    TB_STYLE="--tb=long"
+else
+    TB_STYLE="--tb=short"
+fi
+
 # Run pytest with all test files
 # shellcheck disable=SC2086
 python3 -m pytest \
     $TEST_FILES \
     -v \
-    --tb=short \
+    $TB_STYLE \
     $PYTEST_ARGS
 
 TEST_EXIT_CODE=$?
