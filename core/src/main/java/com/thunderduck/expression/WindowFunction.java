@@ -222,7 +222,15 @@ public class WindowFunction extends Expression {
 
     @Override
     public boolean nullable() {
-        // Window functions can generally produce nulls
+        // Ranking functions always return non-null values
+        String funcUpper = function.toUpperCase();
+        if (funcUpper.equals("ROW_NUMBER") ||
+            funcUpper.equals("RANK") ||
+            funcUpper.equals("DENSE_RANK") ||
+            funcUpper.equals("NTILE")) {
+            return false;
+        }
+        // All other window functions can return null
         return true;
     }
 

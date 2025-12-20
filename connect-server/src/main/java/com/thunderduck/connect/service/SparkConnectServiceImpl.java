@@ -9,7 +9,9 @@ import com.thunderduck.runtime.ArrowBatchIterator;
 import com.thunderduck.runtime.ArrowStreamingExecutor;
 import com.thunderduck.runtime.QueryExecutor;
 import com.thunderduck.runtime.TailBatchIterator;
+import com.thunderduck.runtime.SchemaCorrectedBatchIterator;
 import com.thunderduck.logical.Tail;
+import com.thunderduck.types.StructType;
 import com.thunderduck.schema.SchemaInferrer;
 import io.grpc.Context;
 import io.grpc.Status;
@@ -229,13 +231,17 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     String generatedSQL = sqlGenerator.generate(logicalPlan);
                     logger.info("Generated SQL from plan: {}", generatedSQL);
 
+                    // Get logical schema for correct nullable flags
+                    // DuckDB returns all columns as nullable, but Spark has specific rules
+                    StructType logicalSchema = logicalPlan.schema();
+
                     // Check if this is a Tail plan - use TailBatchIterator wrapper
                     if (logicalPlan instanceof Tail) {
                         Tail tailPlan = (Tail) logicalPlan;
-                        executeSQLStreaming(generatedSQL, session, responseObserver, (int) tailPlan.limit());
+                        executeSQLStreaming(generatedSQL, logicalSchema, session, responseObserver, (int) tailPlan.limit());
                     } else {
-                        // Execute the generated SQL
-                        executeSQL(generatedSQL, session, responseObserver);
+                        // Execute the generated SQL with schema correction
+                        executeSQLStreaming(generatedSQL, logicalSchema, session, responseObserver);
                     }
 
                 } catch (Exception e) {
@@ -1597,7 +1603,23 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
      */
     private void executeSQLStreaming(String sql, Session session,
                                      StreamObserver<ExecutePlanResponse> responseObserver) {
-        executeSQLStreaming(sql, session, responseObserver, -1);
+        executeSQLStreaming(sql, null, session, responseObserver, -1);
+    }
+
+    /**
+     * Execute SQL query with schema correction for correct nullable flags.
+     *
+     * <p>When a logical schema is provided, the Arrow output from DuckDB is wrapped
+     * to correct nullable flags to match Spark semantics.
+     *
+     * @param sql SQL query string
+     * @param logicalSchema the logical plan schema with correct nullable flags (can be null)
+     * @param session Session object
+     * @param responseObserver Response stream
+     */
+    private void executeSQLStreaming(String sql, StructType logicalSchema, Session session,
+                                     StreamObserver<ExecutePlanResponse> responseObserver) {
+        executeSQLStreaming(sql, logicalSchema, session, responseObserver, -1);
     }
 
     /**
@@ -1607,12 +1629,16 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
      * that collects all batches and returns only the last N rows. This is memory-efficient
      * with O(N) memory where N is the tail limit.
      *
+     * <p>When logicalSchema is provided, the results are wrapped in a
+     * {@link SchemaCorrectedBatchIterator} that corrects nullable flags to match Spark semantics.
+     *
      * @param sql SQL query string
+     * @param logicalSchema the logical plan schema with correct nullable flags (can be null)
      * @param session Session object
      * @param responseObserver Response stream
-     * @param tailLimit if > 0, return only the last tailLimit rows
+     * @param tailLimit if >= 0, return only the last tailLimit rows; -1 for all rows
      */
-    private void executeSQLStreaming(String sql, Session session,
+    private void executeSQLStreaming(String sql, StructType logicalSchema, Session session,
                                      StreamObserver<ExecutePlanResponse> responseObserver,
                                      int tailLimit) {
         String operationId = java.util.UUID.randomUUID().toString();
@@ -1627,12 +1653,19 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             // Create executor and get base iterator
             ArrowStreamingExecutor executor = new ArrowStreamingExecutor(session.getRuntime());
             try (ArrowBatchIterator baseIterator = executor.executeStreaming(sql)) {
-                // Wrap with TailBatchIterator if tail operation requested
                 ArrowBatchIterator iterator = baseIterator;
+
+                // Wrap with SchemaCorrectedBatchIterator if logical schema provided
+                // This corrects nullable flags from DuckDB (all true) to match Spark semantics
+                if (logicalSchema != null) {
+                    iterator = new SchemaCorrectedBatchIterator(iterator, logicalSchema, executor.getAllocator());
+                }
+
+                // Wrap with TailBatchIterator if tail operation requested
                 if (tailLimit >= 0) {
                     // TailBatchIterator needs the allocator from executor to share root
                     // tailLimit >= 0 because tail(0) should return empty result, not all rows
-                    iterator = new TailBatchIterator(baseIterator, executor.getAllocator(), tailLimit);
+                    iterator = new TailBatchIterator(iterator, executor.getAllocator(), tailLimit);
                 }
 
                 try (ArrowBatchIterator effectiveIterator = iterator) {

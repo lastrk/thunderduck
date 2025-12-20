@@ -168,6 +168,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             visitTail((Tail) plan);
         } else if (plan instanceof Sample) {
             visitSample((Sample) plan);
+        } else if (plan instanceof WithColumns) {
+            visitWithColumns((WithColumns) plan);
         } else {
             throw new UnsupportedOperationException(
                 "SQL generation not implemented for: " + plan.getClass().getSimpleName());
@@ -429,6 +431,44 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             sql.append(String.format(" USING SAMPLE %.6f%% (bernoulli)",
                 percentage));
         }
+    }
+
+    /**
+     * Visits a WithColumns node (add/replace columns).
+     * Builds SQL directly in buffer to avoid corruption from generate() calls.
+     */
+    private void visitWithColumns(WithColumns plan) {
+        // Build column exclusion list
+        StringBuilder excludeFilter = new StringBuilder();
+        excludeFilter.append("COLUMNS(c -> c NOT IN (");
+        for (int i = 0; i < plan.columnNames().size(); i++) {
+            if (i > 0) excludeFilter.append(", ");
+            excludeFilter.append("'").append(plan.columnNames().get(i).replace("'", "''")).append("'");
+        }
+        excludeFilter.append("))");
+
+        // Build new column expressions
+        StringBuilder newColExprs = new StringBuilder();
+        for (int i = 0; i < plan.columnNames().size(); i++) {
+            if (i > 0) newColExprs.append(", ");
+            newColExprs.append(plan.columnExpressions().get(i).toSQL());
+            newColExprs.append(" AS ");
+            newColExprs.append(SQLQuoting.quoteIdentifier(plan.columnNames().get(i)));
+        }
+
+        // Build full SQL
+        sql.append("SELECT ");
+        sql.append(excludeFilter.toString());
+        sql.append(", ");
+        sql.append(newColExprs.toString());
+        sql.append(" FROM (");
+
+        // Visit child
+        subqueryDepth++;
+        visit(plan.child());
+        subqueryDepth--;
+
+        sql.append(") AS _withcol_subquery");
     }
 
     /**

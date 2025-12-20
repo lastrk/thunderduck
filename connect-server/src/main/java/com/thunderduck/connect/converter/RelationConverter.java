@@ -773,54 +773,27 @@ public class RelationConverter {
             return input;
         }
 
-        // Generate SQL
-        SQLGenerator generator = new SQLGenerator();
-        String inputSql = generator.generate(input);
-
-        // Collect all column names being added/replaced
+        // Convert all column names and expressions
         List<String> colNames = new ArrayList<>();
-        StringBuilder newColExprs = new StringBuilder();
+        List<Expression> colExprs = new ArrayList<>();
 
-        for (int i = 0; i < aliases.size(); i++) {
-            org.apache.spark.connect.proto.Expression.Alias alias = aliases.get(i);
-
+        for (org.apache.spark.connect.proto.Expression.Alias alias : aliases) {
             // Convert the expression
             Expression expr = expressionConverter.convert(alias.getExpr());
-            String exprSql = expr.toSQL();
 
             // Get the column name (first name part)
             String colName = alias.getName(0);
             colNames.add(colName);
-            String quotedColName = SQLQuoting.quoteIdentifier(colName);
-
-            if (i > 0) {
-                newColExprs.append(", ");
-            }
-            newColExprs.append(exprSql).append(" AS ").append(quotedColName);
+            colExprs.add(expr);
 
             logger.debug("WithColumns: adding/replacing column '{}'", colName);
         }
 
-        // Build the COLUMNS filter to exclude columns being replaced
-        // This works for both add (no match, keeps all) and replace (filters out existing)
-        // Using DuckDB's COLUMNS(c -> c NOT IN (...)) lambda syntax
-        StringBuilder excludeFilter = new StringBuilder();
-        excludeFilter.append("COLUMNS(c -> c NOT IN (");
-        for (int i = 0; i < colNames.size(); i++) {
-            if (i > 0) {
-                excludeFilter.append(", ");
-            }
-            // Column names need to be strings for comparison
-            excludeFilter.append("'").append(colNames.get(i).replace("'", "''")).append("'");
-        }
-        excludeFilter.append("))");
-
-        // Build: SELECT COLUMNS(c -> c NOT IN ('col1', 'col2')), expr1 AS col1, expr2 AS col2 FROM (...)
-        String sql = String.format("SELECT %s, %s FROM (%s) AS _withcol_subquery",
-            excludeFilter.toString(), newColExprs.toString(), inputSql);
-
-        logger.debug("Creating WithColumns SQL: {}", sql);
-        return new SQLRelation(sql);
+        // Return WithColumns plan that properly infers schema
+        com.thunderduck.logical.WithColumns plan =
+            new com.thunderduck.logical.WithColumns(input, colNames, colExprs);
+        logger.debug("Creating WithColumns plan with {} columns", colNames.size());
+        return plan;
     }
 
     /**

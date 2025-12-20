@@ -449,7 +449,12 @@ public class Aggregate extends LogicalPlan {
 
         @Override
         public boolean nullable() {
-            // Aggregates can generally produce nulls (e.g., AVG of empty set)
+            // COUNT always returns non-null (0 for empty groups)
+            String funcUpper = function.toUpperCase();
+            if (funcUpper.equals("COUNT")) {
+                return false;
+            }
+            // All other aggregates can return null (empty groups, null inputs)
             return true;
         }
 

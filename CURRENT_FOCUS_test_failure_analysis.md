@@ -2,58 +2,49 @@
 
 ## Objective
 
-Analyze the 451 failed tests from `run-differential-tests-v2.sh` to:
+Analyze the differential test failures from `run-differential-tests-v2.sh` to:
 1. Cluster failures by root cause
 2. Identify the most impactful fixes
 3. Address root causes systematically
 
-## Current State (as of latest run)
+## Current State (as of 2025-12-20)
 
-- **Failed**: 451
-- **Passed**: 121
+- **Failed**: 417
+- **Passed**: 155
 - **Skipped**: 2
-- **Pass Rate**: ~21%
+- **Pass Rate**: ~27% (up from ~21%)
 
-## Root Cause Analysis (Refined)
+### Recent Improvements
 
-### Issue #1: GroupBy/Aggregate Schema Loss (~238 tests)
+- **Window Function Types**: Fixed ranking functions (ROW_NUMBER, RANK, DENSE_RANK, NTILE) to return IntegerType instead of LongType (+7 tests passing)
+- **Nullable Inference**: Added `SchemaCorrectedBatchIterator` and `WithColumns` logical plan to properly infer nullable flags from expressions
+- **WithColumns Plan**: Replaced raw SQLRelation with proper WithColumns plan class for correct schema inference
+
+## Root Cause Analysis (Updated)
+
+### Issue #1: GroupBy/Aggregate Schema Loss (~200+ tests) - PARTIALLY FIXED
 
 **Symptoms**:
 - Column names become `group_0`, `group_1`, `group_2` instead of actual names
 - All types become `StringType()`
-- Affects TPC-DS (205), TPC-H DataFrame tests (33)
+- Affects TPC-DS, TPC-H DataFrame tests
 
-**Example**:
-```
-Reference: l_orderkey (LongType), o_orderdate (DateType), revenue (DecimalType)
-Test: group_0 (StringType), group_1 (StringType), revenue (StringType)
-```
+**Status**: WithColumns schema inference fixed, but groupBy operations may still have issues.
 
-**Root Cause**: `Aggregate` or `Project` logical plan doesn't preserve column names/types through groupBy operations.
-
-**Files to Fix**: `SQLGenerator.java` - aggregate SQL generation, `Project.java` - schema inference
+**Files to Check**: `Aggregate.java`, `SQLGenerator.java`, schema propagation through groupBy
 
 ---
 
-### Issue #2: Window Functions Return LongType Instead of IntegerType (~35 tests)
+### Issue #2: Window Functions (~35 tests) - RANKING FIXED, OTHERS PENDING
 
 **Symptoms**:
-- `row_number`, `rank`, `dense_rank`, `ntile` return `LongType()` instead of `IntegerType()`
-- Nullable mismatches (all columns marked nullable when they shouldn't be)
+- Ranking functions now return correct IntegerType
+- LAG, LEAD, FIRST, LAST, NTH_VALUE still have type mismatches
+- Frame specifications (ROWS BETWEEN, RANGE BETWEEN) may have issues
 
-**Example**:
-```
-Column 'row_num': type mismatch - Reference=IntegerType(), Test=LongType()
-Column 'department': nullable mismatch - Reference=False, Test=True
-```
+**Status**: Ranking functions (row_number, rank, dense_rank, ntile) FIXED. Analytic functions pending.
 
-**Root Cause**:
-1. DuckDB window functions return BIGINT, not INT
-2. Nullable inference doesn't account for NOT NULL columns
-
-**Files to Fix**:
-- `ExpressionConverter.java` - window function return type inference
-- Schema inference for nullable
+**Files to Fix**: `ExpressionConverter.java` - LAG/LEAD/FIRST/LAST type inference
 
 ---
 
@@ -63,13 +54,7 @@ Column 'department': nullable mismatch - Reference=False, Test=True
 - Column count mismatch (Test has extra columns)
 - USING join columns appear twice instead of once
 
-**Example**:
-```
-Reference: 3 columns (id, name1, name2)
-Test: 4 columns (includes duplicate id column)
-```
-
-**Root Cause**: USING join doesn't deduplicate the join column in the output.
+**Status**: Not yet addressed.
 
 **Files to Fix**: `Join.java` or SQL generation for USING joins
 
@@ -88,7 +73,7 @@ Test: 4 columns (includes duplicate id column)
 | `MAP('a', 1)` | `MAP(['a'], [1])` |
 | `NAMED_STRUCT('x', 1)` | `{'x': 1}` or `struct_pack(x := 1)` |
 
-**Files to Fix**: `ExpressionConverter.java` - literal handling, `SQLGenerator.java` - SQL output
+**Status**: Not yet addressed.
 
 ---
 
@@ -103,15 +88,19 @@ Test: 4 columns (includes duplicate id column)
 | `array_join` | 2 | `list_string_agg` |
 | `initcap` | 2 | Custom UDF or implementation |
 
+**Status**: Not yet addressed.
+
 ---
 
-### Issue #6: Type Width Mismatches (~60 tests)
+### Issue #6: Type Width Mismatches (~50 tests)
 
 | Pattern | Count | Fix |
 |---------|-------|-----|
-| IntegerType vs LongType | 52 | Ensure INT functions return INT |
+| IntegerType vs LongType | ~40 | Partially fixed for window functions |
 | LongType vs DecimalType | 20 | Map decimal types correctly |
 | ByteType vs LongType | 12 | Small int handling |
+
+**Status**: Window function types fixed. Other type mismatches pending.
 
 ---
 
@@ -119,38 +108,53 @@ Test: 4 columns (includes duplicate id column)
 
 All lambda tests fail - likely `transform`, `filter`, `aggregate` function translation issues.
 
+**Status**: Not yet addressed.
+
 ---
 
-### Issue #8: Nullable Inference (~50+ tests)
+### Issue #8: Nullable Inference - PARTIALLY FIXED
 
-Many tests fail only due to nullable mismatches. Thunderduck marks columns as `nullable=True` when Spark says `nullable=False`.
+**Symptoms**:
+- Many tests fail only due to nullable mismatches
+- Thunderduck marks columns as `nullable=True` when Spark says `nullable=False`
+
+**Status**: Fixed for:
+- Ranking window functions (ROW_NUMBER, RANK, etc.)
+- COUNT aggregates
+- WithColumns expressions
+
+Still pending for other operations.
+
+**Files Modified**:
+- `WindowFunction.java` - `nullable()` returns false for ranking functions
+- `Aggregate.AggregateExpression.java` - `nullable()` returns false for COUNT
+- `SchemaCorrectedBatchIterator.java` - NEW - corrects Arrow schema nullable flags
+- `WithColumns.java` - NEW - proper schema inference for withColumn operations
 
 ---
 
 ## Priority Fix Order (by Impact)
 
-| Priority | Issue | Tests Fixed | Effort |
-|----------|-------|-------------|--------|
-| 1 | GroupBy Schema Loss | ~238 | Medium |
-| 2 | SQL Syntax (ARRAY, MAP, STRUCT) | ~70 | Low |
-| 3 | Window Function Types | ~35 | Low |
-| 4 | Missing Functions | ~30 | Medium |
-| 5 | Lambda Functions | ~18 | Medium |
-| 6 | USING Join Dedup | ~10 | Low |
-| 7 | Type Width | ~60 | Low |
-| 8 | Nullable Inference | ~50+ | Medium |
+| Priority | Issue | Est. Tests | Status |
+|----------|-------|------------|--------|
+| 1 | GroupBy Schema Loss | ~200 | Partially Fixed |
+| 2 | SQL Syntax (ARRAY, MAP, STRUCT) | ~70 | Not Started |
+| 3 | Window Analytic Functions (LAG, LEAD) | ~20 | Not Started |
+| 4 | Missing Functions | ~30 | Not Started |
+| 5 | Lambda Functions | ~18 | Not Started |
+| 6 | USING Join Dedup | ~10 | Not Started |
+| 7 | Type Width (remaining) | ~30 | Partially Fixed |
 
 ## Next Steps
 
-1. [ ] **Fix GroupBy schema loss** - highest impact
-   - Debug why groupBy loses column names/types
-   - Check `Aggregate.toSQL()` and `Project.inferSchema()`
+1. [ ] **Fix GroupBy schema loss** - check if remaining issues in Aggregate/Project
+   - Debug why groupBy loses column names/types in some cases
 
 2. [ ] **Add ARRAY/MAP/STRUCT literal translation**
    - Update `ExpressionConverter` for complex type literals
 
-3. [ ] **Fix window function return types**
-   - Cast DuckDB BIGINT results to INT for ranking functions
+3. [ ] **Fix window analytic function types**
+   - LAG, LEAD, FIRST, LAST, NTH_VALUE type inference
 
 4. [ ] **Implement missing functions**
    - Add `list_union`, `list_except`, `explode_outer` translations
@@ -166,4 +170,14 @@ grep "Generated SQL" /tmp/server.log
 
 # Run window function tests only
 python3 -m pytest differential/test_window_functions.py -v
+
+# Run all differential tests
+/workspace/tests/scripts/run-differential-tests-v2.sh
 ```
+
+## Test Results History
+
+| Date | Passed | Failed | Pass Rate | Notes |
+|------|--------|--------|-----------|-------|
+| 2025-12-20 | 155 | 417 | 27% | Nullable fix, WithColumns plan |
+| Previous | 121 | 451 | 21% | Baseline |
