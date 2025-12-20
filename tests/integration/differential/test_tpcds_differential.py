@@ -8,12 +8,13 @@ This test suite runs TPC-DS queries on both:
 Results are compared row-by-row with detailed diff output on mismatch.
 
 Coverage:
-- 94 out of 99 TPC-DS queries (Q36 excluded due to DuckDB limitation)
+- 93 out of 99 TPC-DS queries
 - Variant queries: Q14a/b, Q23a/b, Q24a/b, Q39a/b
-- Total: ~98 unique query patterns
+- Total: ~97 unique query patterns
 
-Note: Q36 uses GROUPING() in window PARTITION BY clause which DuckDB
-does not support. See docs/research/TPCDS_ROOT_CAUSE_ANALYSIS.md
+Exclusions:
+- Q36: Uses GROUPING() in window PARTITION BY (DuckDB limitation)
+- Q72: Causes Spark OOM in differential testing environment
 """
 
 import pytest
@@ -39,7 +40,7 @@ STANDARD_QUERIES = [
     40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
     51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
     61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
-    71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+    71, 73, 74, 75, 76, 77, 78, 79, 80,  # Q72 excluded (Spark OOM)
     81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
     91, 92, 93, 94, 95, 96, 97, 98, 99
 ]
@@ -358,7 +359,7 @@ class TestTPCDS_Batch7:
 class TestTPCDS_Batch8:
     """TPC-DS Q71-Q80 differential tests"""
 
-    @pytest.mark.parametrize("query_id", [71, 72, 73, 74, 75, 76, 77, 78, 79, 80])
+    @pytest.mark.parametrize("query_id", [71, 73, 74, 75, 76, 77, 78, 79, 80])  # Q72 excluded
     def test_batch8(
         self,
         query_id,

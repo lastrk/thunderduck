@@ -10,6 +10,45 @@ from decimal import Decimal
 from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType, StructField, DataType
 import difflib
+import threading
+
+
+def collect_with_timeout(df: DataFrame, timeout: int, name: str) -> List:
+    """
+    Collect DataFrame with timeout.
+
+    Args:
+        df: DataFrame to collect
+        timeout: Timeout in seconds
+        name: Name for error messages (e.g., "Spark Reference", "Thunderduck")
+
+    Returns:
+        List of rows
+
+    Raises:
+        TimeoutError: If collection exceeds timeout
+    """
+    result = []
+    exception = []
+
+    def collect_func():
+        try:
+            result.extend(df.collect())
+        except Exception as e:
+            exception.append(e)
+
+    thread = threading.Thread(target=collect_func)
+    thread.daemon = True
+    thread.start()
+    thread.join(timeout=timeout)
+
+    if thread.is_alive():
+        raise TimeoutError(f"{name} query execution timed out after {timeout}s")
+
+    if exception:
+        raise exception[0]
+
+    return result
 
 
 class DataFrameDiff:
@@ -31,7 +70,8 @@ class DataFrameDiff:
         reference_df: DataFrame,
         test_df: DataFrame,
         query_name: str = "Query",
-        max_diff_rows: int = 10
+        max_diff_rows: int = 10,
+        timeout: int = 30
     ) -> Tuple[bool, str, dict]:
         """
         Compare two DataFrames and produce detailed diff
@@ -41,6 +81,7 @@ class DataFrameDiff:
             test_df: Test DataFrame (Thunderduck)
             query_name: Name of the query for logging
             max_diff_rows: Maximum number of diff rows to show
+            timeout: Timeout in seconds for each collect() operation (default: 30)
 
         Returns:
             Tuple of (passed: bool, message: str, stats: dict)
@@ -71,9 +112,12 @@ class DataFrameDiff:
 
         print("✓ Schemas match")
 
-        # 2. Collect and compare row counts
-        reference_rows = reference_df.collect()
-        test_rows = test_df.collect()
+        # 2. Collect and compare row counts (with timeout)
+        print(f"  Collecting Spark Reference results (timeout: {timeout}s)...")
+        reference_rows = collect_with_timeout(reference_df, timeout, "Spark Reference")
+
+        print(f"  Collecting Thunderduck results (timeout: {timeout}s)...")
+        test_rows = collect_with_timeout(test_df, timeout, "Thunderduck")
 
         stats['reference_rows'] = len(reference_rows)
         stats['test_rows'] = len(test_rows)
@@ -292,10 +336,19 @@ def assert_dataframes_equal(
     test_df: DataFrame,
     query_name: str = "Query",
     epsilon: float = 1e-6,
-    max_diff_rows: int = 10
+    max_diff_rows: int = 10,
+    timeout: int = 30,
+    orchestrator=None
 ):
     """
-    Assert that two DataFrames are equal, with detailed diff on failure
+    Assert that two DataFrames are equal, with detailed diff on failure.
+
+    If orchestrator is provided, uses the V2 infrastructure with:
+    - Proper error classification (hard errors vs soft errors)
+    - Timing measurements
+    - Server health monitoring
+
+    If orchestrator is not provided, uses basic timeout behavior.
 
     Args:
         reference_df: Reference DataFrame (Spark)
@@ -303,20 +356,195 @@ def assert_dataframes_equal(
         query_name: Name of the query for error messages
         epsilon: Tolerance for floating point comparisons
         max_diff_rows: Maximum number of diff rows to show
+        timeout: Timeout in seconds for each collect() operation (default: 30)
+        orchestrator: Optional TestOrchestrator instance for timing and health checks
 
     Raises:
         AssertionError: If DataFrames don't match
+        TimeoutError: If query execution times out (basic mode)
+        HardError subclass: On timeout, crash, or connection failure (orchestrator mode)
     """
-    diff = DataFrameDiff(epsilon=epsilon)
-    passed, message, stats = diff.compare(
-        reference_df, test_df, query_name, max_diff_rows
+    if orchestrator is not None:
+        # Use V2 path with timing and health checks
+        from .exceptions import ResultMismatchError
+        try:
+            compare_differential(
+                orchestrator=orchestrator,
+                spark_df=reference_df,
+                thunderduck_df=test_df,
+                query_name=query_name,
+                timeout=timeout,
+                epsilon=epsilon,
+                max_diff_rows=max_diff_rows
+            )
+        except ResultMismatchError as e:
+            raise AssertionError(str(e)) from e
+    else:
+        # Use basic path (existing behavior)
+        diff = DataFrameDiff(epsilon=epsilon)
+        passed, message, stats = diff.compare(
+            reference_df, test_df, query_name, max_diff_rows, timeout
+        )
+
+        if not passed:
+            raise AssertionError(f"{query_name} failed:\n{message}")
+
+
+# ============================================================================
+# Orchestrator-Based Comparison (internal implementation)
+# ============================================================================
+
+def compare_differential(
+    orchestrator,
+    spark_df: DataFrame,
+    thunderduck_df: DataFrame,
+    query_name: str,
+    timeout: int = None,
+    epsilon: float = 1e-6,
+    max_diff_rows: int = 10
+) -> None:
+    """
+    Compare DataFrames with proper error handling using the orchestrator.
+
+    This function:
+    1. Checks server health before collection
+    2. Uses orchestrator's timed collection with proper error classification
+    3. Records timing metrics
+    4. Raises appropriate exceptions for hard vs soft errors
+
+    Args:
+        orchestrator: TestOrchestrator instance for timing and error handling
+        spark_df: DataFrame from Spark Reference
+        thunderduck_df: DataFrame from Thunderduck
+        query_name: Name of the query for logging
+        timeout: Collection timeout (uses orchestrator default if None)
+        epsilon: Tolerance for floating point comparisons
+        max_diff_rows: Maximum number of diff rows to show
+
+    Raises:
+        HardError subclass: On timeout, crash, or connection failure
+        ResultMismatchError: On value differences (soft error)
+    """
+    from .exceptions import (
+        HardError,
+        QueryTimeoutError,
+        ServerCrashError,
+        HealthCheckError,
+        ResultMismatchError,
     )
 
-    if not passed:
-        raise AssertionError(f"{query_name} failed:\n{message}")
+    timeout = timeout or orchestrator.collect_timeout
+
+    print(f"\n{'=' * 80}")
+    print(f"Comparing: {query_name}")
+    print(f"{'=' * 80}")
+
+    # Check servers are healthy before attempting collection
+    try:
+        orchestrator.check_servers_healthy()
+    except HealthCheckError as e:
+        orchestrator.on_hard_error(e, test_name=query_name)
+        raise
+
+    # 1. Compare schemas first (doesn't require collection)
+    diff = DataFrameDiff(epsilon=epsilon)
+    schema_match, schema_msg = diff._compare_schemas(
+        spark_df.schema, thunderduck_df.schema
+    )
+
+    if not schema_match:
+        print(f"✗ Schema mismatch")
+        print(schema_msg)
+        raise ResultMismatchError(
+            f"Schema mismatch in {query_name}:\n{schema_msg}",
+            query_name=query_name
+        )
+
+    print("✓ Schemas match")
+
+    # 2. Collect Spark Reference results with timeout
+    print(f"  Collecting Spark Reference results (timeout: {timeout}s)...")
+    try:
+        spark_rows = orchestrator.collect_result(spark_df, "spark", timeout)
+    except QueryTimeoutError as e:
+        orchestrator.on_hard_error(e, test_name=query_name)
+        raise
+    except Exception as e:
+        error = ServerCrashError(f"Spark Reference failed during collection: {e}")
+        orchestrator.on_hard_error(error, test_name=query_name)
+        raise error from e
+
+    print(f"  Spark Reference: {len(spark_rows):,} rows")
+
+    # 3. Check Spark server still healthy after collection
+    try:
+        orchestrator.check_servers_healthy()
+    except HealthCheckError as e:
+        orchestrator.on_hard_error(e, test_name=query_name)
+        raise
+
+    # 4. Collect Thunderduck results with timeout
+    print(f"  Collecting Thunderduck results (timeout: {timeout}s)...")
+    try:
+        thunderduck_rows = orchestrator.collect_result(thunderduck_df, "thunderduck", timeout)
+    except QueryTimeoutError as e:
+        orchestrator.on_hard_error(e, test_name=query_name)
+        raise
+    except Exception as e:
+        error = ServerCrashError(f"Thunderduck failed during collection: {e}")
+        orchestrator.on_hard_error(error, test_name=query_name)
+        raise error from e
+
+    print(f"  Thunderduck: {len(thunderduck_rows):,} rows")
+
+    # 5. Compare row counts
+    if len(spark_rows) != len(thunderduck_rows):
+        msg = f"Row count mismatch: Spark={len(spark_rows)}, Thunderduck={len(thunderduck_rows)}"
+        print(f"✗ {msg}")
+        raise ResultMismatchError(
+            msg,
+            spark_result=spark_rows,
+            thunderduck_result=thunderduck_rows,
+            query_name=query_name
+        )
+
+    print("✓ Row counts match")
+
+    # 6. Compare data row-by-row
+    mismatches = []
+    columns = spark_df.columns
+
+    for i, (spark_row, td_row) in enumerate(zip(spark_rows, thunderduck_rows)):
+        match, diff_msg = diff._compare_rows(
+            spark_row, td_row, i, columns
+        )
+        if not match:
+            mismatches.append((i, diff_msg))
+            if len(mismatches) >= max_diff_rows:
+                break
+
+    if mismatches:
+        diff_output = diff._format_diff_output(
+            mismatches, spark_rows, thunderduck_rows, columns
+        )
+        print(f"✗ Found {len(mismatches)} mismatched rows (showing first {max_diff_rows})")
+        print(diff_output)
+        raise ResultMismatchError(
+            f"Data mismatch in {query_name}:\n{diff_output}",
+            spark_result=spark_rows,
+            thunderduck_result=thunderduck_rows,
+            query_name=query_name
+        )
+
+    print(f"✓ All {len(spark_rows):,} rows match")
+    print(f"\n{'=' * 80}")
+    print(f"✓ {query_name} PASSED")
+    print(f"{'=' * 80}")
 
 
 if __name__ == "__main__":
     # Example usage
     print("DataFrameDiff utility loaded")
-    print("Use assert_dataframes_equal() for easy pytest integration")
+    print("Use assert_dataframes_equal() for pytest integration")
+    print("  - Without orchestrator: basic timeout behavior")
+    print("  - With orchestrator: timing measurements and health checks")

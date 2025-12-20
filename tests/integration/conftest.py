@@ -9,6 +9,8 @@ import sys
 import atexit
 import signal
 import subprocess
+import time
+import threading
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
@@ -46,6 +48,29 @@ signal.signal(signal.SIGTERM, signal_handler)
 # Register atexit handler as fallback
 atexit.register(kill_all_servers)
 
+
+def stop_spark_with_timeout(spark, timeout=10):
+    """
+    Stop SparkSession with a timeout to prevent hanging.
+
+    PySpark's spark.stop() can block indefinitely waiting for a clean gRPC
+    disconnection. This wrapper ensures cleanup continues even if the
+    disconnection hangs.
+    """
+    def stop_func():
+        try:
+            spark.stop()
+        except Exception:
+            pass  # Ignore errors during cleanup
+
+    thread = threading.Thread(target=stop_func)
+    thread.daemon = True
+    thread.start()
+    thread.join(timeout=timeout)
+    if thread.is_alive():
+        print(f"  Warning: SparkSession.stop() did not complete within {timeout}s, continuing...")
+
+
 from server_manager import ServerManager
 from result_validator import ResultValidator
 from dual_server_manager import DualServerManager
@@ -75,33 +100,25 @@ def server_manager():
     manager.stop()
 
 
-@pytest.fixture(scope="session")
-def spark_session(server_manager):
+@pytest.fixture(scope="class")
+def spark_session(spark_thunderduck):
     """
-    Session-scoped Spark session connected to test server
+    Class-scoped alias for spark_thunderduck.
+
+    For backward compatibility with tests expecting spark_session.
     """
-    print("\nCreating Spark session...")
-
-    spark = (SparkSession.builder
-             .remote(f"sc://{server_manager.host}:{server_manager.port}")
-             .appName("ThunderduckIntegrationTests")
-             .getOrCreate())
-
-    print(f"✓ Connected to Spark Connect server at {server_manager.host}:{server_manager.port}")
-
-    yield spark
-
-    print("\nStopping Spark session...")
-    spark.stop()
+    return spark_thunderduck
 
 
-@pytest.fixture
-def spark(spark_session):
+@pytest.fixture(scope="class")
+def spark(spark_thunderduck):
     """
-    Function-scoped alias for spark_session
-    Provides a fresh namespace for each test
+    Class-scoped alias for spark_thunderduck.
+
+    This allows tests written for single-server mode to work
+    in the dual-server testing environment.
     """
-    return spark_session
+    return spark_thunderduck
 
 
 # Validator fixtures
@@ -366,22 +383,62 @@ def load_tpcds_query(tpcds_queries_dir):
 # ============================================================================
 # Differential Testing Fixtures (Spark Reference vs Thunderduck)
 # ============================================================================
+# Consolidated infrastructure with:
+# - Low timeouts to detect deadlocks/blocking/failures fast
+# - Timing measurements for connect/query plan/collect phases
+# - Error classification (hard errors vs soft errors)
+# - Diagnostic collection on failures
+#
+# Configuration via environment variables:
+#   SPARK_PORT=15003              - Spark Reference server port
+#   THUNDERDUCK_PORT=15002        - Thunderduck server port
+#   CONNECT_TIMEOUT=10            - Session creation timeout (seconds)
+#   QUERY_PLAN_TIMEOUT=5          - Query plan building timeout
+#   COLLECT_TIMEOUT=10            - Result collection timeout
+#   HEALTH_CHECK_TIMEOUT=2        - Server health check timeout
+#   SERVER_STARTUP_TIMEOUT=60     - Server startup timeout
+#   SPARK_MEMORY=4g               - Spark driver memory
+#   THUNDERDUCK_MEMORY=2g         - Thunderduck JVM heap
+#   THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true  - Continue on hard errors
+# ============================================================================
+
+import os
+from utils.test_orchestrator import TestOrchestrator
+from utils.exceptions import HardError
+
+
+def _get_orchestrator_config():
+    """Build orchestrator config from environment variables."""
+    return {
+        # Ports
+        'spark_port': int(os.environ.get('SPARK_PORT', 15003)),
+        'thunderduck_port': int(os.environ.get('THUNDERDUCK_PORT', 15002)),
+        # Timeouts (low by default to detect issues fast)
+        'connect_timeout': int(os.environ.get('CONNECT_TIMEOUT', 10)),
+        'query_plan_timeout': int(os.environ.get('QUERY_PLAN_TIMEOUT', 5)),
+        'collect_timeout': int(os.environ.get('COLLECT_TIMEOUT', 10)),
+        'health_check_timeout': int(os.environ.get('HEALTH_CHECK_TIMEOUT', 2)),
+        'server_startup_timeout': int(os.environ.get('SERVER_STARTUP_TIMEOUT', 60)),
+        # Memory
+        'spark_memory': os.environ.get('SPARK_MEMORY', '4g'),
+        'thunderduck_memory': os.environ.get('THUNDERDUCK_MEMORY', '2g'),
+        # Behavior
+        'continue_on_error': os.environ.get('THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR', '').lower() == 'true',
+        # Workspace
+        'workspace_dir': str(Path(__file__).parent.parent.parent),
+    }
+
 
 @pytest.fixture(scope="session")
 def dual_server_manager():
     """
-    Session-scoped fixture that starts both servers for differential testing
+    Session-scoped fixture that starts both servers for differential testing.
 
     Starts:
     - Apache Spark Connect 4.0.1 (reference) on port 15003 (native installation)
     - Thunderduck Connect (test) on port 15002
 
     Both servers are started fresh and killed on teardown (even on interrupt).
-
-    Usage:
-        def test_differential(dual_server_manager, spark_reference, spark_thunderduck):
-            # Both sessions are connected and ready
-            pass
     """
     # Kill any existing servers first to ensure clean slate
     kill_all_servers()
@@ -410,55 +467,117 @@ def dual_server_manager():
 
 
 @pytest.fixture(scope="session")
-def spark_reference(dual_server_manager):
+def orchestrator(dual_server_manager):
     """
-    Session-scoped Spark session connected to Apache Spark Connect (reference)
+    Session-scoped orchestrator that manages sessions with monitoring.
 
-    This is the reference implementation (official Apache Spark 4.0.1)
-    running as a native process.
+    Provides:
+    - Low timeouts to detect deadlocks/blocking/failures fast
+    - Timing measurements for performance analysis
+    - Diagnostic collection on hard errors
+
+    Depends on dual_server_manager to ensure servers are running.
     """
-    print("\nCreating Spark Reference session...")
+    config = _get_orchestrator_config()
+    orch = TestOrchestrator(config)
 
-    spark = (SparkSession.builder
-             .remote(f"sc://localhost:{dual_server_manager.spark_reference_port}")
-             .appName("SparkReference-DifferentialTests")
-             .getOrCreate())
+    yield orch
 
-    print(f"✓ Connected to Spark Reference at localhost:{dual_server_manager.spark_reference_port}")
-    print(f"  Spark version: {spark.version}")
-
-    yield spark
-
-    print("\nStopping Spark Reference session...")
-    spark.stop()
+    # Print timing summary at end of test session
+    print(orch.timings.get_summary())
 
 
-@pytest.fixture(scope="session")
-def spark_thunderduck(dual_server_manager):
+# Primary session fixtures (class-scoped for isolation)
+@pytest.fixture(scope="class")
+def spark_reference(orchestrator):
     """
-    Session-scoped Spark session connected to Thunderduck Connect (test)
+    Class-scoped Spark session connected to Apache Spark Connect (reference).
+
+    This is the reference implementation (official Apache Spark 4.0.1).
+    Fresh session per test class provides isolation while being efficient.
+    """
+    session = orchestrator.create_spark_session()
+    yield session
+    stop_spark_with_timeout(session, timeout=5)
+
+
+@pytest.fixture(scope="class")
+def spark_thunderduck(orchestrator):
+    """
+    Class-scoped Spark session connected to Thunderduck Connect (test).
 
     This is the system under test (Thunderduck implementation).
+    Fresh session per test class provides isolation while being efficient.
     """
-    print("\nCreating Spark Thunderduck session...")
-
-    spark = (SparkSession.builder
-             .remote(f"sc://localhost:{dual_server_manager.thunderduck_port}")
-             .appName("Thunderduck-DifferentialTests")
-             .getOrCreate())
-
-    print(f"✓ Connected to Thunderduck at localhost:{dual_server_manager.thunderduck_port}")
-
-    yield spark
-
-    print("\nStopping Spark Thunderduck session...")
-    spark.stop()
+    session = orchestrator.create_thunderduck_session()
+    yield session
+    stop_spark_with_timeout(session, timeout=5)
 
 
-@pytest.fixture(scope="session")
+# Function-scoped sessions (for tests that need per-test isolation)
+@pytest.fixture
+def spark_reference_isolated(orchestrator):
+    """
+    Function-scoped: fresh PySpark session per test.
+
+    Use for tests that modify state (temp views, settings) and need
+    a clean session for each test.
+    """
+    session = orchestrator.create_spark_session()
+    yield session
+    stop_spark_with_timeout(session, timeout=5)
+
+
+@pytest.fixture
+def thunderduck_isolated(orchestrator):
+    """
+    Function-scoped: fresh PySpark session per test.
+
+    Use for tests that modify state (temp views, settings) and need
+    a clean session for each test.
+    """
+    session = orchestrator.create_thunderduck_session()
+    yield session
+    stop_spark_with_timeout(session, timeout=5)
+
+
+# Fresh server fixtures (kills and restarts server)
+@pytest.fixture
+def fresh_spark_server(orchestrator):
+    """
+    Restarts Spark Reference server, returns new session.
+
+    Use when you need a completely fresh server state.
+    WARNING: This is slow (~60s). Only use when absolutely necessary.
+    """
+    orchestrator.restart_spark_server()
+    session = orchestrator.create_spark_session()
+    yield session
+    stop_spark_with_timeout(session, timeout=5)
+
+
+@pytest.fixture
+def fresh_thunderduck_server(orchestrator):
+    """
+    Restarts Thunderduck server, returns new session.
+
+    Use when you need a completely fresh server state.
+    WARNING: This is slow (~30s). Only use when absolutely necessary.
+    """
+    orchestrator.restart_thunderduck_server()
+    session = orchestrator.create_thunderduck_session()
+    yield session
+    stop_spark_with_timeout(session, timeout=5)
+
+
+# ============================================================================
+# TPC-H Differential Testing Fixtures
+# ============================================================================
+
+@pytest.fixture(scope="class")
 def tpch_tables_reference(spark_reference, tpch_data_dir):
     """
-    Load TPC-H tables into Spark Reference session
+    Load TPC-H tables into Spark Reference session (class-scoped).
     """
     tables = [
         'lineitem', 'orders', 'customer', 'part',
@@ -473,17 +592,15 @@ def tpch_tables_reference(spark_reference, tpch_data_dir):
 
         df = spark_reference.read.parquet(str(parquet_path))
         df.createOrReplaceTempView(table)
-        row_count = df.count()
-        print(f"  ✓ {table}: {row_count:,} rows")
 
     print(f"✓ All {len(tables)} TPC-H tables loaded into Spark Reference")
     return tables
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="class")
 def tpch_tables_thunderduck(spark_thunderduck, tpch_data_dir):
     """
-    Load TPC-H tables into Thunderduck session
+    Load TPC-H tables into Thunderduck session (class-scoped).
     """
     tables = [
         'lineitem', 'orders', 'customer', 'part',
@@ -498,8 +615,6 @@ def tpch_tables_thunderduck(spark_thunderduck, tpch_data_dir):
 
         df = spark_thunderduck.read.parquet(str(parquet_path))
         df.createOrReplaceTempView(table)
-        row_count = df.count()
-        print(f"  ✓ {table}: {row_count:,} rows")
 
     print(f"✓ All {len(tables)} TPC-H tables loaded into Thunderduck")
     return tables
@@ -519,10 +634,10 @@ TPCDS_TABLES = [
 ]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="class")
 def tpcds_tables_reference(spark_reference, tpcds_data_dir):
     """
-    Load TPC-DS tables into Spark Reference session
+    Load TPC-DS tables into Spark Reference session (class-scoped).
     """
     print(f"\nLoading {len(TPCDS_TABLES)} TPC-DS tables into Spark Reference...")
     for table in TPCDS_TABLES:
@@ -537,10 +652,10 @@ def tpcds_tables_reference(spark_reference, tpcds_data_dir):
     return TPCDS_TABLES
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="class")
 def tpcds_tables_thunderduck(spark_thunderduck, tpcds_data_dir):
     """
-    Load TPC-DS tables into Thunderduck session
+    Load TPC-DS tables into Thunderduck session (class-scoped).
     """
     print(f"\nLoading {len(TPCDS_TABLES)} TPC-DS tables into Thunderduck...")
     for table in TPCDS_TABLES:

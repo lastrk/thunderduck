@@ -48,7 +48,7 @@ echo -e "${BLUE}Starting Spark Connect server on port ${SPARK_PORT}...${NC}"
 # Set required JVM options for Apache Arrow (Spark 4.0.x requirement)
 export SPARK_SUBMIT_OPTS="--add-opens=java.base/java.nio=ALL-UNNAMED"
 
-# Start Spark Connect server
+# Start Spark Connect server (no pipe to avoid subprocess issues)
 "$SPARK_HOME/sbin/start-connect-server.sh" \
     --master "local[*]" \
     --driver-memory 4g \
@@ -60,7 +60,7 @@ export SPARK_SUBMIT_OPTS="--add-opens=java.base/java.nio=ALL-UNNAMED"
     --conf spark.sql.autoBroadcastJoinThreshold=-1 \
     --conf spark.ui.enabled=true \
     --conf spark.ui.port=4041 \
-    2>&1 | tee "${SPARK_LOG_DIR}/start.log" &
+    > "${SPARK_LOG_DIR}/start.log" 2>&1
 
 # Wait for server to start
 echo -e "${BLUE}Waiting for server to start...${NC}"

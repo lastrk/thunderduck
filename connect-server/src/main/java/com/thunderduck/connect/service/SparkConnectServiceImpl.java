@@ -1365,13 +1365,19 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     }
 
     /**
-     * Checks if a SQL statement is a DDL statement that doesn't return a ResultSet.
+     * Checks if a SQL statement is a DDL/DML statement that doesn't return a ResultSet.
      *
-     * <p>DDL statements include: CREATE, DROP, ALTER, TRUNCATE, RENAME, GRANT, REVOKE.
+     * <p>Non-query statements include:
+     * <ul>
+     *   <li>DDL: CREATE, DROP, ALTER, TRUNCATE, RENAME, GRANT, REVOKE</li>
+     *   <li>DML: INSERT, UPDATE, DELETE, MERGE</li>
+     *   <li>Session: SET, RESET, USE, PRAGMA</li>
+     *   <li>Admin: INSTALL, LOAD, ATTACH, DETACH, CHECKPOINT, VACUUM</li>
+     * </ul>
      * These need to be executed with executeUpdate() instead of executeQuery().
      *
      * @param sql the SQL statement to check
-     * @return true if the statement is DDL
+     * @return true if the statement is DDL/DML (non-query)
      */
     private boolean isDDLStatement(String sql) {
         if (sql == null || sql.isEmpty()) {
@@ -1380,7 +1386,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
         String trimmed = sql.trim().toUpperCase();
 
-        // Check for common DDL keywords
+        // Check for DDL keywords
         return trimmed.startsWith("CREATE ") ||
                trimmed.startsWith("DROP ") ||
                trimmed.startsWith("ALTER ") ||
@@ -1388,6 +1394,12 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                trimmed.startsWith("RENAME ") ||
                trimmed.startsWith("GRANT ") ||
                trimmed.startsWith("REVOKE ") ||
+               // DML statements (don't return ResultSet)
+               trimmed.startsWith("INSERT ") ||
+               trimmed.startsWith("UPDATE ") ||
+               trimmed.startsWith("DELETE ") ||
+               trimmed.startsWith("MERGE ") ||
+               // Session/admin commands
                trimmed.startsWith("SET ") ||
                trimmed.startsWith("RESET ") ||
                trimmed.startsWith("PRAGMA ") ||

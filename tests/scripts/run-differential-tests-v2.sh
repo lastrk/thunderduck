@@ -15,10 +15,24 @@
 #   aggregations - Multi-dimensional aggregation tests (21 tests)
 #   window      - Window function tests (35 tests)
 #
+# Environment variables (all optional):
+#   SPARK_PORT=15003              - Spark Reference server port
+#   THUNDERDUCK_PORT=15002        - Thunderduck server port
+#   CONNECT_TIMEOUT=10            - Session creation timeout (seconds)
+#   QUERY_PLAN_TIMEOUT=5          - Query plan building timeout
+#   COLLECT_TIMEOUT=10            - Result collection timeout
+#   HEALTH_CHECK_TIMEOUT=2        - Server health check timeout
+#   SERVER_STARTUP_TIMEOUT=60     - Server startup timeout
+#   SPARK_MEMORY=4g               - Spark driver memory
+#   THUNDERDUCK_MEMORY=2g         - Thunderduck JVM heap
+#   THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true  - Continue on hard errors (for CI/CD)
+#
 # Examples:
 #   ./run-differential-tests-v2.sh              # Run all tests
 #   ./run-differential-tests-v2.sh tpch         # Run only TPC-H tests
 #   ./run-differential-tests-v2.sh window -x    # Run window tests, stop on first failure
+#   COLLECT_TIMEOUT=30 ./run-differential-tests-v2.sh tpcds  # Longer timeout for TPC-DS
+#   THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true ./run-differential-tests-v2.sh  # CI/CD mode
 
 # Detect shell and set compatibility mode
 if [ -n "$ZSH_VERSION" ]; then
@@ -44,7 +58,6 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 WORKSPACE_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-VENV_DIR="$WORKSPACE_DIR/tests/integration/.venv"
 SPARK_HOME="${SPARK_HOME:-$HOME/spark/current}"
 
 # Colors for output
@@ -195,17 +208,7 @@ echo ""
 # ------------------------------------------------------------------------------
 # Check prerequisites
 # ------------------------------------------------------------------------------
-echo -e "${BLUE}[1/4] Checking prerequisites...${NC}"
-
-# Check if venv exists
-if [ ! -d "$VENV_DIR" ]; then
-    echo -e "${RED}ERROR: Virtual environment not found at $VENV_DIR${NC}"
-    echo ""
-    echo "Please run the setup script first:"
-    echo "  $SCRIPT_DIR/setup-differential-testing.sh"
-    exit 1
-fi
-echo -e "${GREEN}  Virtual environment found${NC}"
+echo -e "${BLUE}[1/3] Checking prerequisites...${NC}"
 
 # Check Spark installation
 if [ ! -d "$SPARK_HOME" ] || [ ! -f "$SPARK_HOME/bin/spark-submit" ]; then
@@ -243,7 +246,7 @@ echo -e "${GREEN}  Thunderduck server JAR found${NC}"
 # Kill any existing servers
 # ------------------------------------------------------------------------------
 echo ""
-echo -e "${BLUE}[2/4] Stopping any existing servers...${NC}"
+echo -e "${BLUE}[2/3] Stopping any existing servers...${NC}"
 
 if pgrep -f "org.apache.spark.sql.connect.service.SparkConnectServer" > /dev/null 2>&1; then
     echo "  Killing existing Spark Connect server..."
@@ -258,15 +261,6 @@ if pgrep -f "thunderduck-connect-server" > /dev/null 2>&1; then
 fi
 
 echo -e "${GREEN}  Clean slate confirmed${NC}"
-
-# ------------------------------------------------------------------------------
-# Activate virtual environment
-# ------------------------------------------------------------------------------
-echo ""
-echo -e "${BLUE}[3/4] Activating virtual environment...${NC}"
-source "$VENV_DIR/bin/activate"
-echo -e "${GREEN}  Python: $(which python)${NC}"
-echo -e "${GREEN}  PySpark: $(python -c 'import pyspark; print(pyspark.__version__)')${NC}"
 
 # ------------------------------------------------------------------------------
 # Parse arguments and resolve test group
@@ -323,13 +317,20 @@ fi
 # Run tests
 # ------------------------------------------------------------------------------
 echo ""
-echo -e "${BLUE}[4/4] Running tests...${NC}"
+echo -e "${BLUE}[3/3] Running tests...${NC}"
 echo ""
 echo -e "  ${CYAN}Test group:${NC} $TEST_GROUP ($(get_test_description "$TEST_GROUP"))"
 echo -e "  ${CYAN}Test files:${NC} $TEST_FILES"
 if [ -n "$PYTEST_ARGS" ]; then
     echo -e "  ${CYAN}Pytest args:${NC} $PYTEST_ARGS"
 fi
+echo ""
+echo -e "  ${CYAN}Configuration:${NC}"
+echo -e "    Spark port:       ${SPARK_PORT:-15003}"
+echo -e "    Thunderduck port: ${THUNDERDUCK_PORT:-15002}"
+echo -e "    Connect timeout:  ${CONNECT_TIMEOUT:-10}s"
+echo -e "    Collect timeout:  ${COLLECT_TIMEOUT:-10}s"
+echo -e "    Continue on error: ${THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR:-false}"
 echo ""
 
 cd "$WORKSPACE_DIR/tests/integration"
@@ -339,7 +340,7 @@ export SPARK_HOME
 
 # Run pytest with all test files
 # shellcheck disable=SC2086
-python -m pytest \
+python3 -m pytest \
     $TEST_FILES \
     -v \
     --tb=short \
