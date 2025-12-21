@@ -12,203 +12,144 @@ With SparkSQL pass-through removed, focus shifts to refining the DataFrame API i
 
 ---
 
-## Priority 1: Refactoring Opportunities
+## Priority 1: Refactoring - COMPLETED
 
-### Goal
-Remove code that was added reactively while fixing differential tests. Consolidate duplicated logic and simplify the codebase.
+### TypeInferenceEngine Created
 
-### Duplication Analysis (Completed)
+`TypeInferenceEngine.java` (598 lines) consolidates type inference logic:
+- `resolveType(expr, schema)` - Main type resolution
+- `resolveNullable(expr, schema)` - Nullability resolution
+- `promoteNumericTypes(left, right)` - Numeric type promotion
+- `promoteDecimalDivision(dividend, divisor)` - Decimal division per Spark rules
+- `resolveAggregateReturnType(function, argType)` - Aggregate type inference
 
-**Code audited:** WithColumns.java, Project.java, Aggregate.java
-
-| Code Pattern | WithColumns | Project | Aggregate | Lines Duplicated |
-|-------------|-------------|---------|-----------|------------------|
-| Window function type resolution | lines 156-242 | lines 170-258 | N/A | ~80 lines |
-| Binary expression type resolution | lines 244-275 | lines 259-289 | N/A | ~40 lines |
-| `promoteNumericTypes()` | lines 297-338 | lines 486-534 | N/A | ~40 lines |
-| Column lookup from schema | lines 277-287 | lines 164-169 | lines 284-289 | ~15 lines |
-| Nullable resolution | lines 347-374 | lines 395-428 | lines 303-320 | ~30 lines |
-
-**Total duplicated code: ~205 lines across 3 files**
-
-### Specific Duplication Details
-
-#### 1. Window Function Type Resolution (~80 lines)
-
-Both WithColumns and Project have nearly identical logic for:
-- Ranking functions (ROW_NUMBER, RANK, DENSE_RANK, NTILE) → IntegerType
-- Distribution functions (PERCENT_RANK, CUME_DIST) → DoubleType
-- COUNT → LongType
-- Analytic functions (LAG, LEAD, FIRST, LAST, NTH_VALUE) → argument type
-- MIN, MAX → argument type
-- SUM → promoted type (Integer/Long→Long, Float/Double→Double, Decimal→Decimal(p+10,s))
-- AVG → DoubleType for numeric, Decimal for Decimal input
-- STDDEV, VARIANCE → DoubleType
-
-#### 2. Binary Expression Type Resolution (~40 lines)
-
-Both files have identical logic for:
-- Comparison/logical operators → BooleanType
-- Division → DoubleType (always)
-- Other arithmetic → promoteNumericTypes()
-- String concatenation → StringType
-
-#### 3. Numeric Type Promotion (~40 lines)
-
-Both files implement identical `promoteNumericTypes()`:
-- Double > Float > Decimal > Long > Integer > Short > Byte
-- Decimal + Decimal → max(precision), max(scale)
-
-#### 4. Column Lookup (~15 lines per file)
-
-All three files iterate over schema fields to find column by name (case-insensitive).
-
-### Recommended Refactoring
-
-Create `TypeInferenceEngine.java` in `com.thunderduck.logical` with:
-
-```java
-public final class TypeInferenceEngine {
-    // Type resolution
-    public static DataType resolveType(Expression expr, StructType schema);
-
-    // Nullability resolution
-    public static boolean resolveNullable(Expression expr, StructType schema);
-
-    // Aggregate type inference
-    public static DataType inferAggregateType(String function, DataType argType);
-
-    // Numeric type promotion
-    public static DataType promoteNumericTypes(DataType left, DataType right);
-}
-```
-
-**Benefits:**
-- Single source of truth for type inference rules
-- Easier to maintain Spark compatibility
-- Reduces code in logical plan nodes by ~60%
-- Makes adding new expression types easier
-
-### Implementation Steps
-
-- [ ] Create `TypeInferenceEngine.java` with consolidated logic
-- [ ] Update `WithColumns.java` to delegate to TypeInferenceEngine
-- [ ] Update `Project.java` to delegate to TypeInferenceEngine
-- [ ] Update `Aggregate.java` to delegate to TypeInferenceEngine
-- [ ] Remove duplicate private methods from all three files
-- [ ] Add unit tests for TypeInferenceEngine
+All logical plan nodes (WithColumns, Project, Aggregate) now delegate to this engine.
 
 ---
 
-## Priority 2: Principled Schema Inference & Nullability
+## Priority 2: Type Preservation Fixes
 
-### Goal
-Define a consistent, Spark-conformant approach to schema and type inference.
+### Decimal Division - PARTIALLY FIXED
 
-### Spark Schema Semantics
+**Commit**: `dc59d72` - Fix Decimal division type preservation
 
-**Schema inference** answers: "What are the column names and types of this operation's output?"
+**What was fixed**:
+- Added `promoteDecimalDivision()` using Spark's formula
+- Division of Decimal/Decimal now returns Decimal (not Double)
 
-**Nullability** answers: "Can this column/expression contain NULL values?"
+**Remaining issue (Q98)**:
+- Precision/scale calculation differs from Spark
+- Reference: `DecimalType(38,17)`, Test: `DecimalType(38,30)`
+- The scale formula `max(6, s1 + p2 + 1)` may need adjustment for division in aggregate context
 
-### Spark's Nullability Rules (to match)
+### CASE WHEN Type Preservation - PARTIALLY FIXED
 
-| Expression Type | Nullable |
-|-----------------|----------|
-| Literal (non-null) | false |
-| Column reference | inherits from source schema |
-| Arithmetic on nullable | true if any operand nullable |
-| Aggregate (COUNT) | false |
-| Aggregate (SUM, AVG, MIN, MAX) | true (empty group → null) |
-| Window ranking (ROW_NUMBER, RANK) | false |
-| Window analytic (LAG, LEAD) | true (unless default provided AND column non-nullable) |
-| COALESCE | true only if ALL args nullable |
-| CASE WHEN | true if any THEN/ELSE branch nullable |
+**Changes made**:
+- Extended `RawSQLExpression` with optional `DataType` parameter
+- Updated `convertCaseWhen()` to infer type from THEN/ELSE branches
 
-### Spark's Type Promotion Rules (to match)
+**Remaining issue (Q99, Q62)**:
+- CASE WHEN branches contain `UnresolvedColumn` which returns `StringType` as placeholder
+- Type inference at conversion time doesn't have schema access
+- `SUM(StringType)` defaults to `DoubleType`
+- Need schema-aware type resolution for CASE WHEN
 
-**Division**: `Decimal / Decimal` → `Decimal` (not Double!)
-- Precision: `p1 - s1 + s2 + max(6, s1 + p2 + 1)`
-- Scale: `max(6, s1 + p2 + 1)`
+**Root cause**: Architectural - column types aren't known at ExpressionConverter time
 
-**Note**: Current implementation returns Double for all division. This is a known deviation.
-
-**Multiplication**: `Decimal * Decimal` → `Decimal`
-- Precision: `p1 + p2 + 1`
-- Scale: `s1 + s2`
-
-**Addition/Subtraction**: Widen to larger precision/scale
-
-### Architecture After Refactoring
-
-```
-┌─────────────────────────────────────────┐
-│         TypeInferenceEngine             │
-│  - resolveType(expr, schema)            │
-│  - resolveNullable(expr, schema)        │
-│  - promoteNumericTypes(left, right)     │
-│  - inferAggregateType(func, argType)    │
-└─────────────────────────────────────────┘
-                    │
-    ┌───────────────┼───────────────┐
-    ▼               ▼               ▼
-Project      WithColumns      Aggregate
-(delegates)   (delegates)    (delegates)
-```
+**Potential solutions**:
+1. Create proper `CaseWhenExpression` class storing branch expressions
+2. Handle in `TypeInferenceEngine.resolveType()` with schema lookup
+3. Defer CASE WHEN type resolution to schema inference phase
 
 ---
 
-## Priority 3: Remaining DataFrame Test Failures
+## Priority 3: Differential Test Results (2025-12-21)
 
-### Current Status
-- **TPC-DS DataFrame**: 20/33 passing (13 failing)
-- **Window tests**: 35/35 passing (100%)
+### Summary
+- **Passed**: 174
+- **Failed**: 172
+- **Skipped**: 228
 
-### Known Failure Categories
+### TPC-DS DataFrame Status
 
-1. **Decimal type preservation** (Q98, Q99)
-   - Division returns Double instead of Decimal
-   - CASE WHEN loses Decimal type (RawSQLExpression returns StringType)
+| Query | Status | Issue |
+|-------|--------|-------|
+| Q3, Q7, Q13, Q15, Q19, Q26, Q32, Q37, Q41, Q42, Q45, Q48, Q50, Q52, Q55, Q71, Q82, Q91, Q92, Q96 | PASS | - |
+| Q9, Q12, Q17, Q20, Q25, Q29, Q40, Q43, Q62, Q84, Q85 | FAIL | Various type/data issues |
+| Q98 | FAIL | Decimal scale mismatch (38,17 vs 38,30) |
+| Q99 | FAIL | CASE WHEN returns DoubleType instead of DecimalType |
 
-2. **Data/ordering mismatches** (Q84, others)
-   - Need investigation
+### Failure Categories
 
-3. **Other type mismatches**
-   - Need investigation
+1. **Decimal precision/scale** (Q98)
+   - Division scale calculation differs from Spark
 
-### Tests to Investigate
-- [ ] Q9, Q12, Q17, Q20, Q25, Q29, Q40, Q43, Q62, Q84, Q85, Q98, Q99
+2. **CASE WHEN type inference** (Q99, Q62)
+   - Column references unresolved at conversion time
+   - Need schema-aware type resolution
+
+3. **Other failures** (172 total)
+   - Complex types (arrays, maps, structs)
+   - Interval arithmetic
+   - Pivot/unpivot operations
+   - Temp views
+   - Using joins
 
 ---
 
-## Priority 4: Unit Test Updates
+## Priority 4: Next Steps
 
-### Areas to Check
+### Immediate (Type Fixes)
+1. **Fix Decimal division scale** - Investigate Q98 scale formula
+2. **Schema-aware CASE WHEN** - Create CaseWhenExpression with deferred type resolution
 
-- [ ] Type inference tests - do they cover new Decimal division logic?
-- [ ] Nullability tests - do they cover the rules above?
-- [ ] Window function tests - verify IntegerType for ranking functions
-- [ ] Schema inference tests - verify logical plan nodes
+### Future Work
+- Complex type handling improvements
+- Interval arithmetic support
+- Pivot/unpivot operations
 
 ---
 
-## Files to Modify
+## Files Modified (This Session)
 
-| File | Action |
+| File | Changes |
 |------|---------|
-| `core/src/main/java/com/thunderduck/logical/TypeInferenceEngine.java` | NEW - consolidated type inference |
-| `core/src/main/java/com/thunderduck/logical/WithColumns.java` | Remove ~150 lines, delegate to engine |
-| `core/src/main/java/com/thunderduck/logical/Project.java` | Remove ~200 lines, delegate to engine |
-| `core/src/main/java/com/thunderduck/logical/Aggregate.java` | Remove ~40 lines, delegate to engine |
-| `connect-server/.../ExpressionConverter.java` | CASE WHEN type tracking |
-| `core/src/main/java/com/thunderduck/types/*.java` | Type promotion utilities |
+| `core/.../types/TypeInferenceEngine.java` | Added `promoteDecimalDivision()` |
+| `core/.../expression/RawSQLExpression.java` | Added optional type field |
+| `connect-server/.../ExpressionConverter.java` | Updated `convertCaseWhen()` type inference |
+| `tests/.../types/TypeInferenceEngineTest.java` | NEW - 15 unit tests |
+| `tests/.../expression/RawSQLExpressionTest.java` | NEW - 12 unit tests |
 
 ---
 
-## Next Steps
+## Architecture Notes
 
-1. **Create TypeInferenceEngine** - Consolidate all type inference into single class
-2. **Migrate logical plan nodes** - Update WithColumns, Project, Aggregate to use engine
-3. **Fix Decimal division type** - Address Q98 (return Decimal not Double)
-4. **Fix CASE WHEN type preservation** - Address Q99 (RawSQLExpression type tracking)
-5. **Test** - Verify no regressions with full DataFrame test suite
+### Type Resolution Flow
+
+```
+Spark Connect Protocol
+    ↓
+ExpressionConverter (no schema access)
+    ↓
+Logical Plan Nodes (WithColumns, Project, Aggregate)
+    ↓
+TypeInferenceEngine.resolveType(expr, schema) ← Schema available here
+    ↓
+Schema Inference
+```
+
+### CASE WHEN Problem
+
+```
+F.when(condition, column_ref).otherwise(0)
+    ↓
+ExpressionConverter.convertCaseWhen()
+    ↓
+column_ref.dataType() → StringType (UnresolvedColumn placeholder)
+    ↓
+RawSQLExpression(sql, StringType)
+    ↓
+SUM(RawSQLExpression) → resolveAggregateReturnType("SUM", StringType) → DoubleType
+```
+
+**Fix needed**: Defer type resolution to TypeInferenceEngine where schema is available.

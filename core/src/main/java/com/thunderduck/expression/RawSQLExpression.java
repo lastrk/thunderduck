@@ -19,14 +19,29 @@ import java.util.Objects;
 public class RawSQLExpression extends Expression {
 
     private final String sql;
+    private final DataType explicitType;
 
     /**
-     * Creates a raw SQL expression.
+     * Creates a raw SQL expression with unknown type (defaults to StringType).
      *
      * @param sql the SQL expression string
      */
     public RawSQLExpression(String sql) {
+        this(sql, null);
+    }
+
+    /**
+     * Creates a raw SQL expression with an explicit type.
+     *
+     * <p>Use this constructor when the expression's type can be inferred
+     * from context (e.g., CASE WHEN branches).
+     *
+     * @param sql the SQL expression string
+     * @param type the explicit data type (null to default to StringType)
+     */
+    public RawSQLExpression(String sql, DataType type) {
         this.sql = Objects.requireNonNull(sql, "sql must not be null");
+        this.explicitType = type;
     }
 
     /**
@@ -40,8 +55,10 @@ public class RawSQLExpression extends Expression {
 
     @Override
     public DataType dataType() {
-        // We can't determine the type without parsing the SQL
-        // Return a generic type
+        // Use explicit type if provided, otherwise default to StringType
+        if (explicitType != null) {
+            return explicitType;
+        }
         return StringType.get();
     }
 
@@ -71,11 +88,12 @@ public class RawSQLExpression extends Expression {
         if (this == obj) return true;
         if (!(obj instanceof RawSQLExpression)) return false;
         RawSQLExpression that = (RawSQLExpression) obj;
-        return Objects.equals(sql, that.sql);
+        return Objects.equals(sql, that.sql) &&
+               Objects.equals(explicitType, that.explicitType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sql);
+        return Objects.hash(sql, explicitType);
     }
 }

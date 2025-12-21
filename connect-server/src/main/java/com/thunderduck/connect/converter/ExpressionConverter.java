@@ -639,6 +639,9 @@ public class ExpressionConverter {
     /**
      * Converts CASE/WHEN/OTHERWISE expressions into SQL CASE statements.
      * Spark sends these as nested function calls.
+     *
+     * <p>The result type is inferred from the THEN/ELSE branches to preserve
+     * type information (e.g., Decimal columns in CASE WHEN expressions).
      */
     private com.thunderduck.expression.Expression convertCaseWhen(List<com.thunderduck.expression.Expression> arguments) {
         if (arguments.size() < 2) {
@@ -648,21 +651,30 @@ public class ExpressionConverter {
         // Build a CASE expression
         // Format: CASE WHEN condition THEN value [WHEN ... THEN ...] [ELSE else_value] END
         StringBuilder caseExpr = new StringBuilder("CASE ");
+        com.thunderduck.types.DataType resultType = null;
 
-        // Process WHEN/THEN pairs
+        // Process WHEN/THEN pairs - infer type from first THEN branch
         for (int i = 0; i < arguments.size() - 1; i += 2) {
+            com.thunderduck.expression.Expression thenExpr = arguments.get(i + 1);
+            if (resultType == null) {
+                resultType = thenExpr.dataType();
+            }
             caseExpr.append("WHEN ").append(arguments.get(i).toSQL())
-                   .append(" THEN ").append(arguments.get(i + 1).toSQL()).append(" ");
+                   .append(" THEN ").append(thenExpr.toSQL()).append(" ");
         }
 
         // If there's an odd number of arguments, the last one is the ELSE clause
         if (arguments.size() % 2 == 1) {
-            caseExpr.append("ELSE ").append(arguments.get(arguments.size() - 1).toSQL()).append(" ");
+            com.thunderduck.expression.Expression elseExpr = arguments.get(arguments.size() - 1);
+            if (resultType == null) {
+                resultType = elseExpr.dataType();
+            }
+            caseExpr.append("ELSE ").append(elseExpr.toSQL()).append(" ");
         }
 
         caseExpr.append("END");
 
-        return new RawSQLExpression(caseExpr.toString());
+        return new RawSQLExpression(caseExpr.toString(), resultType);
     }
 
     /**
