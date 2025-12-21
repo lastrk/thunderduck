@@ -142,6 +142,37 @@ public final class TypeInferenceEngine {
         return left != null ? left : DoubleType.get();
     }
 
+    /**
+     * Calculates the result type for Decimal division per Spark semantics.
+     *
+     * <p>Spark's Decimal division formula:
+     * <ul>
+     *   <li>Precision: p1 - s1 + s2 + max(6, s1 + p2 + 1)</li>
+     *   <li>Scale: max(6, s1 + p2 + 1)</li>
+     * </ul>
+     *
+     * <p>Where p1, s1 are precision/scale of dividend and p2, s2 are precision/scale of divisor.
+     *
+     * @param dividend the dividend (left operand) type
+     * @param divisor the divisor (right operand) type
+     * @return the result DecimalType with calculated precision and scale
+     */
+    public static DecimalType promoteDecimalDivision(DecimalType dividend, DecimalType divisor) {
+        int p1 = dividend.precision();
+        int s1 = dividend.scale();
+        int p2 = divisor.precision();
+        int s2 = divisor.scale();
+
+        int scale = Math.max(6, s1 + p2 + 1);
+        int precision = p1 - s1 + s2 + scale;
+
+        // Cap at maximum precision and scale (38 for Spark)
+        scale = Math.min(scale, 38);
+        precision = Math.min(precision, 38);
+
+        return new DecimalType(precision, scale);
+    }
+
     // ========================================================================
     // Core Type Resolution
     // ========================================================================
@@ -305,8 +336,11 @@ public final class TypeInferenceEngine {
         DataType leftType = resolveType(binExpr.left(), schema);
         DataType rightType = resolveType(binExpr.right(), schema);
 
-        // Division always returns Double (matches current Spark behavior)
+        // Division: Decimal/Decimal returns Decimal, otherwise Double
         if (op == BinaryExpression.Operator.DIVIDE) {
+            if (leftType instanceof DecimalType && rightType instanceof DecimalType) {
+                return promoteDecimalDivision((DecimalType) leftType, (DecimalType) rightType);
+            }
             return DoubleType.get();
         }
 
