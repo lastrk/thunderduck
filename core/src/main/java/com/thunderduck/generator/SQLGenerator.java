@@ -642,11 +642,17 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         sql.append(") AS ").append(generateSubqueryAlias());
 
         // GROUP BY clause
+        // Note: GROUP BY cannot have aliases, so we unwrap AliasExpressions
         if (!plan.groupingExpressions().isEmpty()) {
             sql.append(" GROUP BY ");
             java.util.List<String> groupExprs = new java.util.ArrayList<>();
             for (com.thunderduck.expression.Expression expr : plan.groupingExpressions()) {
-                groupExprs.add(expr.toSQL());
+                // Unwrap AliasExpression for GROUP BY - aliases not allowed here
+                if (expr instanceof com.thunderduck.expression.AliasExpression) {
+                    groupExprs.add(((com.thunderduck.expression.AliasExpression) expr).expression().toSQL());
+                } else {
+                    groupExprs.add(expr.toSQL());
+                }
             }
             sql.append(String.join(", ", groupExprs));
         }

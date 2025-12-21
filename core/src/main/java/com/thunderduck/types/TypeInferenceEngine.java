@@ -2,6 +2,7 @@ package com.thunderduck.types;
 
 import com.thunderduck.expression.AliasExpression;
 import com.thunderduck.expression.BinaryExpression;
+import com.thunderduck.expression.CaseWhenExpression;
 import com.thunderduck.expression.Expression;
 import com.thunderduck.expression.FunctionCall;
 import com.thunderduck.expression.Literal;
@@ -114,14 +115,9 @@ public final class TypeInferenceEngine {
 
         // If either is Decimal, result is Decimal with appropriate precision
         if (left instanceof DecimalType || right instanceof DecimalType) {
-            if (left instanceof DecimalType && right instanceof DecimalType) {
-                DecimalType leftDec = (DecimalType) left;
-                DecimalType rightDec = (DecimalType) right;
-                int maxPrecision = Math.max(leftDec.precision(), rightDec.precision());
-                int maxScale = Math.max(leftDec.scale(), rightDec.scale());
-                return new DecimalType(maxPrecision, maxScale);
-            }
-            return left instanceof DecimalType ? left : right;
+            DecimalType leftDec = toDecimalForUnification(left);
+            DecimalType rightDec = toDecimalForUnification(right);
+            return unifyDecimalTypes(leftDec, rightDec);
         }
 
         // If either is Long, result is Long
@@ -141,6 +137,60 @@ public final class TypeInferenceEngine {
 
         // Default: return left type or Double for safety
         return left != null ? left : DoubleType.get();
+    }
+
+    /**
+     * Converts a type to DecimalType for type unification in CASE/COALESCE expressions.
+     *
+     * <p>Spark promotes integral types to Decimal with fixed precision:
+     * <ul>
+     *   <li>ByteType → Decimal(3,0)</li>
+     *   <li>ShortType → Decimal(5,0)</li>
+     *   <li>IntegerType → Decimal(10,0)</li>
+     *   <li>LongType → Decimal(20,0)</li>
+     * </ul>
+     */
+    private static DecimalType toDecimalForUnification(DataType type) {
+        if (type instanceof DecimalType) {
+            return (DecimalType) type;
+        }
+        if (type instanceof ByteType) {
+            return new DecimalType(3, 0);
+        }
+        if (type instanceof ShortType) {
+            return new DecimalType(5, 0);
+        }
+        if (type instanceof IntegerType) {
+            return new DecimalType(10, 0);
+        }
+        if (type instanceof LongType) {
+            return new DecimalType(20, 0);
+        }
+        // Default for unknown types
+        return new DecimalType(10, 0);
+    }
+
+    /**
+     * Unifies two DecimalTypes per Spark's CASE/COALESCE rules.
+     *
+     * <p>Formula:
+     * <ul>
+     *   <li>resultScale = max(s1, s2)</li>
+     *   <li>resultIntDigits = max(p1-s1, p2-s2)</li>
+     *   <li>resultPrecision = resultIntDigits + resultScale</li>
+     * </ul>
+     */
+    private static DecimalType unifyDecimalTypes(DecimalType left, DecimalType right) {
+        int s1 = left.scale();
+        int s2 = right.scale();
+        int intDigits1 = left.precision() - s1;
+        int intDigits2 = right.precision() - s2;
+
+        int resultScale = Math.max(s1, s2);
+        int resultIntDigits = Math.max(intDigits1, intDigits2);
+        int resultPrecision = Math.min(resultIntDigits + resultScale, 38);
+
+        return new DecimalType(resultPrecision, resultScale);
     }
 
     /**
@@ -306,6 +356,11 @@ public final class TypeInferenceEngine {
             return resolveFunctionCallType((FunctionCall) expr, schema);
         }
 
+        // Handle CaseWhenExpression - resolve branch types with schema
+        if (expr instanceof CaseWhenExpression) {
+            return resolveCaseWhenType((CaseWhenExpression) expr, schema);
+        }
+
         // Default: use the expression's declared type
         return expr.dataType();
     }
@@ -455,6 +510,85 @@ public final class TypeInferenceEngine {
 
         // Default to left operand type
         return leftType;
+    }
+
+    // ========================================================================
+    // CASE WHEN Type Resolution
+    // ========================================================================
+
+    /**
+     * Resolves CASE WHEN expression return type by examining all branches.
+     *
+     * <p>This method resolves the types of all THEN and ELSE branches using the
+     * provided schema, then unifies them to determine the result type. This is
+     * critical for proper type inference when branches contain column references.
+     *
+     * <p>Type unification rules:
+     * <ul>
+     *   <li>If all branches are numeric, use numeric type promotion</li>
+     *   <li>If types don't match, use the first non-null type</li>
+     * </ul>
+     *
+     * @param caseWhen the CASE WHEN expression
+     * @param schema the schema for resolving column types
+     * @return the unified result type
+     */
+    public static DataType resolveCaseWhenType(CaseWhenExpression caseWhen, StructType schema) {
+        DataType resultType = null;
+
+        // Resolve all THEN branch types
+        for (Expression thenBranch : caseWhen.thenBranches()) {
+            DataType branchType = resolveType(thenBranch, schema);
+            resultType = unifyTypes(resultType, branchType);
+        }
+
+        // Resolve ELSE branch type if present
+        if (caseWhen.elseBranch() != null) {
+            DataType elseType = resolveType(caseWhen.elseBranch(), schema);
+            resultType = unifyTypes(resultType, elseType);
+        }
+
+        return resultType != null ? resultType : StringType.get();
+    }
+
+    /**
+     * Unifies two types for CASE WHEN branches.
+     *
+     * <p>Returns the common supertype of two types:
+     * <ul>
+     *   <li>If either is null, return the other</li>
+     *   <li>If both are numeric, use numeric type promotion</li>
+     *   <li>Otherwise, return the first non-null type</li>
+     * </ul>
+     *
+     * @param a first type (may be null)
+     * @param b second type (may be null)
+     * @return the unified type
+     */
+    private static DataType unifyTypes(DataType a, DataType b) {
+        if (a == null) return b;
+        if (b == null) return a;
+
+        // If both are numeric, use promotion
+        if (isNumericType(a) && isNumericType(b)) {
+            return promoteNumericTypes(a, b);
+        }
+
+        // Default to first type
+        return a;
+    }
+
+    /**
+     * Checks if a type is numeric.
+     */
+    private static boolean isNumericType(DataType type) {
+        return type instanceof IntegerType ||
+               type instanceof LongType ||
+               type instanceof ShortType ||
+               type instanceof ByteType ||
+               type instanceof FloatType ||
+               type instanceof DoubleType ||
+               type instanceof DecimalType;
     }
 
     // ========================================================================

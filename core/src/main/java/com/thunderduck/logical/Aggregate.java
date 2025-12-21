@@ -187,11 +187,17 @@ public class Aggregate extends LogicalPlan {
         sql.append(") AS ").append(generator.generateSubqueryAlias());
 
         // GROUP BY clause
+        // Note: GROUP BY cannot have aliases, so we unwrap AliasExpressions
         if (!groupingExpressions.isEmpty()) {
             sql.append(" GROUP BY ");
             List<String> groupExprs = new ArrayList<>();
             for (Expression expr : groupingExpressions) {
-                groupExprs.add(expr.toSQL());
+                // Unwrap AliasExpression for GROUP BY - aliases not allowed here
+                if (expr instanceof AliasExpression) {
+                    groupExprs.add(((AliasExpression) expr).expression().toSQL());
+                } else {
+                    groupExprs.add(expr.toSQL());
+                }
             }
             sql.append(String.join(", ", groupExprs));
         }

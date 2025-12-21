@@ -648,33 +648,24 @@ public class ExpressionConverter {
             throw new PlanConversionException("WHEN requires at least 2 arguments (condition and value)");
         }
 
-        // Build a CASE expression
-        // Format: CASE WHEN condition THEN value [WHEN ... THEN ...] [ELSE else_value] END
-        StringBuilder caseExpr = new StringBuilder("CASE ");
-        com.thunderduck.types.DataType resultType = null;
+        // Build a CaseWhenExpression that preserves branch structure
+        // for schema-aware type resolution in TypeInferenceEngine
+        List<com.thunderduck.expression.Expression> conditions = new java.util.ArrayList<>();
+        List<com.thunderduck.expression.Expression> thenBranches = new java.util.ArrayList<>();
+        com.thunderduck.expression.Expression elseBranch = null;
 
-        // Process WHEN/THEN pairs - infer type from first THEN branch
+        // Process WHEN/THEN pairs
         for (int i = 0; i < arguments.size() - 1; i += 2) {
-            com.thunderduck.expression.Expression thenExpr = arguments.get(i + 1);
-            if (resultType == null) {
-                resultType = thenExpr.dataType();
-            }
-            caseExpr.append("WHEN ").append(arguments.get(i).toSQL())
-                   .append(" THEN ").append(thenExpr.toSQL()).append(" ");
+            conditions.add(arguments.get(i));
+            thenBranches.add(arguments.get(i + 1));
         }
 
         // If there's an odd number of arguments, the last one is the ELSE clause
         if (arguments.size() % 2 == 1) {
-            com.thunderduck.expression.Expression elseExpr = arguments.get(arguments.size() - 1);
-            if (resultType == null) {
-                resultType = elseExpr.dataType();
-            }
-            caseExpr.append("ELSE ").append(elseExpr.toSQL()).append(" ");
+            elseBranch = arguments.get(arguments.size() - 1);
         }
 
-        caseExpr.append("END");
-
-        return new RawSQLExpression(caseExpr.toString(), resultType);
+        return new com.thunderduck.expression.CaseWhenExpression(conditions, thenBranches, elseBranch);
     }
 
     /**
