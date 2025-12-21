@@ -69,16 +69,15 @@ All logical plan nodes (WithColumns, Project, Aggregate) now delegate to this en
 
 ## Priority 3: Differential Test Results (2025-12-21)
 
-### Summary (Updated after CASE WHEN fix)
-- **TPC-DS DataFrame**: 23 passed, 1 failed (Q84 nullable mismatch)
+### Summary (Updated 2025-12-21)
+- **TPC-DS DataFrame**: 24 passed, 0 failed ✓
 - **SQL Tests**: 203 skipped (not implemented yet)
 
 ### TPC-DS DataFrame Status
 
 | Query | Status | Issue |
 |-------|--------|-------|
-| Q3, Q7, Q12, Q13, Q15, Q19, Q20, Q26, Q37, Q41, Q42, Q43, Q45, Q48, Q50, Q52, Q55, **Q62**, Q82, Q91, Q96, **Q98**, **Q99** | PASS | - |
-| Q84 | FAIL | Nullable mismatch (pre-existing issue) |
+| Q3, Q7, Q12, Q13, Q15, Q19, Q20, Q26, Q37, Q41, Q42, Q43, Q45, Q48, Q50, Q52, Q55, **Q62**, Q82, **Q84**, Q91, Q96, **Q98**, **Q99** | PASS | - |
 
 ### Fixed Issues
 
@@ -89,8 +88,11 @@ All logical plan nodes (WithColumns, Project, Aggregate) now delegate to this en
    - Added schema-aware type resolution in `TypeInferenceEngine`
    - Fixed Decimal + Integer type unification
 
-3. **Remaining issues**
-   - Q84: Nullable mismatch on customer_name column
+3. ~~**Q84 nullable mismatch** (customer_name)~~ - **FIXED**
+   - `concat_ws` nullability now correctly depends only on separator argument
+   - Added special case in `ExpressionConverter.inferFunctionNullable()`
+
+4. **Remaining issues**
    - SQL tests not yet implemented
 
 ---
@@ -100,11 +102,12 @@ All logical plan nodes (WithColumns, Project, Aggregate) now delegate to this en
 ### Completed
 1. ~~**Fix Decimal division scale**~~ - **DONE** (Q98 passes)
 2. ~~**Schema-aware CASE WHEN**~~ - **DONE** (Q99, Q62 pass)
+3. ~~**Fix Q84 concat_ws nullability**~~ - **DONE** (Q84 passes, all 24 TPC-DS DataFrame tests pass)
+4. ~~**Pivot operations**~~ - **DONE** (all 6 pivot tests pass)
 
 ### Remaining
-- Q84 nullable mismatch fix
 - SQL test implementation
-- Pivot/unpivot operations
+- Unpivot/cube/rollup nullable fixes (same issue as pivot, needs schema-aware SQLRelation)
 
 ---
 

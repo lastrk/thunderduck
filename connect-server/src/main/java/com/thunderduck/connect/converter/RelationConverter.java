@@ -308,6 +308,13 @@ public class RelationConverter {
                 .map(expressionConverter::convert)
                 .collect(Collectors.toList());
 
+        // Check for PIVOT group type
+        if (aggregate.getGroupType() == org.apache.spark.connect.proto.Aggregate.GroupType.GROUP_TYPE_PIVOT) {
+            logger.debug("Creating PIVOT aggregate with {} grouping and {} aggregate expressions",
+                    groupingExprs.size(), aggregateExprs.size());
+            return convertPivotAggregate(aggregate, input, groupingExprs, aggregateExprs);
+        }
+
         logger.debug("Creating Aggregate with {} grouping and {} aggregate expressions",
                 groupingExprs.size(), aggregateExprs.size());
 
@@ -354,6 +361,551 @@ public class RelationConverter {
         }
 
         return new com.thunderduck.logical.Aggregate(input, groupingExprs, aggExprs);
+    }
+
+    /**
+     * Converts a PIVOT aggregate operation.
+     *
+     * <p>Pivot transforms rows into columns based on distinct values of a pivot column.
+     * For example, given:
+     * <pre>
+     * | country | year | sales |
+     * |---------|------|-------|
+     * | US      | 2023 | 1000  |
+     * | US      | 2024 | 1200  |
+     * </pre>
+     *
+     * With pivot on "year" and aggregate SUM(sales), produces:
+     * <pre>
+     * | country | 2023 | 2024 |
+     * |---------|------|------|
+     * | US      | 1000 | 1200 |
+     * </pre>
+     *
+     * <p>Uses DuckDB's native PIVOT syntax:
+     * <pre>
+     * PIVOT (input) ON pivot_col IN (val1, val2, ...) USING agg(col) GROUP BY grouping_cols
+     * </pre>
+     *
+     * @param aggregate the Aggregate protobuf message with PIVOT group type
+     * @param input the input logical plan
+     * @param groupingExprs the GROUP BY expressions
+     * @param aggregateExprs the aggregate expressions (already converted)
+     * @return a SQLRelation with DuckDB PIVOT syntax
+     */
+    private LogicalPlan convertPivotAggregate(
+            org.apache.spark.connect.proto.Aggregate aggregate,
+            LogicalPlan input,
+            List<Expression> groupingExprs,
+            List<Expression> aggregateExprs) {
+
+        // Get pivot metadata
+        org.apache.spark.connect.proto.Aggregate.Pivot pivotMsg = aggregate.getPivot();
+        String pivotColName = extractColumnName(pivotMsg.getCol());
+        if (pivotColName == null) {
+            throw new PlanConversionException("Pivot column must be a column reference");
+        }
+
+        // Generate SQL for input
+        SQLGenerator generator = new SQLGenerator();
+        String inputSql = generator.generate(input);
+
+        // Get pivot values - either explicit or auto-discovered
+        List<Object> pivotValues = new ArrayList<>();
+        if (pivotMsg.getValuesCount() > 0) {
+            // Explicit values provided
+            for (org.apache.spark.connect.proto.Expression.Literal lit : pivotMsg.getValuesList()) {
+                pivotValues.add(convertLiteralToJava(lit));
+            }
+            logger.debug("Pivot: using {} explicit values", pivotValues.size());
+        } else {
+            // Auto-discover distinct values (full Spark parity)
+            pivotValues = discoverPivotValues(inputSql, pivotColName);
+            logger.debug("Pivot: discovered {} values", pivotValues.size());
+        }
+
+        if (pivotValues.isEmpty()) {
+            // Return empty result if no pivot values found
+            logger.warn("Pivot: no values found, returning empty result");
+            return createEmptyPivotResult(groupingExprs, aggregateExprs, pivotColName, pivotValues);
+        }
+
+        // Build aggregate expressions SQL for USING clause
+        String aggregatesSql = formatPivotAggregates(aggregateExprs);
+
+        // Build GROUP BY clause
+        String groupBySql = formatGroupByColumns(groupingExprs);
+
+        // Build pivot values IN clause
+        String valuesSql = formatPivotValuesForSQL(pivotValues);
+
+        // Build DuckDB PIVOT SQL
+        String pivotSql;
+        if (groupBySql.isEmpty()) {
+            pivotSql = String.format(
+                "PIVOT (%s) ON %s IN (%s) USING %s",
+                inputSql,
+                SQLQuoting.quoteIdentifier(pivotColName),
+                valuesSql,
+                aggregatesSql
+            );
+        } else {
+            pivotSql = String.format(
+                "PIVOT (%s) ON %s IN (%s) USING %s GROUP BY %s",
+                inputSql,
+                SQLQuoting.quoteIdentifier(pivotColName),
+                valuesSql,
+                aggregatesSql,
+                groupBySql
+            );
+        }
+
+        // Wrap in SELECT with type casts for Spark compatibility
+        String sql = buildPivotSelectWrapper(pivotSql, groupingExprs, aggregateExprs, pivotValues);
+
+        logger.debug("Creating Pivot SQL: {}", sql);
+
+        // Build output schema with correct nullable flags
+        StructType outputSchema = buildPivotOutputSchema(input.schema(), groupingExprs, aggregateExprs, pivotValues);
+
+        // SQLRelation with schema for nullable flag correction
+        return new SQLRelation(sql, outputSchema);
+    }
+
+    /**
+     * Builds the output schema for a pivot operation with correct nullable flags.
+     *
+     * <p>Grouping columns preserve their nullability from the input schema.
+     * Pivot value columns (aggregates) are nullable because some groups may
+     * not have values for all pivot column values.
+     */
+    private StructType buildPivotOutputSchema(
+            StructType inputSchema,
+            List<Expression> groupingExprs,
+            List<Expression> aggregateExprs,
+            List<Object> pivotValues) {
+
+        List<StructField> fields = new ArrayList<>();
+        boolean multipleAggregates = aggregateExprs.size() > 1;
+
+        // Add grouping columns - preserve nullability from input schema
+        for (Expression expr : groupingExprs) {
+            String colName = extractExpressionColumnName(expr);
+            StructField inputField = inputSchema.fieldByName(colName);
+
+            if (inputField != null) {
+                // Preserve input nullability and type
+                fields.add(inputField);
+            } else {
+                // Fallback if not found in schema
+                fields.add(new StructField(colName, com.thunderduck.types.StringType.get(), true));
+            }
+        }
+
+        // Add pivot value columns - these are always nullable because some groups
+        // may not have values for all pivot column values
+        for (Object value : pivotValues) {
+            String valueStr = formatPivotValueAsColumnName(value);
+
+            for (Expression aggExpr : aggregateExprs) {
+                String colName;
+                String aggAlias = extractAggregateAlias(aggExpr);
+
+                if (multipleAggregates) {
+                    colName = valueStr + "_" + aggAlias;
+                } else {
+                    colName = valueStr;
+                }
+
+                // Get the Spark type for this aggregate
+                com.thunderduck.types.DataType dataType = getSparkDataTypeForAggregate(aggExpr, inputSchema);
+                fields.add(new StructField(colName, dataType, true));
+            }
+        }
+
+        return new StructType(fields);
+    }
+
+    /**
+     * Gets the Spark DataType for an aggregate expression.
+     *
+     * <p>For type-preserving aggregates (MAX, MIN), we need the input schema
+     * to determine the correct return type.
+     */
+    private com.thunderduck.types.DataType getSparkDataTypeForAggregate(
+            Expression aggExpr, StructType inputSchema) {
+        Expression innerExpr = aggExpr;
+        if (aggExpr instanceof AliasExpression) {
+            innerExpr = ((AliasExpression) aggExpr).expression();
+        }
+
+        if (innerExpr instanceof FunctionCall) {
+            FunctionCall funcCall = (FunctionCall) innerExpr;
+            String funcName = funcCall.functionName().toLowerCase();
+            switch (funcName) {
+                case "sum":
+                case "count":
+                    return com.thunderduck.types.LongType.get();
+                case "avg":
+                    return com.thunderduck.types.DoubleType.get();
+                case "max":
+                case "min":
+                    // MAX/MIN preserve the input type
+                    return getInputTypeFromAggregate(funcCall, inputSchema);
+                default:
+                    return com.thunderduck.types.LongType.get();
+            }
+        }
+        return com.thunderduck.types.LongType.get();
+    }
+
+    /**
+     * Gets the input type for a type-preserving aggregate (MAX, MIN).
+     */
+    private com.thunderduck.types.DataType getInputTypeFromAggregate(
+            FunctionCall funcCall, StructType inputSchema) {
+        // Get the argument expression
+        List<Expression> args = funcCall.arguments();
+        if (args.isEmpty()) {
+            return com.thunderduck.types.LongType.get();
+        }
+
+        Expression arg = args.get(0);
+
+        // If it's a column reference, look up the type in the schema
+        if (arg instanceof UnresolvedColumn) {
+            String colName = ((UnresolvedColumn) arg).columnName();
+            StructField field = inputSchema.fieldByName(colName);
+            if (field != null) {
+                return field.dataType();
+            }
+        }
+
+        // Default to Long
+        return com.thunderduck.types.LongType.get();
+    }
+
+    /**
+     * Builds a SELECT wrapper around PIVOT for Spark type compatibility.
+     *
+     * <p>DuckDB's PIVOT returns different types than Spark for some aggregates:
+     * - SUM on integers: DuckDB returns DECIMAL(38,0), Spark returns BIGINT
+     *
+     * This wrapper adds CASTs to ensure type parity.
+     */
+    private String buildPivotSelectWrapper(
+            String pivotSql,
+            List<Expression> groupingExprs,
+            List<Expression> aggregateExprs,
+            List<Object> pivotValues) {
+
+        List<String> selectColumns = new ArrayList<>();
+        boolean multipleAggregates = aggregateExprs.size() > 1;
+
+        // Add grouping columns
+        for (Expression expr : groupingExprs) {
+            String colName = extractExpressionColumnName(expr);
+            selectColumns.add(SQLQuoting.quoteIdentifier(colName));
+        }
+
+        // Add pivot columns with type casts
+        for (Object value : pivotValues) {
+            String valueStr = formatPivotValueAsColumnName(value);
+
+            for (Expression aggExpr : aggregateExprs) {
+                String colName;
+                String aggAlias = extractAggregateAlias(aggExpr);
+
+                if (multipleAggregates) {
+                    colName = valueStr + "_" + aggAlias;
+                } else {
+                    colName = valueStr;
+                }
+
+                // Determine if we need a type cast
+                String castType = getSparkTypeForAggregate(aggExpr);
+                String quotedCol = SQLQuoting.quoteIdentifier(colName);
+
+                if (castType != null) {
+                    // Cast to Spark-compatible type
+                    selectColumns.add("CAST(" + quotedCol + " AS " + castType + ") AS " + quotedCol);
+                } else {
+                    selectColumns.add(quotedCol);
+                }
+            }
+        }
+
+        return "SELECT " + String.join(", ", selectColumns) + " FROM (" + pivotSql + ")";
+    }
+
+    /**
+     * Determines the DuckDB type to cast to for Spark compatibility.
+     *
+     * @return the DuckDB type name to cast to, or null if no cast needed
+     */
+    private String getSparkTypeForAggregate(Expression aggExpr) {
+        // Unwrap alias
+        Expression innerExpr = aggExpr;
+        if (aggExpr instanceof AliasExpression) {
+            innerExpr = ((AliasExpression) aggExpr).expression();
+        }
+
+        // Check if it's a function call
+        if (innerExpr instanceof FunctionCall) {
+            String funcName = ((FunctionCall) innerExpr).functionName().toLowerCase();
+
+            // SUM on integers in Spark returns BIGINT, DuckDB returns DECIMAL
+            // COUNT also returns BIGINT in Spark
+            switch (funcName) {
+                case "sum":
+                    return "BIGINT";
+                case "count":
+                    return "BIGINT";
+                default:
+                    return null;  // No cast needed for AVG, MAX, MIN, etc.
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Discovers distinct pivot values from the input data.
+     *
+     * <p>When pivot values are not explicitly provided, Spark discovers them
+     * by querying distinct values of the pivot column.
+     *
+     * @param inputSql the input SQL query
+     * @param pivotColName the pivot column name
+     * @return list of distinct pivot values (sorted, excluding NULLs)
+     */
+    private List<Object> discoverPivotValues(String inputSql, String pivotColName) {
+        if (schemaInferrer == null) {
+            throw new PlanConversionException(
+                "Pivot with auto-discovery requires schema inference, but no connection available");
+        }
+
+        String discoverySql = String.format(
+            "SELECT DISTINCT %s FROM (%s) WHERE %s IS NOT NULL ORDER BY %s",
+            SQLQuoting.quoteIdentifier(pivotColName),
+            inputSql,
+            SQLQuoting.quoteIdentifier(pivotColName),
+            SQLQuoting.quoteIdentifier(pivotColName)
+        );
+
+        List<Object> values = new ArrayList<>();
+        try {
+            java.sql.ResultSet rs = schemaInferrer.getConnection().createStatement().executeQuery(discoverySql);
+            while (rs.next()) {
+                values.add(rs.getObject(1));
+            }
+            rs.close();
+        } catch (java.sql.SQLException e) {
+            throw new PlanConversionException("Failed to discover pivot values: " + e.getMessage(), e);
+        }
+
+        return values;
+    }
+
+    /**
+     * Converts a protobuf Literal to a Java object.
+     */
+    private Object convertLiteralToJava(org.apache.spark.connect.proto.Expression.Literal lit) {
+        switch (lit.getLiteralTypeCase()) {
+            case INTEGER:
+                return lit.getInteger();
+            case LONG:
+                return lit.getLong();
+            case DOUBLE:
+                return lit.getDouble();
+            case FLOAT:
+                return (double) lit.getFloat();
+            case STRING:
+                return lit.getString();
+            case BOOLEAN:
+                return lit.getBoolean();
+            case SHORT:
+                return (int) lit.getShort();
+            case BYTE:
+                return (int) lit.getByte();
+            case DATE:
+                // DuckDB date is days since epoch
+                return java.time.LocalDate.ofEpochDay(lit.getDate());
+            case NULL:
+                return null;
+            default:
+                // For other types, convert to string
+                return lit.toString();
+        }
+    }
+
+    /**
+     * Formats pivot values for SQL IN clause.
+     */
+    private String formatPivotValuesForSQL(List<Object> values) {
+        return values.stream()
+            .map(this::formatValueForSQL)
+            .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * Formats a single value for SQL (handles strings, numbers, dates).
+     */
+    private String formatValueForSQL(Object value) {
+        if (value == null) {
+            return "NULL";
+        }
+        if (value instanceof String) {
+            return "'" + ((String) value).replace("'", "''") + "'";
+        }
+        if (value instanceof Number) {
+            return value.toString();
+        }
+        if (value instanceof java.time.LocalDate) {
+            return "DATE '" + value + "'";
+        }
+        if (value instanceof java.sql.Date) {
+            return "DATE '" + value + "'";
+        }
+        if (value instanceof Boolean) {
+            return value.toString().toUpperCase();
+        }
+        // Default: treat as string
+        return "'" + value.toString().replace("'", "''") + "'";
+    }
+
+    /**
+     * Formats aggregate expressions for USING clause with aliases.
+     *
+     * <p>DuckDB PIVOT supports aliases in the USING clause:
+     * {@code PIVOT ... USING SUM(sales) AS total, COUNT(*) AS cnt}
+     */
+    private String formatPivotAggregates(List<Expression> aggregateExprs) {
+        List<String> aggStrings = new ArrayList<>();
+        for (Expression expr : aggregateExprs) {
+            if (expr instanceof AliasExpression) {
+                AliasExpression aliasExpr = (AliasExpression) expr;
+                // Include alias: SUM(sales) AS total
+                aggStrings.add(aliasExpr.expression().toSQL() + " AS " +
+                    SQLQuoting.quoteIdentifier(aliasExpr.alias()));
+            } else {
+                aggStrings.add(expr.toSQL());
+            }
+        }
+        return String.join(", ", aggStrings);
+    }
+
+    /**
+     * Formats GROUP BY columns for PIVOT clause.
+     */
+    private String formatGroupByColumns(List<Expression> groupingExprs) {
+        if (groupingExprs.isEmpty()) {
+            return "";
+        }
+        return groupingExprs.stream()
+            .map(Expression::toSQL)
+            .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * Creates an empty pivot result when no pivot values are found.
+     */
+    private LogicalPlan createEmptyPivotResult(
+            List<Expression> groupingExprs,
+            List<Expression> aggregateExprs,
+            String pivotColName,
+            List<Object> pivotValues) {
+        // Return an empty SELECT that will yield no rows
+        String sql = "SELECT * FROM (SELECT 1) WHERE FALSE";
+        return new SQLRelation(sql);
+    }
+
+    /**
+     * Infers the output schema for a pivot operation.
+     *
+     * <p>Output schema consists of:
+     * <ul>
+     *   <li>Grouping columns (if any)</li>
+     *   <li>Pivoted columns: {pivot_value} for single aggregate, {pivot_value}_{agg} for multiple</li>
+     * </ul>
+     */
+    private StructType inferPivotSchema(
+            LogicalPlan input,
+            List<Expression> groupingExprs,
+            List<Expression> aggregateExprs,
+            String pivotColName,
+            List<Object> pivotValues) {
+
+        List<StructField> fields = new ArrayList<>();
+
+        // Add grouping columns
+        for (Expression expr : groupingExprs) {
+            String colName = extractExpressionColumnName(expr);
+            // Default to StringType for simplicity; schema inference will correct this
+            fields.add(new StructField(colName, com.thunderduck.types.StringType.get(), true));
+        }
+
+        // Add pivoted columns
+        // For single aggregate: column name is just the pivot value
+        // For multiple aggregates: column name is {value}_{aggregate_alias}
+        boolean multipleAggregates = aggregateExprs.size() > 1;
+
+        for (Object value : pivotValues) {
+            String valueStr = formatPivotValueAsColumnName(value);
+
+            for (Expression aggExpr : aggregateExprs) {
+                String colName;
+                if (multipleAggregates) {
+                    String aggName = extractAggregateAlias(aggExpr);
+                    colName = valueStr + "_" + aggName;
+                } else {
+                    colName = valueStr;
+                }
+                // Use the aggregate return type; default to DoubleType for numeric aggregates
+                fields.add(new StructField(colName, com.thunderduck.types.DoubleType.get(), true));
+            }
+        }
+
+        return new StructType(fields);
+    }
+
+    /**
+     * Extracts column name from an expression.
+     */
+    private String extractExpressionColumnName(Expression expr) {
+        if (expr instanceof UnresolvedColumn) {
+            return ((UnresolvedColumn) expr).columnName();
+        }
+        if (expr instanceof AliasExpression) {
+            return ((AliasExpression) expr).alias();
+        }
+        return expr.toSQL();
+    }
+
+    /**
+     * Extracts the alias or function name from an aggregate expression.
+     */
+    private String extractAggregateAlias(Expression expr) {
+        if (expr instanceof AliasExpression) {
+            return ((AliasExpression) expr).alias();
+        }
+        if (expr instanceof FunctionCall) {
+            return ((FunctionCall) expr).functionName().toLowerCase();
+        }
+        return "value";
+    }
+
+    /**
+     * Formats a pivot value as a valid column name.
+     */
+    private String formatPivotValueAsColumnName(Object value) {
+        if (value == null) {
+            return "null";
+        }
+        String str = value.toString();
+        // DuckDB/Spark use the string representation of the value as the column name
+        // For most types this is straightforward
+        return str;
     }
 
     /**

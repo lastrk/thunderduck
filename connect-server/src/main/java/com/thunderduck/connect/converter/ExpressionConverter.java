@@ -527,6 +527,12 @@ public class ExpressionConverter {
             return false;
         }
 
+        // concat_ws is only nullable if the separator (first arg) is nullable
+        // NULL values in other arguments are skipped, not propagated to result
+        if (lower.equals("concat_ws") && !args.isEmpty()) {
+            return args.get(0).nullable();
+        }
+
         // Most functions are nullable if any argument is nullable
         if (args.isEmpty()) {
             return true;
