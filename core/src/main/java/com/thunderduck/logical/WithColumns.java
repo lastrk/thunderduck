@@ -1,12 +1,10 @@
 package com.thunderduck.logical;
 
-import com.thunderduck.expression.BinaryExpression;
 import com.thunderduck.expression.Expression;
-import com.thunderduck.expression.UnresolvedColumn;
-import com.thunderduck.expression.WindowFunction;
 import com.thunderduck.types.DataType;
 import com.thunderduck.types.StructField;
 import com.thunderduck.types.StructType;
+import com.thunderduck.types.TypeInferenceEngine;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -143,234 +141,17 @@ public class WithColumns extends LogicalPlan {
     }
 
     /**
-     * Resolves the type of an expression, looking up column types from the child schema.
-     *
-     * <p>This is needed because expressions like WindowFunction(LAG, UnresolvedColumn)
-     * need to resolve the column type to determine the function return type.
-     *
-     * @param expr the expression to resolve
-     * @param childSchema the schema to look up column types from
-     * @return the resolved data type
+     * Resolves the type of an expression using the centralized TypeInferenceEngine.
      */
     private DataType resolveExpressionType(Expression expr, StructType childSchema) {
-        // Handle WindowFunction - resolve argument types from child schema
-        if (expr instanceof WindowFunction) {
-            WindowFunction wf = (WindowFunction) expr;
-            String func = wf.function().toUpperCase();
-
-            // Ranking functions return IntegerType
-            if (func.equals("ROW_NUMBER") || func.equals("RANK") ||
-                func.equals("DENSE_RANK") || func.equals("NTILE")) {
-                return com.thunderduck.types.IntegerType.get();
-            }
-
-            // PERCENT_RANK and CUME_DIST return DoubleType
-            if (func.equals("PERCENT_RANK") || func.equals("CUME_DIST")) {
-                return com.thunderduck.types.DoubleType.get();
-            }
-
-            // COUNT always returns LongType
-            if (func.equals("COUNT")) {
-                return com.thunderduck.types.LongType.get();
-            }
-
-            // Functions that return the type of their first argument
-            // Analytic: LAG, LEAD, FIRST/FIRST_VALUE, LAST/LAST_VALUE, NTH_VALUE
-            // Aggregate: MIN, MAX (preserve input type)
-            if (func.equals("LAG") || func.equals("LEAD") ||
-                func.equals("FIRST") || func.equals("FIRST_VALUE") ||
-                func.equals("LAST") || func.equals("LAST_VALUE") ||
-                func.equals("NTH_VALUE") ||
-                func.equals("MIN") || func.equals("MAX")) {
-
-                if (!wf.arguments().isEmpty()) {
-                    Expression arg = wf.arguments().get(0);
-                    DataType argType = resolveExpressionType(arg, childSchema);
-                    if (argType != null) {
-                        return argType;
-                    }
-                }
-            }
-
-            // SUM promotes type: Integer/Long -> Long, Float/Double -> Double, Decimal -> Decimal(p+10,s)
-            if (func.equals("SUM")) {
-                if (!wf.arguments().isEmpty()) {
-                    Expression arg = wf.arguments().get(0);
-                    DataType argType = resolveExpressionType(arg, childSchema);
-                    if (argType != null) {
-                        if (argType instanceof com.thunderduck.types.IntegerType ||
-                            argType instanceof com.thunderduck.types.LongType ||
-                            argType instanceof com.thunderduck.types.ShortType ||
-                            argType instanceof com.thunderduck.types.ByteType) {
-                            return com.thunderduck.types.LongType.get();
-                        }
-                        if (argType instanceof com.thunderduck.types.FloatType ||
-                            argType instanceof com.thunderduck.types.DoubleType) {
-                            return com.thunderduck.types.DoubleType.get();
-                        }
-                        if (argType instanceof com.thunderduck.types.DecimalType) {
-                            com.thunderduck.types.DecimalType decType = (com.thunderduck.types.DecimalType) argType;
-                            int newPrecision = Math.min(decType.precision() + 10, 38);
-                            return new com.thunderduck.types.DecimalType(newPrecision, decType.scale());
-                        }
-                        return argType;  // Preserve other types
-                    }
-                }
-                return com.thunderduck.types.LongType.get();  // Default fallback
-            }
-
-            // AVG returns Double for numeric types, Decimal for Decimal input
-            if (func.equals("AVG")) {
-                if (!wf.arguments().isEmpty()) {
-                    Expression arg = wf.arguments().get(0);
-                    DataType argType = resolveExpressionType(arg, childSchema);
-                    if (argType != null) {
-                        if (argType instanceof com.thunderduck.types.DecimalType) {
-                            return argType;  // AVG(Decimal) returns same precision Decimal
-                        }
-                        return com.thunderduck.types.DoubleType.get();
-                    }
-                }
-                return com.thunderduck.types.DoubleType.get();
-            }
-
-            // STDDEV, VARIANCE, etc. return Double
-            if (func.equals("STDDEV") || func.equals("STDDEV_POP") || func.equals("STDDEV_SAMP") ||
-                func.equals("VARIANCE") || func.equals("VAR_POP") || func.equals("VAR_SAMP")) {
-                return com.thunderduck.types.DoubleType.get();
-            }
-        }
-
-        // Handle BinaryExpression - recursively resolve operand types
-        if (expr instanceof BinaryExpression) {
-            BinaryExpression binExpr = (BinaryExpression) expr;
-            BinaryExpression.Operator op = binExpr.operator();
-
-            // Comparison and logical operators always return boolean
-            if (op.isComparison() || op.isLogical()) {
-                return com.thunderduck.types.BooleanType.get();
-            }
-
-            // Arithmetic operators - resolve operand types and determine result type
-            DataType leftType = resolveExpressionType(binExpr.left(), childSchema);
-            DataType rightType = resolveExpressionType(binExpr.right(), childSchema);
-
-            // Division always returns Double
-            if (op == BinaryExpression.Operator.DIVIDE) {
-                return com.thunderduck.types.DoubleType.get();
-            }
-
-            // For +, -, *, %, use numeric type promotion
-            if (op.isArithmetic()) {
-                return promoteNumericTypes(leftType, rightType);
-            }
-
-            // String concatenation returns String
-            if (op == BinaryExpression.Operator.CONCAT) {
-                return com.thunderduck.types.StringType.get();
-            }
-
-            // Default to left operand type
-            return leftType;
-        }
-
-        // Handle UnresolvedColumn - look up type from child schema
-        if (expr instanceof UnresolvedColumn) {
-            UnresolvedColumn col = (UnresolvedColumn) expr;
-            String colName = col.columnName();
-
-            for (StructField field : childSchema.fields()) {
-                if (field.name().equalsIgnoreCase(colName)) {
-                    return field.dataType();
-                }
-            }
-        }
-
-        // Default: use the expression's own dataType()
-        return expr.dataType();
+        return TypeInferenceEngine.resolveType(expr, childSchema);
     }
 
     /**
-     * Promotes numeric types according to Spark type coercion rules.
-     * Follows Spark's "widening" rules: Double > Float > Decimal > Long > Integer > Short > Byte.
-     */
-    private DataType promoteNumericTypes(DataType left, DataType right) {
-        // If either is Double, result is Double
-        if (left instanceof com.thunderduck.types.DoubleType ||
-            right instanceof com.thunderduck.types.DoubleType) {
-            return com.thunderduck.types.DoubleType.get();
-        }
-
-        // If either is Float, result is Float
-        if (left instanceof com.thunderduck.types.FloatType ||
-            right instanceof com.thunderduck.types.FloatType) {
-            return com.thunderduck.types.FloatType.get();
-        }
-
-        // If either is Decimal, result is Decimal with appropriate precision
-        if (left instanceof com.thunderduck.types.DecimalType ||
-            right instanceof com.thunderduck.types.DecimalType) {
-            if (left instanceof com.thunderduck.types.DecimalType &&
-                right instanceof com.thunderduck.types.DecimalType) {
-                com.thunderduck.types.DecimalType leftDec = (com.thunderduck.types.DecimalType) left;
-                com.thunderduck.types.DecimalType rightDec = (com.thunderduck.types.DecimalType) right;
-                int maxPrecision = Math.max(leftDec.precision(), rightDec.precision());
-                int maxScale = Math.max(leftDec.scale(), rightDec.scale());
-                return new com.thunderduck.types.DecimalType(maxPrecision, maxScale);
-            }
-            return left instanceof com.thunderduck.types.DecimalType ? left : right;
-        }
-
-        // If either is Long, result is Long
-        if (left instanceof com.thunderduck.types.LongType ||
-            right instanceof com.thunderduck.types.LongType) {
-            return com.thunderduck.types.LongType.get();
-        }
-
-        // If either is Integer, result is Integer
-        if (left instanceof com.thunderduck.types.IntegerType ||
-            right instanceof com.thunderduck.types.IntegerType) {
-            return com.thunderduck.types.IntegerType.get();
-        }
-
-        // Default: return Double for safety
-        return com.thunderduck.types.DoubleType.get();
-    }
-
-    /**
-     * Resolves the nullability of an expression, considering child schema and expression semantics.
-     *
-     * <p>For BinaryExpression, the result is non-nullable only if both operands are non-nullable.
-     * For WindowFunction, we delegate to the expression's nullable() method which already
-     * handles special cases like LAG/LEAD with default values.
+     * Resolves the nullability of an expression using the centralized TypeInferenceEngine.
      */
     private boolean resolveNullable(Expression expr, StructType childSchema) {
-        // Handle WindowFunction - delegate to its proper nullable logic
-        if (expr instanceof WindowFunction) {
-            return expr.nullable();
-        }
-
-        // Handle BinaryExpression - non-nullable only if both operands are non-nullable
-        if (expr instanceof BinaryExpression) {
-            BinaryExpression binExpr = (BinaryExpression) expr;
-            boolean leftNullable = resolveNullable(binExpr.left(), childSchema);
-            boolean rightNullable = resolveNullable(binExpr.right(), childSchema);
-            return leftNullable || rightNullable;
-        }
-
-        // Handle UnresolvedColumn - look up nullable from child schema
-        if (expr instanceof UnresolvedColumn) {
-            UnresolvedColumn col = (UnresolvedColumn) expr;
-            String colName = col.columnName();
-            for (StructField field : childSchema.fields()) {
-                if (field.name().equalsIgnoreCase(colName)) {
-                    return field.nullable();
-                }
-            }
-        }
-
-        // Default: use the expression's own nullable()
-        return expr.nullable();
+        return TypeInferenceEngine.resolveNullable(expr, childSchema);
     }
 
     @Override

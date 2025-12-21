@@ -5,13 +5,9 @@ import com.thunderduck.expression.Expression;
 import com.thunderduck.expression.UnresolvedColumn;
 import com.thunderduck.types.DataType;
 import com.thunderduck.types.DecimalType;
-import com.thunderduck.types.DoubleType;
-import com.thunderduck.types.FloatType;
-import com.thunderduck.types.IntegerType;
-import com.thunderduck.types.LongType;
-import com.thunderduck.types.StringType;
 import com.thunderduck.types.StructField;
 import com.thunderduck.types.StructType;
+import com.thunderduck.types.TypeInferenceEngine;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -267,105 +263,26 @@ public class Aggregate extends LogicalPlan {
     }
 
     /**
-     * Resolves the data type of an expression from the child schema.
-     *
-     * @param expr the expression
-     * @param childSchema the child schema for resolving column types (may be null)
-     * @return the resolved data type
+     * Resolves the data type of an expression using the centralized TypeInferenceEngine.
      */
     private DataType resolveExpressionType(Expression expr, StructType childSchema) {
-        // Get underlying expression if aliased
-        Expression baseExpr = expr;
-        if (expr instanceof AliasExpression) {
-            baseExpr = ((AliasExpression) expr).expression();
-        }
-
-        // Resolve column reference from child schema
-        if (baseExpr instanceof UnresolvedColumn && childSchema != null) {
-            String colName = ((UnresolvedColumn) baseExpr).columnName();
-            StructField field = childSchema.fieldByName(colName);
-            if (field != null) {
-                return field.dataType();
-            }
-        }
-
-        // For FunctionCall and other expressions, use their declared type
-        return baseExpr.dataType();
+        return TypeInferenceEngine.resolveType(expr, childSchema);
     }
 
     /**
-     * Resolves whether an expression is nullable from the child schema.
-     *
-     * @param expr the expression
-     * @param childSchema the child schema for resolving column nullability (may be null)
-     * @return true if nullable
+     * Resolves the nullability of an expression using the centralized TypeInferenceEngine.
      */
     private boolean resolveExpressionNullable(Expression expr, StructType childSchema) {
-        // Get underlying expression if aliased
-        Expression baseExpr = expr;
-        if (expr instanceof AliasExpression) {
-            baseExpr = ((AliasExpression) expr).expression();
-        }
-
-        // Resolve column reference from child schema
-        if (baseExpr instanceof UnresolvedColumn && childSchema != null) {
-            String colName = ((UnresolvedColumn) baseExpr).columnName();
-            StructField field = childSchema.fieldByName(colName);
-            if (field != null) {
-                return field.nullable();
-            }
-        }
-
-        return baseExpr.nullable();
+        return TypeInferenceEngine.resolveNullable(expr, childSchema);
     }
 
     /**
-     * Infers the return type for an aggregate function.
-     *
-     * @param aggExpr the aggregate expression
-     * @param childSchema the child schema for resolving argument types
-     * @return the inferred return type
+     * Infers the return type for an aggregate function using the centralized TypeInferenceEngine.
      */
     private DataType inferAggregateReturnType(AggregateExpression aggExpr, StructType childSchema) {
-        String func = aggExpr.function().toUpperCase();
         Expression arg = aggExpr.argument();
         DataType argType = arg != null ? resolveExpressionType(arg, childSchema) : null;
-
-        switch (func) {
-            case "COUNT":
-                return LongType.get();
-            case "SUM":
-                // SUM promotes type: INT->LONG, FLOAT->DOUBLE, etc.
-                if (argType instanceof IntegerType || argType instanceof LongType) {
-                    return LongType.get();
-                }
-                if (argType instanceof FloatType || argType instanceof DoubleType) {
-                    return DoubleType.get();
-                }
-                if (argType instanceof DecimalType) {
-                    // Spark: SUM(DECIMAL(p,s)) -> DECIMAL(p+10, s), capped at max precision 38
-                    DecimalType decType = (DecimalType) argType;
-                    int newPrecision = Math.min(decType.precision() + 10, 38);
-                    return new DecimalType(newPrecision, decType.scale());
-                }
-                return DoubleType.get(); // Default
-            case "AVG":
-                // Spark: AVG(DECIMAL(p,s)) -> DECIMAL(p+4, s+4), capped at max precision 38
-                if (argType instanceof DecimalType) {
-                    DecimalType decType = (DecimalType) argType;
-                    int newPrecision = Math.min(decType.precision() + 4, 38);
-                    int newScale = Math.min(decType.scale() + 4, newPrecision);
-                    return new DecimalType(newPrecision, newScale);
-                }
-                return DoubleType.get();
-            case "MIN":
-            case "MAX":
-            case "FIRST":
-            case "LAST":
-                return argType != null ? argType : StringType.get();
-            default:
-                return argType != null ? argType : StringType.get();
-        }
+        return TypeInferenceEngine.resolveAggregateReturnType(aggExpr.function(), argType);
     }
 
     @Override
