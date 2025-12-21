@@ -58,8 +58,9 @@ public class WindowFunctionTest extends TestBase {
             // When: Generate SQL
             String sql = windowFunc.toSQL();
 
-            // Then: Should generate proper window function SQL
-            assertThat(sql).isEqualTo("ROW_NUMBER() OVER (PARTITION BY category ORDER BY price DESC NULLS LAST)");
+            // Then: Should generate proper window function SQL with CAST for Spark compatibility
+            // DuckDB returns BIGINT for ranking functions, Spark returns INTEGER
+            assertThat(sql).isEqualTo("CAST(ROW_NUMBER() OVER (PARTITION BY category ORDER BY price DESC NULLS LAST) AS INTEGER)");
             assertThat(sql).contains("ROW_NUMBER()");
             assertThat(sql).contains("OVER");
             assertThat(sql).contains("PARTITION BY category");
@@ -88,8 +89,8 @@ public class WindowFunctionTest extends TestBase {
             // When: Generate SQL
             String sql = rank.toSQL();
 
-            // Then: Should generate RANK function
-            assertThat(sql).isEqualTo("RANK() OVER (ORDER BY score DESC NULLS LAST)");
+            // Then: Should generate RANK function with CAST for Spark compatibility
+            assertThat(sql).isEqualTo("CAST(RANK() OVER (ORDER BY score DESC NULLS LAST) AS INTEGER)");
             assertThat(sql).contains("RANK()");
             assertThat(sql).doesNotContain("PARTITION BY");
         }
@@ -120,8 +121,8 @@ public class WindowFunctionTest extends TestBase {
             // When: Generate SQL
             String sql = denseRank.toSQL();
 
-            // Then: Should have multiple partition columns
-            assertThat(sql).isEqualTo("DENSE_RANK() OVER (PARTITION BY department, team ORDER BY salary DESC NULLS LAST)");
+            // Then: Should have multiple partition columns with CAST for Spark compatibility
+            assertThat(sql).isEqualTo("CAST(DENSE_RANK() OVER (PARTITION BY department, team ORDER BY salary DESC NULLS LAST) AS INTEGER)");
             assertThat(sql).contains("PARTITION BY department, team");
         }
 
@@ -148,8 +149,8 @@ public class WindowFunctionTest extends TestBase {
             // When: Generate SQL
             String sql = ntile.toSQL();
 
-            // Then: Should include bucket count argument
-            assertThat(sql).isEqualTo("NTILE(4) OVER (ORDER BY score DESC NULLS LAST)");
+            // Then: Should include bucket count argument with CAST for Spark compatibility
+            assertThat(sql).isEqualTo("CAST(NTILE(4) OVER (ORDER BY score DESC NULLS LAST) AS INTEGER)");
             assertThat(sql).contains("NTILE(4)");
         }
     }
@@ -297,8 +298,8 @@ public class WindowFunctionTest extends TestBase {
             // When: Generate SQL
             String sql = rowNumber.toSQL();
 
-            // Then: Should have empty OVER clause
-            assertThat(sql).isEqualTo("ROW_NUMBER() OVER ()");
+            // Then: Should have empty OVER clause with CAST for Spark compatibility
+            assertThat(sql).isEqualTo("CAST(ROW_NUMBER() OVER () AS INTEGER)");
             assertThat(sql).doesNotContain("PARTITION BY");
             assertThat(sql).doesNotContain("ORDER BY");
         }
@@ -347,8 +348,8 @@ public class WindowFunctionTest extends TestBase {
             // When: Generate SQL
             String sql = rank.toSQL();
 
-            // Then: Should have ORDER BY but no PARTITION BY
-            assertThat(sql).isEqualTo("RANK() OVER (ORDER BY score DESC NULLS LAST)");
+            // Then: Should have ORDER BY but no PARTITION BY with CAST for Spark compatibility
+            assertThat(sql).isEqualTo("CAST(RANK() OVER (ORDER BY score DESC NULLS LAST) AS INTEGER)");
             assertThat(sql).doesNotContain("PARTITION BY");
             assertThat(sql).contains("ORDER BY");
         }
@@ -382,8 +383,8 @@ public class WindowFunctionTest extends TestBase {
             // When: Generate SQL
             String sql = rank.toSQL();
 
-            // Then: Should have multiple ORDER BY columns
-            assertThat(sql).isEqualTo("RANK() OVER (ORDER BY department ASC NULLS FIRST, salary DESC NULLS LAST)");
+            // Then: Should have multiple ORDER BY columns with CAST for Spark compatibility
+            assertThat(sql).isEqualTo("CAST(RANK() OVER (ORDER BY department ASC NULLS FIRST, salary DESC NULLS LAST) AS INTEGER)");
             assertThat(sql).contains("department ASC NULLS FIRST");
             assertThat(sql).contains("salary DESC NULLS LAST");
         }
@@ -465,9 +466,9 @@ public class WindowFunctionTest extends TestBase {
         }
 
         @Test
-        @DisplayName("Window function nullable returns true")
-        void testWindowFunctionNullable() {
-            // Given: Any window function
+        @DisplayName("Ranking functions are non-nullable")
+        void testRankingFunctionNullable() {
+            // Given: A ranking window function
             WindowFunction rowNumber = new WindowFunction(
                 "ROW_NUMBER",
                 Collections.emptyList(),
@@ -478,8 +479,8 @@ public class WindowFunctionTest extends TestBase {
             // When: Check nullable
             boolean nullable = rowNumber.nullable();
 
-            // Then: Should be nullable
-            assertThat(nullable).isTrue();
+            // Then: Ranking functions always return non-null values
+            assertThat(nullable).isFalse();
         }
     }
 }
