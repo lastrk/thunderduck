@@ -1944,15 +1944,11 @@ public class RelationConverter {
                 subqueryAlias.getQualifierList());
         }
 
-        // Generate SQL with explicit alias
-        SQLGenerator generator = new SQLGenerator();
-        String inputSql = generator.generate(input);
-
-        String sql = String.format("SELECT * FROM (%s) AS %s",
-            inputSql, SQLQuoting.quoteIdentifier(alias));
-
-        logger.debug("Creating SubqueryAlias SQL with alias '{}': {}", alias, sql);
-        return new SQLRelation(sql);
+        // Return AliasedRelation to preserve alias for joins to use directly
+        // This allows join conditions like col("d1.column") to work correctly
+        // when the alias "d1" is referenced in the ON clause
+        logger.debug("Creating AliasedRelation with alias '{}'", alias);
+        return new AliasedRelation(input, alias);
     }
 
     /**

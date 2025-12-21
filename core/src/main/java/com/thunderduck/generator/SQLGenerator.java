@@ -160,6 +160,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             visitLocalDataRelation((LocalDataRelation) plan);
         } else if (plan instanceof SQLRelation) {
             visitSQLRelation((SQLRelation) plan);
+        } else if (plan instanceof AliasedRelation) {
+            visitAliasedRelation((AliasedRelation) plan);
         } else if (plan instanceof Distinct) {
             visitDistinct((Distinct) plan);
         } else if (plan instanceof RangeRelation) {
@@ -186,9 +188,50 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
     }
 
     /**
+     * Visits an AliasedRelation node.
+     *
+     * <p>Generates SQL with the user-provided alias. When used in joins,
+     * the alias allows join conditions to reference it directly.
+     *
+     * <p>Note: We must NOT call plan.toSQL(this) because that would call
+     * generator.generate(child) which resets the StringBuilder, losing
+     * all previously appended content.
+     */
+    private void visitAliasedRelation(AliasedRelation plan) {
+        String childSource = getDirectlyAliasableSource(plan.child());
+        if (childSource != null) {
+            // Direct table reference with user alias - no subquery needed
+            sql.append("SELECT * FROM ");
+            sql.append(childSource);
+            sql.append(" AS ");
+            sql.append(SQLQuoting.quoteIdentifier(plan.alias()));
+        } else {
+            // Complex child needs wrapping
+            sql.append("SELECT * FROM (");
+            subqueryDepth++;
+            visit(plan.child());
+            subqueryDepth--;
+            sql.append(") AS ");
+            sql.append(SQLQuoting.quoteIdentifier(plan.alias()));
+        }
+    }
+
+    /**
      * Visits a Project node (SELECT clause).
      */
     private void visitProject(Project plan) {
+        LogicalPlan child = plan.child();
+
+        // Special case: Project on Filter on Join with aliased relations
+        // Generate flat SQL to preserve alias visibility
+        if (child instanceof Filter) {
+            Filter filter = (Filter) child;
+            if (filter.child() instanceof Join && hasAliasedRelation(filter.child())) {
+                generateProjectOnFilterJoin(plan, filter, (Join) filter.child());
+                return;
+            }
+        }
+
         sql.append("SELECT ");
 
         List<Expression> projections = plan.projections();
@@ -211,16 +254,164 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             }
         }
 
-        // Add FROM clause from child
-        sql.append(" FROM (");
-        subqueryDepth++;
-        visit(plan.child());
-        subqueryDepth--;
-        sql.append(")");
+        // Add FROM clause from child - check for direct source optimization
+        String childSource = getDirectlyAliasableSource(plan.child());
+        if (childSource != null) {
+            sql.append(" FROM ").append(childSource);
+            if (subqueryDepth > 0) {
+                sql.append(" AS ").append(generateSubqueryAlias());
+            }
+        } else {
+            sql.append(" FROM (");
+            subqueryDepth++;
+            visit(plan.child());
+            subqueryDepth--;
+            sql.append(")");
+            // Add subquery alias if needed
+            if (subqueryDepth > 0) {
+                sql.append(" AS ").append(generateSubqueryAlias());
+            }
+        }
+    }
 
-        // Add subquery alias if needed
-        if (subqueryDepth > 0) {
-            sql.append(" AS ").append(generateSubqueryAlias());
+    /**
+     * Generates flat SQL for Project on Filter on Join with aliased relations.
+     * This preserves alias visibility by not wrapping intermediate results in subqueries.
+     */
+    private void generateProjectOnFilterJoin(Project project, Filter filter, Join join) {
+        sql.append("SELECT ");
+
+        List<Expression> projections = project.projections();
+        List<String> aliases = project.aliases();
+
+        for (int i = 0; i < projections.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+
+            Expression expr = projections.get(i);
+            sql.append(expr.toSQL());
+
+            String alias = aliases.get(i);
+            if (alias != null && !alias.isEmpty()) {
+                sql.append(" AS ");
+                sql.append(SQLQuoting.quoteIdentifier(alias));
+            }
+        }
+
+        sql.append(" FROM ");
+
+        // Generate flat join chain
+        generateFlatJoinChain(join);
+
+        // Add WHERE clause from filter
+        sql.append(" WHERE ");
+        sql.append(filter.condition().toSQL());
+    }
+
+    /**
+     * Generates a flat join chain without nested subqueries.
+     * This preserves table aliases so they can be referenced in WHERE clauses.
+     */
+    private void generateFlatJoinChain(Join join) {
+        // Collect all joins in the chain
+        List<JoinPart> joinParts = new java.util.ArrayList<>();
+        LogicalPlan leftmost = collectJoinParts(join, joinParts);
+
+        // Generate leftmost table/subquery
+        generateJoinSource(leftmost);
+
+        // Generate each join in sequence
+        for (JoinPart part : joinParts) {
+            sql.append(" ");
+            sql.append(getJoinKeyword(part.joinType));
+            sql.append(" ");
+            generateJoinSource(part.right);
+            if (part.condition != null) {
+                sql.append(" ON ");
+                sql.append(part.condition.toSQL());
+            }
+        }
+    }
+
+    /**
+     * Collects join parts from a join chain, returning the leftmost non-join plan.
+     */
+    private LogicalPlan collectJoinParts(Join join, List<JoinPart> parts) {
+        LogicalPlan left = join.left();
+        if (left instanceof Join) {
+            // Recursively collect from nested join
+            LogicalPlan leftmost = collectJoinParts((Join) left, parts);
+            // Add this join's right side
+            parts.add(new JoinPart(join.right(), join.joinType(), join.condition()));
+            return leftmost;
+        } else {
+            // Left is not a join, this is the leftmost table
+            // Add this join's right side as the first join
+            parts.add(new JoinPart(join.right(), join.joinType(), join.condition()));
+            return left;
+        }
+    }
+
+    /**
+     * Generates SQL for a join source (table, aliased relation, or subquery).
+     */
+    private void generateJoinSource(LogicalPlan plan) {
+        if (plan instanceof AliasedRelation) {
+            AliasedRelation aliased = (AliasedRelation) plan;
+            String childSource = getDirectlyAliasableSource(aliased.child());
+            if (childSource != null) {
+                sql.append(childSource);
+            } else {
+                sql.append("(");
+                visit(aliased.child());
+                sql.append(")");
+            }
+            sql.append(" AS ");
+            sql.append(SQLQuoting.quoteIdentifier(aliased.alias()));
+        } else {
+            String source = getDirectlyAliasableSource(plan);
+            if (source != null) {
+                sql.append(source);
+                sql.append(" AS ");
+                sql.append(generateSubqueryAlias());
+            } else {
+                sql.append("(");
+                visit(plan);
+                sql.append(") AS ");
+                sql.append(generateSubqueryAlias());
+            }
+        }
+    }
+
+    /**
+     * Helper class to hold join information.
+     */
+    private static class JoinPart {
+        final LogicalPlan right;
+        final Join.JoinType joinType;
+        final Expression condition;
+
+        JoinPart(LogicalPlan right, Join.JoinType joinType, Expression condition) {
+            this.right = right;
+            this.joinType = joinType;
+            this.condition = condition;
+        }
+    }
+
+    /**
+     * Gets the SQL keyword for a join type.
+     */
+    private String getJoinKeyword(Join.JoinType joinType) {
+        switch (joinType) {
+            case INNER: return "INNER JOIN";
+            case LEFT: return "LEFT OUTER JOIN";
+            case RIGHT: return "RIGHT OUTER JOIN";
+            case FULL: return "FULL OUTER JOIN";
+            case CROSS: return "CROSS JOIN";
+            case LEFT_SEMI: return "LEFT SEMI JOIN";
+            case LEFT_ANTI: return "LEFT ANTI JOIN";
+            default: throw new UnsupportedOperationException("Unknown join type: " + joinType);
         }
     }
 
@@ -228,13 +419,57 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * Visits a Filter node (WHERE clause).
      */
     private void visitFilter(Filter plan) {
-        sql.append("SELECT * FROM (");
-        subqueryDepth++;
-        visit(plan.child());
-        subqueryDepth--;
-        sql.append(") AS ").append(generateSubqueryAlias());
-        sql.append(" WHERE ");
-        sql.append(plan.condition().toSQL());
+        LogicalPlan child = plan.child();
+
+        // For Joins with user-defined aliases (AliasedRelation), append WHERE directly
+        // to preserve alias visibility. Otherwise, wrap in subquery.
+        if (child instanceof Join && hasAliasedChildren((Join) child)) {
+            // Visit the join directly (produces SELECT * FROM ... JOIN ... ON ...)
+            visit(child);
+            // Append WHERE clause - aliases are still in scope
+            sql.append(" WHERE ");
+            sql.append(plan.condition().toSQL());
+        } else {
+            // Standard approach - check for direct table reference
+            String childSource = getDirectlyAliasableSource(child);
+            if (childSource != null) {
+                // Direct table - no subquery needed
+                sql.append("SELECT * FROM ").append(childSource);
+                sql.append(" WHERE ");
+                sql.append(plan.condition().toSQL());
+            } else {
+                // Complex child - wrap in subquery
+                sql.append("SELECT * FROM (");
+                subqueryDepth++;
+                visit(child);
+                subqueryDepth--;
+                sql.append(") AS ").append(generateSubqueryAlias());
+                sql.append(" WHERE ");
+                sql.append(plan.condition().toSQL());
+            }
+        }
+    }
+
+    /**
+     * Checks if a Join has any AliasedRelation children (directly or nested).
+     * Used to determine if filter should preserve alias visibility.
+     */
+    private boolean hasAliasedChildren(Join join) {
+        return hasAliasedRelation(join.left()) || hasAliasedRelation(join.right());
+    }
+
+    /**
+     * Recursively checks if a plan contains AliasedRelation.
+     */
+    private boolean hasAliasedRelation(LogicalPlan plan) {
+        if (plan instanceof AliasedRelation) {
+            return true;
+        }
+        if (plan instanceof Join) {
+            Join j = (Join) plan;
+            return hasAliasedRelation(j.left()) || hasAliasedRelation(j.right());
+        }
+        return false;
     }
 
     /**
@@ -245,7 +480,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
         if (columns == null || columns.isEmpty()) {
             // DISTINCT on all columns
-            sql.append("SELECT DISTINCT * FROM (");
+            sql.append("SELECT DISTINCT * FROM ");
         } else {
             // DISTINCT on specific columns
             sql.append("SELECT DISTINCT ");
@@ -255,13 +490,20 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                 }
                 sql.append(quoteIdentifier(columns.get(i)));
             }
-            sql.append(" FROM (");
+            sql.append(" FROM ");
         }
 
-        subqueryDepth++;
-        visit(plan.children().get(0));
-        subqueryDepth--;
-        sql.append(") AS ").append(generateSubqueryAlias());
+        // Check for direct source optimization
+        String childSource = getDirectlyAliasableSource(plan.children().get(0));
+        if (childSource != null) {
+            sql.append(childSource);
+        } else {
+            sql.append("(");
+            subqueryDepth++;
+            visit(plan.children().get(0));
+            subqueryDepth--;
+            sql.append(") AS ").append(generateSubqueryAlias());
+        }
     }
 
     /**
@@ -334,11 +576,17 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * Builds SQL directly in buffer to avoid corruption.
      */
     private void visitSort(Sort plan) {
-        sql.append("SELECT * FROM (");
-        subqueryDepth++;
-        visit(plan.child());  // Use visit(), not generate()
-        subqueryDepth--;
-        sql.append(") AS ").append(generateSubqueryAlias());
+        // Check for direct source optimization
+        String childSource = getDirectlyAliasableSource(plan.child());
+        if (childSource != null) {
+            sql.append("SELECT * FROM ").append(childSource);
+        } else {
+            sql.append("SELECT * FROM (");
+            subqueryDepth++;
+            visit(plan.child());  // Use visit(), not generate()
+            subqueryDepth--;
+            sql.append(") AS ").append(generateSubqueryAlias());
+        }
         sql.append(" ORDER BY ");
 
         java.util.List<Sort.SortOrder> sortOrders = plan.sortOrders();
@@ -370,11 +618,17 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * Visits a Limit node (LIMIT clause).
      */
     private void visitLimit(Limit plan) {
-        sql.append("SELECT * FROM (");
-        subqueryDepth++;
-        visit(plan.child());
-        subqueryDepth--;
-        sql.append(") AS ").append(generateSubqueryAlias());
+        // Check for direct source optimization
+        String childSource = getDirectlyAliasableSource(plan.child());
+        if (childSource != null) {
+            sql.append("SELECT * FROM ").append(childSource);
+        } else {
+            sql.append("SELECT * FROM (");
+            subqueryDepth++;
+            visit(plan.child());
+            subqueryDepth--;
+            sql.append(") AS ").append(generateSubqueryAlias());
+        }
         sql.append(" LIMIT ");
         sql.append(plan.limit());
 
@@ -634,12 +888,17 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
         sql.append(String.join(", ", selectExprs));
 
-        // FROM clause
-        sql.append(" FROM (");
-        subqueryDepth++;
-        visit(plan.child());  // Use visit(), not generate()
-        subqueryDepth--;
-        sql.append(") AS ").append(generateSubqueryAlias());
+        // FROM clause - check for direct source optimization
+        String childSource = getDirectlyAliasableSource(plan.child());
+        if (childSource != null) {
+            sql.append(" FROM ").append(childSource);
+        } else {
+            sql.append(" FROM (");
+            subqueryDepth++;
+            visit(plan.child());  // Use visit(), not generate()
+            subqueryDepth--;
+            sql.append(") AS ").append(generateSubqueryAlias());
+        }
 
         // GROUP BY clause
         // Note: GROUP BY cannot have aliases, so we unwrap AliasExpressions
@@ -712,24 +971,54 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             // For semi/anti joins, we need to use WHERE EXISTS/NOT EXISTS
             // SELECT * FROM left WHERE [NOT] EXISTS (SELECT 1 FROM right WHERE condition)
 
-            String leftAlias = generateSubqueryAlias();
-            String rightAlias = generateSubqueryAlias();
+            LogicalPlan leftPlan = plan.left();
+            LogicalPlan rightPlan = plan.right();
+
+            // Determine aliases - use user-provided aliases from AliasedRelation when available
+            String leftAlias;
+            String rightAlias;
+
+            if (leftPlan instanceof AliasedRelation) {
+                leftAlias = SQLQuoting.quoteIdentifier(((AliasedRelation) leftPlan).alias());
+            } else {
+                leftAlias = generateSubqueryAlias();
+            }
+
+            if (rightPlan instanceof AliasedRelation) {
+                rightAlias = SQLQuoting.quoteIdentifier(((AliasedRelation) rightPlan).alias());
+            } else {
+                rightAlias = generateSubqueryAlias();
+            }
 
             // Build plan_id → alias mapping for column qualification
             Map<Long, String> planIdToAlias = new HashMap<>();
             collectPlanIds(plan.left(), leftAlias, planIdToAlias);
             collectPlanIds(plan.right(), rightAlias, planIdToAlias);
 
-            // LEFT SIDE - use direct aliasing for TableScan, wrap others
-            String leftSource = getDirectlyAliasableSource(plan.left());
-            if (leftSource != null) {
-                sql.append("SELECT * FROM ").append(leftSource).append(" AS ").append(leftAlias);
+            // LEFT SIDE - handle AliasedRelation, use direct aliasing for TableScan, wrap others
+            if (leftPlan instanceof AliasedRelation) {
+                AliasedRelation aliased = (AliasedRelation) leftPlan;
+                String childSource = getDirectlyAliasableSource(aliased.child());
+                if (childSource != null) {
+                    sql.append("SELECT * FROM ").append(childSource).append(" AS ").append(leftAlias);
+                } else {
+                    sql.append("SELECT * FROM (");
+                    subqueryDepth++;
+                    visit(aliased.child());
+                    subqueryDepth--;
+                    sql.append(") AS ").append(leftAlias);
+                }
             } else {
-                sql.append("SELECT * FROM (");
-                subqueryDepth++;
-                visit(plan.left());
-                subqueryDepth--;
-                sql.append(") AS ").append(leftAlias);
+                String leftSource = getDirectlyAliasableSource(leftPlan);
+                if (leftSource != null) {
+                    sql.append("SELECT * FROM ").append(leftSource).append(" AS ").append(leftAlias);
+                } else {
+                    sql.append("SELECT * FROM (");
+                    subqueryDepth++;
+                    visit(leftPlan);
+                    subqueryDepth--;
+                    sql.append(") AS ").append(leftAlias);
+                }
             }
 
             // Add WHERE [NOT] EXISTS
@@ -738,16 +1027,30 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                 sql.append("NOT ");
             }
 
-            // RIGHT SIDE - use direct aliasing for TableScan, wrap others
-            String rightSource = getDirectlyAliasableSource(plan.right());
-            if (rightSource != null) {
-                sql.append("EXISTS (SELECT 1 FROM ").append(rightSource).append(" AS ").append(rightAlias);
+            // RIGHT SIDE - handle AliasedRelation, use direct aliasing for TableScan, wrap others
+            if (rightPlan instanceof AliasedRelation) {
+                AliasedRelation aliased = (AliasedRelation) rightPlan;
+                String childSource = getDirectlyAliasableSource(aliased.child());
+                if (childSource != null) {
+                    sql.append("EXISTS (SELECT 1 FROM ").append(childSource).append(" AS ").append(rightAlias);
+                } else {
+                    sql.append("EXISTS (SELECT 1 FROM (");
+                    subqueryDepth++;
+                    visit(aliased.child());
+                    subqueryDepth--;
+                    sql.append(") AS ").append(rightAlias);
+                }
             } else {
-                sql.append("EXISTS (SELECT 1 FROM (");
-                subqueryDepth++;
-                visit(plan.right());
-                subqueryDepth--;
-                sql.append(") AS ").append(rightAlias);
+                String rightSource = getDirectlyAliasableSource(rightPlan);
+                if (rightSource != null) {
+                    sql.append("EXISTS (SELECT 1 FROM ").append(rightSource).append(" AS ").append(rightAlias);
+                } else {
+                    sql.append("EXISTS (SELECT 1 FROM (");
+                    subqueryDepth++;
+                    visit(rightPlan);
+                    subqueryDepth--;
+                    sql.append(") AS ").append(rightAlias);
+                }
             }
 
             // Add WHERE clause for the correlation
@@ -762,25 +1065,54 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         } else {
             // Regular joins (INNER, LEFT, RIGHT, FULL, CROSS)
 
-            // Generate aliases before visiting children
-            String leftAlias = generateSubqueryAlias();
-            String rightAlias = generateSubqueryAlias();
+            // Determine aliases - use user-provided aliases from AliasedRelation when available
+            String leftAlias;
+            String rightAlias;
+            LogicalPlan leftPlan = plan.left();
+            LogicalPlan rightPlan = plan.right();
+
+            if (leftPlan instanceof AliasedRelation) {
+                leftAlias = SQLQuoting.quoteIdentifier(((AliasedRelation) leftPlan).alias());
+            } else {
+                leftAlias = generateSubqueryAlias();
+            }
+
+            if (rightPlan instanceof AliasedRelation) {
+                rightAlias = SQLQuoting.quoteIdentifier(((AliasedRelation) rightPlan).alias());
+            } else {
+                rightAlias = generateSubqueryAlias();
+            }
 
             // Build plan_id → alias mapping for column qualification
             Map<Long, String> planIdToAlias = new HashMap<>();
             collectPlanIds(plan.left(), leftAlias, planIdToAlias);
             collectPlanIds(plan.right(), rightAlias, planIdToAlias);
 
-            // LEFT SIDE - use direct aliasing for TableScan, wrap others
-            String leftSource = getDirectlyAliasableSource(plan.left());
-            if (leftSource != null) {
-                sql.append("SELECT * FROM ").append(leftSource).append(" AS ").append(leftAlias);
+            // LEFT SIDE - use direct aliasing for TableScan, handle AliasedRelation, wrap others
+            if (leftPlan instanceof AliasedRelation) {
+                // User provided an alias - generate SQL using that alias directly
+                AliasedRelation aliased = (AliasedRelation) leftPlan;
+                String childSource = getDirectlyAliasableSource(aliased.child());
+                if (childSource != null) {
+                    sql.append("SELECT * FROM ").append(childSource).append(" AS ").append(leftAlias);
+                } else {
+                    sql.append("SELECT * FROM (");
+                    subqueryDepth++;
+                    visit(aliased.child());
+                    subqueryDepth--;
+                    sql.append(") AS ").append(leftAlias);
+                }
             } else {
-                sql.append("SELECT * FROM (");
-                subqueryDepth++;
-                visit(plan.left());
-                subqueryDepth--;
-                sql.append(") AS ").append(leftAlias);
+                String leftSource = getDirectlyAliasableSource(leftPlan);
+                if (leftSource != null) {
+                    sql.append("SELECT * FROM ").append(leftSource).append(" AS ").append(leftAlias);
+                } else {
+                    sql.append("SELECT * FROM (");
+                    subqueryDepth++;
+                    visit(leftPlan);
+                    subqueryDepth--;
+                    sql.append(") AS ").append(leftAlias);
+                }
             }
 
             // JOIN type
@@ -805,16 +1137,31 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                         "Unexpected join type: " + plan.joinType());
             }
 
-            // RIGHT SIDE - use direct aliasing for TableScan, wrap others
-            String rightSource = getDirectlyAliasableSource(plan.right());
-            if (rightSource != null) {
-                sql.append(rightSource).append(" AS ").append(rightAlias);
+            // RIGHT SIDE - use direct aliasing for TableScan, handle AliasedRelation, wrap others
+            if (rightPlan instanceof AliasedRelation) {
+                // User provided an alias - generate SQL using that alias directly
+                AliasedRelation aliased = (AliasedRelation) rightPlan;
+                String childSource = getDirectlyAliasableSource(aliased.child());
+                if (childSource != null) {
+                    sql.append(childSource).append(" AS ").append(rightAlias);
+                } else {
+                    sql.append("(");
+                    subqueryDepth++;
+                    visit(aliased.child());
+                    subqueryDepth--;
+                    sql.append(") AS ").append(rightAlias);
+                }
             } else {
-                sql.append("(");
-                subqueryDepth++;
-                visit(plan.right());
-                subqueryDepth--;
-                sql.append(") AS ").append(rightAlias);
+                String rightSource = getDirectlyAliasableSource(rightPlan);
+                if (rightSource != null) {
+                    sql.append(rightSource).append(" AS ").append(rightAlias);
+                } else {
+                    sql.append("(");
+                    subqueryDepth++;
+                    visit(rightPlan);
+                    subqueryDepth--;
+                    sql.append(") AS ").append(rightAlias);
+                }
             }
 
             // ON clause (except for CROSS join)

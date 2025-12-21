@@ -29,7 +29,7 @@ All logical plan nodes (WithColumns, Project, Aggregate) now delegate to this en
 
 ## Priority 2: Type Preservation Fixes
 
-### Decimal Division - FIXED ✓
+### Decimal Division - FIXED
 
 **Commits**:
 - `dc59d72` - Initial Decimal division type preservation
@@ -49,7 +49,7 @@ All logical plan nodes (WithColumns, Project, Aggregate) now delegate to this en
 - Integer literals promoted to Decimal based on actual value (100 → Decimal(3,0))
 - CAST wrapper added in SQLGenerator.visitWithColumns() for division expressions
 
-### CASE WHEN Type Preservation - FIXED ✓
+### CASE WHEN Type Preservation - FIXED
 
 **Changes made**:
 - Created `CaseWhenExpression` class to preserve branch structure for schema-aware type resolution
@@ -61,57 +61,92 @@ All logical plan nodes (WithColumns, Project, Aggregate) now delegate to this en
 - Fixed GROUP BY alias SQL generation in both `Aggregate.toSQL()` and `SQLGenerator.visitAggregate()`
 
 **Result**:
-- Q99 now passes! ✓
-- Q62 now passes! ✓
+- Q99 now passes!
+- Q62 now passes!
 - All other CASE WHEN queries work correctly with Decimal type preservation
 
 ---
 
-## Priority 3: Differential Test Results (2025-12-21)
+## Priority 3: Join Alias Visibility - FIXED (2025-12-21)
 
-### Summary (Updated 2025-12-21)
-- **TPC-DS DataFrame**: 24 passed, 0 failed ✓
+### Problem
+TPC-DS queries Q17, Q25, Q29 were failing with SQL binding errors:
+- `d1['d_date_sk']` - bracket notation instead of qualified column syntax
+- `Referenced table "d1" not found` - aliases buried in nested subqueries
+
+### Solution
+
+1. **Created `AliasedRelation` logical plan node** - Preserves user-provided aliases from `DataFrame.alias()` operations
+2. **Fixed `ExpressionConverter.convertUnresolvedAttribute()`** - Two-part column references (`d1.d_date_sk`) now use qualified column syntax instead of struct field access
+3. **Modified `Join.java`** - Added `generateJoinSide()` to preserve user-provided aliases
+4. **Enhanced `SQLGenerator.java`**:
+   - Added `visitAliasedRelation()` handler
+   - Added `generateProjectOnFilterJoin()` for flat SQL generation
+   - Added `generateFlatJoinChain()` and `collectJoinParts()` to flatten join chains
+   - Added `generateJoinSource()` for individual join sources
+
+**Result**: All 33 TPC-DS DataFrame tests now pass (was 24)
+
+---
+
+## Priority 4: SQL Generation Optimization - COMPLETED (2025-12-21)
+
+### Problem
+SQL generation was creating excessive nested subqueries even for simple table references:
+```sql
+SELECT col1, col2 FROM (
+    SELECT * FROM (
+        SELECT * FROM "users"
+    ) AS subquery_1
+    WHERE id > 100
+) AS subquery_2
+```
+
+### Solution
+Extended the `getDirectlyAliasableSource()` pattern to 7 visit methods:
+
+| Method | Optimization |
+|--------|--------------|
+| `visitAliasedRelation()` | Direct table ref: `SELECT * FROM "table" AS alias` |
+| `visitFilter()` | Skip subquery for TableScan children |
+| `visitProject()` | Direct FROM clause for TableScan children |
+| `visitSort()` | Skip subquery for TableScan children |
+| `visitLimit()` | Skip subquery for TableScan children |
+| `visitDistinct()` | Skip subquery for TableScan children |
+| `visitAggregate()` | Direct FROM clause for TableScan children |
+
+**Result**: Generated SQL is cleaner and more readable:
+```sql
+SELECT col1, col2 FROM "users"
+WHERE id > 100
+ORDER BY col1
+```
+
+---
+
+## Priority 5: Differential Test Results (2025-12-21)
+
+### Summary
+- **TPC-DS DataFrame**: 33 passed, 0 failed
 - **SQL Tests**: 203 skipped (not implemented yet)
 
-### TPC-DS DataFrame Status
+### TPC-DS DataFrame Status - ALL PASSING
 
-| Query | Status | Issue |
-|-------|--------|-------|
-| Q3, Q7, Q12, Q13, Q15, Q19, Q20, Q26, Q37, Q41, Q42, Q43, Q45, Q48, Q50, Q52, Q55, **Q62**, Q82, **Q84**, Q91, Q96, **Q98**, **Q99** | PASS | - |
+| Query | Status |
+|-------|--------|
+| Q3, Q7, Q9, Q12, Q13, Q15, Q17, Q19, Q20, Q25, Q26, Q29, Q32, Q37, Q40, Q41, Q42, Q43, Q45, Q48, Q50, Q52, Q55, Q62, Q71, Q82, Q84, Q85, Q91, Q92, Q96, Q98, Q99 | PASS |
 
 ### Fixed Issues
 
-1. ~~**Decimal precision/scale** (Q98)~~ - **FIXED**
-
-2. ~~**CASE WHEN type inference** (Q99, Q62)~~ - **FIXED**
-   - Created `CaseWhenExpression` class
-   - Added schema-aware type resolution in `TypeInferenceEngine`
-   - Fixed Decimal + Integer type unification
-
-3. ~~**Q84 nullable mismatch** (customer_name)~~ - **FIXED**
-   - `concat_ws` nullability now correctly depends only on separator argument
-   - Added special case in `ExpressionConverter.inferFunctionNullable()`
-
-4. **Remaining issues**
-   - SQL tests not yet implemented
+1. **Decimal precision/scale** (Q98) - FIXED
+2. **CASE WHEN type inference** (Q99, Q62) - FIXED
+3. **Q84 nullable mismatch** (customer_name) - FIXED
+4. **Q17, Q25, Q29 join alias visibility** - FIXED
+5. **Q91 ORDER BY tie-breaking** - FIXED (added secondary sort keys)
 
 ---
 
-## Priority 4: Next Steps
-
-### Completed
-1. ~~**Fix Decimal division scale**~~ - **DONE** (Q98 passes)
-2. ~~**Schema-aware CASE WHEN**~~ - **DONE** (Q99, Q62 pass)
-3. ~~**Fix Q84 concat_ws nullability**~~ - **DONE** (Q84 passes, all 24 TPC-DS DataFrame tests pass)
-4. ~~**Pivot operations**~~ - **DONE** (all 6 pivot tests pass)
-
-### Remaining
-- SQL test implementation
-- Unpivot/cube/rollup nullable fixes (same issue as pivot, needs schema-aware SQLRelation)
-
----
-
-## Priority 5: RawSQLExpression Elimination - COMPLETED ✓
+## Priority 6: RawSQLExpression Elimination - COMPLETED
 
 ### Problem
 `RawSQLExpression` was used as a catch-all for expressions without typed representations, causing:
@@ -139,6 +174,22 @@ All logical plan nodes (WithColumns, Project, Aggregate) now delegate to this en
 
 ---
 
+## Next Steps
+
+### Completed
+1. **Fix Decimal division scale** - DONE (Q98 passes)
+2. **Schema-aware CASE WHEN** - DONE (Q99, Q62 pass)
+3. **Fix Q84 concat_ws nullability** - DONE (Q84 passes)
+4. **Pivot operations** - DONE (all 6 pivot tests pass)
+5. **Fix join alias visibility** - DONE (Q17, Q25, Q29 pass)
+6. **SQL generation optimization** - DONE (reduced unnecessary subquery wrapping)
+
+### Remaining
+- SQL test implementation
+- Unpivot/cube/rollup nullable fixes (same issue as pivot, needs schema-aware SQLRelation)
+
+---
+
 ## Files Modified (All Sessions)
 
 | File | Changes |
@@ -151,9 +202,13 @@ All logical plan nodes (WithColumns, Project, Aggregate) now delegate to this en
 | `core/.../expression/InExpression.java` | NEW - IN clause with test expr and values |
 | `core/.../expression/IntervalExpression.java` | NEW - Interval literals (YEAR_MONTH, DAY_TIME, CALENDAR) |
 | `core/.../expression/RawSQLExpression.java` | DELETED - No longer needed |
-| `core/.../generator/SQLGenerator.java` | Added CAST wrapper for decimal divisions, fixed GROUP BY alias unwrapping |
+| `core/.../logical/AliasedRelation.java` | NEW - Preserves user-provided aliases for joins |
+| `core/.../logical/Join.java` | Added `generateJoinSide()` for alias preservation |
+| `core/.../generator/SQLGenerator.java` | Added CAST wrapper for decimal divisions, fixed GROUP BY alias unwrapping, added `visitAliasedRelation()`, `generateProjectOnFilterJoin()`, `generateFlatJoinChain()`, direct source optimization for 7 visit methods |
 | `core/.../logical/Aggregate.java` | Fixed GROUP BY alias unwrapping |
-| `connect-server/.../ExpressionConverter.java` | Updated to use typed expression classes |
+| `connect-server/.../ExpressionConverter.java` | Updated to use typed expression classes, fixed two-part column references |
+| `connect-server/.../RelationConverter.java` | Uses `AliasedRelation` instead of `SQLRelation` for aliases |
+| `tests/.../tpcds_dataframe/tpcds_dataframe_queries.py` | Q91 orderBy fix with secondary sort keys |
 | `tests/.../types/TypeInferenceEngineTest.java` | 15 unit tests |
 | `tests/.../expression/CaseWhenExpressionTest.java` | NEW - 19 unit tests |
 | `tests/.../expression/RawSQLExpressionTest.java` | DELETED - No longer needed |
@@ -197,4 +252,18 @@ Branch type resolution: cs_sales_price → Decimal(7,2)
 Type unification: Decimal(7,2) + Integer → Decimal(12,2)
     ↓
 SUM(Decimal(12,2)) → Decimal(22,2)  ← Correct!
+```
+
+### Join Alias Visibility Solution (FIXED)
+
+```
+df.alias("d1").join(df.alias("d2"), col("d1.id") == col("d2.id"))
+    ↓
+RelationConverter.convertSubqueryAlias()
+    ↓
+AliasedRelation(child, "d1")  ← Preserves user alias
+    ↓
+SQLGenerator.visitJoin() / generateFlatJoinChain()
+    ↓
+SELECT * FROM "table" AS "d1" INNER JOIN "table" AS "d2" ON "d1"."id" = "d2"."id"
 ```

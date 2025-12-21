@@ -470,7 +470,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q26(spark: SparkSession) -> DataFrame:
         """Query 26: Catalog sales promotional analysis"""
@@ -556,7 +556,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q32(spark: SparkSession) -> DataFrame:
         """Query 32: Excess discount amount"""
@@ -1215,13 +1215,13 @@ class TpcdsDataFrameQueries:
             )
             .groupBy("cc_call_center_id", "cc_name", "cc_manager", "cd_marital_status", "cd_education_status")
             .agg(count("cr_returning_customer_sk").alias("returns_count"))
-            .orderBy(col("returns_count").desc())
+            .orderBy(col("returns_count").desc(), "cc_call_center_id", "cc_name", "cc_manager", "cd_marital_status", "cd_education_status")
             .limit(100)
         )
 
         return result
 
-    
+
     @staticmethod
     def q92(spark: SparkSession) -> DataFrame:
         """Query 92: Web sales discount analysis"""

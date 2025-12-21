@@ -191,12 +191,13 @@ public class ExpressionConverter {
             // Simple column reference - pass planId for join resolution
             return new UnresolvedColumn(parts[0], null, planId);
         } else if (parts.length == 2) {
-            // Could be table.column or column.field
-            // If we have planId, this is likely struct access (table ref would be via planId)
-            // Without planId, assume struct access for consistency
-            // This generates struct_extract which works for both cases
-            com.thunderduck.expression.Expression base = new UnresolvedColumn(parts[0], null, planId);
-            return ExtractValueExpression.structField(base, parts[1]);
+            // Two-part identifier: table.column or struct.field
+            // Use standard SQL qualified column syntax (a.b) which works for both:
+            // - table_alias.column → resolves to column in aliased table
+            // - struct_column.field → DuckDB supports dot notation for struct field access
+            // Previous implementation used bracket notation (a['b']) which only works for structs,
+            // not for table-qualified column references like d1.d_date_sk in self-joins.
+            return new UnresolvedColumn(parts[1], parts[0], planId);
         } else {
             // Nested field access: col.field1.field2.field3
             // Build chained ExtractValueExpression calls

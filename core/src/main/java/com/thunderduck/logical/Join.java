@@ -101,20 +101,17 @@ public class Join extends LogicalPlan {
     public String toSQL(SQLGenerator generator) {
         StringBuilder sql = new StringBuilder();
 
-        // Generate left subquery
-        sql.append("SELECT * FROM (");
-        sql.append(generator.generate(left));
-        sql.append(") AS ").append(generator.generateSubqueryAlias());
+        // Generate left side
+        sql.append("SELECT * FROM ");
+        sql.append(generateJoinSide(left, generator));
 
         // Generate JOIN keyword with type
         sql.append(" ");
         sql.append(getJoinKeyword());
         sql.append(" ");
 
-        // Generate right subquery
-        sql.append("(");
-        sql.append(generator.generate(right));
-        sql.append(") AS ").append(generator.generateSubqueryAlias());
+        // Generate right side
+        sql.append(generateJoinSide(right, generator));
 
         // Generate ON clause (if condition exists)
         if (condition != null) {
@@ -123,6 +120,31 @@ public class Join extends LogicalPlan {
         }
 
         return sql.toString();
+    }
+
+    /**
+     * Generates SQL for a join side, preserving user-provided aliases.
+     *
+     * <p>If the plan is an AliasedRelation, use the user's alias directly so that
+     * join conditions like col("d1.column") can reference it. Otherwise, wrap
+     * in a subquery with a generated alias.
+     *
+     * @param plan the join side plan
+     * @param generator the SQL generator
+     * @return the SQL for this join side
+     */
+    private String generateJoinSide(LogicalPlan plan, SQLGenerator generator) {
+        if (plan instanceof AliasedRelation) {
+            // User provided an explicit alias - use it directly so join conditions can reference it
+            AliasedRelation aliased = (AliasedRelation) plan;
+            String childSql = generator.generate(aliased.child());
+            return String.format("(%s) AS %s",
+                childSql, com.thunderduck.generator.SQLQuoting.quoteIdentifier(aliased.alias()));
+        } else {
+            // No explicit alias - wrap in subquery with generated alias
+            return String.format("(%s) AS %s",
+                generator.generate(plan), generator.generateSubqueryAlias());
+        }
     }
 
     /**
