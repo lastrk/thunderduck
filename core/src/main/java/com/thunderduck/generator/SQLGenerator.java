@@ -1801,8 +1801,10 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                 }
 
                 org.apache.arrow.vector.FieldVector vector = root.getVector(col);
+                org.apache.arrow.vector.types.pojo.ArrowType arrowType =
+                    root.getSchema().getFields().get(col).getType();
                 Object value = getArrowValue(vector, row);
-                values.append(formatSQLValue(value));
+                values.append(formatTypedSQLValue(value, arrowType));
             }
 
             values.append(")");
@@ -1986,6 +1988,32 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             // Fallback: convert to string and quote
             String escaped = value.toString().replace("'", "''");
             return "'" + escaped + "'";
+        }
+    }
+
+    /**
+     * Formats a value with explicit CAST to preserve Arrow schema type.
+     * This ensures DuckDB uses the correct type instead of inferring from literals.
+     *
+     * @param value the value to format
+     * @param type the Arrow type to cast to
+     * @return SQL representation with CAST wrapper for numeric types
+     */
+    private String formatTypedSQLValue(Object value, org.apache.arrow.vector.types.pojo.ArrowType type) {
+        String formatted = formatSQLValue(value);
+        if (value == null) {
+            return formatted; // NULL doesn't need CAST
+        }
+
+        // Only wrap numeric types that DuckDB might infer incorrectly
+        switch (type.getTypeID()) {
+            case Int:
+            case FloatingPoint:
+            case Decimal:
+                String sqlType = com.thunderduck.runtime.ArrowInterchange.arrowTypeToSQLType(type);
+                return "CAST(" + formatted + " AS " + sqlType + ")";
+            default:
+                return formatted; // Other types (String, Date, etc.) are fine as-is
         }
     }
 

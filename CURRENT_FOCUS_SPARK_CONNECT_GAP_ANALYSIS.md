@@ -1,9 +1,9 @@
 # Spark Connect 4.0.x Gap Analysis for Thunderduck
 
-**Version:** 4.9
+**Version:** 4.11
 **Date:** 2025-12-22
 **Purpose:** Comprehensive analysis of Spark Connect operator support in Thunderduck
-**Validation:** 418 differential tests (418 passing) - see [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
+**Validation:** 432 differential tests (432 passing) - see [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
 
 ---
 
@@ -499,7 +499,7 @@ Features intentionally not supported due to Spark/DuckDB architectural differenc
 
 This section documents operations that are implemented but NOT covered by differential tests.
 
-### 10.1 Current Test Summary: 389 tests across 20 files
+### 10.1 Current Test Summary: 403 tests across 21 files
 
 | Category | Test File | Tests | Status |
 |----------|-----------|-------|--------|
@@ -525,6 +525,7 @@ This section documents operations that are implemented but NOT covered by differ
 | TPC-DS DataFrame | test_tpcds_dataframe_differential.py | 33 | Good |
 | Date/Time Functions | test_datetime_functions_differential.py | 18 | Good (M54) |
 | Conditional Expressions | test_conditional_differential.py | 12 | Good (M55) |
+| **Type Casting** | test_type_casting_differential.py | **14** | **IMPROVED (M62/M63)** |
 
 ### 10.2 Operations NOT Differentially Tested
 
@@ -566,10 +567,17 @@ All distinct operations now have differential test coverage:
 - ✅ `df.dropDuplicates(["col1", "col2"])` - multi-column deduplication
 - ✅ Combined operations: distinct with filter
 
-#### Type Casting - MINIMAL COVERAGE
-- Explicit `cast()` function
-- Decimal precision/scale handling
-- String to numeric conversions
+#### Type Casting - ✅ COVERED (M62/M63)
+Explicit CAST operations now have differential test coverage:
+- ✅ Numeric casts: `int_to_string`, `string_to_int`, `int_to_double`, `long_to_int` (4/5 tests pass)
+- ✅ Decimal casts: `int_to_decimal`, `double_to_decimal` (2/3 tests pass)
+- ✅ Date/time casts: `string_to_date`, `string_to_timestamp` (2/4 tests pass)
+- ✅ NULL casts: `cast_null_to_int`, `cast_null_to_string` (2/3 tests pass)
+- ✅ Boolean casts: `int_to_boolean`, `boolean_to_int` (2/2 tests pass)
+- ✅ String casts: `boolean_to_string`, `double_to_string` (2/2 tests pass)
+- ⏳ Skipped (5 tests): spark.sql() not supported (3), truncation semantic difference (1), decimal literal precision (1)
+
+**Type Inference Fix (M63)**: Added CAST wrappers to numeric VALUES clause literals to preserve Arrow schema types. DuckDB infers `3.7` as DECIMAL - now wrapped with `CAST(3.7 AS DOUBLE)`. Fixed `long_to_int`, `double_to_decimal`, `double_to_string`.
 
 #### Sorting Edge Cases - NO COVERAGE
 - `nullsFirst` / `nullsLast` options
@@ -595,9 +603,9 @@ All aggregation function tests now pass (15/15):
 | ~~High~~ | ~~test_set_operations_differential.py~~ | ~~union, intersect, except~~ | ~~14~~ | ✅ **DONE (M57)** |
 | ~~Medium~~ | ~~test_distinct_differential.py~~ | ~~distinct, dropDuplicates~~ | ~~12~~ | ✅ **DONE (M58)** |
 | ~~Medium~~ | ~~test_aggregation_functions_differential.py~~ | ~~collect_*, countDistinct~~ | ~~15~~ | ✅ **DONE (M60/M61)** |
-| Medium | test_type_casting_differential.py | Explicit casts | ~15 | Pending |
+| ~~Medium~~ | ~~test_type_casting_differential.py~~ | ~~Explicit casts~~ | ~~11~~ | ✅ **DONE (M62)** |
 
-**Total estimated new tests: ~15** (datetime + conditional + joins + set operations + distinct + aggregations complete)
+**Total estimated new tests: ~10** (datetime + conditional + joins + set operations + distinct + aggregations + type casting complete)
 
 ---
 

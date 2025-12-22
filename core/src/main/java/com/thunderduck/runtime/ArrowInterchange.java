@@ -174,7 +174,7 @@ public class ArrowInterchange {
      * @param type the Arrow type
      * @return the SQL type name
      */
-    private static String arrowTypeToSQLType(ArrowType type) {
+    public static String arrowTypeToSQLType(ArrowType type) {
         switch (type.getTypeID()) {
             case Bool: return "BOOLEAN";
             case Int:

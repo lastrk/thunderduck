@@ -89,10 +89,18 @@ public class Literal extends Expression {
         }
 
         if (dataType instanceof DateType) {
+            // LocalDate.toString() returns ISO format like "2025-01-15"
             return "DATE '" + value + "'";
         }
 
         if (dataType instanceof TimestampType) {
+            // Handle Instant objects by converting to LocalDateTime for proper formatting
+            if (value instanceof java.time.Instant) {
+                java.time.Instant instant = (java.time.Instant) value;
+                java.time.LocalDateTime ldt = java.time.LocalDateTime.ofInstant(
+                    instant, java.time.ZoneOffset.UTC);
+                return "TIMESTAMP '" + ldt.toString().replace("T", " ") + "'";
+            }
             return "TIMESTAMP '" + value + "'";
         }
 

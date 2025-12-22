@@ -113,11 +113,18 @@ public class ExpressionConverter {
             case STRING:
                 return new com.thunderduck.expression.Literal(literal.getString(), StringType.get());
             case DATE:
-                // Date is stored as days since epoch
-                return new com.thunderduck.expression.Literal(literal.getDate(), DateType.get());
+                // Date is stored as days since epoch - convert to LocalDate for proper SQL generation
+                int days = literal.getDate();
+                java.time.LocalDate date = java.time.LocalDate.ofEpochDay(days);
+                return new com.thunderduck.expression.Literal(date, DateType.get());
             case TIMESTAMP:
-                // Timestamp is stored as microseconds since epoch
-                return new com.thunderduck.expression.Literal(literal.getTimestamp(), TimestampType.get());
+                // Timestamp is stored as microseconds since epoch - convert to Instant
+                long micros = literal.getTimestamp();
+                java.time.Instant instant = java.time.Instant.ofEpochSecond(
+                    micros / 1_000_000,
+                    (micros % 1_000_000) * 1000
+                );
+                return new com.thunderduck.expression.Literal(instant, TimestampType.get());
             case DECIMAL:
                 org.apache.spark.connect.proto.Expression.Literal.Decimal decimal = literal.getDecimal();
                 return new com.thunderduck.expression.Literal(
@@ -127,10 +134,14 @@ public class ExpressionConverter {
             // ==================== Type Literals (M48) ====================
 
             case TIMESTAMP_NTZ:
-                // TimestampNTZ is stored as microseconds since epoch, same as TIMESTAMP
+                // TimestampNTZ is stored as microseconds since epoch - convert to Instant
                 // DuckDB's TIMESTAMP is already without timezone
-                return new com.thunderduck.expression.Literal(
-                    literal.getTimestampNtz(), TimestampType.get());
+                long ntzMicros = literal.getTimestampNtz();
+                java.time.Instant ntzInstant = java.time.Instant.ofEpochSecond(
+                    ntzMicros / 1_000_000,
+                    (ntzMicros % 1_000_000) * 1000
+                );
+                return new com.thunderduck.expression.Literal(ntzInstant, TimestampType.get());
 
             case YEAR_MONTH_INTERVAL:
                 // YearMonthInterval is stored as total months
