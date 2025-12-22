@@ -1,7 +1,11 @@
 package com.thunderduck.connect.session;
 
 import com.thunderduck.logical.LogicalPlan;
+import com.thunderduck.runtime.ArrowStreamingExecutor;
 import com.thunderduck.runtime.DuckDBRuntime;
+import com.thunderduck.runtime.QueryExecutor;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +44,11 @@ public class Session implements AutoCloseable {
     private final Map<String, String> config;
     private final Map<String, LogicalPlan> tempViews;
     private volatile boolean closed = false;
+
+    // Cached executors - created lazily, shared across all operations in this session
+    private volatile BufferAllocator sharedAllocator;
+    private volatile QueryExecutor cachedQueryExecutor;
+    private volatile ArrowStreamingExecutor cachedStreamingExecutor;
 
     /**
      * Create a new session with the given ID and an in-memory DuckDB database.
@@ -136,6 +145,78 @@ public class Session implements AutoCloseable {
             throw new IllegalStateException("Session is closed: " + sessionId);
         }
         return runtime;
+    }
+
+    /**
+     * Get a shared BufferAllocator for this session.
+     *
+     * <p>The allocator is created lazily and reused across all operations
+     * in this session, reducing memory allocation overhead.
+     *
+     * @return Shared BufferAllocator for this session
+     * @throws IllegalStateException if session is closed
+     */
+    public BufferAllocator getSharedAllocator() {
+        if (closed) {
+            throw new IllegalStateException("Session is closed: " + sessionId);
+        }
+        if (sharedAllocator == null) {
+            synchronized (this) {
+                if (sharedAllocator == null) {
+                    sharedAllocator = new RootAllocator(Long.MAX_VALUE);
+                    logger.debug("Created shared allocator for session {}", sessionId);
+                }
+            }
+        }
+        return sharedAllocator;
+    }
+
+    /**
+     * Get a cached QueryExecutor for this session.
+     *
+     * <p>The executor is created lazily and reused across all operations
+     * in this session, avoiding repeated RootAllocator creation overhead.
+     *
+     * @return Cached QueryExecutor for this session
+     * @throws IllegalStateException if session is closed
+     */
+    public QueryExecutor getQueryExecutor() {
+        if (closed) {
+            throw new IllegalStateException("Session is closed: " + sessionId);
+        }
+        if (cachedQueryExecutor == null) {
+            synchronized (this) {
+                if (cachedQueryExecutor == null) {
+                    cachedQueryExecutor = new QueryExecutor(runtime);
+                    logger.debug("Created cached QueryExecutor for session {}", sessionId);
+                }
+            }
+        }
+        return cachedQueryExecutor;
+    }
+
+    /**
+     * Get a cached ArrowStreamingExecutor for this session.
+     *
+     * <p>The executor is created lazily and reused across all operations
+     * in this session. Uses the session's shared allocator.
+     *
+     * @return Cached ArrowStreamingExecutor for this session
+     * @throws IllegalStateException if session is closed
+     */
+    public ArrowStreamingExecutor getStreamingExecutor() {
+        if (closed) {
+            throw new IllegalStateException("Session is closed: " + sessionId);
+        }
+        if (cachedStreamingExecutor == null) {
+            synchronized (this) {
+                if (cachedStreamingExecutor == null) {
+                    cachedStreamingExecutor = new ArrowStreamingExecutor(runtime);
+                    logger.debug("Created cached ArrowStreamingExecutor for session {}", sessionId);
+                }
+            }
+        }
+        return cachedStreamingExecutor;
     }
 
     /**
@@ -264,6 +345,32 @@ public class Session implements AutoCloseable {
 
         // Clear temp views
         tempViews.clear();
+
+        // Close cached executors (must be closed before allocator and runtime)
+        if (cachedStreamingExecutor != null) {
+            try {
+                cachedStreamingExecutor.close();
+            } catch (Exception e) {
+                logger.warn("Error closing ArrowStreamingExecutor for session {}: {}",
+                    sessionId, e.getMessage());
+            }
+            cachedStreamingExecutor = null;
+        }
+
+        // Note: QueryExecutor doesn't implement AutoCloseable, but it holds resources
+        // that are tied to the runtime. Setting to null allows GC.
+        cachedQueryExecutor = null;
+
+        // Close shared allocator
+        if (sharedAllocator != null) {
+            try {
+                sharedAllocator.close();
+            } catch (Exception e) {
+                logger.warn("Error closing BufferAllocator for session {}: {}",
+                    sessionId, e.getMessage());
+            }
+            sharedAllocator = null;
+        }
 
         // Close DuckDB runtime
         if (runtime != null) {

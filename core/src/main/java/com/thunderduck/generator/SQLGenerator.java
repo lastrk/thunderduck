@@ -699,15 +699,6 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * Builds SQL directly in buffer to avoid corruption from generate() calls.
      */
     private void visitWithColumns(WithColumns plan) {
-        // Build column exclusion list
-        StringBuilder excludeFilter = new StringBuilder();
-        excludeFilter.append("COLUMNS(c -> c NOT IN (");
-        for (int i = 0; i < plan.columnNames().size(); i++) {
-            if (i > 0) excludeFilter.append(", ");
-            excludeFilter.append("'").append(plan.columnNames().get(i).replace("'", "''")).append("'");
-        }
-        excludeFilter.append("))");
-
         // Get child schema for type-aware SQL generation
         com.thunderduck.types.StructType childSchema = null;
         try {
@@ -716,10 +707,17 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             // Child schema unavailable - proceed without type-specific handling
         }
 
-        // Build new column expressions with type-aware CAST for divisions
-        StringBuilder newColExprs = new StringBuilder();
+        // Build SQL directly - no intermediate StringBuilders needed
+        sql.append("SELECT COLUMNS(c -> c NOT IN (");
         for (int i = 0; i < plan.columnNames().size(); i++) {
-            if (i > 0) newColExprs.append(", ");
+            if (i > 0) sql.append(", ");
+            sql.append("'").append(plan.columnNames().get(i).replace("'", "''")).append("'");
+        }
+        sql.append(")), ");
+
+        // Append new column expressions with type-aware CAST for divisions
+        for (int i = 0; i < plan.columnNames().size(); i++) {
+            if (i > 0) sql.append(", ");
 
             Expression expr = plan.columnExpressions().get(i);
             String exprSQL = expr.toSQL();
@@ -740,16 +738,11 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                 }
             }
 
-            newColExprs.append(exprSQL);
-            newColExprs.append(" AS ");
-            newColExprs.append(SQLQuoting.quoteIdentifier(plan.columnNames().get(i)));
+            sql.append(exprSQL);
+            sql.append(" AS ");
+            sql.append(SQLQuoting.quoteIdentifier(plan.columnNames().get(i)));
         }
 
-        // Build full SQL
-        sql.append("SELECT ");
-        sql.append(excludeFilter.toString());
-        sql.append(", ");
-        sql.append(newColExprs.toString());
         sql.append(" FROM (");
 
         // Visit child

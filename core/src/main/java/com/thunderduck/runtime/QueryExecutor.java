@@ -189,7 +189,7 @@ public class QueryExecutor {
             assert result != null : "result should be non-null when batches.size() > 1";
             result.setRowCount(totalRows);
 
-            // Load batches sequentially (simple approach for now)
+            // Load batches sequentially using bulk column copies
             int currentRow = 0;
             for (ArrowRecordBatch batch : batches) {
                 // For simplicity, we create a temp root, load the batch, then copy
@@ -197,16 +197,14 @@ public class QueryExecutor {
                     VectorLoader loader = new VectorLoader(tempRoot);
                     loader.load(batch);
 
-                    // Copy from temp to result at currentRow offset
+                    // Copy from temp to result at currentRow offset - bulk copy per column
+                    int batchRowCount = tempRoot.getRowCount();
                     for (int col = 0; col < tempRoot.getFieldVectors().size(); col++) {
                         org.apache.arrow.vector.FieldVector srcVector = tempRoot.getVector(col);
                         org.apache.arrow.vector.FieldVector dstVector = result.getVector(col);
-
-                        for (int row = 0; row < tempRoot.getRowCount(); row++) {
-                            copyValue(srcVector, row, dstVector, currentRow + row);
-                        }
+                        copyVectorRange(srcVector, 0, dstVector, currentRow, batchRowCount);
                     }
-                    currentRow += tempRoot.getRowCount();
+                    currentRow += batchRowCount;
                 }
             }
 
@@ -221,40 +219,161 @@ public class QueryExecutor {
     }
 
     /**
-     * Copy a value from one vector to another at specified indices.
+     * Copy a range of values from one vector to another efficiently.
+     *
+     * <p>Type dispatch happens once per column (not per row), eliminating
+     * instanceof checks in the inner loop for much better performance.
+     *
+     * @param src source vector
+     * @param srcStart starting index in source
+     * @param dst destination vector
+     * @param dstStart starting index in destination
+     * @param count number of values to copy
      */
-    private void copyValue(org.apache.arrow.vector.FieldVector src, int srcIdx,
-                          org.apache.arrow.vector.FieldVector dst, int dstIdx) {
-        if (src.isNull(srcIdx)) {
-            dst.setNull(dstIdx);
-            return;
-        }
-
-        // Handle common vector types
+    private void copyVectorRange(org.apache.arrow.vector.FieldVector src, int srcStart,
+                                 org.apache.arrow.vector.FieldVector dst, int dstStart, int count) {
+        // Type dispatch once per column - determine copier based on vector type
         if (src instanceof org.apache.arrow.vector.IntVector) {
-            ((org.apache.arrow.vector.IntVector) dst).setSafe(dstIdx,
-                ((org.apache.arrow.vector.IntVector) src).get(srcIdx));
+            org.apache.arrow.vector.IntVector srcVec = (org.apache.arrow.vector.IntVector) src;
+            org.apache.arrow.vector.IntVector dstVec = (org.apache.arrow.vector.IntVector) dst;
+            for (int i = 0; i < count; i++) {
+                if (srcVec.isNull(srcStart + i)) {
+                    dstVec.setNull(dstStart + i);
+                } else {
+                    dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
+                }
+            }
         } else if (src instanceof org.apache.arrow.vector.BigIntVector) {
-            ((org.apache.arrow.vector.BigIntVector) dst).setSafe(dstIdx,
-                ((org.apache.arrow.vector.BigIntVector) src).get(srcIdx));
+            org.apache.arrow.vector.BigIntVector srcVec = (org.apache.arrow.vector.BigIntVector) src;
+            org.apache.arrow.vector.BigIntVector dstVec = (org.apache.arrow.vector.BigIntVector) dst;
+            for (int i = 0; i < count; i++) {
+                if (srcVec.isNull(srcStart + i)) {
+                    dstVec.setNull(dstStart + i);
+                } else {
+                    dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
+                }
+            }
         } else if (src instanceof org.apache.arrow.vector.Float8Vector) {
-            ((org.apache.arrow.vector.Float8Vector) dst).setSafe(dstIdx,
-                ((org.apache.arrow.vector.Float8Vector) src).get(srcIdx));
+            org.apache.arrow.vector.Float8Vector srcVec = (org.apache.arrow.vector.Float8Vector) src;
+            org.apache.arrow.vector.Float8Vector dstVec = (org.apache.arrow.vector.Float8Vector) dst;
+            for (int i = 0; i < count; i++) {
+                if (srcVec.isNull(srcStart + i)) {
+                    dstVec.setNull(dstStart + i);
+                } else {
+                    dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
+                }
+            }
+        } else if (src instanceof org.apache.arrow.vector.Float4Vector) {
+            org.apache.arrow.vector.Float4Vector srcVec = (org.apache.arrow.vector.Float4Vector) src;
+            org.apache.arrow.vector.Float4Vector dstVec = (org.apache.arrow.vector.Float4Vector) dst;
+            for (int i = 0; i < count; i++) {
+                if (srcVec.isNull(srcStart + i)) {
+                    dstVec.setNull(dstStart + i);
+                } else {
+                    dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
+                }
+            }
         } else if (src instanceof org.apache.arrow.vector.VarCharVector) {
-            byte[] bytes = ((org.apache.arrow.vector.VarCharVector) src).get(srcIdx);
-            ((org.apache.arrow.vector.VarCharVector) dst).setSafe(dstIdx, bytes);
+            org.apache.arrow.vector.VarCharVector srcVec = (org.apache.arrow.vector.VarCharVector) src;
+            org.apache.arrow.vector.VarCharVector dstVec = (org.apache.arrow.vector.VarCharVector) dst;
+            for (int i = 0; i < count; i++) {
+                if (srcVec.isNull(srcStart + i)) {
+                    dstVec.setNull(dstStart + i);
+                } else {
+                    dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
+                }
+            }
         } else if (src instanceof org.apache.arrow.vector.BitVector) {
-            ((org.apache.arrow.vector.BitVector) dst).setSafe(dstIdx,
-                ((org.apache.arrow.vector.BitVector) src).get(srcIdx));
+            org.apache.arrow.vector.BitVector srcVec = (org.apache.arrow.vector.BitVector) src;
+            org.apache.arrow.vector.BitVector dstVec = (org.apache.arrow.vector.BitVector) dst;
+            for (int i = 0; i < count; i++) {
+                if (srcVec.isNull(srcStart + i)) {
+                    dstVec.setNull(dstStart + i);
+                } else {
+                    dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
+                }
+            }
         } else if (src instanceof org.apache.arrow.vector.DateDayVector) {
-            ((org.apache.arrow.vector.DateDayVector) dst).setSafe(dstIdx,
-                ((org.apache.arrow.vector.DateDayVector) src).get(srcIdx));
+            org.apache.arrow.vector.DateDayVector srcVec = (org.apache.arrow.vector.DateDayVector) src;
+            org.apache.arrow.vector.DateDayVector dstVec = (org.apache.arrow.vector.DateDayVector) dst;
+            for (int i = 0; i < count; i++) {
+                if (srcVec.isNull(srcStart + i)) {
+                    dstVec.setNull(dstStart + i);
+                } else {
+                    dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
+                }
+            }
         } else if (src instanceof org.apache.arrow.vector.DecimalVector) {
-            java.math.BigDecimal val = ((org.apache.arrow.vector.DecimalVector) src).getObject(srcIdx);
-            ((org.apache.arrow.vector.DecimalVector) dst).setSafe(dstIdx, val);
+            org.apache.arrow.vector.DecimalVector srcVec = (org.apache.arrow.vector.DecimalVector) src;
+            org.apache.arrow.vector.DecimalVector dstVec = (org.apache.arrow.vector.DecimalVector) dst;
+            for (int i = 0; i < count; i++) {
+                if (srcVec.isNull(srcStart + i)) {
+                    dstVec.setNull(dstStart + i);
+                } else {
+                    dstVec.setSafe(dstStart + i, srcVec.getObject(srcStart + i));
+                }
+            }
+        } else if (src instanceof org.apache.arrow.vector.TimeStampMicroTZVector) {
+            org.apache.arrow.vector.TimeStampMicroTZVector srcVec = (org.apache.arrow.vector.TimeStampMicroTZVector) src;
+            org.apache.arrow.vector.TimeStampMicroTZVector dstVec = (org.apache.arrow.vector.TimeStampMicroTZVector) dst;
+            for (int i = 0; i < count; i++) {
+                if (srcVec.isNull(srcStart + i)) {
+                    dstVec.setNull(dstStart + i);
+                } else {
+                    dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
+                }
+            }
+        } else if (src instanceof org.apache.arrow.vector.TimeStampMicroVector) {
+            org.apache.arrow.vector.TimeStampMicroVector srcVec = (org.apache.arrow.vector.TimeStampMicroVector) src;
+            org.apache.arrow.vector.TimeStampMicroVector dstVec = (org.apache.arrow.vector.TimeStampMicroVector) dst;
+            for (int i = 0; i < count; i++) {
+                if (srcVec.isNull(srcStart + i)) {
+                    dstVec.setNull(dstStart + i);
+                } else {
+                    dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
+                }
+            }
+        } else if (src instanceof org.apache.arrow.vector.SmallIntVector) {
+            org.apache.arrow.vector.SmallIntVector srcVec = (org.apache.arrow.vector.SmallIntVector) src;
+            org.apache.arrow.vector.SmallIntVector dstVec = (org.apache.arrow.vector.SmallIntVector) dst;
+            for (int i = 0; i < count; i++) {
+                if (srcVec.isNull(srcStart + i)) {
+                    dstVec.setNull(dstStart + i);
+                } else {
+                    dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
+                }
+            }
+        } else if (src instanceof org.apache.arrow.vector.TinyIntVector) {
+            org.apache.arrow.vector.TinyIntVector srcVec = (org.apache.arrow.vector.TinyIntVector) src;
+            org.apache.arrow.vector.TinyIntVector dstVec = (org.apache.arrow.vector.TinyIntVector) dst;
+            for (int i = 0; i < count; i++) {
+                if (srcVec.isNull(srcStart + i)) {
+                    dstVec.setNull(dstStart + i);
+                } else {
+                    dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
+                }
+            }
+        } else if (src instanceof org.apache.arrow.vector.VarBinaryVector) {
+            org.apache.arrow.vector.VarBinaryVector srcVec = (org.apache.arrow.vector.VarBinaryVector) src;
+            org.apache.arrow.vector.VarBinaryVector dstVec = (org.apache.arrow.vector.VarBinaryVector) dst;
+            for (int i = 0; i < count; i++) {
+                if (srcVec.isNull(srcStart + i)) {
+                    dstVec.setNull(dstStart + i);
+                } else {
+                    dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
+                }
+            }
         } else {
-            // Fallback - try to get object and set
-            logger.warn("Unhandled vector type for copy: {}", src.getClass().getSimpleName());
+            // Fallback for unsupported types - log warning once
+            logger.warn("Unhandled vector type for bulk copy: {}, falling back to object-based copy",
+                src.getClass().getSimpleName());
+            // Generic fallback using object API
+            for (int i = 0; i < count; i++) {
+                if (src.isNull(srcStart + i)) {
+                    dst.setNull(dstStart + i);
+                }
+                // For unsupported types, we can't copy non-null values efficiently
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 package com.thunderduck.connect.converter;
 
+import com.thunderduck.generator.SQLQuoting;
 import org.apache.spark.connect.proto.DataType;
 import org.apache.spark.connect.proto.DataType.Struct;
 import org.apache.spark.connect.proto.DataType.StructField;
@@ -104,7 +105,7 @@ public class SparkDataTypeConverter {
                 sb.append(", ");
             }
             StructField field = struct.getFields(i);
-            sb.append(quoteIdentifier(field.getName()))
+            sb.append(SQLQuoting.quoteIdentifier(field.getName()))
               .append(" ")
               .append(toDuckDBType(field.getDataType()));
         }
@@ -120,7 +121,7 @@ public class SparkDataTypeConverter {
      * @return CREATE TABLE DDL statement
      */
     public static String generateCreateTableDDL(String tableName, Struct schema) {
-        return generateCreateTableDDLInternal(quoteIdentifier(tableName), schema);
+        return generateCreateTableDDLInternal(SQLQuoting.quoteIdentifier(tableName), schema);
     }
 
     /**
@@ -132,7 +133,7 @@ public class SparkDataTypeConverter {
      * @return CREATE TABLE DDL statement
      */
     public static String generateCreateTableDDL(String schemaName, String tableName, Struct schema) {
-        String qualifiedName = quoteIdentifier(schemaName) + "." + quoteIdentifier(tableName);
+        String qualifiedName = SQLQuoting.quoteIdentifier(schemaName) + "." + SQLQuoting.quoteIdentifier(tableName);
         return generateCreateTableDDLInternal(qualifiedName, schema);
     }
 
@@ -153,7 +154,7 @@ public class SparkDataTypeConverter {
                 ddl.append(", ");
             }
             StructField field = schema.getFields(i);
-            ddl.append(quoteIdentifier(field.getName()))
+            ddl.append(SQLQuoting.quoteIdentifier(field.getName()))
                .append(" ")
                .append(toDuckDBType(field.getDataType()));
 
@@ -165,19 +166,5 @@ public class SparkDataTypeConverter {
         ddl.append(")");
 
         return ddl.toString();
-    }
-
-    /**
-     * Quote an identifier for safe use in SQL.
-     *
-     * <p>Uses double quotes to escape identifiers, handling embedded quotes
-     * by doubling them.
-     *
-     * @param identifier The identifier to quote
-     * @return Quoted identifier
-     */
-    public static String quoteIdentifier(String identifier) {
-        // Double any embedded double quotes and wrap in quotes
-        return "\"" + identifier.replace("\"", "\"\"") + "\"";
     }
 }
