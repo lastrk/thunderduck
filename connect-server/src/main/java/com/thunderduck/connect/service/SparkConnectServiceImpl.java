@@ -2037,10 +2037,20 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             com.thunderduck.types.StructField duckField = duckDBSchema.fields().get(i);
             com.thunderduck.types.StructField logicalField = logicalSchema.fields().get(i);
 
-            // Use DuckDB's type (correct for aggregates) but logical plan's nullable
+            // For DecimalType: prefer logical plan's type (computed using Spark rules)
+            // For other types: use DuckDB's type (handles aggregates, etc.)
+            com.thunderduck.types.DataType finalType;
+            if (logicalField.dataType() instanceof com.thunderduck.types.DecimalType) {
+                // Use logical plan's decimal type - it was computed using Spark's rules
+                finalType = logicalField.dataType();
+            } else {
+                // Use DuckDB's type for non-decimal (correct for aggregates)
+                finalType = duckField.dataType();
+            }
+
             mergedFields.add(new com.thunderduck.types.StructField(
                 duckField.name(),
-                duckField.dataType(),
+                finalType,
                 logicalField.nullable()
             ));
         }

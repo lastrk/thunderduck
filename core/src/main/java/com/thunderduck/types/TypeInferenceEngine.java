@@ -516,12 +516,21 @@ public final class TypeInferenceEngine {
         }
 
         // Multiplication: Handle Decimal arithmetic specially per Spark rules
+        // Only use decimal promotion when at least one operand is already DecimalType
+        // Integer * Integer stays as integer (uses numeric type promotion below)
         if (op == BinaryExpression.Operator.MULTIPLY) {
-            DecimalType leftDec = toDecimalType(leftType, binExpr.left());
-            DecimalType rightDec = toDecimalType(rightType, binExpr.right());
-            if (leftDec != null && rightDec != null) {
-                return promoteDecimalMultiplication(leftDec, rightDec);
+            boolean leftIsDecimal = leftType instanceof DecimalType;
+            boolean rightIsDecimal = rightType instanceof DecimalType;
+
+            // Only apply decimal rules if at least one operand is already decimal
+            if (leftIsDecimal || rightIsDecimal) {
+                DecimalType leftDec = toDecimalType(leftType, binExpr.left());
+                DecimalType rightDec = toDecimalType(rightType, binExpr.right());
+                if (leftDec != null && rightDec != null) {
+                    return promoteDecimalMultiplication(leftDec, rightDec);
+                }
             }
+            // Otherwise fall through to numeric type promotion
         }
 
         // For other arithmetic operators, use numeric type promotion
