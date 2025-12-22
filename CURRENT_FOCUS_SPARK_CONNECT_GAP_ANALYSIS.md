@@ -1,9 +1,9 @@
 # Spark Connect 4.0.x Gap Analysis for Thunderduck
 
-**Version:** 4.6
+**Version:** 4.7
 **Date:** 2025-12-22
 **Purpose:** Comprehensive analysis of Spark Connect operator support in Thunderduck
-**Validation:** 403 differential tests (all passing) - see [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
+**Validation:** 415 differential tests (all passing) - see [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
 
 ---
 
@@ -516,6 +516,7 @@ This section documents operations that are implemented but NOT covered by differ
 | **Joins (ON)** | test_joins_differential.py | **15** | **NEW (M56)** |
 | **Joins (USING)** | test_using_joins_differential.py | **11** | **FIXED (M56)** |
 | **Set Operations** | test_set_operations_differential.py | **14** | **NEW (M57)** |
+| **Distinct** | test_distinct_differential.py | **12** | **NEW (M58)** |
 | Statistics | test_statistics_differential.py | 16 | Good |
 | Catalog Operations | test_catalog_operations.py | 13 | Good |
 | Temp Views | test_temp_views.py | 7 | Limited |
@@ -556,9 +557,13 @@ All set operations now have differential test coverage:
 - ✅ `df.except()`, `df.exceptAll()`, `df.subtract()` - EXCEPT and EXCEPT ALL
 - ✅ Edge cases: nulls, chained operations, empty DataFrames
 
-#### Distinct Operations - NO COVERAGE
-- `df.distinct()`
-- `df.dropDuplicates()`, `df.dropDuplicates(subset=[...])`
+#### Distinct Operations - ✅ COVERED (M58)
+All distinct operations now have differential test coverage:
+- ✅ `df.distinct()` - basic, with nulls, empty DataFrame, multiple columns
+- ✅ `df.dropDuplicates()` - alias for distinct
+- ✅ `df.dropDuplicates(["col"])` - single column deduplication
+- ✅ `df.dropDuplicates(["col1", "col2"])` - multi-column deduplication
+- ✅ Combined operations: distinct with filter
 
 #### Type Casting - MINIMAL COVERAGE
 - Explicit `cast()` function
@@ -582,11 +587,11 @@ All set operations now have differential test coverage:
 | ~~High~~ | ~~test_conditional_differential.py~~ | ~~when/otherwise~~ | ~~10~~ | ✅ **DONE (M55)** |
 | ~~High~~ | ~~test_joins_differential.py~~ | ~~All join types~~ | ~~15~~ | ✅ **DONE (M56)** |
 | ~~High~~ | ~~test_set_operations_differential.py~~ | ~~union, intersect, except~~ | ~~14~~ | ✅ **DONE (M57)** |
+| ~~Medium~~ | ~~test_distinct_differential.py~~ | ~~distinct, dropDuplicates~~ | ~~12~~ | ✅ **DONE (M58)** |
 | Medium | test_type_casting_differential.py | Explicit casts | ~15 | Pending |
-| Medium | Expand test_dataframe_ops | distinct, dropDuplicates | ~8 | Pending |
 | Medium | Expand test_multidim_aggregations | countDistinct, collect_* | ~10 | Pending |
 
-**Total estimated new tests: ~30** (datetime + conditional + joins + set operations complete)
+**Total estimated new tests: ~25** (datetime + conditional + joins + set operations + distinct complete)
 
 ---
 
@@ -721,7 +726,7 @@ spark.udf.register(...)                       # User-defined functions not suppo
 
 ---
 
-**Document Version:** 4.6
+**Document Version:** 4.7
 **Last Updated:** 2025-12-22
 **Author:** Analysis generated from Spark Connect 4.0.x protobuf definitions
 
@@ -729,6 +734,7 @@ spark.udf.register(...)                       # User-defined functions not suppo
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v4.7 | 2025-12-22 | Added distinct operations differential tests (M58). 12 tests covering distinct() (basic, nulls, empty, multiple columns), dropDuplicates() (alias, single column, multiple columns, nulls in subset), combined operations (distinct with filter). Test count: 403→415. |
 | v4.6 | 2025-12-22 | Added set operations differential tests (M57). 14 tests covering union (basic, duplicates, distinct), unionByName, intersect/intersectAll, except/exceptAll, subtract, edge cases (nulls, chaining, empty DataFrames). **NEW FEATURE**: unionByName column reordering - right DataFrame columns now reordered to match left DataFrame column names. Test count: 389→403. |
 | v4.5 | 2025-12-22 | Added joins differential tests (M56). 15 tests for ON-clause joins (all types), 11 tests for USING joins. **BUG FIX**: USING join column deduplication - join columns now appear once (not duplicated), proper column ordering matching Spark, COALESCE for RIGHT/FULL outer USING joins. Test count: 363→389. |
 | v4.4 | 2025-12-22 | Added conditional expressions differential tests (M55). 12 tests covering basic when/otherwise, chained conditions, type coercion, null handling, nested CASE WHEN, aggregation. Test count: 351→363. |
