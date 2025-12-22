@@ -317,7 +317,7 @@ The differential testing framework compares Thunderduck results against Apache S
 ### Quick Start
 
 ```bash
-# One-time setup (downloads Spark 4.0.1, creates Python venv)
+# One-time setup (downloads Spark 4.0.1, installs Python dependencies)
 ./tests/scripts/setup-differential-testing.sh
 
 # Run DataFrame differential tests
@@ -329,15 +329,26 @@ The differential testing framework compares Thunderduck results against Apache S
 Run specific test suites using named groups:
 
 ```bash
-# Run by test group (DataFrame API tests)
-./tests/scripts/run-differential-tests-v2.sh functions    # Function parity (57 tests)
-./tests/scripts/run-differential-tests-v2.sh aggregations # Multi-dim aggregations (21 tests)
-./tests/scripts/run-differential-tests-v2.sh window       # Window functions (35 tests)
-./tests/scripts/run-differential-tests-v2.sh all          # All DataFrame tests (default)
+# Core DataFrame tests
+./tests/scripts/run-differential-tests-v2.sh dataframe    # TPC-DS DataFrame (33 tests)
+./tests/scripts/run-differential-tests-v2.sh functions    # Function parity tests
+./tests/scripts/run-differential-tests-v2.sh operations   # DataFrame operations
+./tests/scripts/run-differential-tests-v2.sh window       # Window functions
+./tests/scripts/run-differential-tests-v2.sh aggregations # Multi-dim aggregations
+
+# Additional test groups
+./tests/scripts/run-differential-tests-v2.sh lambda       # Lambda/HOF functions
+./tests/scripts/run-differential-tests-v2.sh joins        # USING join tests
+./tests/scripts/run-differential-tests-v2.sh statistics   # cov, corr, describe
+./tests/scripts/run-differential-tests-v2.sh types        # Complex types & literals
+./tests/scripts/run-differential-tests-v2.sh schema       # Schema operations
+
+# Run all tests
+./tests/scripts/run-differential-tests-v2.sh all          # All differential tests (default)
 
 # With pytest options
-./tests/scripts/run-differential-tests-v2.sh window -x    # Stop on first failure
-./tests/scripts/run-differential-tests-v2.sh --help       # Show help
+./tests/scripts/run-differential-tests-v2.sh dataframe -x # Stop on first failure
+./tests/scripts/run-differential-tests-v2.sh --help       # Show all options
 ```
 
 > **Note**: `tpch` and `tpcds` SQL test groups are disabled pending SparkSQL parser integration.
@@ -354,22 +365,14 @@ Run specific test suites using named groups:
 
 ### Running Tests Directly
 
+For advanced use cases, you can run pytest directly:
+
 ```bash
-# Activate venv first
-source tests/integration/.venv/bin/activate
 cd tests/integration
-
-# Run specific test files
-python -m pytest test_differential_v2.py -v           # TPC-H
-python -m pytest test_tpcds_differential.py -v        # TPC-DS
-python -m pytest test_dataframe_functions.py -v       # Function parity
-python -m pytest test_multidim_aggregations.py -v     # Aggregations
-python -m pytest test_window_functions.py -v          # Window functions
-
-# Run by marker
-python -m pytest -m "differential" -v                 # All differential tests
-python -m pytest -m "window" -v                       # Window function tests
+python -m pytest differential/ -v  # Run all differential tests
 ```
+
+> **Recommended**: Use `./tests/scripts/run-differential-tests-v2.sh` which handles server lifecycle automatically.
 
 ### Test Results
 
