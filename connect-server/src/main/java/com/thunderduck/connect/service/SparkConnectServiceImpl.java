@@ -2037,15 +2037,29 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             com.thunderduck.types.StructField duckField = duckDBSchema.fields().get(i);
             com.thunderduck.types.StructField logicalField = logicalSchema.fields().get(i);
 
-            // For DecimalType: prefer logical plan's type (computed using Spark rules)
-            // For other types: use DuckDB's type (handles aggregates, etc.)
+            // Type merging strategy:
+            // 1. DecimalType: prefer logical plan's type (computed using Spark rules)
+            // 2. IntegerType vs LongType: prefer logical (date extraction functions return INT in Spark)
+            // 3. LongType vs DoubleType: prefer logical (unix_timestamp returns LONG in Spark)
+            // 4. Other types: use DuckDB's type (handles aggregates, etc.)
             com.thunderduck.types.DataType finalType;
-            if (logicalField.dataType() instanceof com.thunderduck.types.DecimalType) {
+            com.thunderduck.types.DataType logicalType = logicalField.dataType();
+            com.thunderduck.types.DataType duckType = duckField.dataType();
+
+            if (logicalType instanceof com.thunderduck.types.DecimalType) {
                 // Use logical plan's decimal type - it was computed using Spark's rules
-                finalType = logicalField.dataType();
+                finalType = logicalType;
+            } else if (logicalType instanceof com.thunderduck.types.IntegerType
+                       && duckType instanceof com.thunderduck.types.LongType) {
+                // DuckDB returns BIGINT for date extraction functions, but Spark expects INTEGER
+                finalType = logicalType;
+            } else if (logicalType instanceof com.thunderduck.types.LongType
+                       && duckType instanceof com.thunderduck.types.DoubleType) {
+                // DuckDB returns DOUBLE for unix_timestamp, but Spark expects LONG
+                finalType = logicalType;
             } else {
-                // Use DuckDB's type for non-decimal (correct for aggregates)
-                finalType = duckField.dataType();
+                // Use DuckDB's type for other cases (correct for aggregates)
+                finalType = duckType;
             }
 
             mergedFields.add(new com.thunderduck.types.StructField(

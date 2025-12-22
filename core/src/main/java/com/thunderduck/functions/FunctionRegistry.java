@@ -275,8 +275,9 @@ public class FunctionRegistry {
         CUSTOM_TRANSLATORS.put("date_sub", args ->
             "CAST((" + args[0] + " - INTERVAL '" + args[1] + " days') AS DATE)");
 
-        // datediff: Spark datediff(end, start) returns days
-        // DuckDB datediff('day', start, end) - different arg order!
+        // datediff: Spark datediff(end, start) returns (end - start) days
+        // DuckDB datediff('day', A, B) returns (B - A) days (second minus first!)
+        // So we swap args: datediff('day', start, end) = end - start
         CUSTOM_TRANSLATORS.put("datediff", args ->
             "datediff('day', " + args[1] + ", " + args[0] + ")");
 
@@ -285,8 +286,9 @@ public class FunctionRegistry {
         CUSTOM_TRANSLATORS.put("add_months", args ->
             "CAST((" + args[0] + " + INTERVAL '" + args[1] + " months') AS DATE)");
 
-        // months_between: Spark months_between(date1, date2, roundOff)
-        // DuckDB: datediff('month', date2, date1) for approximate
+        // months_between: Spark months_between(date1, date2, roundOff) returns (date1 - date2) months
+        // DuckDB datediff('day', A, B) returns (B - A) days (second minus first!)
+        // So: datediff('day', date2, date1) / 31.0 = (date1 - date2) / 31.0
         CUSTOM_TRANSLATORS.put("months_between", args -> {
             if (args.length >= 2) {
                 // Compute the fractional months: (date1 - date2) / 31.0
@@ -349,12 +351,13 @@ public class FunctionRegistry {
         DIRECT_MAPPINGS.put("next_day", "next_day");
 
         // unix_timestamp: Spark unix_timestamp() or unix_timestamp(timestamp) or unix_timestamp(string, format)
-        // DuckDB: epoch(timestamp) or epoch(strptime(string, format))
+        // DuckDB: epoch(timestamp) returns DOUBLE, but Spark returns LONG
+        // Cast to BIGINT to match Spark's return type
         CUSTOM_TRANSLATORS.put("unix_timestamp", args -> {
             if (args.length == 0) {
-                return "epoch(current_timestamp)";
+                return "CAST(epoch(current_timestamp) AS BIGINT)";
             } else if (args.length == 1) {
-                return "epoch(" + args[0] + ")";
+                return "CAST(epoch(" + args[0] + ") AS BIGINT)";
             } else {
                 // unix_timestamp(expr, format)
                 // If expr is a string literal (single quotes in SQL), parse it with strptime
@@ -364,11 +367,11 @@ public class FunctionRegistry {
                 if (expr.startsWith("'") && !expr.startsWith("''")) {
                     // It's a string literal - needs parsing
                     String format = convertSparkDateFormatToDuckDB(args[1]);
-                    return "epoch(strptime(" + args[0] + ", " + format + "))";
+                    return "CAST(epoch(strptime(" + args[0] + ", " + format + ")) AS BIGINT)";
                 } else {
                     // It's a column reference, identifier, or timestamp expression
                     // Just use epoch() directly - the format is ignored for non-string inputs
-                    return "epoch(" + args[0] + ")";
+                    return "CAST(epoch(" + args[0] + ") AS BIGINT)";
                 }
             }
         });

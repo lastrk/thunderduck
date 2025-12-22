@@ -1,6 +1,6 @@
 # Spark Connect 4.0.x Gap Analysis for Thunderduck
 
-**Version:** 4.13
+**Version:** 4.14
 **Date:** 2025-12-22
 **Purpose:** Comprehensive analysis of Spark Connect operator support in Thunderduck
 **Validation:** 444 differential tests (444 passing) - see [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
@@ -747,7 +747,7 @@ spark.udf.register(...)                       # User-defined functions not suppo
 
 ---
 
-**Document Version:** 4.13
+**Document Version:** 4.14
 **Last Updated:** 2025-12-22
 **Author:** Analysis generated from Spark Connect 4.0.x protobuf definitions
 
@@ -755,6 +755,7 @@ spark.udf.register(...)                       # User-defined functions not suppo
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v4.14 | 2025-12-22 | **M69: Fixed datetime extraction function type inference.** Extended mergeSchemas() to prefer logical IntegerType over DuckDB's BigIntType for date extraction functions. Fixed datediff argument order (DuckDB returns B-A, not A-B). Cast unix_timestamp to BIGINT. All 444 tests passing. |
 | v4.13 | 2025-12-22 | **M68: Fixed decimal precision mismatch.** Schema merging now uses logical plan's DecimalType (computed using Spark rules) instead of DuckDB's type. Type inference engine fixed to not promote integer multiplication to decimal. All 444 tests passing. |
 | v4.12 | 2025-12-22 | **M64: Added sorting edge cases differential tests.** 12 new tests covering nullsFirst/nullsLast (5 tests), multi-column sorting (3 tests), edge cases (4 tests). All gaps now covered - test count: 444 (all passing). |
 | v4.11 | 2025-12-22 | **M62/M63: Added type casting differential tests and fixed type inference issues.** 14 tests for explicit CAST operations. M63: Added CAST wrappers to VALUES clause to preserve Arrow schema types. |
