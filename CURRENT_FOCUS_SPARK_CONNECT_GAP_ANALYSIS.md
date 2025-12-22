@@ -1,9 +1,9 @@
 # Spark Connect 4.0.x Gap Analysis for Thunderduck
 
-**Version:** 4.11
+**Version:** 4.12
 **Date:** 2025-12-22
 **Purpose:** Comprehensive analysis of Spark Connect operator support in Thunderduck
-**Validation:** 432 differential tests (432 passing) - see [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
+**Validation:** 444 differential tests (444 passing) - see [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
 
 ---
 
@@ -499,7 +499,7 @@ Features intentionally not supported due to Spark/DuckDB architectural differenc
 
 This section documents operations that are implemented but NOT covered by differential tests.
 
-### 10.1 Current Test Summary: 403 tests across 21 files
+### 10.1 Current Test Summary: 444 tests across 22 files
 
 | Category | Test File | Tests | Status |
 |----------|-----------|-------|--------|
@@ -526,6 +526,7 @@ This section documents operations that are implemented but NOT covered by differ
 | Date/Time Functions | test_datetime_functions_differential.py | 18 | Good (M54) |
 | Conditional Expressions | test_conditional_differential.py | 12 | Good (M55) |
 | **Type Casting** | test_type_casting_differential.py | **14** | **IMPROVED (M62/M63)** |
+| **Sorting Edge Cases** | test_sorting_differential.py | **12** | **NEW (M64)** |
 
 ### 10.2 Operations NOT Differentially Tested
 
@@ -579,9 +580,14 @@ Explicit CAST operations now have differential test coverage:
 
 **Type Inference Fix (M63)**: Added CAST wrappers to numeric VALUES clause literals to preserve Arrow schema types. DuckDB infers `3.7` as DECIMAL - now wrapped with `CAST(3.7 AS DOUBLE)`. Fixed `long_to_int`, `double_to_decimal`, `double_to_string`.
 
-#### Sorting Edge Cases - NO COVERAGE
-- `nullsFirst` / `nullsLast` options
-- Multi-column sorting with mixed asc/desc
+#### Sorting Edge Cases - ✅ COVERED (M64)
+All sorting edge cases now have differential test coverage:
+- ✅ Null ordering: `asc_nulls_first()`, `asc_nulls_last()`, `desc_nulls_first()`, `desc_nulls_last()`
+- ✅ String null ordering
+- ✅ Multi-column sorting with mixed asc/desc
+- ✅ Multi-column sorting with mixed null ordering
+- ✅ Three-column sorting
+- ✅ Edge cases: all-null columns, ties with nulls, empty DataFrame, single row
 
 #### Aggregation Functions - ✅ FIXED (M60/M61)
 All aggregation function tests now pass (15/15):
@@ -604,8 +610,9 @@ All aggregation function tests now pass (15/15):
 | ~~Medium~~ | ~~test_distinct_differential.py~~ | ~~distinct, dropDuplicates~~ | ~~12~~ | ✅ **DONE (M58)** |
 | ~~Medium~~ | ~~test_aggregation_functions_differential.py~~ | ~~collect_*, countDistinct~~ | ~~15~~ | ✅ **DONE (M60/M61)** |
 | ~~Medium~~ | ~~test_type_casting_differential.py~~ | ~~Explicit casts~~ | ~~11~~ | ✅ **DONE (M62)** |
+| ~~Medium~~ | ~~test_sorting_differential.py~~ | ~~nullsFirst/Last, multi-column~~ | ~~12~~ | ✅ **DONE (M64)** |
 
-**Total estimated new tests: ~10** (datetime + conditional + joins + set operations + distinct + aggregations + type casting complete)
+**Total estimated new tests: 0** (All gaps covered: datetime + conditional + joins + set operations + distinct + aggregations + type casting + sorting complete)
 
 ---
 
@@ -740,7 +747,7 @@ spark.udf.register(...)                       # User-defined functions not suppo
 
 ---
 
-**Document Version:** 4.9
+**Document Version:** 4.12
 **Last Updated:** 2025-12-22
 **Author:** Analysis generated from Spark Connect 4.0.x protobuf definitions
 
@@ -748,6 +755,8 @@ spark.udf.register(...)                       # User-defined functions not suppo
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v4.12 | 2025-12-22 | **M64: Added sorting edge cases differential tests.** 12 new tests covering nullsFirst/nullsLast (5 tests), multi-column sorting (3 tests), edge cases (4 tests). All gaps now covered - test count: 444 (all passing). |
+| v4.11 | 2025-12-22 | **M62/M63: Added type casting differential tests and fixed type inference issues.** 14 tests for explicit CAST operations. M63: Added CAST wrappers to VALUES clause to preserve Arrow schema types. |
 | v4.9 | 2025-12-22 | **M60/M61: Fixed aggregation function type inference and semantic differences.** All 15 aggregation tests now pass. M60: Centralized TypeInferenceEngine for aggregate return types (countDistinct→LongType, collect_list/collect_set→ArrayType). M61: Fixed semantic differences - collect_list/collect_set use FILTER clause to exclude NULLs (Spark semantics), multi-column countDistinct uses ROW() wrapper for tuple semantics, SUM cast to BIGINT. Test count: 418 (all passing). |
 | v4.8 | 2025-12-22 | Added aggregation functions differential tests (M59). 3 tests for first/last via min/max proxy. **TYPE INFERENCE ISSUES DISCOVERED**: collect_list/collect_set return StringType instead of ArrayType; countDistinct returns IntegerType instead of LongType. 12 tests skipped pending type inference fixes. Test count: 415→418. |
 | v4.7 | 2025-12-22 | Added distinct operations differential tests (M58). 12 tests covering distinct() (basic, nulls, empty, multiple columns), dropDuplicates() (alias, single column, multiple columns, nulls in subset), combined operations (distinct with filter). Test count: 403→415. |
