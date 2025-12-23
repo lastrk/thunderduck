@@ -1,0 +1,6 @@
+marimo>=0.10.0
+pyspark==4.0.1
+pandas>=2.0.0
+pyarrow>=14.0.0
+grpcio>=1.48.1
+grpcio-status>=1.48.1
