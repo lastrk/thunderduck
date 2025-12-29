@@ -474,9 +474,44 @@ Features intentionally not supported due to Spark/DuckDB architectural differenc
 
 ---
 
-## 9. Source Files
+## 9. Known Compatibility Gaps (To Be Fixed)
 
-### Protocol Definitions
+This section documents unintentional compatibility differences between Spark and Thunderduck that need to be fixed in Thunderduck. These are NOT workarounds - Thunderduck must be modified to match Spark's behavior.
+
+### 9.1 Date Arithmetic with String Literals
+
+**Issue**: `F.date_sub(F.lit("yyyy-MM-dd"), days)` fails in Thunderduck but works in Spark.
+
+**Spark Behavior**: Automatically casts ISO-format date string literals (`yyyy-MM-dd`) to DATE type before arithmetic operations.
+
+**Thunderduck/DuckDB Behavior**: Throws "Binder Error: Could not choose a best candidate function for `-(STRING_LITERAL, INTERVAL)`"
+
+**Example**:
+```python
+# This works in Spark but fails in Thunderduck:
+df.filter(F.col("l_shipdate") <= F.date_sub(F.lit("1998-12-01"), 90))
+
+# Generated SQL has:
+# CAST(('1998-12-01' - INTERVAL '90 days') AS DATE)
+# Spark handles this, DuckDB cannot subtract interval from string
+```
+
+**Root Cause**: Spark's SQL parser recognizes `yyyy-MM-dd` format strings as implicit dates. DuckDB requires explicit DATE literals (`DATE '1998-12-01'`) or CAST operations.
+
+**User Workaround** (temporary): Use explicit date conversion:
+```python
+df.filter(F.col("l_shipdate") <= F.date_sub(F.to_date(F.lit("1998-12-01")), 90))
+```
+
+**Required Fix**: Thunderduck's expression converter should detect string literals in date functions and wrap them with appropriate CAST or DATE literal syntax before sending to DuckDB.
+
+**Status**: Open - needs implementation in ExpressionConverter.java
+
+---
+
+## 10. Source Files
+
+### 10.1 Protocol Definitions
 
 | File | Contents |
 |------|----------|
@@ -485,7 +520,7 @@ Features intentionally not supported due to Spark/DuckDB architectural differenc
 | `connect-server/src/main/proto/spark/connect/commands.proto` | 10 command types |
 | `connect-server/src/main/proto/spark/connect/catalog.proto` | 26 catalog operations |
 
-### Implementation Files
+### 10.2 Implementation Files
 
 | File | Contents |
 |------|----------|
@@ -495,11 +530,11 @@ Features intentionally not supported due to Spark/DuckDB architectural differenc
 
 ---
 
-## 10. Differential Test Coverage Gaps
+## 11. Differential Test Coverage Gaps
 
 This section documents operations that are implemented but NOT covered by differential tests.
 
-### 10.1 Current Test Summary: 444 tests across 22 files
+### 11.1 Current Test Summary: 444 tests across 22 files
 
 | Category | Test File | Tests | Status |
 |----------|-----------|-------|--------|
@@ -528,7 +563,7 @@ This section documents operations that are implemented but NOT covered by differ
 | **Type Casting** | test_type_casting_differential.py | **14** | **IMPROVED (M62/M63)** |
 | **Sorting Edge Cases** | test_sorting_differential.py | **12** | **NEW (M64)** |
 
-### 10.2 Operations NOT Differentially Tested
+### 11.2 Operations NOT Differentially Tested
 
 #### Date/Time Functions - ✅ COVERED (M54)
 All major date/time functions now have differential test coverage:
@@ -599,7 +634,7 @@ All aggregation function tests now pass (15/15):
 
 **Semantic Fixes (M61)**: DuckDB `list()` includes NULLs (Spark excludes), multi-column `COUNT(DISTINCT)` only counts first column (Spark counts tuples). Fixed with FILTER clause and ROW() wrapper.
 
-### 10.3 Recommended Test Additions
+### 11.3 Recommended Test Additions
 
 | Priority | New Test File | Coverage | Est. Tests | Status |
 |----------|---------------|----------|------------|--------|
@@ -747,14 +782,15 @@ spark.udf.register(...)                       # User-defined functions not suppo
 
 ---
 
-**Document Version:** 4.14
-**Last Updated:** 2025-12-22
+**Document Version:** 4.15
+**Last Updated:** 2025-12-23
 **Author:** Analysis generated from Spark Connect 4.0.x protobuf definitions
 
 ### Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v4.15 | 2025-12-23 | **Added Section 9: Known Compatibility Gaps.** Documented date_sub with string literal issue - Spark auto-casts ISO date strings but Thunderduck/DuckDB requires explicit DATE cast. This is a bug to fix, not an intentional incompatibility. |
 | v4.14 | 2025-12-22 | **M69: Fixed datetime extraction function type inference.** Extended mergeSchemas() to prefer logical IntegerType over DuckDB's BigIntType for date extraction functions. Fixed datediff argument order (DuckDB returns B-A, not A-B). Cast unix_timestamp to BIGINT. All 444 tests passing. |
 | v4.13 | 2025-12-22 | **M68: Fixed decimal precision mismatch.** Schema merging now uses logical plan's DecimalType (computed using Spark rules) instead of DuckDB's type. Type inference engine fixed to not promote integer multiplication to decimal. All 444 tests passing. |
 | v4.12 | 2025-12-22 | **M64: Added sorting edge cases differential tests.** 12 new tests covering nullsFirst/nullsLast (5 tests), multi-column sorting (3 tests), edge cases (4 tests). All gaps now covered - test count: 444 (all passing). |
