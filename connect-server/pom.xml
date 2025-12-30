@@ -310,4 +310,119 @@
         </plugins>
     </build>
 
+    <!--
+    ============================================================================
+    Profile: use-system-protoc
+    ============================================================================
+    Use system-installed protoc and protoc-gen-grpc-java instead of downloading
+    from Maven Central. Required on macOS where downloaded binaries are blocked
+    by Gatekeeper.
+
+    Prerequisites (macOS):
+        brew install protobuf
+
+        # For Apple Silicon (M1/M2/M3):
+        curl -L -o /usr/local/bin/protoc-gen-grpc-java \
+          'https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.62.2/protoc-gen-grpc-java-1.62.2-osx-aarch_64.exe'
+
+        # For Intel Mac:
+        curl -L -o /usr/local/bin/protoc-gen-grpc-java \
+          'https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.62.2/protoc-gen-grpc-java-1.62.2-osx-x86_64.exe'
+
+        chmod +x /usr/local/bin/protoc-gen-grpc-java
+        xattr -d com.apple.quarantine /usr/local/bin/protoc-gen-grpc-java
+
+    Usage: mvn package -Puse-system-protoc
+    ============================================================================
+    -->
+    <profiles>
+        <profile>
+            <id>use-system-protoc</id>
+            <build>
+                <plugins>
+                    <!-- Skip downloading protoc - use system version -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>3.6.1</version>
+                        <executions>
+                            <execution>
+                                <id>copy-protoc</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Override default antrun to use system protoc -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <!-- Disable the default execution -->
+                            <execution>
+                                <id>generate-protobuf</id>
+                                <phase>none</phase>
+                            </execution>
+                            <!-- Add new execution using system protoc -->
+                            <execution>
+                                <id>generate-protobuf-system</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <!-- Create output directories -->
+                                        <mkdir dir="${project.build.directory}/generated-sources/protobuf/java"/>
+                                        <mkdir dir="${project.build.directory}/generated-sources/protobuf/grpc-java"/>
+                                        <mkdir dir="${project.build.directory}/protobuf-include"/>
+
+                                        <!-- Extract .proto files from Spark Connect JAR -->
+                                        <echo message="Extracting proto files from spark-connect_2.13-${spark.version}.jar"/>
+                                        <unzip src="${settings.localRepository}/org/apache/spark/spark-connect_2.13/${spark.version}/spark-connect_2.13-${spark.version}.jar"
+                                               dest="${project.basedir}/src/main/proto"
+                                               overwrite="true">
+                                            <patternset>
+                                                <include name="spark/connect/*.proto"/>
+                                            </patternset>
+                                        </unzip>
+
+                                        <!-- Extract google/protobuf well-known types from protobuf JAR -->
+                                        <unzip src="${settings.localRepository}/com/google/protobuf/protobuf-java/${protobuf.version}/protobuf-java-${protobuf.version}.jar"
+                                               dest="${project.build.directory}/protobuf-include">
+                                            <patternset>
+                                                <include name="google/protobuf/*.proto"/>
+                                            </patternset>
+                                        </unzip>
+
+                                        <!-- Run protoc using system binaries (protoc and protoc-gen-grpc-java from PATH) -->
+                                        <exec executable="protoc" failonerror="true">
+                                            <arg value="--java_out=${project.build.directory}/generated-sources/protobuf/java"/>
+                                            <arg value="--grpc-java_out=${project.build.directory}/generated-sources/protobuf/grpc-java"/>
+                                            <arg value="--proto_path=${project.build.directory}/protobuf-include"/>
+                                            <arg value="--proto_path=${project.basedir}/src/main/proto"/>
+                                            <arg value="${project.basedir}/src/main/proto/spark/connect/base.proto"/>
+                                            <arg value="${project.basedir}/src/main/proto/spark/connect/catalog.proto"/>
+                                            <arg value="${project.basedir}/src/main/proto/spark/connect/commands.proto"/>
+                                            <arg value="${project.basedir}/src/main/proto/spark/connect/common.proto"/>
+                                            <arg value="${project.basedir}/src/main/proto/spark/connect/example_plugins.proto"/>
+                                            <arg value="${project.basedir}/src/main/proto/spark/connect/expressions.proto"/>
+                                            <arg value="${project.basedir}/src/main/proto/spark/connect/ml.proto"/>
+                                            <arg value="${project.basedir}/src/main/proto/spark/connect/ml_common.proto"/>
+                                            <arg value="${project.basedir}/src/main/proto/spark/connect/relations.proto"/>
+                                            <arg value="${project.basedir}/src/main/proto/spark/connect/types.proto"/>
+                                        </exec>
+
+                                        <echo message="Generated protobuf classes successfully using system protoc"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>

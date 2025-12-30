@@ -206,6 +206,45 @@ mvn clean install -Pfast
 mvn clean verify -Pcoverage
 ```
 
+### macOS Build Requirements
+
+On macOS, the default build downloads protobuf binaries that get blocked by Gatekeeper. Use the `use-system-protoc` profile with locally installed tools instead.
+
+**Prerequisites:**
+
+```bash
+# 1. Install protoc via Homebrew or download directly
+brew install protobuf
+# Verify: protoc --version (should show 3.x or 25.x)
+
+# 2. Install grpc-java protoc plugin
+# Check your architecture first:
+uname -m
+
+# For Apple Silicon (arm64):
+sudo curl -L -o /usr/local/bin/protoc-gen-grpc-java \
+  'https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.62.2/protoc-gen-grpc-java-1.62.2-osx-aarch_64.exe'
+
+# For Intel Mac (x86_64):
+sudo curl -L -o /usr/local/bin/protoc-gen-grpc-java \
+  'https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.62.2/protoc-gen-grpc-java-1.62.2-osx-x86_64.exe'
+
+# Make executable and remove quarantine
+sudo chmod +x /usr/local/bin/protoc-gen-grpc-java
+sudo xattr -d com.apple.quarantine /usr/local/bin/protoc-gen-grpc-java 2>/dev/null || true
+
+# Verify it's in PATH
+which protoc-gen-grpc-java
+```
+
+**Build with system protoc:**
+
+```bash
+mvn clean package -DskipTests -Puse-system-protoc
+```
+
+> **Note**: If you installed a different protoc version (e.g., 25.x via Homebrew), it should still work as protobuf is generally backward compatible.
+
 ### Build Specific Modules
 
 ```bash
