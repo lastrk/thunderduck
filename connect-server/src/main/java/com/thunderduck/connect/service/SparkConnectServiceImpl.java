@@ -219,11 +219,19 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 logger.info("Deserializing DataFrame plan: {}", plan.getRoot().getRelTypeCase());
 
                 try {
+                    // Start timing instrumentation
+                    QueryTimingStats timing = new QueryTimingStats();
+                    timing.startTotal();
+
                     // Convert Protobuf plan to LogicalPlan
+                    timing.startPlanConvert();
                     LogicalPlan logicalPlan = createPlanConverter(session).convert(plan);
+                    timing.stopPlanConvert();
 
                     // Generate SQL from LogicalPlan
+                    timing.startSqlGenerate();
                     String generatedSQL = sqlGenerator.generate(logicalPlan);
+                    timing.stopSqlGenerate();
                     logger.info("Generated SQL from plan: {}", generatedSQL);
 
                     // Get logical schema for correct nullable flags
@@ -233,10 +241,10 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     // Check if this is a Tail plan - use TailBatchIterator wrapper
                     if (logicalPlan instanceof Tail) {
                         Tail tailPlan = (Tail) logicalPlan;
-                        executeSQLStreaming(generatedSQL, logicalSchema, session, responseObserver, (int) tailPlan.limit());
+                        executeSQLStreaming(generatedSQL, logicalSchema, session, responseObserver, (int) tailPlan.limit(), timing);
                     } else {
                         // Execute the generated SQL with schema correction
-                        executeSQLStreaming(generatedSQL, logicalSchema, session, responseObserver);
+                        executeSQLStreaming(generatedSQL, logicalSchema, session, responseObserver, -1, timing);
                     }
 
                 } catch (Exception e) {
@@ -1638,8 +1646,26 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     private void executeSQLStreaming(String sql, StructType logicalSchema, Session session,
                                      StreamObserver<ExecutePlanResponse> responseObserver,
                                      int tailLimit) {
+        executeSQLStreaming(sql, logicalSchema, session, responseObserver, tailLimit, null);
+    }
+
+    /**
+     * Execute SQL query with streaming Arrow batches and timing instrumentation.
+     *
+     * <p>This is the main entry point for DataFrame plan execution with full timing
+     * instrumentation across all phases.
+     *
+     * @param sql SQL query string
+     * @param logicalSchema the logical plan schema with correct nullable flags (can be null)
+     * @param session Session object
+     * @param responseObserver Response stream
+     * @param tailLimit if >= 0, return only the last tailLimit rows; -1 for all rows
+     * @param timing timing stats collector (can be null for direct SQL execution)
+     */
+    private void executeSQLStreaming(String sql, StructType logicalSchema, Session session,
+                                     StreamObserver<ExecutePlanResponse> responseObserver,
+                                     int tailLimit, QueryTimingStats timing) {
         String operationId = java.util.UUID.randomUUID().toString();
-        long startTime = System.nanoTime();
 
         try {
             String opDesc = tailLimit > 0 ? "streaming tail(" + tailLimit + ")" : "streaming";
@@ -1650,7 +1676,12 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             // Get cached executor from session (reuses shared allocator)
             // This avoids creating a new RootAllocator for each query, reducing overhead by 2-5ms
             ArrowStreamingExecutor executor = session.getStreamingExecutor();
+
+            // Time DuckDB execution (to first batch)
+            if (timing != null) timing.startDuckdbExecute();
             try (ArrowBatchIterator baseIterator = executor.executeStreaming(sql)) {
+                if (timing != null) timing.stopDuckdbExecute();
+
                 ArrowBatchIterator iterator = baseIterator;
 
                 // Wrap with SchemaCorrectedBatchIterator if logical schema provided
@@ -1666,14 +1697,24 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     iterator = new TailBatchIterator(iterator, executor.getAllocator(), tailLimit);
                 }
 
+                // Time result streaming
+                if (timing != null) timing.startResultStream();
                 try (ArrowBatchIterator effectiveIterator = iterator) {
                     StreamingResultHandler handler = new StreamingResultHandler(
                         responseObserver, session.getSessionId(), operationId);
                     handler.streamResults(effectiveIterator);
 
-                    long durationMs = (System.nanoTime() - startTime) / 1_000_000;
-                    logger.info("[{}] {} query completed in {}ms, {} batches, {} rows",
-                        operationId, opDesc, durationMs, handler.getBatchCount(), handler.getTotalRows());
+                    if (timing != null) {
+                        timing.stopResultStream();
+                        timing.stopTotal();
+                        timing.setBatchCount(handler.getBatchCount());
+                        timing.setRowCount(handler.getTotalRows());
+                        logger.info("[{}] Query timing: {}", operationId, timing.toLogString());
+                    } else {
+                        // Fallback logging when no timing stats provided
+                        logger.info("[{}] {} query completed, {} batches, {} rows",
+                            operationId, opDesc, handler.getBatchCount(), handler.getTotalRows());
+                    }
                 }
             }
 

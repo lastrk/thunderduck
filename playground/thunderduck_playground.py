@@ -154,15 +154,15 @@ def _(GENERATED_DATA_DIR, duckdb, mo):
 
     *Note: Large scale factors use a temporary disk-backed database to avoid OOM.*
     """)
-    return (generate_tpch_data,)
+    return
 
 
 @app.cell
-def _(generate_tpch_data):
+def _():
     # Uncomment to generate TPC-H data at SF=1 (~1GB)
     # This only needs to be run once - data is persisted to playground/data/
     #
-    generate_tpch_data(scale_factor=20.0)
+    # generate_tpch_data(scale_factor=20.0)
     pass
     return
 
@@ -200,7 +200,8 @@ def _(FALLBACK_DATA_DIR, GENERATED_DATA_DIR, spark_ref, spark_td):
     def find_best_data_dir():
         """Find the best available TPC-H data directory."""
         # Check for generated data at various scale factors
-        for sf in [20.0, 10.0, 1.0, 0.1]:
+        # for sf in [20.0, 10.0, 1.0, 0.1]:
+        for sf in [20.0]:
             sf_dir = GENERATED_DATA_DIR / f"tpch_sf{sf}"
             if sf_dir.exists() and (sf_dir / "lineitem.parquet").exists():
                 return sf_dir, sf
