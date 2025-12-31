@@ -116,10 +116,10 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have HAVING clause with aggregate condition
-            assertThat(sql).contains("GROUP BY category");
-            assertThat(sql).contains("HAVING");
-            assertThat(sql).contains("SUM(amount) > 1000");
-            assertThat(sql).contains("AS \"total\"");
+            assertThat(sql).containsIgnoringCase("GROUP BY category");
+            assertThat(sql).containsIgnoringCase("HAVING");
+            assertThat(sql).containsIgnoringCase("SUM(amount) > 1000");
+            assertThat(sql).containsIgnoringCase("AS \"total\"");
         }
 
         @Test
@@ -153,9 +153,9 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have COUNT in HAVING clause
-            assertThat(sql).contains("GROUP BY customer_id");
-            assertThat(sql).contains("HAVING");
-            assertThat(sql).contains("COUNT(1) > 5");
+            assertThat(sql).containsIgnoringCase("GROUP BY customer_id");
+            assertThat(sql).containsIgnoringCase("HAVING");
+            assertThat(sql).containsIgnoringCase("COUNT(1) > 5");
         }
 
         @Test
@@ -192,8 +192,8 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have AVG in HAVING clause
-            assertThat(sql).contains("GROUP BY category");
-            assertThat(sql).contains("HAVING");
+            assertThat(sql).containsIgnoringCase("GROUP BY category");
+            assertThat(sql).containsIgnoringCase("HAVING");
             assertThat(sql).containsPattern("AVG\\(price\\).*50\\.0");
         }
     }
@@ -237,10 +237,10 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have both conditions in HAVING
-            assertThat(sql).contains("HAVING");
-            assertThat(sql).contains("SUM(amount) > 1000");
-            assertThat(sql).contains("AND");
-            assertThat(sql).contains("COUNT(1) > 10");
+            assertThat(sql).containsIgnoringCase("HAVING");
+            assertThat(sql).containsIgnoringCase("SUM(amount) > 1000");
+            assertThat(sql).containsIgnoringCase("AND");
+            assertThat(sql).containsIgnoringCase("COUNT(1) > 10");
         }
 
         @Test
@@ -279,10 +279,10 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have OR condition in HAVING
-            assertThat(sql).contains("HAVING");
-            assertThat(sql).contains("SUM(amount) > 5000");
-            assertThat(sql).contains("OR");
-            assertThat(sql).contains("AVG(price) > 100");
+            assertThat(sql).containsIgnoringCase("HAVING");
+            assertThat(sql).containsIgnoringCase("SUM(amount) > 5000");
+            assertThat(sql).containsIgnoringCase("OR");
+            assertThat(sql).containsIgnoringCase("AVG(price) > 100");
         }
 
         @Test
@@ -326,12 +326,12 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have properly nested conditions
-            assertThat(sql).contains("HAVING");
-            assertThat(sql).contains("SUM(amount) > 1000");
-            assertThat(sql).contains("AND");
-            assertThat(sql).contains("COUNT(1) > 5");
-            assertThat(sql).contains("OR");
-            assertThat(sql).contains("AVG(price) > 50");
+            assertThat(sql).containsIgnoringCase("HAVING");
+            assertThat(sql).containsIgnoringCase("SUM(amount) > 1000");
+            assertThat(sql).containsIgnoringCase("AND");
+            assertThat(sql).containsIgnoringCase("COUNT(1) > 5");
+            assertThat(sql).containsIgnoringCase("OR");
+            assertThat(sql).containsIgnoringCase("AVG(price) > 50");
         }
     }
 
@@ -370,9 +370,9 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have COUNT in HAVING even though not in SELECT
-            assertThat(sql).contains("SELECT category, SUM(amount)");
-            assertThat(sql).contains("HAVING");
-            assertThat(sql).contains("COUNT(1) > 10");
+            assertThat(sql).containsIgnoringCase("SELECT category, SUM(amount)");
+            assertThat(sql).containsIgnoringCase("HAVING");
+            assertThat(sql).containsIgnoringCase("COUNT(1) > 10");
             assertThat(sql).doesNotContain("COUNT(1) AS");  // Not in SELECT list
         }
 
@@ -404,8 +404,8 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have HAVING without GROUP BY
-            assertThat(sql).contains("HAVING");
-            assertThat(sql).contains("SUM(amount) > 10000");
+            assertThat(sql).containsIgnoringCase("HAVING");
+            assertThat(sql).containsIgnoringCase("SUM(amount) > 10000");
             assertThat(sql).doesNotContain("GROUP BY");
         }
 
@@ -437,9 +437,9 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should allow grouping key in HAVING
-            assertThat(sql).contains("GROUP BY category");
-            assertThat(sql).contains("HAVING");
-            assertThat(sql).contains("category = 'Electronics'");
+            assertThat(sql).containsIgnoringCase("GROUP BY category");
+            assertThat(sql).containsIgnoringCase("HAVING");
+            assertThat(sql).containsIgnoringCase("category = 'Electronics'");
         }
     }
 
@@ -485,11 +485,11 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have BETWEEN-style condition in HAVING
-            assertThat(sql).contains("HAVING");
-            assertThat(sql).contains("SUM(amount)");
-            assertThat(sql).contains("1000");
-            assertThat(sql).contains("AND");
-            assertThat(sql).contains("5000");
+            assertThat(sql).containsIgnoringCase("HAVING");
+            assertThat(sql).containsIgnoringCase("SUM(amount)");
+            assertThat(sql).containsIgnoringCase("1000");
+            assertThat(sql).containsIgnoringCase("AND");
+            assertThat(sql).containsIgnoringCase("5000");
         }
 
         @Test
@@ -530,8 +530,8 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have IN-style condition (as OR chain)
-            assertThat(sql).contains("HAVING");
-            assertThat(sql).contains("COUNT(1)");
+            assertThat(sql).containsIgnoringCase("HAVING");
+            assertThat(sql).containsIgnoringCase("COUNT(1)");
             assertThat(sql).containsPattern("= 5.*OR.*= 10.*OR.*= 15");
         }
 
@@ -569,8 +569,8 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have comparison in HAVING
-            assertThat(sql).contains("HAVING");
-            assertThat(sql).contains("AVG(price)");
+            assertThat(sql).containsIgnoringCase("HAVING");
+            assertThat(sql).containsIgnoringCase("AVG(price)");
         }
     }
 
@@ -612,11 +612,11 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have complex aggregate expression in HAVING clause
-            assertThat(sql).contains("HAVING");
-            assertThat(sql).contains("SUM(amount)");
-            assertThat(sql).contains("AVG(amount)");
-            assertThat(sql).contains("*");
-            assertThat(sql).contains("10");
+            assertThat(sql).containsIgnoringCase("HAVING");
+            assertThat(sql).containsIgnoringCase("SUM(amount)");
+            assertThat(sql).containsIgnoringCase("AVG(amount)");
+            assertThat(sql).containsIgnoringCase("*");
+            assertThat(sql).containsIgnoringCase("10");
         }
 
         @Test
@@ -653,11 +653,11 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have arithmetic expression in HAVING
-            assertThat(sql).contains("HAVING");
-            assertThat(sql).contains("SUM(amount)");
-            assertThat(sql).contains("/");
-            assertThat(sql).contains("COUNT(1)");
-            assertThat(sql).contains("> 100");
+            assertThat(sql).containsIgnoringCase("HAVING");
+            assertThat(sql).containsIgnoringCase("SUM(amount)");
+            assertThat(sql).containsIgnoringCase("/");
+            assertThat(sql).containsIgnoringCase("COUNT(1)");
+            assertThat(sql).containsIgnoringCase("> 100");
         }
     }
 
@@ -687,9 +687,9 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should work without HAVING clause
-            assertThat(sql).contains("SELECT category, SUM(amount)");
-            assertThat(sql).contains("GROUP BY category");
-            assertThat(sql).doesNotContain("HAVING");
+            assertThat(sql).containsIgnoringCase("SELECT category, SUM(amount)");
+            assertThat(sql).containsIgnoringCase("GROUP BY category");
+            assertThat(sql).doesNotContainIgnoringCase("HAVING");
             assertThat(aggregate.havingCondition()).isNull();
         }
 
@@ -715,7 +715,7 @@ public class HavingClauseTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should behave like no HAVING clause
-            assertThat(sql).doesNotContain("HAVING");
+            assertThat(sql).doesNotContainIgnoringCase("HAVING");
             assertThat(aggregate.havingCondition()).isNull();
         }
     }

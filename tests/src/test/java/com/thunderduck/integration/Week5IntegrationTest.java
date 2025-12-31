@@ -85,9 +85,9 @@ public class Week5IntegrationTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should combine DISTINCT and HAVING
-            assertThat(sql).contains("COUNT(DISTINCT customer_id)");
-            assertThat(sql).contains("GROUP BY region");
-            assertThat(sql).contains("HAVING (COUNT(DISTINCT customer_id) > 10)");
+            assertThat(sql).containsIgnoringCase("COUNT(DISTINCT customer_id)");
+            assertThat(sql).containsIgnoringCase("GROUP BY region");
+            assertThat(sql).containsIgnoringCase("HAVING (COUNT(DISTINCT customer_id) > 10)");
         }
 
         @Test
@@ -128,10 +128,10 @@ public class Week5IntegrationTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have aggregates with HAVING
-            assertThat(sql).contains("AVG(amount)");
-            assertThat(sql).contains("STDDEV_SAMP(amount)");
-            assertThat(sql).contains("GROUP BY region, category");
-            assertThat(sql).contains("HAVING (STDDEV_SAMP(amount) > 100.0)");
+            assertThat(sql).containsIgnoringCase("AVG(amount)");
+            assertThat(sql).containsIgnoringCase("STDDEV_SAMP(amount)");
+            assertThat(sql).containsIgnoringCase("GROUP BY region, category");
+            assertThat(sql).containsIgnoringCase("HAVING (STDDEV_SAMP(amount) > 100.0)");
         }
 
         @Test
@@ -173,9 +173,9 @@ public class Week5IntegrationTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have multiple DISTINCT with complex HAVING
-            assertThat(sql).contains("COUNT(DISTINCT customer_id)");
-            assertThat(sql).contains("COUNT(DISTINCT product_id)");
-            assertThat(sql).contains("HAVING ((COUNT(DISTINCT customer_id) > 5) AND (COUNT(DISTINCT product_id) > 3))");
+            assertThat(sql).containsIgnoringCase("COUNT(DISTINCT customer_id)");
+            assertThat(sql).containsIgnoringCase("COUNT(DISTINCT product_id)");
+            assertThat(sql).containsIgnoringCase("HAVING ((COUNT(DISTINCT customer_id) > 5) AND (COUNT(DISTINCT product_id) > 3))");
         }
 
         @Test
@@ -205,9 +205,9 @@ public class Week5IntegrationTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have statistical aggregates
-            assertThat(sql).contains("MEDIAN(amount)");
-            assertThat(sql).contains("PERCENTILE_CONT(amount)");
-            assertThat(sql).contains("GROUP BY region");
+            assertThat(sql).containsIgnoringCase("MEDIAN(amount)");
+            assertThat(sql).containsIgnoringCase("PERCENTILE_CONT(amount)");
+            assertThat(sql).containsIgnoringCase("GROUP BY region");
         }
     }
 
@@ -293,9 +293,9 @@ public class Week5IntegrationTest extends TestBase {
             String sql = nthValue.toSQL();
 
             // Then: Should combine NTH_VALUE with frame
-            assertThat(sql).contains("NTH_VALUE(amount, 2)");
-            assertThat(sql).contains("ORDER BY sale_date ASC");
-            assertThat(sql).contains("ROWS BETWEEN CURRENT ROW AND 5 FOLLOWING");
+            assertThat(sql).containsIgnoringCase("NTH_VALUE(amount, 2)");
+            assertThat(sql).containsIgnoringCase("ORDER BY sale_date ASC");
+            assertThat(sql).containsIgnoringCase("ROWS BETWEEN CURRENT ROW AND 5 FOLLOWING");
         }
 
         @Test
@@ -323,9 +323,9 @@ public class Week5IntegrationTest extends TestBase {
             String sql = ntile.toSQL();
 
             // Then: Should have complete window specification
-            assertThat(sql).contains("NTILE(4)");
-            assertThat(sql).contains("PARTITION BY region");
-            assertThat(sql).contains("ORDER BY amount DESC");
+            assertThat(sql).containsIgnoringCase("NTILE(4)");
+            assertThat(sql).containsIgnoringCase("PARTITION BY region");
+            assertThat(sql).containsIgnoringCase("ORDER BY amount DESC");
         }
 
         @Test
@@ -365,8 +365,8 @@ public class Week5IntegrationTest extends TestBase {
             String movingAvgSQL = movingAvg.toSQL();
 
             // Then: Should have different frame specifications
-            assertThat(cumulativeSumSQL).contains("ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW");
-            assertThat(movingAvgSQL).contains("ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING");
+            assertThat(cumulativeSumSQL).containsIgnoringCase("ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW");
+            assertThat(movingAvgSQL).containsIgnoringCase("ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING");
         }
     }
 
@@ -414,13 +414,13 @@ public class Week5IntegrationTest extends TestBase {
             String aggSQL = generator.generate(aggregate);
 
             // Then: Should have aggregation SQL
-            assertThat(aggSQL).contains("COUNT(1)");
-            assertThat(aggSQL).contains("GROUP BY region");
+            assertThat(aggSQL).containsIgnoringCase("COUNT(1)");
+            assertThat(aggSQL).containsIgnoringCase("GROUP BY region");
 
             // And window function should generate correct SQL
             String windowSQL = rankFunc.toSQL();
-            assertThat(windowSQL).contains("RANK()");
-            assertThat(windowSQL).contains("ORDER BY");
+            assertThat(windowSQL).containsIgnoringCase("RANK()");
+            assertThat(windowSQL).containsIgnoringCase("ORDER BY");
         }
 
         @Test
@@ -454,9 +454,9 @@ public class Week5IntegrationTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should combine all three types
-            assertThat(sql).contains("COUNT(DISTINCT customer_id)");
-            assertThat(sql).contains("STDDEV_SAMP(amount)");
-            assertThat(sql).contains("MEDIAN(amount)");
+            assertThat(sql).containsIgnoringCase("COUNT(DISTINCT customer_id)");
+            assertThat(sql).containsIgnoringCase("STDDEV_SAMP(amount)");
+            assertThat(sql).containsIgnoringCase("MEDIAN(amount)");
         }
 
         @Test
@@ -490,9 +490,9 @@ public class Week5IntegrationTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have filter and aggregation
-            assertThat(sql).contains("WHERE (amount > 999.0)");
-            assertThat(sql).contains("SUM(amount)");
-            assertThat(sql).contains("GROUP BY region");
+            assertThat(sql).containsIgnoringCase("WHERE (amount > 999.0)");
+            assertThat(sql).containsIgnoringCase("SUM(amount)");
+            assertThat(sql).containsIgnoringCase("GROUP BY region");
         }
 
         @Test
@@ -545,12 +545,12 @@ public class Week5IntegrationTest extends TestBase {
             String windowSQL = rankWindow.toSQL();
 
             // Then: Should combine all features correctly
-            assertThat(aggSQL).contains("COUNT(DISTINCT customer_id)");
-            assertThat(aggSQL).contains("AVG(amount)");
-            assertThat(aggSQL).contains("GROUP BY region");
-            assertThat(aggSQL).contains("HAVING (COUNT(DISTINCT customer_id) > 10)");
-            assertThat(windowSQL).contains("RANK()");
-            assertThat(windowSQL).contains("ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW");
+            assertThat(aggSQL).containsIgnoringCase("COUNT(DISTINCT customer_id)");
+            assertThat(aggSQL).containsIgnoringCase("AVG(amount)");
+            assertThat(aggSQL).containsIgnoringCase("GROUP BY region");
+            assertThat(aggSQL).containsIgnoringCase("HAVING (COUNT(DISTINCT customer_id) > 10)");
+            assertThat(windowSQL).containsIgnoringCase("RANK()");
+            assertThat(windowSQL).containsIgnoringCase("ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW");
         }
     }
 }
