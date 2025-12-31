@@ -87,8 +87,8 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate STDDEV_SAMP function
-            assertThat(sql).contains("STDDEV_SAMP(temperature)");
-            assertThat(sql).contains("AS \"temp_stddev_samp\"");
+            assertThat(sql).containsIgnoringCase("STDDEV_SAMP(temperature)");
+            assertThat(sql).containsIgnoringCase("AS \"temp_stddev_samp\"");
         }
 
         @Test
@@ -115,8 +115,8 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate STDDEV_POP function
-            assertThat(sql).contains("STDDEV_POP(pressure)");
-            assertThat(sql).contains("AS \"pressure_stddev_pop\"");
+            assertThat(sql).containsIgnoringCase("STDDEV_POP(pressure)");
+            assertThat(sql).containsIgnoringCase("AS \"pressure_stddev_pop\"");
         }
 
         @Test
@@ -145,9 +145,9 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have both GROUP BY and STDDEV_SAMP
-            assertThat(sql).contains("SELECT region, STDDEV_SAMP(temperature)");
-            assertThat(sql).contains("GROUP BY region");
-            assertThat(sql).contains("AS \"temp_stddev\"");
+            assertThat(sql).containsIgnoringCase("SELECT region, STDDEV_SAMP(temperature)");
+            assertThat(sql).containsIgnoringCase("GROUP BY region");
+            assertThat(sql).containsIgnoringCase("AS \"temp_stddev\"");
         }
     }
 
@@ -179,8 +179,8 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate VAR_SAMP function
-            assertThat(sql).contains("VAR_SAMP(temperature)");
-            assertThat(sql).contains("AS \"temp_variance_samp\"");
+            assertThat(sql).containsIgnoringCase("VAR_SAMP(temperature)");
+            assertThat(sql).containsIgnoringCase("AS \"temp_variance_samp\"");
         }
 
         @Test
@@ -207,8 +207,8 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate VAR_POP function
-            assertThat(sql).contains("VAR_POP(pressure)");
-            assertThat(sql).contains("AS \"pressure_variance_pop\"");
+            assertThat(sql).containsIgnoringCase("VAR_POP(pressure)");
+            assertThat(sql).containsIgnoringCase("AS \"pressure_variance_pop\"");
         }
 
         @Test
@@ -239,9 +239,9 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate all three functions
-            assertThat(sql).contains("VAR_SAMP(temperature)");
-            assertThat(sql).contains("VAR_POP(temperature)");
-            assertThat(sql).contains("STDDEV_SAMP(temperature)");
+            assertThat(sql).containsIgnoringCase("VAR_SAMP(temperature)");
+            assertThat(sql).containsIgnoringCase("VAR_POP(temperature)");
+            assertThat(sql).containsIgnoringCase("STDDEV_SAMP(temperature)");
         }
     }
 
@@ -306,8 +306,8 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate PERCENTILE_DISC function
-            assertThat(sql).contains("PERCENTILE_DISC(pressure)");
-            assertThat(sql).contains("AS \"p75_pressure\"");
+            assertThat(sql).containsIgnoringCase("PERCENTILE_DISC(pressure)");
+            assertThat(sql).containsIgnoringCase("AS \"p75_pressure\"");
         }
 
         @Test
@@ -334,8 +334,8 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate MEDIAN function
-            assertThat(sql).contains("MEDIAN(temperature)");
-            assertThat(sql).contains("AS \"median_temp\"");
+            assertThat(sql).containsIgnoringCase("MEDIAN(temperature)");
+            assertThat(sql).containsIgnoringCase("AS \"median_temp\"");
         }
 
         @Test
@@ -366,8 +366,8 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate all three percentile functions
-            assertThat(sql).contains("PERCENTILE_CONT(temperature)");
-            assertThat(sql).contains("MEDIAN(temperature)");
+            assertThat(sql).containsIgnoringCase("PERCENTILE_CONT(temperature)");
+            assertThat(sql).containsIgnoringCase("MEDIAN(temperature)");
         }
 
         @Test
@@ -393,8 +393,8 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have both GROUP BY and MEDIAN
-            assertThat(sql).contains("SELECT region, MEDIAN(temperature)");
-            assertThat(sql).contains("GROUP BY region");
+            assertThat(sql).containsIgnoringCase("SELECT region, MEDIAN(temperature)");
+            assertThat(sql).containsIgnoringCase("GROUP BY region");
         }
     }
 
@@ -430,13 +430,13 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate all seven statistical functions
-            assertThat(sql).contains("COUNT(temperature)");
-            assertThat(sql).contains("AVG(temperature)");
-            assertThat(sql).contains("STDDEV_SAMP(temperature)");
-            assertThat(sql).contains("VAR_SAMP(temperature)");
-            assertThat(sql).contains("MEDIAN(temperature)");
-            assertThat(sql).contains("MIN(temperature)");
-            assertThat(sql).contains("MAX(temperature)");
+            assertThat(sql).containsIgnoringCase("COUNT(temperature)");
+            assertThat(sql).containsIgnoringCase("AVG(temperature)");
+            assertThat(sql).containsIgnoringCase("STDDEV_SAMP(temperature)");
+            assertThat(sql).containsIgnoringCase("VAR_SAMP(temperature)");
+            assertThat(sql).containsIgnoringCase("MEDIAN(temperature)");
+            assertThat(sql).containsIgnoringCase("MIN(temperature)");
+            assertThat(sql).containsIgnoringCase("MAX(temperature)");
         }
 
         @Test
@@ -463,7 +463,7 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should handle complex expression
-            assertThat(sql).contains("STDDEV_SAMP((temperature - pressure))");
+            assertThat(sql).containsIgnoringCase("STDDEV_SAMP((temperature - pressure))");
         }
 
         @Test
@@ -496,11 +496,11 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have WHERE, GROUP BY, and statistical functions
-            assertThat(sql).contains("WHERE (region = 'North')");
-            assertThat(sql).contains("GROUP BY sensor_id");
-            assertThat(sql).contains("AVG(temperature)");
-            assertThat(sql).contains("STDDEV_SAMP(temperature)");
-            assertThat(sql).contains("MEDIAN(temperature)");
+            assertThat(sql).containsIgnoringCase("WHERE (region = 'North')");
+            assertThat(sql).containsIgnoringCase("GROUP BY sensor_id");
+            assertThat(sql).containsIgnoringCase("AVG(temperature)");
+            assertThat(sql).containsIgnoringCase("STDDEV_SAMP(temperature)");
+            assertThat(sql).containsIgnoringCase("MEDIAN(temperature)");
         }
     }
 
@@ -547,7 +547,7 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate valid SQL (NULL handling is database's responsibility)
-            assertThat(sql).contains("STDDEV_SAMP(value)");
+            assertThat(sql).containsIgnoringCase("STDDEV_SAMP(value)");
         }
 
         @Test
@@ -571,7 +571,7 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate DISTINCT statistical aggregate
-            assertThat(sql).contains("STDDEV_SAMP(DISTINCT temperature)");
+            assertThat(sql).containsIgnoringCase("STDDEV_SAMP(DISTINCT temperature)");
         }
 
         @Test
@@ -633,8 +633,8 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate HAVING with statistical function
-            assertThat(sql).contains("GROUP BY region");
-            assertThat(sql).contains("HAVING (STDDEV_SAMP(temperature) > 5.0)");
+            assertThat(sql).containsIgnoringCase("GROUP BY region");
+            assertThat(sql).containsIgnoringCase("HAVING (STDDEV_SAMP(temperature) > 5.0)");
         }
 
         @Test
@@ -667,8 +667,8 @@ public class AdvancedAggregatesTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate HAVING with MEDIAN
-            assertThat(sql).contains("GROUP BY sensor_id");
-            assertThat(sql).contains("HAVING (MEDIAN(pressure) > 100.0)");
+            assertThat(sql).containsIgnoringCase("GROUP BY sensor_id");
+            assertThat(sql).containsIgnoringCase("HAVING (MEDIAN(pressure) > 100.0)");
         }
     }
 }

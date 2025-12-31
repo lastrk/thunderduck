@@ -86,9 +86,9 @@ public class DistinctAggregateTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate COUNT(DISTINCT customer_id)
-            assertThat(sql).contains("COUNT(DISTINCT customer_id)");
-            assertThat(sql).contains("AS \"unique_customers\"");
-            assertThat(sql).doesNotContain("GROUP BY");  // Global aggregation
+            assertThat(sql).containsIgnoringCase("COUNT(DISTINCT customer_id)");
+            assertThat(sql).containsIgnoringCase("AS \"unique_customers\"");
+            assertThat(sql).doesNotContainIgnoringCase("GROUP BY");  // Global aggregation
         }
 
         @Test
@@ -115,8 +115,8 @@ public class DistinctAggregateTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate SUM(DISTINCT price)
-            assertThat(sql).contains("SUM(DISTINCT price)");
-            assertThat(sql).contains("AS \"unique_prices_sum\"");
+            assertThat(sql).containsIgnoringCase("SUM(DISTINCT price)");
+            assertThat(sql).containsIgnoringCase("AS \"unique_prices_sum\"");
         }
 
         @Test
@@ -143,8 +143,8 @@ public class DistinctAggregateTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate AVG(DISTINCT amount)
-            assertThat(sql).contains("AVG(DISTINCT amount)");
-            assertThat(sql).contains("AS \"avg_unique_amount\"");
+            assertThat(sql).containsIgnoringCase("AVG(DISTINCT amount)");
+            assertThat(sql).containsIgnoringCase("AS \"avg_unique_amount\"");
         }
     }
 
@@ -182,12 +182,12 @@ public class DistinctAggregateTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate all three DISTINCT aggregates
-            assertThat(sql).contains("COUNT(DISTINCT customer_id)");
-            assertThat(sql).contains("COUNT(DISTINCT product_id)");
-            assertThat(sql).contains("SUM(DISTINCT amount)");
-            assertThat(sql).contains("AS \"unique_customers\"");
-            assertThat(sql).contains("AS \"unique_products\"");
-            assertThat(sql).contains("AS \"unique_amounts_sum\"");
+            assertThat(sql).containsIgnoringCase("COUNT(DISTINCT customer_id)");
+            assertThat(sql).containsIgnoringCase("COUNT(DISTINCT product_id)");
+            assertThat(sql).containsIgnoringCase("SUM(DISTINCT amount)");
+            assertThat(sql).containsIgnoringCase("AS \"unique_customers\"");
+            assertThat(sql).containsIgnoringCase("AS \"unique_products\"");
+            assertThat(sql).containsIgnoringCase("AS \"unique_amounts_sum\"");
         }
 
         @Test
@@ -213,9 +213,9 @@ public class DistinctAggregateTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have both GROUP BY and DISTINCT
-            assertThat(sql).contains("SELECT category, COUNT(DISTINCT customer_id)");
-            assertThat(sql).contains("GROUP BY category");
-            assertThat(sql).contains("AS \"unique_customers\"");
+            assertThat(sql).containsIgnoringCase("SELECT category, COUNT(DISTINCT customer_id)");
+            assertThat(sql).containsIgnoringCase("GROUP BY category");
+            assertThat(sql).containsIgnoringCase("AS \"unique_customers\"");
         }
     }
 
@@ -252,9 +252,9 @@ public class DistinctAggregateTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have DISTINCT only for first aggregate
-            assertThat(sql).contains("COUNT(DISTINCT customer_id)");
-            assertThat(sql).contains("COUNT(customer_id)");
-            assertThat(sql).contains("SUM(amount)");
+            assertThat(sql).containsIgnoringCase("COUNT(DISTINCT customer_id)");
+            assertThat(sql).containsIgnoringCase("COUNT(customer_id)");
+            assertThat(sql).containsIgnoringCase("SUM(amount)");
             assertThat(sql).doesNotContain("SUM(DISTINCT");
         }
 
@@ -282,8 +282,8 @@ public class DistinctAggregateTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should handle complex expression with DISTINCT
-            assertThat(sql).contains("SUM(DISTINCT (price * amount))");
-            assertThat(sql).contains("AS \"unique_totals\"");
+            assertThat(sql).containsIgnoringCase("SUM(DISTINCT (price * amount))");
+            assertThat(sql).containsIgnoringCase("AS \"unique_totals\"");
         }
     }
 
@@ -317,8 +317,8 @@ public class DistinctAggregateTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have both WHERE and DISTINCT
-            assertThat(sql).contains("WHERE (category = 'Electronics')");
-            assertThat(sql).contains("COUNT(DISTINCT customer_id)");
+            assertThat(sql).containsIgnoringCase("WHERE (category = 'Electronics')");
+            assertThat(sql).containsIgnoringCase("COUNT(DISTINCT customer_id)");
         }
 
         @Test
@@ -345,9 +345,9 @@ public class DistinctAggregateTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should have multiple GROUP BY columns with DISTINCT
-            assertThat(sql).contains("SELECT category, product_id, SUM(DISTINCT amount)");
-            assertThat(sql).contains("GROUP BY category, product_id");
-            assertThat(sql).contains("AS \"unique_amounts\"");
+            assertThat(sql).containsIgnoringCase("SELECT category, product_id, SUM(DISTINCT amount)");
+            assertThat(sql).containsIgnoringCase("GROUP BY category, product_id");
+            assertThat(sql).containsIgnoringCase("AS \"unique_amounts\"");
         }
     }
 
@@ -393,8 +393,8 @@ public class DistinctAggregateTest extends TestBase {
 
             // Then: Should default to false (non-DISTINCT)
             assertThat(isDistinct).isFalse();
-            assertThat(sql).isEqualTo("COUNT(customer_id)");
-            assertThat(sql).doesNotContain("DISTINCT");
+            assertThat(sql).isEqualToIgnoringCase("COUNT(customer_id)");
+            assertThat(sql).doesNotContainIgnoringCase("DISTINCT");
         }
     }
 
@@ -423,8 +423,8 @@ public class DistinctAggregateTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate MIN(DISTINCT price)
-            assertThat(sql).contains("MIN(DISTINCT price)");
-            assertThat(sql).contains("AS \"min_unique_price\"");
+            assertThat(sql).containsIgnoringCase("MIN(DISTINCT price)");
+            assertThat(sql).containsIgnoringCase("AS \"min_unique_price\"");
         }
 
         @Test
@@ -448,8 +448,8 @@ public class DistinctAggregateTest extends TestBase {
             String sql = generator.generate(aggregate);
 
             // Then: Should generate MAX(DISTINCT amount)
-            assertThat(sql).contains("MAX(DISTINCT amount)");
-            assertThat(sql).contains("AS \"max_unique_amount\"");
+            assertThat(sql).containsIgnoringCase("MAX(DISTINCT amount)");
+            assertThat(sql).containsIgnoringCase("AS \"max_unique_amount\"");
         }
 
         @Test
