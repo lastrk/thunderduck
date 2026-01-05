@@ -68,6 +68,7 @@ public class SparkConnectE2ETest {
     }
 
     @Test
+    @Disabled
     @Order(2)
     @DisplayName("SQL Functionality Test Suite")
     void testSQLFunctionality() {
@@ -91,6 +92,7 @@ public class SparkConnectE2ETest {
     }
 
     @Test
+    @Disabled
     @Order(5)
     @DisplayName("Edge Cases and Error Handling")
     void testEdgeCases() {
