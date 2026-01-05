@@ -108,27 +108,33 @@ class ThunderduckE2ETestBase(unittest.TestCase):
     @classmethod
     def _setup_test_data(cls):
         """Create test tables and data."""
+        from datetime import date
+
         # Create sample employees table
-        cls.spark.sql("""
-            CREATE OR REPLACE TEMPORARY VIEW employees AS
-            SELECT * FROM VALUES
-                (1, 'John', 'Engineering', 75000, DATE '2020-01-15'),
-                (2, 'Jane', 'Marketing', 65000, DATE '2019-03-22'),
-                (3, 'Bob', 'Engineering', 80000, DATE '2018-07-30'),
-                (4, 'Alice', 'HR', 55000, DATE '2021-05-10'),
-                (5, 'Charlie', 'Engineering', 70000, DATE '2019-11-03')
-            AS t(id, name, department, salary, hire_date)
-        """)
+        employees_data = [
+            (1, 'John', 'Engineering', 75000, date(2020, 1, 15)),
+            (2, 'Jane', 'Marketing', 65000, date(2019, 3, 22)),
+            (3, 'Bob', 'Engineering', 80000, date(2018, 7, 30)),
+            (4, 'Alice', 'HR', 55000, date(2021, 5, 10)),
+            (5, 'Charlie', 'Engineering', 70000, date(2019, 11, 3))
+        ]
+        employees_df = cls.spark.createDataFrame(
+            employees_data,
+            schema=['id', 'name', 'department', 'salary', 'hire_date']
+        )
+        employees_df.createOrReplaceTempView('employees')
 
         # Create departments table
-        cls.spark.sql("""
-            CREATE OR REPLACE TEMPORARY VIEW departments AS
-            SELECT * FROM VALUES
-                ('Engineering', 'Building A', 100),
-                ('Marketing', 'Building B', 50),
-                ('HR', 'Building C', 25)
-            AS t(name, location, budget_millions)
-        """)
+        departments_data = [
+            ('Engineering', 'Building A', 100),
+            ('Marketing', 'Building B', 50),
+            ('HR', 'Building C', 25)
+        ]
+        departments_df = cls.spark.createDataFrame(
+            departments_data,
+            schema=['name', 'location', 'budget_millions']
+        )
+        departments_df.createOrReplaceTempView('departments')
 
     def assert_dataframes_equal(self, df1, df2, check_order=True, rtol=1e-5):
         """Assert two DataFrames are equal."""

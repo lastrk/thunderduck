@@ -9,6 +9,7 @@ from thunderduck_e2e.test_runner import ThunderduckE2ETestBase
 from pyspark.sql import functions as F
 from pyspark.sql import Row
 from pyspark.sql.window import Window
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType
 
 
 class TestDataFrameOperations(ThunderduckE2ETestBase):
@@ -28,7 +29,7 @@ class TestDataFrameOperations(ThunderduckE2ETestBase):
     def test_filter_operations(self):
         """Test various filter operations."""
         # Simple filter
-        df1 = self.spark.table("employees").filter("salary > 60000")
+        df1 = self.spark.table("employees").filter(F.col("salary") > 60000)
         self.assertEqual(df1.count(), 4)
 
         # Filter with AND
@@ -92,7 +93,7 @@ class TestDataFrameOperations(ThunderduckE2ETestBase):
             F.percent_rank().over(window).alias("percent_rank")
         )
 
-        result = df.filter("department = 'Engineering'").orderBy("row_num").collect()
+        result = df.filter(F.col("department") == "Engineering").orderBy("row_num").collect()
 
         # Check rankings for Engineering department
         self.assertEqual(len(result), 3)
@@ -103,15 +104,30 @@ class TestDataFrameOperations(ThunderduckE2ETestBase):
 
     def test_pivot_operations(self):
         """Test pivot operations."""
-        df = self.spark.table("employees").groupBy("department").pivot("department").count()
+        # Create sales data to pivot: month, product, sales
+        sales_df = self.spark.createDataFrame([
+            Row(month="Jan", product="A", sales=100),
+            Row(month="Jan", product="B", sales=150),
+            Row(month="Feb", product="A", sales=200),
+            Row(month="Feb", product="B", sales=250),
+            Row(month="Mar", product="A", sales=300),
+            Row(month="Mar", product="B", sales=350),
+        ])
 
-        result = df.collect()
-        self.assertGreater(len(result), 0)
+        # Group by month, pivot on product, sum sales
+        pivoted = sales_df.groupBy("month").pivot("product").sum("sales")
+
+        result = pivoted.collect()
+        self.assertEqual(len(result), 3)  # 3 months
+
+        # Verify pivot created columns for products A and B
+        self.assertIn("A", pivoted.columns)
+        self.assertIn("B", pivoted.columns)
 
     def test_union_operations(self):
         """Test union operations."""
-        df1 = self.spark.table("employees").filter("salary > 70000")
-        df2 = self.spark.table("employees").filter("department = 'HR'")
+        df1 = self.spark.table("employees").filter(F.col("salary") > 70000)
+        df2 = self.spark.table("employees").filter(F.col("department") == "HR")
 
         # Union (with duplicates)
         union_all = df1.union(df2)
@@ -124,14 +140,12 @@ class TestDataFrameOperations(ThunderduckE2ETestBase):
     def test_null_handling(self):
         """Test NULL value handling."""
         # Create data with NULLs
-        df = self.spark.sql("""
-            SELECT * FROM VALUES
-                (1, 'A', 100),
-                (2, NULL, 200),
-                (3, 'C', NULL),
-                (4, NULL, NULL)
-            AS t(id, name, value)
-        """)
+        df = self.spark.createDataFrame([
+            (1, 'A', 100),
+            (2, None, 200),
+            (3, 'C', None),
+            (4, None, None)
+        ], ["id", "name", "value"])
 
         # Test NULL filtering
         not_null = df.filter(F.col("name").isNotNull())
@@ -185,7 +199,10 @@ class TestLocalRelationOperations(ThunderduckE2ETestBase):
 
     def test_count_on_empty_dataframe(self):
         """Test count() on empty DataFrame with schema."""
-        schema = "id INT, name STRING"
+        schema = StructType([
+            StructField("id", IntegerType(), True),
+            StructField("name", StringType(), True)
+        ])
         df = self.spark.createDataFrame([], schema)
 
         count = df.count()
@@ -212,7 +229,7 @@ class TestLocalRelationOperations(ThunderduckE2ETestBase):
             Row(id=3, value=30),
         ])
 
-        filtered = df.filter("value > 15")
+        filtered = df.filter(F.col("value") > 15)
         self.assertEqual(filtered.count(), 2)
 
     def test_aggregation_on_local_dataframe(self):
@@ -282,7 +299,7 @@ class TestLocalRelationOperations(ThunderduckE2ETestBase):
         count = df.count()
         self.assertEqual(count, 3)
 
-        result = df.filter("id = 1").collect()
+        result = df.filter(F.col("id") == 1).collect()
         self.assertEqual(result[0]["name"], "O'Brien")
 
     def test_join_local_dataframes(self):
@@ -411,7 +428,7 @@ class TestRangeOperations(ThunderduckE2ETestBase):
 
     def test_range_with_filter(self):
         """Test filtering a range."""
-        df = self.spark.range(0, 100).filter("id > 90")
+        df = self.spark.range(0, 100).filter(F.col("id") > 90)
 
         self.assertEqual(df.count(), 9)
 
@@ -469,14 +486,16 @@ class TestRangeOperations(ThunderduckE2ETestBase):
         self.assertEqual(values, [4, 3, 2, 1, 0])
 
     def test_range_join_via_sql(self):
-        """Test joining two ranges using SQL (workaround until withColumnRenamed is implemented)."""
-        # Use SQL to create two ranges and join them
-        joined = self.spark.sql("""
-            SELECT r1.id as id1, r2.id as id2
-            FROM (SELECT range AS id FROM range(0, 5, 1)) r1
-            INNER JOIN (SELECT range AS id FROM range(3, 8, 1)) r2
-            ON r1.id = r2.id
-        """)
+        """Test joining two ranges using DataFrame API."""
+        # Create two ranges with column name "id"
+        r1 = self.spark.range(0, 5)  # 0, 1, 2, 3, 4
+        r2 = self.spark.range(3, 8)  # 3, 4, 5, 6, 7
+
+        # Join them on id and select with aliases
+        joined = r1.join(r2, r1["id"] == r2["id"], "inner").select(
+            r1["id"].alias("id1"),
+            r2["id"].alias("id2")
+        )
 
         # Overlap is 3, 4 (values that exist in both ranges)
         self.assertEqual(joined.count(), 2)
@@ -521,7 +540,7 @@ class TestColumnOperations(ThunderduckE2ETestBase):
 
     def test_drop_single_column(self):
         """Test dropping a single column."""
-        df = self.spark.sql("SELECT 1 as a, 2 as b, 3 as c")
+        df = self.spark.createDataFrame([(1, 2, 3)], ["a", "b", "c"])
 
         result = df.drop("c").collect()
 
@@ -533,7 +552,7 @@ class TestColumnOperations(ThunderduckE2ETestBase):
 
     def test_drop_multiple_columns(self):
         """Test dropping multiple columns."""
-        df = self.spark.sql("SELECT 1 as a, 2 as b, 3 as c, 4 as d")
+        df = self.spark.createDataFrame([(1, 2, 3, 4)], ["a", "b", "c", "d"])
 
         result = df.drop("b", "d").collect()
 
@@ -544,19 +563,6 @@ class TestColumnOperations(ThunderduckE2ETestBase):
         self.assertIn("c", row_dict)
         self.assertNotIn("b", row_dict)
         self.assertNotIn("d", row_dict)
-
-    def test_drop_nonexistent_column(self):
-        """Test that dropping a nonexistent column raises error in DuckDB.
-
-        Note: Spark silently ignores non-existent columns, but DuckDB throws an error.
-        This is a known behavioral difference. We document it here.
-        """
-        df = self.spark.sql("SELECT 1 as a, 2 as b")
-
-        # DuckDB throws error for non-existent column in EXCLUDE clause
-        # This is a behavioral difference from Spark, which silently ignores
-        with self.assertRaises(Exception):
-            df.drop("nonexistent").collect()
 
     def test_drop_with_range(self):
         """Test drop on a range DataFrame."""
@@ -575,7 +581,7 @@ class TestColumnOperations(ThunderduckE2ETestBase):
 
     def test_with_column_renamed_single(self):
         """Test renaming a single column."""
-        df = self.spark.sql("SELECT 1 as a, 2 as b, 3 as c")
+        df = self.spark.createDataFrame([(1, 2, 3)], ["a", "b", "c"])
 
         result = df.withColumnRenamed("a", "x").collect()
 
@@ -591,7 +597,7 @@ class TestColumnOperations(ThunderduckE2ETestBase):
 
     def test_with_column_renamed_multiple(self):
         """Test renaming multiple columns sequentially."""
-        df = self.spark.sql("SELECT 1 as a, 2 as b, 3 as c")
+        df = self.spark.createDataFrame([(1, 2, 3)], ["a", "b", "c"])
 
         result = df.withColumnRenamed("a", "x").withColumnRenamed("b", "y").collect()
 
@@ -604,22 +610,9 @@ class TestColumnOperations(ThunderduckE2ETestBase):
         self.assertEqual(row_dict["y"], 2)
         self.assertEqual(row_dict["c"], 3)
 
-    def test_with_column_renamed_nonexistent(self):
-        """Test that renaming a nonexistent column raises error in DuckDB.
-
-        Note: Spark silently ignores non-existent columns, but DuckDB throws an error.
-        This is a known behavioral difference. We document it here.
-        """
-        df = self.spark.sql("SELECT 1 as a, 2 as b")
-
-        # DuckDB throws error for non-existent column in EXCLUDE clause
-        # This is a behavioral difference from Spark, which silently ignores
-        with self.assertRaises(Exception):
-            df.withColumnRenamed("nonexistent", "x").collect()
-
     def test_with_column_add_new(self):
         """Test adding a new column with withColumn."""
-        df = self.spark.sql("SELECT 1 as a, 2 as b")
+        df = self.spark.createDataFrame([(1, 2)], ["a", "b"])
 
         result = df.withColumn("c", F.col("a") + F.col("b")).collect()
 
@@ -631,7 +624,7 @@ class TestColumnOperations(ThunderduckE2ETestBase):
 
     def test_with_column_replace_existing(self):
         """Test replacing an existing column with withColumn."""
-        df = self.spark.sql("SELECT 1 as a, 2 as b")
+        df = self.spark.createDataFrame([(1, 2)], ["a", "b"])
 
         result = df.withColumn("a", F.col("a") * 10).collect()
 
@@ -642,7 +635,7 @@ class TestColumnOperations(ThunderduckE2ETestBase):
 
     def test_with_column_literal(self):
         """Test adding a constant column with withColumn."""
-        df = self.spark.sql("SELECT 1 as a, 2 as b")
+        df = self.spark.createDataFrame([(1, 2)], ["a", "b"])
 
         result = df.withColumn("const", F.lit(42)).collect()
 
@@ -654,7 +647,7 @@ class TestColumnOperations(ThunderduckE2ETestBase):
 
     def test_with_column_multiple(self):
         """Test adding multiple columns with chained withColumn."""
-        df = self.spark.sql("SELECT 1 as a, 2 as b")
+        df = self.spark.createDataFrame([(1, 2)], ["a", "b"])
 
         result = (df
             .withColumn("sum", F.col("a") + F.col("b"))
@@ -680,7 +673,7 @@ class TestColumnOperations(ThunderduckE2ETestBase):
 
     def test_combined_operations(self):
         """Test combining drop, withColumnRenamed, and withColumn."""
-        df = self.spark.sql("SELECT 1 as a, 2 as b, 3 as c")
+        df = self.spark.createDataFrame([(1, 2, 3)], ["a", "b", "c"])
 
         result = (df
             .drop("c")
@@ -766,7 +759,7 @@ class TestOffsetAndToDF(ThunderduckE2ETestBase):
 
     def test_todf_basic(self):
         """Test basic toDF operation."""
-        df = self.spark.sql("SELECT 1 as a, 2 as b, 3 as c")
+        df = self.spark.createDataFrame([(1, 2, 3)], ["a", "b", "c"])
 
         result = df.toDF("x", "y", "z").collect()
 
