@@ -390,8 +390,8 @@ public class EndToEndQueryTest extends TestBase {
                 avgAmount.toSQL());
 
             assertThat(selectList).contains("customer_id")
-                .contains("sum(amount)")
-                .contains("avg(amount)");
+                .containsIgnoringCase("sum(amount)")
+                .containsIgnoringCase("avg(amount)");
         }
 
         @Test

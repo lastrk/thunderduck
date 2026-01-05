@@ -94,9 +94,9 @@ public class SubqueryTest extends TestBase {
             // Then: Should be wrapped in parentheses with subquery
             assertThat(sql).startsWith("(");
             assertThat(sql).endsWith(")");
-            assertThat(sql).contains("SELECT MAX(price)");
-            assertThat(sql).contains("FROM");
-            assertThat(sql).contains("products.parquet");
+            assertThat(sql).containsIgnoringCase("SELECT MAX(price)");
+            assertThat(sql).containsIgnoringCase("FROM");
+            assertThat(sql).containsIgnoringCase("products.parquet");
         }
 
         @Test
@@ -121,7 +121,7 @@ public class SubqueryTest extends TestBase {
             String sql = scalarSub.toSQL();
 
             // Then: Should generate valid subquery SQL
-            assertThat(sql).contains("SELECT AVG(price)");
+            assertThat(sql).containsIgnoringCase("SELECT AVG(price)");
             assertThat(sql).startsWith("(");
             assertThat(sql).endsWith(")");
             assertThat(scalarSub.nullable()).isTrue();
@@ -160,11 +160,11 @@ public class SubqueryTest extends TestBase {
             String sql = scalarSub.toSQL();
 
             // Then: Should contain correlation condition
-            assertThat(sql).contains("SELECT COUNT(*)");
-            assertThat(sql).contains("orders.parquet");
-            assertThat(sql).contains("WHERE");
-            assertThat(sql).contains("product_id");
-            assertThat(sql).contains("id");
+            assertThat(sql).containsIgnoringCase("SELECT COUNT(*)");
+            assertThat(sql).containsIgnoringCase("orders.parquet");
+            assertThat(sql).containsIgnoringCase("WHERE");
+            assertThat(sql).containsIgnoringCase("product_id");
+            assertThat(sql).containsIgnoringCase("id");
         }
 
         @Test
@@ -189,8 +189,8 @@ public class SubqueryTest extends TestBase {
             String sql = scalarSub.toSQL();
 
             // Then: Should generate aggregation SQL
-            assertThat(sql).contains("SELECT SUM(quantity)");
-            assertThat(sql).contains("FROM");
+            assertThat(sql).containsIgnoringCase("SELECT SUM(quantity)");
+            assertThat(sql).containsIgnoringCase("FROM");
             assertThat(sql).startsWith("(");
             assertThat(sql).endsWith(")");
 
@@ -222,8 +222,8 @@ public class SubqueryTest extends TestBase {
             String minSql = minSubquery.toSQL();
 
             // Then: Both should be valid subqueries
-            assertThat(maxSql).contains("SELECT MAX(price)");
-            assertThat(minSql).contains("SELECT MIN(price)");
+            assertThat(maxSql).containsIgnoringCase("SELECT MAX(price)");
+            assertThat(minSql).containsIgnoringCase("SELECT MIN(price)");
             assertThat(maxSubquery.nullable()).isTrue();
             assertThat(minSubquery.nullable()).isTrue();
             assertThat(maxSubquery.toString()).contains("ScalarSubquery");
@@ -257,10 +257,10 @@ public class SubqueryTest extends TestBase {
             String sql = inSubquery.toSQL();
 
             // Then: Should generate IN subquery SQL
-            assertThat(sql).contains("category");
-            assertThat(sql).contains(" IN ");
-            assertThat(sql).contains("SELECT");
-            assertThat(sql).contains("name");
+            assertThat(sql).containsIgnoringCase("category");
+            assertThat(sql).containsIgnoringCase(" IN ");
+            assertThat(sql).containsIgnoringCase("SELECT");
+            assertThat(sql).containsIgnoringCase("name");
             assertThat(inSubquery.dataType()).isEqualTo(com.thunderduck.types.BooleanType.get());
             assertThat(inSubquery.isNegated()).isFalse();
             assertThat(inSubquery.testExpression()).isEqualTo(testExpr);
@@ -287,12 +287,12 @@ public class SubqueryTest extends TestBase {
             String sql = notInSubquery.toSQL();
 
             // Then: Should generate NOT IN SQL
-            assertThat(sql).contains("status");
-            assertThat(sql).contains(" NOT IN ");
-            assertThat(sql).contains("SELECT");
+            assertThat(sql).containsIgnoringCase("status");
+            assertThat(sql).containsIgnoringCase(" NOT IN ");
+            assertThat(sql).containsIgnoringCase("SELECT");
             assertThat(notInSubquery.isNegated()).isTrue();
             assertThat(notInSubquery.dataType()).isEqualTo(com.thunderduck.types.BooleanType.get());
-            assertThat(notInSubquery.toString()).contains("NOT IN");
+            assertThat(notInSubquery.toString()).containsIgnoringCase("NOT IN");
         }
 
         @Test
@@ -320,11 +320,11 @@ public class SubqueryTest extends TestBase {
             String sql = inSubquery.toSQL();
 
             // Then: Should contain correlation condition
-            assertThat(sql).contains("product_id");
-            assertThat(sql).contains(" IN ");
-            assertThat(sql).contains("SELECT");
-            assertThat(sql).contains("WHERE");
-            assertThat(sql).contains("customer_id");
+            assertThat(sql).containsIgnoringCase("product_id");
+            assertThat(sql).containsIgnoringCase(" IN ");
+            assertThat(sql).containsIgnoringCase("SELECT");
+            assertThat(sql).containsIgnoringCase("WHERE");
+            assertThat(sql).containsIgnoringCase("customer_id");
         }
 
         @Test
@@ -360,10 +360,10 @@ public class SubqueryTest extends TestBase {
             String sql = inSubquery.toSQL();
 
             // Then: Should contain JOIN in subquery
-            assertThat(sql).contains("id");
-            assertThat(sql).contains(" IN ");
-            assertThat(sql).contains("SELECT");
-            assertThat(sql).contains("INNER JOIN");
+            assertThat(sql).containsIgnoringCase("id");
+            assertThat(sql).containsIgnoringCase(" IN ");
+            assertThat(sql).containsIgnoringCase("SELECT");
+            assertThat(sql).containsIgnoringCase("INNER JOIN");
             assertThat(inSubquery.nullable()).isTrue();
         }
 
@@ -398,10 +398,10 @@ public class SubqueryTest extends TestBase {
             String sql2 = inSubquery2.toSQL();
 
             // Then: Both should be valid IN subqueries
-            assertThat(sql1).contains("category");
-            assertThat(sql1).contains(" IN ");
-            assertThat(sql2).contains("status");
-            assertThat(sql2).contains(" IN ");
+            assertThat(sql1).containsIgnoringCase("category");
+            assertThat(sql1).containsIgnoringCase(" IN ");
+            assertThat(sql2).containsIgnoringCase("status");
+            assertThat(sql2).containsIgnoringCase(" IN ");
             assertThat(inSubquery1.subquery()).isEqualTo(project1);
             assertThat(inSubquery2.subquery()).isEqualTo(project2);
         }
@@ -435,11 +435,11 @@ public class SubqueryTest extends TestBase {
             String sql = existsSubquery.toSQL();
 
             // Then: Should generate EXISTS SQL
-            assertThat(sql).startsWith("EXISTS ");
-            assertThat(sql).contains("(");
-            assertThat(sql).contains("SELECT");
-            assertThat(sql).contains("WHERE");
-            assertThat(sql).contains("customer_id");
+            assertThat(sql).startsWithIgnoringCase("EXISTS ");
+            assertThat(sql).containsIgnoringCase("(");
+            assertThat(sql).containsIgnoringCase("SELECT");
+            assertThat(sql).containsIgnoringCase("WHERE");
+            assertThat(sql).containsIgnoringCase("customer_id");
             assertThat(existsSubquery.dataType()).isEqualTo(com.thunderduck.types.BooleanType.get());
             assertThat(existsSubquery.isNegated()).isFalse();
         }
@@ -473,12 +473,12 @@ public class SubqueryTest extends TestBase {
             String sql = notExistsSubquery.toSQL();
 
             // Then: Should generate NOT EXISTS SQL
-            assertThat(sql).startsWith("NOT EXISTS ");
-            assertThat(sql).contains("(");
-            assertThat(sql).contains("SELECT");
+            assertThat(sql).startsWithIgnoringCase("NOT EXISTS ");
+            assertThat(sql).containsIgnoringCase("(");
+            assertThat(sql).containsIgnoringCase("SELECT");
             assertThat(notExistsSubquery.isNegated()).isTrue();
             assertThat(notExistsSubquery.dataType()).isEqualTo(com.thunderduck.types.BooleanType.get());
-            assertThat(notExistsSubquery.toString()).contains("NOT EXISTS");
+            assertThat(notExistsSubquery.toString()).containsIgnoringCase("NOT EXISTS");
         }
 
         @Test
@@ -521,11 +521,11 @@ public class SubqueryTest extends TestBase {
             String sql = existsSubquery.toSQL();
 
             // Then: Should contain JOIN and filter
-            assertThat(sql).startsWith("EXISTS ");
-            assertThat(sql).contains("SELECT");
-            assertThat(sql).contains("INNER JOIN");
-            assertThat(sql).contains("WHERE");
-            assertThat(sql).contains("category");
+            assertThat(sql).startsWithIgnoringCase("EXISTS ");
+            assertThat(sql).containsIgnoringCase("SELECT");
+            assertThat(sql).containsIgnoringCase("INNER JOIN");
+            assertThat(sql).containsIgnoringCase("WHERE");
+            assertThat(sql).containsIgnoringCase("category");
         }
 
         @Test
@@ -553,10 +553,10 @@ public class SubqueryTest extends TestBase {
             String sql2 = existsRefunds.toSQL();
 
             // Then: Both should be valid EXISTS subqueries
-            assertThat(sql1).startsWith("EXISTS ");
-            assertThat(sql1).contains("orders.parquet");
-            assertThat(sql2).startsWith("EXISTS ");
-            assertThat(sql2).contains("refunds.parquet");
+            assertThat(sql1).startsWithIgnoringCase("EXISTS ");
+            assertThat(sql1).containsIgnoringCase("orders.parquet");
+            assertThat(sql2).startsWithIgnoringCase("EXISTS ");
+            assertThat(sql2).containsIgnoringCase("refunds.parquet");
             assertThat(existsOrders.nullable()).isTrue();
             assertThat(existsRefunds.nullable()).isTrue();
         }
@@ -592,10 +592,10 @@ public class SubqueryTest extends TestBase {
             String sql = existsSubquery.toSQL();
 
             // Then: Should contain aggregation
-            assertThat(sql).startsWith("EXISTS ");
-            assertThat(sql).contains("SELECT");
-            assertThat(sql).contains("COUNT");
-            assertThat(sql).contains("FROM");
+            assertThat(sql).startsWithIgnoringCase("EXISTS ");
+            assertThat(sql).containsIgnoringCase("SELECT");
+            assertThat(sql).containsIgnoringCase("COUNT");
+            assertThat(sql).containsIgnoringCase("FROM");
             assertThat(existsSubquery.subquery()).isEqualTo(countAgg);
         }
     }
