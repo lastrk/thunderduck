@@ -313,7 +313,7 @@ public class FunctionRegistryTest extends TestBase {
 
             String result = FunctionRegistry.translate("sum_distinct", "amount");
 
-            assertThat(result).isEqualTo("SUM(DISTINCT amount)");
+            assertThat(result).isEqualTo("CAST(SUM(DISTINCT amount) AS BIGINT)");
         }
 
         @Test
