@@ -92,6 +92,9 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Build project modules
+        run: mvn install -DskipTests -B
+
       - name: Run unit tests
         run: mvn test -B -pl tests
 
