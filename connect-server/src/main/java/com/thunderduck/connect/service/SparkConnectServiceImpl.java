@@ -918,6 +918,12 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
      * @return the translated SQL string
      */
     private String translateSparkFunctions(String sql) {
+        // Defense-in-depth: Rewrite Spark function names to DuckDB equivalents
+        // This handles simple 1:1 name mappings (DIRECT_MAPPINGS) in SQL strings
+        // Note: RawSQLExpression.toSQL() also calls this, but we do it here as well
+        // to catch any SQL strings that bypass RawSQLExpression
+        sql = com.thunderduck.functions.FunctionRegistry.rewriteSQL(sql);
+
         // Translate NAMED_STRUCT to struct_pack
         sql = translateNamedStruct(sql);
 

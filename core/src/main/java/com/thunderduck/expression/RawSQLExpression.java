@@ -74,10 +74,12 @@ public class RawSQLExpression extends Expression {
 
     @Override
     public String toSQL() {
-        // Return the SQL text as-is without wrapping
+        // Translate Spark function names to DuckDB equivalents before returning
+        // This enables SQL expression strings like selectExpr("collect_list(id)") to work
+        // Note: Only handles DIRECT_MAPPINGS (simple 1:1 name replacements)
         // Wrapping in parentheses breaks AS clauses (e.g., "salary * 2 as doubled")
         // and is not needed since SQL expression strings are already complete expressions
-        return sqlText;
+        return com.thunderduck.functions.FunctionRegistry.rewriteSQL(sqlText);
     }
 
     @Override

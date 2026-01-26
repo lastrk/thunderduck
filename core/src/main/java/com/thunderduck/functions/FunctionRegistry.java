@@ -72,6 +72,61 @@ public class FunctionRegistry {
     }
 
     /**
+     * Rewrites SQL expression strings by replacing Spark function names with DuckDB equivalents.
+     *
+     * <p>This method performs regex-based function name translation for SQL expression strings.
+     * It handles DIRECT_MAPPINGS (simple 1:1 name replacements) but not CUSTOM_TRANSLATORS
+     * (which require argument transformation and AST-level processing).
+     *
+     * <p>Edge cases handled:
+     * <ul>
+     *   <li>Case insensitive matching (Spark SQL is case insensitive)</li>
+     *   <li>Word boundaries to avoid partial matches</li>
+     *   <li>Only matches function names followed by '(' to avoid column name conflicts</li>
+     * </ul>
+     *
+     * <p>Limitations:
+     * <ul>
+     *   <li>Does not handle CUSTOM_TRANSLATORS (e.g., array_contains with argument reordering)</li>
+     *   <li>May not correctly handle quoted strings containing function names</li>
+     *   <li>Does not validate SQL syntax or function arguments</li>
+     * </ul>
+     *
+     * @param sql the SQL expression string to rewrite
+     * @return the rewritten SQL with DuckDB function names
+     */
+    public static String rewriteSQL(String sql) {
+        if (sql == null || sql.isEmpty()) {
+            return sql;
+        }
+
+        String result = sql;
+
+        // Only rewrite DIRECT_MAPPINGS (simple 1:1 replacements)
+        // Skip CUSTOM_TRANSLATORS as they require AST-level argument transformation
+        for (Map.Entry<String, String> entry : DIRECT_MAPPINGS.entrySet()) {
+            String sparkName = entry.getKey();
+            String duckdbName = entry.getValue();
+
+            // Skip if names are already the same (no translation needed)
+            if (sparkName.equalsIgnoreCase(duckdbName)) {
+                continue;
+            }
+
+            // Pattern: function_name followed by '(' (with optional whitespace)
+            // Use word boundaries to avoid partial matches (e.g., don't match "my_collect_list")
+            // Use positive lookahead (?=\s*\() to ensure followed by '('
+            // Case insensitive flag for Spark SQL compatibility
+            String pattern = "\\b" + sparkName + "(?=\\s*\\()";
+
+            // Replace all occurrences (case insensitive)
+            result = result.replaceAll("(?i)" + pattern, duckdbName);
+        }
+
+        return result;
+    }
+
+    /**
      * Checks if a function is supported.
      *
      * @param functionName the function name
