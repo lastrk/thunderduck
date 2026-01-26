@@ -75,19 +75,23 @@ public class FunctionRegistry {
      * Rewrites SQL expression strings by replacing Spark function names with DuckDB equivalents.
      *
      * <p>This method performs regex-based function name translation for SQL expression strings.
-     * It handles DIRECT_MAPPINGS (simple 1:1 name replacements) but not CUSTOM_TRANSLATORS
-     * (which require argument transformation and AST-level processing).
+     * It handles:
+     * <ul>
+     *   <li>DIRECT_MAPPINGS: Simple 1:1 name replacements (167+ functions)</li>
+     *   <li>Selected CUSTOM_TRANSLATORS: collect_list, collect_set, size (argument transformation)</li>
+     * </ul>
      *
      * <p>Edge cases handled:
      * <ul>
      *   <li>Case insensitive matching (Spark SQL is case insensitive)</li>
      *   <li>Word boundaries to avoid partial matches</li>
      *   <li>Only matches function names followed by '(' to avoid column name conflicts</li>
+     *   <li>Nested parentheses in function arguments</li>
      * </ul>
      *
      * <p>Limitations:
      * <ul>
-     *   <li>Does not handle CUSTOM_TRANSLATORS (e.g., array_contains with argument reordering)</li>
+     *   <li>Most CUSTOM_TRANSLATORS not supported (e.g., locate with argument reordering)</li>
      *   <li>May not correctly handle quoted strings containing function names</li>
      *   <li>Does not validate SQL syntax or function arguments</li>
      * </ul>
@@ -102,8 +106,7 @@ public class FunctionRegistry {
 
         String result = sql;
 
-        // Only rewrite DIRECT_MAPPINGS (simple 1:1 replacements)
-        // Skip CUSTOM_TRANSLATORS as they require AST-level argument transformation
+        // First, rewrite DIRECT_MAPPINGS (simple 1:1 replacements)
         for (Map.Entry<String, String> entry : DIRECT_MAPPINGS.entrySet()) {
             String sparkName = entry.getKey();
             String duckdbName = entry.getValue();
@@ -123,7 +126,176 @@ public class FunctionRegistry {
             result = result.replaceAll("(?i)" + pattern, duckdbName);
         }
 
+        // Then, handle selected CUSTOM_TRANSLATORS (must be done after DIRECT_MAPPINGS)
+        // These require argument extraction and transformation
+        // We do these after DIRECT_MAPPINGS so that function arguments are already translated
+        result = rewriteCollectList(result);
+        result = rewriteCollectSet(result);
+        result = rewriteSize(result);
+
         return result;
+    }
+
+    /**
+     * Rewrites collect_list() function calls in SQL strings.
+     * Spark: collect_list(col)
+     * DuckDB: list(col) FILTER (WHERE col IS NOT NULL)
+     */
+    private static String rewriteCollectList(String sql) {
+        return rewriteFunctionWithPattern(sql, "collect_list", (arg) ->
+            "list(" + arg + ") FILTER (WHERE " + arg + " IS NOT NULL)"
+        );
+    }
+
+    /**
+     * Rewrites collect_set() function calls in SQL strings.
+     * Spark: collect_set(col)
+     * DuckDB: list_distinct(list(col) FILTER (WHERE col IS NOT NULL))
+     */
+    private static String rewriteCollectSet(String sql) {
+        return rewriteFunctionWithPattern(sql, "collect_set", (arg) ->
+            "list_distinct(list(" + arg + ") FILTER (WHERE " + arg + " IS NOT NULL))"
+        );
+    }
+
+    /**
+     * Rewrites size() function calls in SQL strings.
+     * Spark: size(array_col)
+     * DuckDB: CAST(len(array_col) AS INTEGER)
+     */
+    private static String rewriteSize(String sql) {
+        return rewriteFunctionWithPattern(sql, "size", (arg) ->
+            "CAST(len(" + arg + ") AS INTEGER)"
+        );
+    }
+
+    /**
+     * Helper method to rewrite a function call by extracting its argument and applying a transformation.
+     *
+     * @param sql the SQL string
+     * @param functionName the function name to find (case insensitive)
+     * @param transformer function to transform the argument
+     * @return the rewritten SQL
+     */
+    private static String rewriteFunctionWithPattern(String sql, String functionName,
+                                                      java.util.function.Function<String, String> transformer) {
+        StringBuilder result = new StringBuilder();
+        int pos = 0;
+        String lowerSql = sql.toLowerCase();
+        String lowerFuncName = functionName.toLowerCase();
+
+        while (pos < sql.length()) {
+            // Find next occurrence of function name (case insensitive)
+            int funcStart = lowerSql.indexOf(lowerFuncName, pos);
+            if (funcStart == -1) {
+                // No more occurrences, append rest of string
+                result.append(sql.substring(pos));
+                break;
+            }
+
+            // Check if this is a word boundary (not part of a larger identifier)
+            // Identifiers can contain letters, digits, and underscores
+            if (funcStart > 0) {
+                char prevChar = sql.charAt(funcStart - 1);
+                if (Character.isLetterOrDigit(prevChar) || prevChar == '_') {
+                    // Part of larger identifier, skip it
+                    result.append(sql.substring(pos, funcStart + lowerFuncName.length()));
+                    pos = funcStart + lowerFuncName.length();
+                    continue;
+                }
+            }
+
+            // Check if followed by '(' (with optional whitespace)
+            int parenStart = funcStart + functionName.length();
+            while (parenStart < sql.length() && Character.isWhitespace(sql.charAt(parenStart))) {
+                parenStart++;
+            }
+
+            if (parenStart >= sql.length() || sql.charAt(parenStart) != '(') {
+                // Not followed by '(', not a function call
+                result.append(sql.substring(pos, funcStart + lowerFuncName.length()));
+                pos = funcStart + lowerFuncName.length();
+                continue;
+            }
+
+            // Found a function call, extract the argument
+            int parenEnd = findMatchingParen(sql, parenStart);
+            if (parenEnd == -1) {
+                // No matching paren, skip this occurrence
+                result.append(sql.substring(pos, funcStart + lowerFuncName.length()));
+                pos = funcStart + lowerFuncName.length();
+                continue;
+            }
+
+            // Extract the argument (everything between the parentheses)
+            String arg = sql.substring(parenStart + 1, parenEnd).trim();
+
+            // Append everything before the function call
+            result.append(sql.substring(pos, funcStart));
+
+            // Apply the transformation
+            result.append(transformer.apply(arg));
+
+            // Move position past the closing paren
+            pos = parenEnd + 1;
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * Finds the matching closing parenthesis for an opening parenthesis.
+     *
+     * @param sql the SQL string
+     * @param openParenPos the position of the opening parenthesis
+     * @return the position of the matching closing parenthesis, or -1 if not found
+     */
+    private static int findMatchingParen(String sql, int openParenPos) {
+        if (openParenPos >= sql.length() || sql.charAt(openParenPos) != '(') {
+            return -1;
+        }
+
+        int depth = 0;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+
+        for (int i = openParenPos; i < sql.length(); i++) {
+            char c = sql.charAt(i);
+
+            // Handle string literals (single quotes)
+            if (c == '\'' && !inDoubleQuote) {
+                // Check if escaped
+                if (i > 0 && sql.charAt(i - 1) == '\\') {
+                    continue;
+                }
+                inSingleQuote = !inSingleQuote;
+                continue;
+            }
+
+            // Handle identifiers (double quotes)
+            if (c == '"' && !inSingleQuote) {
+                // Check if escaped
+                if (i > 0 && sql.charAt(i - 1) == '\\') {
+                    continue;
+                }
+                inDoubleQuote = !inDoubleQuote;
+                continue;
+            }
+
+            // Only count parentheses outside of quotes
+            if (!inSingleQuote && !inDoubleQuote) {
+                if (c == '(') {
+                    depth++;
+                } else if (c == ')') {
+                    depth--;
+                    if (depth == 0) {
+                        return i;
+                    }
+                }
+            }
+        }
+
+        return -1; // No matching paren found
     }
 
     /**

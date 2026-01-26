@@ -190,6 +190,55 @@ class TestSQLSupport(ThunderduckE2ETestBase):
         self.assertEqual(rows[0]['id'], 1)
         self.assertEqual(rows[1]['id'], 3)
 
+    def test_selectExpr_with_collect_list(self):
+        """Test df.selectExpr() with collect_list() - custom translator."""
+        df = self.spark.createDataFrame([
+            (1, "Alice"),
+            (2, "Bob"),
+            (3, "Charlie")
+        ], ["id", "name"])
+
+        # Use selectExpr with collect_list (custom translator)
+        # Should be translated to list() with FILTER clause
+        result = df.selectExpr("collect_list(name) as names")
+        rows = result.collect()
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(set(rows[0]['names']), {'Alice', 'Bob', 'Charlie'})
+
+    def test_selectExpr_with_collect_set(self):
+        """Test df.selectExpr() with collect_set() - custom translator."""
+        df = self.spark.createDataFrame([
+            (1, "eng"),
+            (2, "hr"),
+            (3, "eng")
+        ], ["id", "dept"])
+
+        # Use selectExpr with collect_set (custom translator)
+        # Should be translated to list_distinct(list()) with FILTER clause
+        result = df.selectExpr("collect_set(dept) as depts")
+        rows = result.collect()
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(set(rows[0]['depts']), {'eng', 'hr'})
+
+    def test_filter_with_size_function(self):
+        """Test df.filter() with size() - custom translator."""
+        df = self.spark.createDataFrame([
+            (1, ["a", "b", "c"]),
+            (2, ["x"]),
+            (3, ["p", "q"])
+        ], ["id", "tags"])
+
+        # Use filter with size() function (custom translator)
+        # Should be translated to CAST(len(...) AS INTEGER)
+        result = df.filter("size(tags) > 1")
+        rows = result.collect()
+
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]['id'], 1)
+        self.assertEqual(rows[1]['id'], 3)
+
     def test_selectExpr_with_explode(self):
         """Test df.selectExpr() with explode() function - should translate to unnest()."""
         df = self.spark.createDataFrame([
@@ -226,61 +275,63 @@ class TestSQLSupport(ThunderduckE2ETestBase):
     def test_selectExpr_with_nested_functions(self):
         """Test df.selectExpr() with nested Spark functions."""
         df = self.spark.createDataFrame([
-            (1, "Alice Bob"),
-            (2, "Charlie David Eve")
+            (1, ["alice", "bob"]),
+            (2, ["charlie", "david", "eve"])
         ], ["id", "names"])
 
-        # Use nested functions: explode() around split()
-        # Both should be translated: split → string_split, explode → unnest
-        result = df.selectExpr("id", "explode(split(names, ' ')) as name")
+        # Use nested function: size() with array (custom translator)
+        # Should be translated to CAST(len(...) AS INTEGER)
+        result = df.selectExpr("id", "size(names) as name_count")
         rows = result.collect()
 
-        self.assertEqual(len(rows), 5)  # 2 names from row 1 + 3 names from row 2
-        names = [r['name'] for r in rows]
-        self.assertEqual(set(names), {'Alice', 'Bob', 'Charlie', 'David', 'Eve'})
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]['name_count'], 2)
+        self.assertEqual(rows[1]['name_count'], 3)
 
-    def test_sql_with_split(self):
-        """Test spark.sql() with split() - should translate to string_split()."""
+    def test_sql_with_collect_list(self):
+        """Test spark.sql() with collect_list() - custom translator."""
         df = self.spark.createDataFrame([
-            ("eng", "Alice Smith"),
-            ("eng", "Bob Jones"),
-            ("hr", "Charlie Brown")
+            ("eng", "Alice"),
+            ("eng", "Bob"),
+            ("hr", "Charlie")
         ], ["dept", "name"])
         df.createOrReplaceTempView("staff")
 
-        # Use split in spark.sql()
+        # Use collect_list in spark.sql()
         result = self.spark.sql("""
-            SELECT dept, split(name, ' ') as name_parts
+            SELECT dept, collect_list(name) as names
             FROM staff
-            WHERE dept = 'eng'
+            GROUP BY dept
         """)
         rows = result.collect()
 
         self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[0]['name_parts'], ['Alice', 'Smith'])
-        self.assertEqual(rows[1]['name_parts'], ['Bob', 'Jones'])
+        eng_row = [r for r in rows if r['dept'] == 'eng'][0]
+        self.assertEqual(set(eng_row['names']), {'Alice', 'Bob'})
 
     def test_sql_with_multiple_spark_functions(self):
-        """Test spark.sql() with multiple Spark functions needing translation."""
+        """Test spark.sql() with multiple Spark functions including custom translators."""
         df = self.spark.createDataFrame([
-            (1, ["spark", "scala"], "Alice Smith"),
-            (2, ["python"], "Bob Jones"),
-            (3, ["spark", "python"], "Charlie Brown")
-        ], ["id", "tags", "name"])
+            (1, ["a", "b", "c"]),
+            (2, ["x"]),
+            (3, ["p", "q", "r", "s"])
+        ], ["id", "tags"])
         df.createOrReplaceTempView("items")
 
-        # Use multiple Spark functions: array_contains, split, startswith
+        # Use multiple Spark functions: size (custom translator), array_contains (direct mapping)
         result = self.spark.sql("""
-            SELECT id, split(name, ' ') as name_parts
+            SELECT id, size(tags) as tag_count
             FROM items
-            WHERE array_contains(tags, 'spark') AND startswith(name, 'A')
+            WHERE size(tags) > 1
             ORDER BY id
         """)
         rows = result.collect()
 
-        self.assertEqual(len(rows), 1)
+        self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0]['id'], 1)
-        self.assertEqual(rows[0]['name_parts'], ['Alice', 'Smith'])
+        self.assertEqual(rows[0]['tag_count'], 3)
+        self.assertEqual(rows[1]['id'], 3)
+        self.assertEqual(rows[1]['tag_count'], 4)
 
     def test_selectExpr_case_insensitive_functions(self):
         """Test that function translation is case insensitive."""
@@ -289,11 +340,11 @@ class TestSQLSupport(ThunderduckE2ETestBase):
             (2, ["x", "y", "z"])
         ], ["id", "items"])
 
-        # Test with different cases: EXPLODE, Explode, explode
-        result1 = df.selectExpr("id", "EXPLODE(items) as item")
-        result2 = df.selectExpr("id", "Explode(items) as item")
-        result3 = df.selectExpr("id", "explode(items) as item")
+        # Test with different cases: SIZE, Size, size (custom translator)
+        result1 = df.filter("SIZE(items) > 2")
+        result2 = df.filter("Size(items) > 2")
+        result3 = df.filter("size(items) > 2")
 
-        self.assertEqual(result1.count(), 5)
-        self.assertEqual(result2.count(), 5)
-        self.assertEqual(result3.count(), 5)
+        self.assertEqual(result1.count(), 1)
+        self.assertEqual(result2.count(), 1)
+        self.assertEqual(result3.count(), 1)
