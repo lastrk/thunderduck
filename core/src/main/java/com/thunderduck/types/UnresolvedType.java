@@ -110,6 +110,13 @@ public class UnresolvedType extends DataType {
     }
 
     /**
+     * Creates an UnresolvedType for a raw SQL expression string.
+     */
+    public static UnresolvedType expressionString() {
+        return new UnresolvedType("expression_string");
+    }
+
+    /**
      * Checks if a DataType is unresolved (needs resolution).
      *
      * @param type the type to check

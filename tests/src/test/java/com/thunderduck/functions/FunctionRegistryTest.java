@@ -603,4 +603,336 @@ public class FunctionRegistryTest extends TestBase {
             assertThat(result).isEqualTo("if(age > 18, 'adult', 'minor')");
         }
     }
+
+    // ==================== SQL Rewriting Tests ====================
+
+    @Nested
+    @DisplayName("SQL Expression String Rewriting")
+    class SQLRewritingTests {
+
+        @Test
+        @DisplayName("TC-FUNC-051: rewriteSQL handles null input")
+        void testRewriteSQLNull() {
+            logStep("Rewrite null SQL should return null");
+
+            String result = FunctionRegistry.rewriteSQL(null);
+
+            assertThat(result).isNull();
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-052: rewriteSQL handles empty input")
+        void testRewriteSQLEmpty() {
+            logStep("Rewrite empty SQL should return empty");
+
+            String result = FunctionRegistry.rewriteSQL("");
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-053: rewriteSQL translates split to string_split")
+        void testRewriteSplit() {
+            logStep("Rewrite split() to string_split()");
+
+            String sql = "SELECT split(name, ' ') FROM users";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).isEqualTo("SELECT string_split(name, ' ') FROM users");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-054: rewriteSQL translates startswith to starts_with with whitespace")
+        void testRewriteStartswith() {
+            logStep("Rewrite startswith() to starts_with() with various whitespace");
+
+            String sql = "WHERE startswith  (name, 'A')";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).contains("starts_with  (name, 'A')");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-055: rewriteSQL translates explode to unnest")
+        void testRewriteExplode() {
+            logStep("Rewrite explode() to unnest()");
+
+            String sql = "SELECT explode(items) as item";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).isEqualTo("SELECT unnest(items) as item");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-056: rewriteSQL translates array_contains to list_contains")
+        void testRewriteArrayContains() {
+            logStep("Rewrite array_contains() to list_contains()");
+
+            String sql = "WHERE array_contains(tags, 'spark')";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).isEqualTo("WHERE list_contains(tags, 'spark')");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-057: rewriteSQL handles nested function calls")
+        void testRewriteNestedFunctions() {
+            logStep("Rewrite nested function calls");
+
+            String sql = "SELECT upper(split(name, ' ')) FROM users";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).isEqualTo("SELECT upper(string_split(name, ' ')) FROM users");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-058: rewriteSQL is case insensitive")
+        void testRewriteCaseInsensitive() {
+            logStep("Rewrite should handle various cases");
+
+            String sql1 = "SELECT EXPLODE(items)";
+            String sql2 = "SELECT Explode(items)";
+            String sql3 = "SELECT explode(items)";
+
+            String result1 = FunctionRegistry.rewriteSQL(sql1);
+            String result2 = FunctionRegistry.rewriteSQL(sql2);
+            String result3 = FunctionRegistry.rewriteSQL(sql3);
+
+            assertThat(result1).containsIgnoringCase("unnest(items)");
+            assertThat(result2).containsIgnoringCase("unnest(items)");
+            assertThat(result3).containsIgnoringCase("unnest(items)");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-059: rewriteSQL handles multiple function calls")
+        void testRewriteMultipleFunctions() {
+            logStep("Rewrite multiple different functions in one SQL");
+
+            String sql = "SELECT split(name, ' '), explode(items) FROM users WHERE array_contains(roles, 'admin') AND startswith(name, 'A')";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).contains("string_split(name, ' ')");
+            assertThat(result).contains("unnest(items)");
+            assertThat(result).contains("list_contains(roles, 'admin')");
+            assertThat(result).contains("starts_with(name, 'A')");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-060: rewriteSQL does not replace partial matches")
+        void testRewriteNoPartialMatch() {
+            logStep("Rewrite should not match partial function names");
+
+            String sql = "SELECT my_explode(items) FROM users";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            // Should NOT be translated because my_explode is different from explode
+            assertThat(result).isEqualTo("SELECT my_explode(items) FROM users");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-061: rewriteSQL preserves SQL structure")
+        void testRewritePreservesStructure() {
+            logStep("Rewrite should preserve SQL structure and formatting");
+
+            String sql = "SELECT\n  explode(items) as item,\n  split(name, ' ') as parts\nFROM users\nWHERE active = true";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).contains("\n");
+            assertThat(result).contains("unnest(items)");
+            assertThat(result).contains("string_split(name, ' ')");
+            assertThat(result).contains("as item");
+            assertThat(result).contains("as parts");
+            assertThat(result).contains("FROM users");
+            assertThat(result).contains("WHERE active = true");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-062: rewriteSQL handles complex nested expressions")
+        void testRewriteComplexNested() {
+            logStep("Rewrite complex nested expressions");
+
+            String sql = "SELECT concat(upper(split(name, ' ')), lower(split(dept, '-')))";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).contains("concat(upper(string_split(name, ' ')), lower(string_split(dept, '-')))");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-063: rewriteSQL skips functions with same names")
+        void testRewriteSkipsSameNames() {
+            logStep("Rewrite should skip functions where Spark and DuckDB names match");
+
+            String sql = "SELECT upper(name), lower(dept) FROM users";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            // upper and lower are same in both Spark and DuckDB
+            assertThat(result).isEqualTo("SELECT upper(name), lower(dept) FROM users");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-064: rewriteSQL handles window functions")
+        void testRewriteWindowFunctions() {
+            logStep("Rewrite should handle window functions");
+
+            // row_number, rank, lag, lead are same in both Spark and DuckDB
+            String sql = "SELECT row_number() OVER (ORDER BY id) FROM users";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).isEqualTo("SELECT row_number() OVER (ORDER BY id) FROM users");
+        }
+    }
+
+    // ==================== Custom Translator SQL Rewriting Tests ====================
+
+    @Nested
+    @DisplayName("Custom Translator SQL Rewriting (collect_list, collect_set, size)")
+    class CustomTranslatorSQLRewritingTests {
+
+        @Test
+        @DisplayName("TC-FUNC-065: rewriteSQL translates collect_list to list with FILTER")
+        void testRewriteCollectList() {
+            logStep("Rewrite collect_list() to list() with FILTER clause");
+
+            String sql = "SELECT collect_list(name) FROM users";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).isEqualTo("SELECT list(name) FILTER (WHERE name IS NOT NULL) FROM users");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-066: rewriteSQL translates collect_set to list_distinct")
+        void testRewriteCollectSet() {
+            logStep("Rewrite collect_set() to list_distinct with FILTER clause");
+
+            String sql = "SELECT collect_set(dept) FROM employees";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).isEqualTo("SELECT list_distinct(list(dept) FILTER (WHERE dept IS NOT NULL)) FROM employees");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-067: rewriteSQL translates size to CAST(len(...) AS INTEGER)")
+        void testRewriteSize() {
+            logStep("Rewrite size() to CAST(len(...) AS INTEGER)");
+
+            String sql = "WHERE size(tags) > 0";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).isEqualTo("WHERE CAST(len(tags) AS INTEGER) > 0");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-068: rewriteSQL handles nested function in collect_list")
+        void testRewriteCollectListNested() {
+            logStep("Rewrite collect_list with nested function call");
+
+            String sql = "SELECT collect_list(upper(name)) FROM users";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).isEqualTo("SELECT list(upper(name)) FILTER (WHERE upper(name) IS NOT NULL) FROM users");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-069: rewriteSQL handles nested function in size")
+        void testRewriteSizeNested() {
+            logStep("Rewrite size with nested function call");
+
+            String sql = "WHERE size(split(name, ' ')) > 1";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).contains("CAST(len(string_split(name, ' ')) AS INTEGER) > 1");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-070: rewriteSQL handles multiple collect_list calls")
+        void testRewriteMultipleCollectList() {
+            logStep("Rewrite multiple collect_list calls");
+
+            String sql = "SELECT collect_list(name), collect_list(dept) FROM users";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).contains("list(name) FILTER (WHERE name IS NOT NULL)");
+            assertThat(result).contains("list(dept) FILTER (WHERE dept IS NOT NULL)");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-071: rewriteSQL handles collect_list with whitespace")
+        void testRewriteCollectListWhitespace() {
+            logStep("Rewrite collect_list with various whitespace");
+
+            String sql = "SELECT collect_list  (name) FROM users";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).contains("list(name) FILTER (WHERE name IS NOT NULL)");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-072: rewriteSQL is case insensitive for collect_list")
+        void testRewriteCollectListCaseInsensitive() {
+            logStep("Rewrite COLLECT_LIST, Collect_List, collect_list");
+
+            String sql1 = "SELECT COLLECT_LIST(id)";
+            String sql2 = "SELECT Collect_List(id)";
+            String sql3 = "SELECT collect_list(id)";
+
+            String result1 = FunctionRegistry.rewriteSQL(sql1);
+            String result2 = FunctionRegistry.rewriteSQL(sql2);
+            String result3 = FunctionRegistry.rewriteSQL(sql3);
+
+            assertThat(result1).containsIgnoringCase("list(id) FILTER (WHERE id IS NOT NULL)");
+            assertThat(result2).containsIgnoringCase("list(id) FILTER (WHERE id IS NOT NULL)");
+            assertThat(result3).containsIgnoringCase("list(id) FILTER (WHERE id IS NOT NULL)");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-073: rewriteSQL handles size with array constructor")
+        void testRewriteSizeWithArrayConstructor() {
+            logStep("Rewrite size with array constructor argument");
+
+            String sql = "SELECT size(array(1, 2, 3))";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            // array should be translated to list_value, and size should wrap it
+            assertThat(result).contains("CAST(len(list_value(1, 2, 3)) AS INTEGER)");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-074: rewriteSQL combines custom translators with direct mappings")
+        void testRewriteCombinesCustomAndDirect() {
+            logStep("Rewrite SQL with both custom translators and direct mappings");
+
+            String sql = "SELECT collect_list(name), explode(items), size(tags) FROM users WHERE array_contains(roles, 'admin')";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            // Custom translators
+            assertThat(result).contains("list(name) FILTER (WHERE name IS NOT NULL)");
+            assertThat(result).contains("CAST(len(tags) AS INTEGER)");
+            // Direct mappings
+            assertThat(result).contains("unnest(items)");
+            assertThat(result).contains("list_contains(roles, 'admin')");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-075: rewriteSQL does not match partial function names")
+        void testRewriteNoPartialMatchCustom() {
+            logStep("Rewrite should not match my_collect_list or my_size");
+
+            String sql = "SELECT my_collect_list(id), my_size(tags) FROM users";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            // Should NOT be translated because these are different function names
+            assertThat(result).isEqualTo("SELECT my_collect_list(id), my_size(tags) FROM users");
+        }
+
+        @Test
+        @DisplayName("TC-FUNC-076: rewriteSQL handles complex nested parentheses")
+        void testRewriteComplexNestedParens() {
+            logStep("Rewrite with complex nested parentheses");
+
+            String sql = "SELECT size(array(concat('a', 'b'), concat('c', 'd')))";
+            String result = FunctionRegistry.rewriteSQL(sql);
+
+            assertThat(result).contains("CAST(len(list_value(concat('a', 'b'), concat('c', 'd'))) AS INTEGER)");
+        }
+    }
 }

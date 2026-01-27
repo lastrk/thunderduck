@@ -28,7 +28,6 @@ from dataframe_diff import assert_dataframes_equal
 # TPC-H Differential Tests
 # ============================================================================
 
-@pytest.mark.skip(reason="SparkSQL not yet supported - pending SQL parser integration")
 @pytest.mark.differential
 @pytest.mark.tpch
 class TestTPCH_Q1_Differential:
@@ -76,7 +75,6 @@ class TestTPCH_Q1_Differential:
         )
 
 
-@pytest.mark.skip(reason="SparkSQL not yet supported - pending SQL parser integration")
 @pytest.mark.differential
 @pytest.mark.tpch
 class TestTPCH_Q3_Differential:
@@ -122,7 +120,6 @@ class TestTPCH_Q3_Differential:
         )
 
 
-@pytest.mark.skip(reason="SparkSQL not yet supported - pending SQL parser integration")
 @pytest.mark.differential
 @pytest.mark.tpch
 class TestTPCH_Q6_Differential:
@@ -172,7 +169,6 @@ class TestTPCH_Q6_Differential:
 # Parameterized Tests for All TPC-H Queries
 # ============================================================================
 
-@pytest.mark.skip(reason="SparkSQL not yet supported - pending SQL parser integration")
 @pytest.mark.differential
 @pytest.mark.tpch
 @pytest.mark.parametrize("query_num", [
@@ -229,7 +225,6 @@ class TestTPCH_AllQueries_Differential:
 # Quick Sanity Test
 # ============================================================================
 
-@pytest.mark.skip(reason="SparkSQL not yet supported - pending SQL parser integration")
 @pytest.mark.differential
 @pytest.mark.quick
 class TestDifferential_Sanity:

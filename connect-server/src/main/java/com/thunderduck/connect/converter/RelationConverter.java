@@ -108,9 +108,7 @@ public class RelationConverter {
             case SET_OP:
                 return convertSetOp(relation.getSetOp());
             case SQL:
-                // SparkSQL not yet supported - pending SQL parser integration
-                throw new UnsupportedOperationException(
-                    "Raw SQL relations are not yet supported. Please use DataFrame API instead.");
+                return convertSQL(relation.getSql());
             case SHOW_STRING:
                 // ShowString is handled at root level in SparkConnectServiceImpl.executeShowString()
                 // If we reach here, something is wrong - ShowString should never be nested
@@ -2116,6 +2114,25 @@ public class RelationConverter {
         // when the alias "d1" is referenced in the ON clause
         logger.debug("Creating AliasedRelation with alias '{}'", alias);
         return new AliasedRelation(input, alias);
+    }
+
+    /**
+     * Converts a SQL relation (from spark.sql()) to a SQLRelation logical plan.
+     *
+     * <p>SQL relations contain raw SQL queries that will be passed through to DuckDB.
+     * Parameter substitution is not handled here (it's done at the service layer).
+     *
+     * @param sql the SQL proto message
+     * @return a SQLRelation logical plan
+     */
+    private LogicalPlan convertSQL(org.apache.spark.connect.proto.SQL sql) {
+        String query = sql.getQuery();
+
+        logger.debug("Converting SQL relation: {}", query);
+
+        // Parameter substitution is handled at the service layer (SparkConnectServiceImpl)
+        // before the query reaches this point, so we just wrap the query in SQLRelation
+        return new com.thunderduck.logical.SQLRelation(query);
     }
 
     /**

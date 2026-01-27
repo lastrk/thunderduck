@@ -760,16 +760,27 @@ public class ExpressionConverter {
     /**
      * Converts an ExpressionString (SQL expression as string).
      *
-     * <p>Thunderduck currently supports only the DataFrame API, not SQL expression strings.
-     * SQL expressions require a SQL parser to generate proper typed AST nodes.
+     * <p>SQL expression strings from PySpark's {@code expr()}, {@code selectExpr()}, or filter
+     * with string arguments are passed through directly to DuckDB without parsing.
+     *
+     * <p>Examples:
+     * <pre>
+     *   df.filter("id > 1")                  -- comparison
+     *   df.selectExpr("id * 2 as doubled")   -- arithmetic with alias
+     *   df.filter("length(name) > 5")        -- function call
+     * </pre>
+     *
+     * <p>This works for most SQL expressions since DuckDB's SQL dialect is very similar to Spark SQL.
+     * However, some Spark-specific functions or syntax may not be supported and will result in
+     * DuckDB errors at query execution time.
+     *
+     * @param exprString the protobuf ExpressionString message
+     * @return a RawSQLExpression wrapping the SQL text
      */
     private com.thunderduck.expression.Expression convertExpressionString(ExpressionString exprString) {
-        throw new UnsupportedOperationException(
-            "SQL expression strings are not supported. " +
-            "Thunderduck currently supports only the DataFrame API. " +
-            "Use DataFrame operations instead of expr(), selectExpr(), or raw SQL. " +
-            "Received: " + exprString.getExpression()
-        );
+        String sqlText = exprString.getExpression();
+        logger.debug("Converting SQL expression string: {}", sqlText);
+        return new com.thunderduck.expression.RawSQLExpression(sqlText);
     }
 
     /**

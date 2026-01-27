@@ -1,8 +1,10 @@
 package com.thunderduck.connect.service;
 
 import com.thunderduck.connect.converter.PlanConverter;
+import com.thunderduck.connect.converter.ExpressionConverter;
 import com.thunderduck.connect.session.Session;
 import com.thunderduck.connect.session.SessionManager;
+import com.thunderduck.connect.sql.SQLParameterSubstitution;
 import com.thunderduck.generator.SQLGenerator;
 import com.thunderduck.logical.LogicalPlan;
 import com.thunderduck.runtime.ArrowBatchIterator;
@@ -19,6 +21,8 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.apache.spark.connect.proto.*;
 import org.apache.spark.connect.proto.Relation;
+import org.apache.spark.connect.proto.SQL;
+import org.apache.spark.connect.proto.SqlCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -168,10 +172,26 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         }
                     }
                 } else if (root.hasSql()) {
-                    // SparkSQL not yet supported - pending SQL parser integration
-                    throw new UnsupportedOperationException(
-                        "spark.sql() is not yet supported. Please use DataFrame API instead. " +
-                        "SQL support will be added in a future release.");
+                    // Handle spark.sql() queries with parameter substitution
+                    SQL sqlRelation = root.getSql();
+                    String query = sqlRelation.getQuery();
+
+                    logger.info("Received spark.sql() query: {}", query);
+
+                    // Substitute parameters if present
+                    if (sqlRelation.getNamedArgumentsCount() > 0 ||
+                        sqlRelation.getPosArgumentsCount() > 0 ||
+                        sqlRelation.getArgsCount() > 0 ||
+                        sqlRelation.getPosArgsCount() > 0) {
+
+                        ExpressionConverter expressionConverter = new ExpressionConverter();
+                        SQLParameterSubstitution paramSubst = new SQLParameterSubstitution(expressionConverter);
+                        query = paramSubst.substituteParameters(sqlRelation);
+                        logger.info("After parameter substitution: {}", query);
+                    }
+
+                    // Pass through to DuckDB with SQL preprocessing
+                    sql = query;
                 } else if (root.hasCatalog()) {
                     // Handle catalog operations (dropTempView, etc.)
                     executeCatalogOperation(root.getCatalog(), session, responseObserver);
@@ -182,10 +202,40 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     return;
                 }
             } else if (plan.hasCommand() && plan.getCommand().hasSqlCommand()) {
-                // SparkSQL not yet supported - pending SQL parser integration
-                throw new UnsupportedOperationException(
-                    "spark.sql() is not yet supported. Please use DataFrame API instead. " +
-                    "SQL support will be added in a future release.");
+                // Handle SQL commands (alternative path for spark.sql())
+                SqlCommand sqlCommand = plan.getCommand().getSqlCommand();
+                String query = null;
+
+                // SqlCommand.sql is deprecated. The SQL query comes in the input relation.
+                if (sqlCommand.hasInput() && sqlCommand.getInput().hasSql()) {
+                    SQL sqlRelation = sqlCommand.getInput().getSql();
+                    query = sqlRelation.getQuery();
+
+                    logger.info("Received spark.sql() via SqlCommand: {}", query);
+
+                    // Handle parameter substitution
+                    if (sqlRelation.getNamedArgumentsCount() > 0 ||
+                        sqlRelation.getPosArgumentsCount() > 0 ||
+                        sqlRelation.getArgsCount() > 0 ||
+                        sqlRelation.getPosArgsCount() > 0) {
+
+                        ExpressionConverter expressionConverter = new ExpressionConverter();
+                        SQLParameterSubstitution paramSubst = new SQLParameterSubstitution(expressionConverter);
+                        query = paramSubst.substituteParameters(sqlRelation);
+                        logger.info("After parameter substitution: {}", query);
+                    }
+                } else if (!sqlCommand.getSql().isEmpty()) {
+                    // Fallback to deprecated field
+                    query = sqlCommand.getSql();
+                    logger.info("Received SQL via deprecated SqlCommand.sql field: {}", query);
+                }
+
+                if (query != null && !query.isEmpty()) {
+                    sql = query;
+                } else {
+                    logger.error("SqlCommand has no query");
+                    throw new IllegalArgumentException("SqlCommand has no query");
+                }
             } else if (plan.hasCommand()) {
                 // Handle non-SQL commands (CreateTempView, DropTempView, etc.)
                 Command command = plan.getCommand();
@@ -868,6 +918,12 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
      * @return the translated SQL string
      */
     private String translateSparkFunctions(String sql) {
+        // Defense-in-depth: Rewrite Spark function names to DuckDB equivalents
+        // This handles simple 1:1 name mappings (DIRECT_MAPPINGS) in SQL strings
+        // Note: RawSQLExpression.toSQL() also calls this, but we do it here as well
+        // to catch any SQL strings that bypass RawSQLExpression
+        sql = com.thunderduck.functions.FunctionRegistry.rewriteSQL(sql);
+
         // Translate NAMED_STRUCT to struct_pack
         sql = translateNamedStruct(sql);
 
