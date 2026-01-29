@@ -189,7 +189,7 @@ curl -s localhost:15002 || echo "Server running on port 15002"
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/thunderduck.git
+git clone https://github.com/lastrk/thunderduck.git
 cd thunderduck
 ```
 
