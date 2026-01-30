@@ -1,0 +1,21 @@
+{
+  "version": "48.0.0",
+  "files": {
+    "cf6fa76aea6fde4f220c15a8695d61dea4fae358f8e6d6ebad3bcdded2d2a803": {
+      "displayName": "ThunderduckBenchmark Template",
+      "source": {
+        "path": "ThunderduckBenchmark.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "307096125112-us-east-1-ec038a34": {
+          "bucketName": "cdk-hnb659fds-assets-307096125112-us-east-1",
+          "objectKey": "cf6fa76aea6fde4f220c15a8695d61dea4fae358f8e6d6ebad3bcdded2d2a803.json",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::307096125112:role/cdk-hnb659fds-file-publishing-role-307096125112-us-east-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

@@ -1,0 +1,502 @@
+{
+ "Description": "Thunderduck benchmark infrastructure - EC2 instances for TPC-H/TPC-DS benchmarks",
+ "Resources": {
+  "BenchmarkSecurityGroup5F296DF8": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Thunderduck benchmark - SSH access",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "SecurityGroupIngress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "SSH access from anywhere",
+      "FromPort": 22,
+      "IpProtocol": "tcp",
+      "ToPort": 22
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "ManagedBy",
+      "Value": "CDK"
+     },
+     {
+      "Key": "Project",
+      "Value": "thunderduck-benchmark"
+     }
+    ],
+    "VpcId": "vpc-b1f062cb"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ThunderduckBenchmark/BenchmarkSecurityGroup/Resource"
+   }
+  },
+  "BenchmarkKeyPair3ED14308": {
+   "Type": "AWS::EC2::KeyPair",
+   "Properties": {
+    "KeyFormat": "pem",
+    "KeyName": "thunderduck-bench-ThunderduckBenchmark",
+    "KeyType": "rsa",
+    "Tags": [
+     {
+      "Key": "ManagedBy",
+      "Value": "CDK"
+     },
+     {
+      "Key": "Project",
+      "Value": "thunderduck-benchmark"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ThunderduckBenchmark/BenchmarkKeyPair/Resource"
+   }
+  },
+  "BenchmarkInstanceRole1DECDFC6": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "ec2.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Description": "Role for Thunderduck benchmark EC2 instances",
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AmazonS3FullAccess"
+       ]
+      ]
+     },
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AmazonSSMManagedInstanceCore"
+       ]
+      ]
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "ManagedBy",
+      "Value": "CDK"
+     },
+     {
+      "Key": "Project",
+      "Value": "thunderduck-benchmark"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ThunderduckBenchmark/BenchmarkInstanceRole/Resource"
+   }
+  },
+  "InstancethunderduckInstanceProfile4875EFCF": {
+   "Type": "AWS::IAM::InstanceProfile",
+   "Properties": {
+    "Roles": [
+     {
+      "Ref": "BenchmarkInstanceRole1DECDFC6"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ThunderduckBenchmark/Instancethunderduck/InstanceProfile"
+   }
+  },
+  "InstancethunderduckDE0B699D": {
+   "Type": "AWS::EC2::Instance",
+   "Properties": {
+    "AvailabilityZone": "us-east-1c",
+    "BlockDeviceMappings": [
+     {
+      "DeviceName": "/dev/xvda",
+      "Ebs": {
+       "DeleteOnTermination": true,
+       "VolumeSize": 100,
+       "VolumeType": "gp3"
+      }
+     }
+    ],
+    "IamInstanceProfile": {
+     "Ref": "InstancethunderduckInstanceProfile4875EFCF"
+    },
+    "ImageId": {
+     "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61x8664C96584B6F00A464EAD1953AFF4B05118Parameter"
+    },
+    "InstanceType": "m6i.xlarge",
+    "KeyName": {
+     "Ref": "BenchmarkKeyPair3ED14308"
+    },
+    "NetworkInterfaces": [
+     {
+      "AssociatePublicIpAddress": true,
+      "DeviceIndex": "0",
+      "GroupSet": [
+       {
+        "Fn::GetAtt": [
+         "BenchmarkSecurityGroup5F296DF8",
+         "GroupId"
+        ]
+       }
+      ],
+      "SubnetId": "subnet-43ccda09"
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "ManagedBy",
+      "Value": "CDK"
+     },
+     {
+      "Key": "Name",
+      "Value": "thunderduck-bench-thunderduck"
+     },
+     {
+      "Key": "Project",
+      "Value": "thunderduck-benchmark"
+     },
+     {
+      "Key": "thunderduck-bench-engine",
+      "Value": "thunderduck"
+     }
+    ],
+    "UserData": {
+     "Fn::Base64": "#!/bin/bash"
+    }
+   },
+   "DependsOn": [
+    "BenchmarkInstanceRole1DECDFC6"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ThunderduckBenchmark/Instancethunderduck/Resource"
+   }
+  },
+  "Instancespark353InstanceProfile1A0F4FBF": {
+   "Type": "AWS::IAM::InstanceProfile",
+   "Properties": {
+    "Roles": [
+     {
+      "Ref": "BenchmarkInstanceRole1DECDFC6"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ThunderduckBenchmark/Instancespark-3-5-3/InstanceProfile"
+   }
+  },
+  "Instancespark353036124E8": {
+   "Type": "AWS::EC2::Instance",
+   "Properties": {
+    "AvailabilityZone": "us-east-1c",
+    "BlockDeviceMappings": [
+     {
+      "DeviceName": "/dev/xvda",
+      "Ebs": {
+       "DeleteOnTermination": true,
+       "VolumeSize": 100,
+       "VolumeType": "gp3"
+      }
+     }
+    ],
+    "IamInstanceProfile": {
+     "Ref": "Instancespark353InstanceProfile1A0F4FBF"
+    },
+    "ImageId": {
+     "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61x8664C96584B6F00A464EAD1953AFF4B05118Parameter"
+    },
+    "InstanceType": "m6i.xlarge",
+    "KeyName": {
+     "Ref": "BenchmarkKeyPair3ED14308"
+    },
+    "NetworkInterfaces": [
+     {
+      "AssociatePublicIpAddress": true,
+      "DeviceIndex": "0",
+      "GroupSet": [
+       {
+        "Fn::GetAtt": [
+         "BenchmarkSecurityGroup5F296DF8",
+         "GroupId"
+        ]
+       }
+      ],
+      "SubnetId": "subnet-43ccda09"
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "ManagedBy",
+      "Value": "CDK"
+     },
+     {
+      "Key": "Name",
+      "Value": "thunderduck-bench-spark-3.5.3"
+     },
+     {
+      "Key": "Project",
+      "Value": "thunderduck-benchmark"
+     },
+     {
+      "Key": "thunderduck-bench-engine",
+      "Value": "spark-3.5.3"
+     }
+    ],
+    "UserData": {
+     "Fn::Base64": "#!/bin/bash"
+    }
+   },
+   "DependsOn": [
+    "BenchmarkInstanceRole1DECDFC6"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ThunderduckBenchmark/Instancespark-3-5-3/Resource"
+   }
+  },
+  "Instancespark401InstanceProfile2F6943A2": {
+   "Type": "AWS::IAM::InstanceProfile",
+   "Properties": {
+    "Roles": [
+     {
+      "Ref": "BenchmarkInstanceRole1DECDFC6"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ThunderduckBenchmark/Instancespark-4-0-1/InstanceProfile"
+   }
+  },
+  "Instancespark40127039A2E": {
+   "Type": "AWS::EC2::Instance",
+   "Properties": {
+    "AvailabilityZone": "us-east-1c",
+    "BlockDeviceMappings": [
+     {
+      "DeviceName": "/dev/xvda",
+      "Ebs": {
+       "DeleteOnTermination": true,
+       "VolumeSize": 100,
+       "VolumeType": "gp3"
+      }
+     }
+    ],
+    "IamInstanceProfile": {
+     "Ref": "Instancespark401InstanceProfile2F6943A2"
+    },
+    "ImageId": {
+     "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61x8664C96584B6F00A464EAD1953AFF4B05118Parameter"
+    },
+    "InstanceType": "m6i.xlarge",
+    "KeyName": {
+     "Ref": "BenchmarkKeyPair3ED14308"
+    },
+    "NetworkInterfaces": [
+     {
+      "AssociatePublicIpAddress": true,
+      "DeviceIndex": "0",
+      "GroupSet": [
+       {
+        "Fn::GetAtt": [
+         "BenchmarkSecurityGroup5F296DF8",
+         "GroupId"
+        ]
+       }
+      ],
+      "SubnetId": "subnet-43ccda09"
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "ManagedBy",
+      "Value": "CDK"
+     },
+     {
+      "Key": "Name",
+      "Value": "thunderduck-bench-spark-4.0.1"
+     },
+     {
+      "Key": "Project",
+      "Value": "thunderduck-benchmark"
+     },
+     {
+      "Key": "thunderduck-bench-engine",
+      "Value": "spark-4.0.1"
+     }
+    ],
+    "UserData": {
+     "Fn::Base64": "#!/bin/bash"
+    }
+   },
+   "DependsOn": [
+    "BenchmarkInstanceRole1DECDFC6"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ThunderduckBenchmark/Instancespark-4-0-1/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/1WMQQrCMBBFz9J9GjX1Bi5EXBjqAWSMUxxtk5JMkFJyd9NKFq7+4z34SqqmkdsKPqE2j3fd013OVwbzFi0GF71BkdttRqNyQBM98XT0Lo7i0Nl/ccZJA/klFDzZwGDzSXaFkyAY5Ny6ftVlS9beddRjSovU4GFAxvX0EnmMnISe+OnsppG7vVTVKxDVPlqmAWX72y/KpbvB1wAAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "ThunderduckBenchmark/CDKMetadata/Default"
+   }
+  }
+ },
+ "Parameters": {
+  "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61x8664C96584B6F00A464EAD1953AFF4B05118Parameter": {
+   "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+   "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64"
+  },
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Outputs": {
+  "InstanceIPthunderduck": {
+   "Description": "Public IP for thunderduck instance",
+   "Value": {
+    "Fn::GetAtt": [
+     "InstancethunderduckDE0B699D",
+     "PublicIp"
+    ]
+   },
+   "Export": {
+    "Name": "ThunderduckBenchmark-IP-thunderduck"
+   }
+  },
+  "InstanceIDthunderduck": {
+   "Description": "Instance ID for thunderduck",
+   "Value": {
+    "Ref": "InstancethunderduckDE0B699D"
+   }
+  },
+  "InstanceIPspark353": {
+   "Description": "Public IP for spark-3.5.3 instance",
+   "Value": {
+    "Fn::GetAtt": [
+     "Instancespark353036124E8",
+     "PublicIp"
+    ]
+   },
+   "Export": {
+    "Name": "ThunderduckBenchmark-IP-spark-3-5-3"
+   }
+  },
+  "InstanceIDspark353": {
+   "Description": "Instance ID for spark-3.5.3",
+   "Value": {
+    "Ref": "Instancespark353036124E8"
+   }
+  },
+  "InstanceIPspark401": {
+   "Description": "Public IP for spark-4.0.1 instance",
+   "Value": {
+    "Fn::GetAtt": [
+     "Instancespark40127039A2E",
+     "PublicIp"
+    ]
+   },
+   "Export": {
+    "Name": "ThunderduckBenchmark-IP-spark-4-0-1"
+   }
+  },
+  "InstanceIDspark401": {
+   "Description": "Instance ID for spark-4.0.1",
+   "Value": {
+    "Ref": "Instancespark40127039A2E"
+   }
+  },
+  "SSHKeyCommand": {
+   "Description": "Command to retrieve SSH private key from SSM",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "aws ssm get-parameter --name /ec2/keypair/",
+      {
+       "Fn::GetAtt": [
+        "BenchmarkKeyPair3ED14308",
+        "KeyPairId"
+       ]
+      },
+      " --with-decryption --query Parameter.Value --output text > benchmark_key.pem && chmod 600 benchmark_key.pem"
+     ]
+    ]
+   }
+  },
+  "SecurityGroupId": {
+   "Description": "Security group ID",
+   "Value": {
+    "Fn::GetAtt": [
+     "BenchmarkSecurityGroup5F296DF8",
+     "GroupId"
+    ]
+   }
+  },
+  "KeyPairName": {
+   "Description": "EC2 key pair name",
+   "Value": {
+    "Ref": "BenchmarkKeyPair3ED14308"
+   }
+  },
+  "Engines": {
+   "Description": "Comma-separated list of engines",
+   "Value": "thunderduck,spark-3.5.3,spark-4.0.1"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

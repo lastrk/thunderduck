@@ -1,0 +1,14 @@
+# AWS SDK
+boto3>=1.34.0
+botocore>=1.34.0
+
+# SSH for EC2 access
+paramiko>=3.4.0
+
+# Data processing
+duckdb>=1.1.0
+pyarrow>=14.0.0
+pandas>=2.0.0
+
+# Spark Connect client
+pyspark>=3.5.0
