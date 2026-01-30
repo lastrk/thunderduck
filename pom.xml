@@ -14,8 +14,7 @@
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
 
         <!-- Dependency versions -->
         <!-- Upgraded from 1.4.1.0 to 1.4.3.0 LTS (Dec 2025) for bug fixes -->
