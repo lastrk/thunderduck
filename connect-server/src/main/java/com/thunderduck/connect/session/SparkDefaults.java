@@ -9,7 +9,7 @@ import java.util.Map;
  * This class provides standard Spark SQL configuration defaults
  * that are expected by PySpark clients when connecting via Spark Connect.
  *
- * These defaults match Apache Spark 3.5+ behavior.
+ * These defaults match Apache Spark 4.1+ behavior.
  */
 public class SparkDefaults {
 
@@ -45,6 +45,9 @@ public class SparkDefaults {
         defaults.put("spark.sql.sources.default", "parquet");
         defaults.put("spark.sql.legacy.timeParserPolicy", "EXCEPTION");
         defaults.put("spark.sql.session.localRelationCacheThreshold", "67108864");
+        defaults.put("spark.sql.session.localRelationChunkSizeRows", "10000");
+        defaults.put("spark.sql.session.localRelationChunkSizeBytes", "4194304");
+        defaults.put("spark.sql.session.localRelationBatchOfChunksSizeBytes", "16777216");
 
 
         // Shuffle configuration
