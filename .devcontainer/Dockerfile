@@ -117,7 +117,7 @@ RUN su vscode -c 'curl -fsSL https://pkgx.sh | sh' && \
 # Note: Use 'update-java-alternatives' to switch between Java versions
 # Note: Consider using pkgx for Java (pkgx install openjdk.org@17) as an alternative
 # ------------------------------------------------------------------------------
-# RUN apt-get update && apt-get install -y \
+ RUN apt-get update && apt-get install -y \
 #     # OpenJDK 11 (LTS, wide enterprise adoption)
 #     # Available on both AMD64 and ARM64
 #     openjdk-11-jdk \
@@ -126,23 +126,23 @@ RUN su vscode -c 'curl -fsSL https://pkgx.sh | sh' && \
 #     openjdk-17-jdk \
 #     # OpenJDK 21 (LTS, latest stable LTS release)
 #     # Available on both AMD64 and ARM64
-#     openjdk-21-jdk \
+     openjdk-21-jdk \
 #     # OpenJDK 24 (Early Access - Not available in Ubuntu 22.04 repos)
 #     # To install Java 24, add Adoptium repository:
 #     # wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | apt-key add -
 #     # echo "deb https://packages.adoptium.net/artifactory/deb $(lsb_release -sc) main" > /etc/apt/sources.list.d/adoptium.list
 #     # apt-get update && apt-get install -y temurin-24-jdk
 #     # Maven (latest from Ubuntu repos, typically 3.6.x or 3.8.x)
-#     maven \
+     maven \
 #     # Gradle (version from Ubuntu repos, may not be latest)
 #     # For latest Gradle, use: pkgx install gradle.org
-#     gradle \
+     gradle \
 #     # Fix ca-certificates-java setup (workaround for cacerts directory issue)
 #     # The ca-certificates-java postinst script sometimes fails on first run
 #     # This ensures the Java certificate store is properly initialized
-#     && /var/lib/dpkg/info/ca-certificates-java.postinst configure \
-#     && apt-get clean \
-#     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+     && /var/lib/dpkg/info/ca-certificates-java.postinst configure \
+     && apt-get clean \
+     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 #
 # # Configure default Java version (multi-architecture compatible)
 # # Option 1: Use update-java-alternatives (recommended, handles all Java components)
@@ -155,7 +155,7 @@ RUN su vscode -c 'curl -fsSL https://pkgx.sh | sh' && \
 # # No action needed - already set during installation
 #
 # # Verify installation
-# # RUN java -version && mvn -version && gradle -version
+RUN java -version && mvn -version && gradle -version
 
 # ------------------------------------------------------------------------------
 # Rust Development Environment
@@ -227,17 +227,16 @@ RUN su vscode -c 'curl -fsSL https://pkgx.sh | sh' && \
 # Miniconda vs Anaconda: Miniconda is minimal, Anaconda includes 250+ packages
 # Note: Conda installation is large (~500MB-3GB), consider using pkgx or venv instead
 # ------------------------------------------------------------------------------
-# RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y \
 #     # Python virtual environment (already installed in base, shown for reference)
-#     # python3-venv \
+    python3-venv \
 #     # Python development headers (for compiling C extensions)
-#     python3-dev \
+    python3-dev \
 #     # pip wheel support
-#     python3-wheel \
-#     # setuptools for package installation
-#     python3-setuptools \
-#     && apt-get clean \
-#     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+   python3-wheel \
+#     # setuptools for package installation     python3-setuptools \
+     && apt-get clean \
+     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 #
 # # Install Miniconda (conda package manager)
 # # Uncomment below to install Miniconda as vscode user
@@ -262,7 +261,7 @@ RUN su vscode -c 'curl -fsSL https://pkgx.sh | sh' && \
 # #     pytest'
 #
 # # Verify installation
-# # RUN python3 --version && pip3 --version
+ RUN python3 --version && pip3 --version
 # # RUN su vscode -c 'conda --version'  # If conda installed
 
 # ------------------------------------------------------------------------------
