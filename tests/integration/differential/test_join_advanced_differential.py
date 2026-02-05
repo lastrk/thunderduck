@@ -335,3 +335,80 @@ class TestJoinAdvancedDifferential:
         ).orderBy("department", "lower_earner")
 
         assert_dataframes_equal(spark_result, td_result, query_name="self_join_filter_alias")
+
+    def test_right_join_column_resolution(self, spark_reference, spark_thunderduck):
+        """Test RIGHT JOIN with column selection from both tables - no explicit aliases.
+
+        This specifically tests the bug fix where:
+        - Both tables have a column named 'id'
+        - No explicit DataFrame.alias() is used
+        - Right join produces unmatched rows (right side has rows with no match on left)
+        - Selection must correctly distinguish left.id (NULL) from right.id (has value)
+
+        Bug behavior was: rid = NULL for unmatched rows (incorrectly using left table's id)
+        Expected behavior: rid = 3 for unmatched rows (correctly using right table's id)
+        """
+        left_data = [(1, "A"), (2, "B")]
+        right_data = [(2, "Y"), (3, "Z")]
+
+        left_spark = spark_reference.createDataFrame(left_data, ["id", "value"])
+        right_spark = spark_reference.createDataFrame(right_data, ["id", "data"])
+
+        left_td = spark_thunderduck.createDataFrame(left_data, ["id", "value"])
+        right_td = spark_thunderduck.createDataFrame(right_data, ["id", "data"])
+
+        # Right join - row with id=3 should have NULL for left side columns
+        # but should have id=3 from right side
+        spark_result = left_spark.join(
+            right_spark, left_spark["id"] == right_spark["id"], "right"
+        ).select(
+            left_spark["value"],
+            right_spark["id"].alias("rid"),
+            right_spark["data"]
+        ).orderBy("rid")
+
+        td_result = left_td.join(
+            right_td, left_td["id"] == right_td["id"], "right"
+        ).select(
+            left_td["value"],
+            right_td["id"].alias("rid"),
+            right_td["data"]
+        ).orderBy("rid")
+
+        assert_dataframes_equal(spark_result, td_result, query_name="right_join_column_resolution")
+
+    def test_full_outer_join_column_resolution(self, spark_reference, spark_thunderduck):
+        """Test FULL OUTER JOIN with column selection from both tables - no explicit aliases.
+
+        Similar to right join test but for full outer join where either side can be NULL.
+        """
+        left_data = [(1, "A"), (2, "B")]
+        right_data = [(2, "Y"), (3, "Z")]
+
+        left_spark = spark_reference.createDataFrame(left_data, ["id", "value"])
+        right_spark = spark_reference.createDataFrame(right_data, ["id", "data"])
+
+        left_td = spark_thunderduck.createDataFrame(left_data, ["id", "value"])
+        right_td = spark_thunderduck.createDataFrame(right_data, ["id", "data"])
+
+        # Full outer join - id=1 has NULL on right, id=3 has NULL on left
+        # Use coalesce on the aliased columns in orderBy
+        spark_result = left_spark.join(
+            right_spark, left_spark["id"] == right_spark["id"], "full"
+        ).select(
+            left_spark["id"].alias("lid"),
+            left_spark["value"],
+            right_spark["id"].alias("rid"),
+            right_spark["data"]
+        ).orderBy(F.coalesce("lid", "rid"))
+
+        td_result = left_td.join(
+            right_td, left_td["id"] == right_td["id"], "full"
+        ).select(
+            left_td["id"].alias("lid"),
+            left_td["value"],
+            right_td["id"].alias("rid"),
+            right_td["data"]
+        ).orderBy(F.coalesce("lid", "rid"))
+
+        assert_dataframes_equal(spark_result, td_result, query_name="full_outer_join_column_resolution")

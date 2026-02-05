@@ -228,19 +228,23 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
     private void visitProject(Project plan) {
         LogicalPlan child = plan.child();
 
-        // Special case: Project on Filter on Join with aliased relations
-        // Generate flat SQL to preserve alias visibility
+        // Special case: Project on Filter on Join
+        // Generate flat SQL to preserve alias visibility and properly qualify columns
+        // This is needed for ALL joins (not just those with explicit user aliases) because
+        // the column references in the Project have plan_ids that map to the join's aliases
         if (child instanceof Filter) {
             Filter filter = (Filter) child;
-            if (filter.child() instanceof Join && hasAliasedRelation(filter.child())) {
+            if (filter.child() instanceof Join) {
                 generateProjectOnFilterJoin(plan, filter, (Join) filter.child());
                 return;
             }
         }
 
-        // Special case: Project directly on Join with aliased relations
+        // Special case: Project directly on Join
         // Generate flat SQL to preserve alias visibility and properly qualify columns
-        if (child instanceof Join && hasAliasedRelation(child)) {
+        // This handles cases like: df1.join(df2, cond, "right").select(df1["col"], df2["col"])
+        // Without flat SQL, duplicate column names become ambiguous in the wrapped subquery
+        if (child instanceof Join) {
             generateProjectOnJoin(plan, (Join) child);
             return;
         }
@@ -288,13 +292,14 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
     }
 
     /**
-     * Generates flat SQL for Project directly on Join with aliased relations.
-     * This preserves alias visibility by qualifying column references.
+     * Generates flat SQL for Project directly on Join.
+     * This preserves alias visibility by qualifying column references, needed for
+     * correct column resolution when both join sides have columns with the same name.
      */
     private void generateProjectOnJoin(Project project, Join join) {
-        // Build plan_id → alias mapping for the join first (before generating SQL)
+        // Build plan_id → alias mapping using the correct aliases that will be generated
         Map<Long, String> planIdToAlias = new HashMap<>();
-        collectJoinPlanIds(join, planIdToAlias);
+        buildJoinPlanIdMapping(join, planIdToAlias);
 
         sql.append("SELECT ");
 
@@ -324,18 +329,19 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
         sql.append(" FROM ");
 
-        // Generate flat join chain (conditions will also be qualified)
+        // Generate flat join chain (conditions will also be qualified using internal mapping)
         generateFlatJoinChainWithMapping(join, null);
     }
 
     /**
-     * Generates flat SQL for Project on Filter on Join with aliased relations.
-     * This preserves alias visibility by not wrapping intermediate results in subqueries.
+     * Generates flat SQL for Project on Filter on Join.
+     * This preserves alias visibility by not wrapping intermediate results in subqueries,
+     * needed for correct column resolution when both join sides have columns with the same name.
      */
     private void generateProjectOnFilterJoin(Project project, Filter filter, Join join) {
-        // Build plan_id → alias mapping for the join first (before generating SQL)
+        // Build plan_id → alias mapping using the correct aliases that will be generated
         Map<Long, String> planIdToAlias = new HashMap<>();
-        collectJoinPlanIds(join, planIdToAlias);
+        buildJoinPlanIdMapping(join, planIdToAlias);
 
         sql.append("SELECT ");
 
@@ -365,7 +371,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
         sql.append(" FROM ");
 
-        // Generate flat join chain (conditions will also be qualified)
+        // Generate flat join chain (conditions will also be qualified using internal mapping)
         generateFlatJoinChainWithMapping(join, null);
 
         // Add WHERE clause with qualified filter condition
@@ -393,11 +399,31 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         List<JoinPart> joinParts = new java.util.ArrayList<>();
         LogicalPlan leftmost = collectJoinParts(join, joinParts);
 
-        // Build plan_id → alias mapping for the entire join tree
-        Map<Long, String> planIdToAlias = new HashMap<>();
-        String leftmostAlias = collectJoinSourcePlanIds(leftmost, planIdToAlias);
+        // Collect all sources in order: leftmost, then each join's right side
+        List<LogicalPlan> sources = new java.util.ArrayList<>();
+        sources.add(leftmost);
         for (JoinPart part : joinParts) {
-            collectJoinSourcePlanIds(part.right, planIdToAlias);
+            sources.add(part.right);
+        }
+
+        // Build plan_id → alias mapping by predicting aliases for each source
+        // We need to track which subquery number will be used for non-aliased sources
+        Map<Long, String> planIdToAlias = new HashMap<>();
+        int predictedCounter = aliasCounter;
+        for (LogicalPlan source : sources) {
+            if (source instanceof AliasedRelation) {
+                AliasedRelation aliased = (AliasedRelation) source;
+                String alias = SQLQuoting.quoteIdentifier(aliased.alias());
+                if (aliased.planId().isPresent()) {
+                    planIdToAlias.putIfAbsent(aliased.planId().getAsLong(), alias);
+                }
+                collectPlanIds(aliased.child(), alias, planIdToAlias);
+            } else {
+                // Non-aliased source will get the next subquery number
+                predictedCounter++;
+                String alias = "subquery_" + predictedCounter;
+                collectPlanIds(source, alias, planIdToAlias);
+            }
         }
 
         // If caller wants the mapping, populate it
@@ -419,35 +445,6 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                 // Use qualified condition to properly resolve column references
                 sql.append(qualifyCondition(part.condition, planIdToAlias));
             }
-        }
-    }
-
-    /**
-     * Collects plan_ids from a join source (for use in flat join chains).
-     * Returns the alias that will be used for this source.
-     *
-     * @param plan the join source plan
-     * @param mapping the map to populate with plan_id → alias entries
-     * @return the alias that will be used for this source
-     */
-    private String collectJoinSourcePlanIds(LogicalPlan plan, Map<Long, String> mapping) {
-        if (plan instanceof AliasedRelation) {
-            AliasedRelation aliased = (AliasedRelation) plan;
-            String alias = SQLQuoting.quoteIdentifier(aliased.alias());
-            // Map the AliasedRelation's own plan_id
-            if (aliased.planId().isPresent()) {
-                mapping.putIfAbsent(aliased.planId().getAsLong(), alias);
-            }
-            // Also map child plan_ids to this alias
-            collectPlanIds(aliased.child(), alias, mapping);
-            return alias;
-        } else {
-            // Generate a subquery alias for non-aliased sources
-            // Note: We can't use generateSubqueryAlias() here as it would increment counter
-            // Instead, peek at what the alias would be
-            String alias = "subquery_" + (aliasCounter + 1);
-            collectPlanIds(plan, alias, mapping);
-            return alias;
         }
     }
 
@@ -579,6 +576,45 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * @param join the join to traverse
      * @param mapping the map to populate with plan_id → alias entries
      */
+    /**
+     * Builds plan_id → alias mapping for a join, correctly predicting the aliases
+     * that will be generated. This must match the alias generation in generateFlatJoinChainWithMapping.
+     *
+     * @param join the join to build mapping for
+     * @param mapping the map to populate
+     */
+    private void buildJoinPlanIdMapping(Join join, Map<Long, String> mapping) {
+        // Collect all joins in the chain (same as in generateFlatJoinChainWithMapping)
+        List<JoinPart> joinParts = new java.util.ArrayList<>();
+        LogicalPlan leftmost = collectJoinParts(join, joinParts);
+
+        // Collect all sources in order: leftmost, then each join's right side
+        List<LogicalPlan> sources = new java.util.ArrayList<>();
+        sources.add(leftmost);
+        for (JoinPart part : joinParts) {
+            sources.add(part.right);
+        }
+
+        // Predict the aliases for each source, starting from current aliasCounter
+        int predictedCounter = aliasCounter;
+        for (LogicalPlan source : sources) {
+            if (source instanceof AliasedRelation) {
+                // User-provided alias
+                AliasedRelation aliased = (AliasedRelation) source;
+                String alias = SQLQuoting.quoteIdentifier(aliased.alias());
+                if (aliased.planId().isPresent()) {
+                    mapping.putIfAbsent(aliased.planId().getAsLong(), alias);
+                }
+                collectPlanIds(aliased.child(), alias, mapping);
+            } else {
+                // Will generate a subquery alias
+                predictedCounter++;
+                String alias = "subquery_" + predictedCounter;
+                collectPlanIds(source, alias, mapping);
+            }
+        }
+    }
+
     private void collectJoinPlanIds(Join join, Map<Long, String> mapping) {
         collectJoinSidePlanIds(join.left(), mapping);
         collectJoinSidePlanIds(join.right(), mapping);
