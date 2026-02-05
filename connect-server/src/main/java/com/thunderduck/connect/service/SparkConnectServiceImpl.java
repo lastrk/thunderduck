@@ -2157,6 +2157,14 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                        && duckType instanceof com.thunderduck.types.DoubleType) {
                 // DuckDB returns DOUBLE for unix_timestamp, but Spark expects LONG
                 finalType = logicalType;
+            } else if (logicalType instanceof com.thunderduck.types.LongType
+                       && duckType instanceof com.thunderduck.types.DecimalType) {
+                // DuckDB returns DECIMAL(38,0) for SUM on integers, but Spark expects LONG
+                finalType = logicalType;
+            } else if (logicalType instanceof com.thunderduck.types.DoubleType
+                       && duckType instanceof com.thunderduck.types.DecimalType) {
+                // DuckDB returns DECIMAL for SUM on doubles, but Spark expects DOUBLE
+                finalType = logicalType;
             } else if (logicalType instanceof com.thunderduck.types.MapType
                        || logicalType instanceof com.thunderduck.types.ArrayType
                        || logicalType instanceof com.thunderduck.types.StructType) {

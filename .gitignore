@@ -70,3 +70,6 @@ htmlcov/
 .devcontainer/.claude-auth-token
 .devcontainer/.claude-base-url
 .devcontainer/.claude-custom-headers
+
+# Generated TPC-DS test data
+tests/integration/tpcds_sf001/

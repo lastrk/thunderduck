@@ -332,10 +332,40 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture(scope="session")
 def tpcds_data_dir():
-    """Path to TPC-DS test data"""
-    data_dir = Path("/workspace/data/tpcds_sf1")
+    """
+    Path to TPC-DS test data (co-located with integration tests).
+
+    Auto-generates TPC-DS data at scale factor 0.01 if the directory doesn't exist.
+    This ensures tests can run without manual data setup.
+    """
+    data_dir = Path(__file__).parent / "tpcds_sf001"
     if not data_dir.exists():
-        pytest.skip(f"TPC-DS data not found at {data_dir}")
+        print(f"\nTPC-DS data not found at {data_dir}")
+        print("Auto-generating TPC-DS data (SF=0.01)...")
+
+        # Run the generation script
+        workspace_root = Path(__file__).parent.parent.parent
+        gen_script = workspace_root / "scripts" / "generate_tpcds_via_duckdb.py"
+
+        if not gen_script.exists():
+            pytest.skip(f"TPC-DS generation script not found at {gen_script}")
+
+        try:
+            result = subprocess.run(
+                ["python3", str(gen_script), "--sf", "0.01", "--output", str(data_dir)],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 minute timeout for data generation
+            )
+            print(result.stdout)
+            print("TPC-DS data generation complete!")
+        except subprocess.CalledProcessError as e:
+            print(f"TPC-DS generation failed: {e.stderr}")
+            pytest.skip(f"TPC-DS data generation failed: {e.stderr}")
+        except subprocess.TimeoutExpired:
+            pytest.skip("TPC-DS data generation timed out after 5 minutes")
+
     return data_dir
 
 

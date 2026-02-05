@@ -14,6 +14,7 @@
 |------------|-------|--------|--------|---------|-----------|
 | **Maven Unit Tests** | 1016 | 979 | 0 | 37 | **100%** |
 | **Differential Tests** | 854 | 411 | 130 | 313 | **76%** |
+| **TPC-DS Tests** | 227 | 35 | 192 | 0 | **15.4%** |
 
 ### Key Findings
 
@@ -27,10 +28,17 @@
    - Most failures are nullable mismatches and missing DuckDB functions
    - All join tests pass (27/27), including right/full outer join fixes
 
-3. **Critical Insight**: Core Thunderduck functionality is solid. Remaining differential test failures are primarily:
-   - Nullable field mismatches (Thunderduck marks more fields nullable than Spark)
-   - Missing DuckDB functions (`named_struct`, `map_from_arrays`)
-   - Type differences in window functions (DecimalType vs LongType)
+3. **TPC-DS Tests: NEEDS WORK** - 35/227 tests passing (15.4%)
+   - Tests now auto-generate data if missing (updated conftest.py fixture)
+   - Passing queries: Q1, Q4, Q11, Q22, Q23a, Q23b, Q37, Q41, Q74, Q82, Q93
+   - DataFrame API tests: 13/15 passing (87%)
+   - Most failures are due to DecimalType precision and nullable mismatches
+
+4. **Critical Insight**: Core Thunderduck functionality is solid. Remaining differential test failures are primarily:
+   - **DecimalType precision**: Spark returns specific precision (e.g., DecimalType(17,2)), Thunderduck returns DecimalType(38,2) or DoubleType
+   - **Nullable mismatches**: Thunderduck marks more fields nullable than Spark
+   - **Missing DuckDB functions**: `named_struct`, `map_from_arrays`
+   - **Type differences in window functions**: DecimalType vs LongType
 
 ---
 
@@ -105,22 +113,79 @@ The 37 skipped tests fall into these categories:
 
 ---
 
+### TPC-DS Differential Tests (227 tests)
+
+**Status**: Running with auto-generated data (SF=0.01)
+**Updated**: 2026-02-05
+**Pass Rate**: 35/227 (15.4%)
+
+#### Passing Queries (11 SQL + 13 DataFrame = 24 unique queries)
+
+| Query | SQL Test | DataFrame Test | Notes |
+|-------|----------|----------------|-------|
+| Q1 | ✅ Pass | - | Simple aggregation |
+| Q3 | - | ✅ Pass | Brand analysis |
+| Q4 | ✅ Pass | - | Customer sales comparison |
+| Q7 | - | ✅ Pass | Promotional sales |
+| Q11 | ✅ Pass | - | Customer preference comparison |
+| Q13 | - | ✅ Pass | Store sales analysis |
+| Q19 | - | ✅ Pass | Customer returns |
+| Q22 | ✅ Pass | - | Inventory analysis |
+| Q23a/b | ✅ Pass | - | Frequent customers |
+| Q26 | - | ✅ Pass | Promotional analysis |
+| Q37 | ✅ Pass | ✅ Pass | Inventory/catalog |
+| Q41 | ✅ Pass | ✅ Pass | Item selection |
+| Q45 | - | ✅ Pass | Web sales analysis |
+| Q48 | - | ✅ Pass | Store sales demographics |
+| Q74 | ✅ Pass | - | Year-over-year comparison |
+| Q82 | ✅ Pass | ✅ Pass | Inventory analysis |
+| Q84 | - | ✅ Pass | Customer income |
+| Q91 | - | ✅ Pass | Customer call analysis |
+| Q93 | ✅ Pass | - | Store returns |
+| Q96 | - | ✅ Pass | Simple count |
+
+#### Failure Categories
+
+**1. DecimalType Precision Mismatch (Most Common)**
+- Spark returns specific precision: `DecimalType(17,2)`, `DecimalType(11,6)`, etc.
+- Thunderduck returns: `DecimalType(38,2)` or `DoubleType()`
+- Affected: Q2, Q3, Q5, Q7, Q8, Q9, Q10, Q14a/b, Q25, Q29, Q32, Q43, Q44, Q53, Q54, Q55, Q59, Q62, Q63, Q65, Q67, Q69, Q70, Q72, Q75, Q76, Q77, Q78, Q80, Q83, Q85, Q86, Q87, Q88, Q89, Q90, Q92, Q94, Q95, Q97, Q98, Q99
+
+**2. Nullable Mismatch**
+- Thunderduck marks aggregation results as `nullable=True`
+- Spark marks them as `nullable=False`
+- Affected: Q6, Q15, Q16, Q17, Q18, Q19, Q20, Q21, Q24a/b, Q27, Q28, Q30, Q31, Q33, Q34, Q35, Q38, Q39a/b, Q40, Q46, Q47, Q49, Q50, Q56, Q57, Q58, Q60, Q61, Q64, Q66, Q68, Q71, Q73, Q79, Q81
+
+**3. Data Value Differences**
+- Some queries show actual data differences (rounding, precision)
+- Example: Q50 - `total_returns: 475477.39` vs `475477.00`
+
+#### Auto-Generation Feature
+
+The `tpcds_data_dir` fixture in `/workspace/tests/integration/conftest.py` now auto-generates TPC-DS data:
+- Checks if `tests/integration/tpcds_sf001/` exists
+- If missing, runs `scripts/generate_tpcds_via_duckdb.py --sf 0.01`
+- Generates 24 TPC-DS tables in Parquet format (~7MB total)
+- 5-minute timeout for data generation
+
+---
+
 ### Differential Tests (693 total, ~471 test functions)
 
-**Status**: Cannot execute without Apache Spark 4.0.1 installation
+**Status**: Running with Apache Spark 4.0.1 reference server
 
 #### Test Structure Analysis
 
 | Category | Files | Tests | Status |
 |----------|-------|-------|--------|
-| **TPC-H/TPC-DS Benchmarks** | 2 | 37 | Blocked by Spark ref server |
-| **DataFrame Operations** | 3 | 97 | Blocked by INSERT setup |
-| **Functions** | 3 | 70 | Blocked by INSERT setup |
-| **Joins** | 2 | 26 | Blocked by INSERT setup |
-| **Aggregations** | 1 | 21 | Blocked by INSERT setup |
-| **Type System** | 3 | 66 | Blocked by INSERT setup |
-| **Other** | 12 | 183 | Mixed blockers |
-| **TOTAL** | 26 | ~693* | Infrastructure issues |
+| **TPC-H/TPC-DS Benchmarks** | 2 | 227+ | Running (see above) |
+| **DataFrame Operations** | 3 | 97 | Running |
+| **Functions** | 3 | 70 | Running |
+| **Joins** | 2 | 26 | ✅ All Passing |
+| **Aggregations** | 1 | 21 | Running |
+| **Type System** | 3 | 66 | Running |
+| **Other** | 12 | 183 | Running |
+| **TOTAL** | 26 | ~693* | Active |
 
 *Note: Actual count ~693 due to parametrized tests generating multiple cases
 
@@ -128,8 +193,7 @@ The 37 skipped tests fall into these categories:
 
 **TPC-H/TPC-DS Benchmarks:**
 - `test_differential_v2.py` - 16 TPC-H SQL tests (678 lines)
-- `test_tpcds_differential.py` - 36 TPC-DS SQL tests (1643 lines)
-- `test_tpcds_dataframe_differential.py` - 1 DataFrame API test (65 lines)
+- `test_tpcds_differential.py` - 227 TPC-DS tests (SQL + DataFrame + batches)
 
 **DataFrame Operations:**
 - `test_dataframe_functions.py` - 57 function parity tests (851 lines)
@@ -635,10 +699,12 @@ Use `ignore_nullable=True` in test assertions for tests using raw SQL.
 - ✅ Maven Unit Tests: **100% passing** (979/1016 runnable, 37 skipped)
 - ✅ Differential Tests: **76% passing** (411/541 runnable, 313 skipped)
 - ✅ All Join Tests: **100% passing** (27/27 including right/full outer joins)
+- ⚠️ TPC-DS Tests: **15.4% passing** (35/227 tests)
 
 ### Target State (Next Milestone)
 - ✅ Maven Unit Tests: **>96%** (maintain) ✅ ACHIEVED
 - ⏳ Differential Tests: **>85%** (460+/541)
+- ⏳ TPC-DS Tests: **>50%** (114+/227) - requires DecimalType precision fixes
 - ⏳ Fix nullable mismatches and missing functions
 
 ### Ultimate Goal
@@ -649,6 +715,16 @@ Use `ignore_nullable=True` in test assertions for tests using raw SQL.
 ---
 
 ## Recent Changes
+
+**2026-02-05 (Evening)**:
+- Updated `tpcds_data_dir` fixture in `/workspace/tests/integration/conftest.py` to auto-generate TPC-DS data
+- Ran full TPC-DS differential test suite: **35/227 passing (15.4%)**
+- Identified primary failure categories:
+  - DecimalType precision mismatch (Spark returns specific precision, Thunderduck returns DecimalType(38,2) or DoubleType)
+  - Nullable field mismatches (Thunderduck marks aggregations as nullable=True)
+- Passing queries: Q1, Q4, Q11, Q22, Q23a/b, Q37, Q41, Q74, Q82, Q93 (SQL tests)
+- DataFrame API tests: 13/15 passing (87%) - Q3, Q7, Q13, Q19, Q26, Q37, Q41, Q45, Q48, Q82, Q84, Q91, Q96
+- Added TPC-DS detailed results section to documentation
 
 **2026-02-05 (PM)**:
 - Fixed nullability mismatch between Spark and Thunderduck for PySpark API
