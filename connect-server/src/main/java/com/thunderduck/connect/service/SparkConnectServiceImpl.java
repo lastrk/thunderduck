@@ -1878,8 +1878,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                trimmed.startsWith("REVOKE ") ||
                // DML statements (don't return ResultSet)
                trimmed.startsWith("INSERT ") ||
-               trimmed.startsWith("UPDATE ") ||
-               trimmed.startsWith("DELETE ") ||
+               // UPDATE and DELETE removed - not supported on V1 tables in Spark
                trimmed.startsWith("MERGE ") ||
                // Session/admin commands
                trimmed.startsWith("SET ") ||
