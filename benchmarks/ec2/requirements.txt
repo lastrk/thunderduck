@@ -11,4 +11,4 @@ pyarrow>=14.0.0
 pandas>=2.0.0
 
 # Spark Connect client
-pyspark>=3.5.0
+pyspark>=4.1.1
