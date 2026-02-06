@@ -1,8 +1,8 @@
 # Current Focus: Differential Test Parity with Spark 4.x
 
 **Status:** In Progress
-**Updated:** 2026-02-06 (Type Casting Fixes Implemented)
-**Previous Update:** 2026-02-06 (Morning)
+**Updated:** 2026-02-06 (Post-Implementation Test Results)
+**Previous Update:** 2026-02-06 (Afternoon - Type Casting Fixes Implemented)
 
 ---
 
@@ -10,10 +10,11 @@
 
 ### Test Results Overview (2026-02-06)
 
-| Test Suite | Total | Passed | Failed | Skipped | Pass Rate |
-|------------|-------|--------|--------|---------|-----------|
-| **Maven Unit Tests** | 976 | 976 | 0 | 0 | **100%** |
-| **Differential Tests** | 854 | 438 | 363 | 53 | **51.3%** |
+| Test Suite | Total | Passed | Failed | Skipped | Pass Rate | Change |
+|------------|-------|--------|--------|---------|-----------|--------|
+| **Maven Unit Tests** | 976 | 976 | 0 | 0 | **100%** | ✅ Maintained |
+| **Differential Tests (Before)** | 854 | 438 | 363 | 53 | 51.3% | Baseline |
+| **Differential Tests (After)** | 854 | **445** | **356** | 53 | **52.1%** | +7 tests |
 
 ### Key Findings
 
@@ -22,39 +23,74 @@
    - Zero failures, zero skipped
    - Covers expressions, converters, type system, SQL generation, error handling
 
-2. **Differential Tests: IMPROVING** - 438/854 tests passing (51.3%)
-   - Up from 411 passing on 2026-02-05
+2. **Differential Tests: MODEST IMPROVEMENT** - 445/854 tests passing (52.1%)
+   - Up from 438 passing before type fixes (+7 tests, +0.8%)
+   - Up from 411 passing on 2026-02-05 (+34 tests total this week)
    - 53 tests intentionally skipped (unsupported DuckDB features)
-   - 363 failures primarily due to type mismatches and missing functions
-   - **Expected after type fixes**: 560+/854 (65%+) pending verification
+   - 356 failures remain (down from 363)
+   - **Expected impact not fully realized** - targeted 100+ test improvement, achieved 7
+
+3. **Critical Discovery: Arrow Serialization Layer Issue** 🔴
+   - DecimalVector → BigIntVector errors **persist** despite SQL fixes
+   - Root cause: Arrow vector creation layer forces type conversions
+   - SQL generation correctly preserves DECIMAL types ✅
+   - But Arrow serialization fails when creating result vectors ❌
+   - **Impact**: Blocks TPC-H Q1/Q3/Q5/Q6, TPC-DS Q43/Q62/Q99 (10+ major queries)
+
+4. **New Issue: DECIMAL Precision/Rounding** 🟡
+   - ~60 tests show unexpected decimal rounding
+   - Example: `31079.94` (Spark) vs `31080.00` (Thunderduck)
+   - Affects revenue/ratio calculations across TPC-DS
+   - Possible causes: DuckDB DECIMAL arithmetic, intermediate precision loss
+
+5. **Successful Fix: DateTime Functions** ✅
+   - Year, month, day, etc. now return INTEGER (was BIGINT)
+   - ~7 tests now passing
+   - Clean implementation, no side effects
 
 ### Latest Implementation (2026-02-06 Afternoon)
 
-**Type Casting Error Fixes - COMPLETED** ✅
+**Type Casting Error Fixes - PARTIALLY SUCCESSFUL** ⚠️
 
 Two major root causes addressed:
 
-1. **DateTime Function Type Mismatch** (~20-30 tests affected)
+1. **DateTime Function Type Mismatch** (~20-30 tests affected) ✅ **SUCCESS**
    - **Problem**: DuckDB returns BIGINT, Spark expects INTEGER (32-bit)
    - **Solution**: Added CAST to INTEGER in SQL generation
    - **Functions Fixed**: year, month, day, dayofmonth, hour, minute, second, quarter, weekofyear, dayofyear
    - **File**: `FunctionRegistry.java`
    - **Status**: Verified with manual tests - returns IntegerType ✅
+   - **Impact**: Estimated ~5-7 tests fixed
 
-2. **DECIMAL Aggregation Precision Loss** (~100+ tests affected)
+2. **DECIMAL Aggregation Precision Loss** (~100+ tests affected) ❌ **LIMITED SUCCESS**
    - **Problem**: Generic SUM always cast to BIGINT, breaking DECIMAL precision
    - **Solution**: Type-aware SUM logic based on input type
      - INTEGER/LONG/SHORT/BYTE → Cast to BIGINT (overflow prevention)
      - DECIMAL → No cast (preserves precision and scale)
      - FLOAT/DOUBLE → No cast (already correct)
    - **File**: `Aggregate.java`
-   - **Impact**: TPC-DS Q43, Q48, Q62, Q99 (conditional SUM on prices)
-   - **Status**: Logic implemented, awaiting differential test validation ✅
+   - **Expected Impact**: TPC-DS Q43, Q48, Q62, Q99 (conditional SUM on prices)
+   - **Actual Result**: ❌ Q43, Q62, Q99 DataFrame versions STILL FAILING with same error
+   - **Root Cause**: Arrow serialization layer issue, not SQL generation issue
 
-**Test Status**:
-- Maven Unit Tests: 976/976 passing (100%) ✅
-- Manual verification: DateTime functions return IntegerType ✅
-- Differential tests: Awaiting full suite run
+### Post-Implementation Test Results (2026-02-06 Evening)
+
+**Full differential test suite run completed:**
+- **Time**: 143.63 seconds (2:23)
+- **Results**: 445 passed, 356 failed, 53 skipped (+7 tests from 438 baseline)
+- **Pass Rate**: 52.1% (up from 51.3%, +0.8% improvement)
+
+**⚠️ CRITICAL FINDING**: The DecimalVector → BigIntVector errors persist in:
+- TPC-H DataFrame: Q1, Q3, Q5, Q6 (still failing)
+- TPC-DS DataFrame: Q43, Q62, Q99 (still failing)
+- Error occurs in "Query streaming failed after 0 batches" (Arrow layer)
+
+**Analysis**:
+- Our SQL generation fix works correctly ✅
+- The problem is in the **Arrow serialization layer**, not SQL generation
+- Type inference says DECIMAL, SQL generates DECIMAL-preserving query
+- But Arrow vector creation still tries to cast DECIMAL → BIGINT
+- Location: Likely in `ArrowStreamingExecutor.java` or type-to-vector mapping
 
 ---
 
@@ -122,34 +158,109 @@ Test coverage includes:
 
 ---
 
+## New Failure Categories Discovered (2026-02-06 Test Run)
+
+### DECIMAL Precision/Rounding Issues (NEW - CRITICAL)
+
+**Impact**: ~60+ tests showing data mismatches
+
+**Symptoms**:
+- Revenue calculations: `31079.94` (Spark) vs `31080.00` (Thunderduck)
+- Ratio calculations: `91.24538744574955089` vs `91.24537607891491840`
+- Price aggregations: `6517.20` vs `6517.00`
+
+**Pattern**: Thunderduck is **rounding decimals** to fewer decimal places
+- Spark preserves full precision: `DecimalType(38,17)` → value `91.24538744574955089`
+- Thunderduck rounds: `DecimalType(38,17)` → value `91.24537607891491840`
+
+**Affected Queries**:
+- TPC-DS Q15, Q42, Q48, Q50, Q52, Q55, Q98, Q99
+- Pattern appears in SUM aggregations with CASE WHEN expressions
+
+**Root Cause**: Unknown - possible issues:
+1. DuckDB's DECIMAL arithmetic rounding mode differs from Spark
+2. Intermediate calculation precision loss
+3. CAST operations introducing rounding
+
+### Timestamp Timezone Issues (NEW - MEDIUM)
+
+**Impact**: ~5 tests
+
+**Error**: `TimeStampMicroTZVector cannot be cast to TimeStampMicroVector`
+
+**Symptom**: DuckDB returns timezone-aware timestamps, Spark expects timezone-naive
+
+**Affected**: `test_string_to_timestamp` in type casting tests
+
+### Nullability Mismatches for Literals (ONGOING)
+
+**Impact**: ~30 tests in type_literals_differential.py
+
+**Symptoms**:
+- Array literals: `nullable=False` (Spark) vs `nullable=True` (Thunderduck)
+- Struct fields: Individual fields nullable when should be non-nullable
+- Map values: Value type nullable when should be non-nullable
+
+**Example**:
+```
+Reference: StructType([StructField('name', StringType(), False), ...])
+Test:      StructType([StructField('name', StringType(), True), ...])
+```
+
+### Date vs Timestamp Return Types (NEW)
+
+**Impact**: ~8 tests
+
+**Symptom**: Interval arithmetic returns `TimestampType` instead of `DateType`
+
+**Example**:
+- Query: `date_col + INTERVAL '1' MONTH`
+- Spark: Returns `DateType`
+- Thunderduck: Returns `TimestampType`
+
+---
+
 ## Failure Analysis by Category
 
-### Priority 1: Type Conversion Issues (CRITICAL) - ✅ PARTIALLY FIXED
+### Priority 1: Type Conversion Issues (CRITICAL) - ⚠️ PARTIALLY FIXED
 
-**Impact**: ~150+ tests
+**Impact**: ~150+ tests (7 fixed, 143+ remain)
 
 **Primary Symptoms**:
-1. ✅ **FIXED**: `DecimalVector cannot be cast to BigIntVector` - Arrow type mismatch in SUM aggregates
-2. ✅ **FIXED**: DateTime functions returning BIGINT instead of INTEGER
-3. ⏳ Remaining: Window function results wrapped incorrectly
+1. ⚠️ **PARTIALLY FIXED**: `DecimalVector cannot be cast to BigIntVector` - Arrow type mismatch
+   - Fixed SQL generation layer ✅
+   - Still failing in Arrow serialization layer ❌
+   - Affects: TPC-H Q1/Q3/Q5/Q6, TPC-DS Q43/Q62/Q99 (DataFrame versions)
+2. ✅ **FIXED**: DateTime functions returning BIGINT instead of INTEGER (~7 tests)
+3. ⏳ **REMAINING**: Window function results wrapped incorrectly
 
-**Root Causes Addressed**:
-1. ✅ **DateTime Functions** - DuckDB returns BIGINT, Spark expects INTEGER
-   - Added CAST to INTEGER for year, month, day, dayofmonth, hour, minute, second, quarter, weekofyear, dayofyear
-   - Updated FunctionRegistry with CUSTOM_TRANSLATORS
+**Root Causes Analysis**:
 
-2. ✅ **SUM Aggregation** - Generic BIGINT cast broke DECIMAL precision
-   - Implemented type-aware logic in Aggregate.AggregateExpression
-   - INTEGER types → Cast to BIGINT (overflow prevention)
-   - DECIMAL types → No cast (preserves precision) ⭐ Key fix for TPC-DS
-   - FLOAT/DOUBLE → No cast (already correct)
+1. ✅ **DateTime Functions - SOLVED**
+   - Problem: DuckDB returns BIGINT, Spark expects INTEGER
+   - Solution: Added CAST to INTEGER in FunctionRegistry.CUSTOM_TRANSLATORS
+   - Result: ~7 tests now passing
+   - Functions fixed: year, month, day, dayofmonth, hour, minute, second, quarter, weekofyear, dayofyear
+
+2. ⚠️ **SUM Aggregation - SQL LAYER FIXED, ARROW LAYER BROKEN**
+   - SQL Generation: ✅ Fixed in Aggregate.AggregateExpression.toSQL()
+     - INTEGER types → Cast to BIGINT (overflow prevention)
+     - DECIMAL types → No cast (preserves precision)
+     - FLOAT/DOUBLE → No cast (already correct)
+   - Arrow Serialization: ❌ **Still broken**
+     - Error occurs in "Query streaming failed after 0 batches"
+     - Type inference correctly identifies DECIMAL
+     - SQL correctly preserves DECIMAL
+     - BUT: Arrow vector creation tries to force BIGINT
+     - Root cause: `ArrowStreamingExecutor.java` or type-to-vector mapping
 
 **Files Modified**:
 - `/workspace/core/src/main/java/com/thunderduck/functions/FunctionRegistry.java`
 - `/workspace/core/src/main/java/com/thunderduck/logical/Aggregate.java`
 - 3 test files updated to expect new CAST format
 
-**Expected Impact**: ~120-150 tests fixed (pending differential test verification)
+**Actual Impact**: 7 tests fixed (expected 120-150)
+**Remaining Work**: Fix Arrow serialization layer for DECIMAL aggregates
 
 ---
 
@@ -240,21 +351,34 @@ Tests intentionally skipped due to known limitations:
 
 ## Priority Fix Roadmap
 
-### Phase 1: Type Conversion Fixes (HIGH IMPACT)
+### Phase 1: Type Conversion Fixes (HIGH IMPACT) - REVISED PRIORITIES
 
-**Goal**: Fix ~150 tests
+**Goal**: Fix ~150 tests (7 completed, 143+ remain)
 
 | Task | Impact | Complexity | Status |
 |------|--------|------------|--------|
-| Fix datetime extracts to return INTEGER (not BIGINT) | ~20-30 tests | Low | ✅ **DONE** (2026-02-06) |
-| Fix Arrow DecimalVector/BigIntVector mismatch | ~100 tests | Medium | ✅ **DONE** (2026-02-06) |
+| Fix datetime extracts to return INTEGER (not BIGINT) | ~7 tests | Low | ✅ **DONE** (2026-02-06) |
+| Fix Arrow DECIMAL serialization layer | ~100+ tests | **HIGH** | ❌ **BLOCKED** |
+| Fix DECIMAL precision/rounding differences | ~60 tests | High | ⏳ NEW PRIORITY |
 | Fix window function result types | ~30 tests | Medium | ⏳ TODO |
+| Fix timestamp timezone handling | ~5 tests | Low | ⏳ TODO |
 
 **Completed 2026-02-06**:
-- DateTime extraction functions (year, month, day, etc.) now cast DuckDB BIGINT → INTEGER
-- SUM aggregation now type-aware: preserves DECIMAL precision while casting integers to BIGINT
-- All 976 Maven unit tests passing with updated expectations
-- Ready for differential test validation
+- ✅ DateTime extraction functions (year, month, day, etc.) now cast DuckDB BIGINT → INTEGER
+- ⚠️ SUM aggregation type-aware logic implemented in SQL layer (but Arrow layer still broken)
+- ✅ All 976 Maven unit tests passing with updated expectations
+- ✅ Differential test validation completed: +7 tests (52.1% pass rate)
+
+**Critical Blockers Identified**:
+1. **Arrow DECIMAL Serialization** - DecimalVector → BigIntVector casting errors persist
+   - Location: `ArrowStreamingExecutor.java` or type-to-vector mapping
+   - Affects: TPC-H Q1/Q3/Q5/Q6, TPC-DS Q43/Q62/Q99 DataFrame queries
+   - Priority: **CRITICAL** - blocks 10+ major queries
+
+2. **DECIMAL Precision/Rounding** - New issue discovered
+   - Thunderduck rounds decimals: `31079.94` → `31080.00`
+   - Affects: ~60 TPC-DS queries with revenue calculations
+   - Priority: **HIGH** - causes data mismatches even when queries execute
 
 ### Phase 2: Missing Function Implementation (MEDIUM IMPACT)
 
@@ -312,6 +436,75 @@ Tests intentionally skipped due to known limitations:
 
 ---
 
+## Next Steps - Prioritized Action Plan
+
+Based on the 2026-02-06 test results, here are the prioritized next steps:
+
+### Immediate Priority: Fix Arrow DECIMAL Serialization (CRITICAL) 🔴
+
+**Problem**: DecimalVector → BigIntVector casting errors in Arrow layer
+
+**Investigation Needed**:
+1. Read `/workspace/connect-server/src/.../ArrowStreamingExecutor.java`
+2. Find where DuckDB query results are converted to Arrow vectors
+3. Identify why DECIMAL results trigger BIGINT vector creation
+4. Check if type inference result is being ignored/overridden
+
+**Hypothesis**:
+- Type inference correctly identifies `DecimalType(38,2)`
+- SQL query preserves DECIMAL (our fix works)
+- But vector allocation uses wrong type from somewhere
+- Possible culprit: Aggregate return type override or schema mismatch
+
+**Expected Impact**: +10-15 major query fixes (TPC-H Q1/Q3/Q5/Q6, TPC-DS Q43/Q62/Q99)
+
+**Complexity**: Medium-High (requires understanding Arrow integration)
+
+---
+
+### High Priority: Investigate DECIMAL Rounding (HIGH) 🟡
+
+**Problem**: Decimal values show precision loss: `31079.94` → `31080.00`
+
+**Investigation Needed**:
+1. Check if DuckDB DECIMAL arithmetic uses different rounding mode than Spark
+2. Verify DECIMAL scale preservation through aggregations
+3. Test simple SUM query to isolate issue
+4. Compare DuckDB `DECIMAL(38,2)` with Spark `DecimalType(38,2)`
+
+**Hypothesis**:
+- DuckDB may round during intermediate calculations
+- CAST operations might introduce rounding
+- Scale might be lost in arithmetic expressions
+
+**Expected Impact**: +60 tests (many TPC-DS queries with revenue calculations)
+
+**Complexity**: High (may require DuckDB configuration or query rewrites)
+
+---
+
+### Medium Priority: Fix Timestamp Timezone Handling (MEDIUM) 🟡
+
+**Problem**: `TimeStampMicroTZVector` vs `TimeStampMicroVector`
+
+**Investigation**: Check timestamp type creation in FunctionRegistry and type inference
+
+**Expected Impact**: +5 tests
+
+**Complexity**: Low-Medium
+
+---
+
+### Lower Priority: Fix Nullability for Literals (LOW) 🟢
+
+**Problem**: Array/struct/map literals marked nullable when shouldn't be
+
+**Expected Impact**: +30 tests (type_literals_differential.py)
+
+**Complexity**: Low (known issue, fix in PySpark API layer)
+
+---
+
 ## Running Tests
 
 ### Maven Unit Tests
@@ -352,18 +545,25 @@ python3 -m pytest differential/test_joins_differential.py -v
 
 ## Success Metrics
 
-### Current State (2026-02-06)
-- ✅ Maven Unit Tests: **100%** (976/976)
-- ⚠️ Differential Tests: **51.3%** (438/854)
-- ⚠️ TPC-H: **40.9%** (9/22)
-- ⚠️ TPC-DS SQL: **11%** (11/99)
-- ⚠️ TPC-DS DataFrame: **38%** (13/34)
+### Current State (2026-02-06 Evening - After Type Fixes)
+- ✅ Maven Unit Tests: **100%** (976/976) - Maintained
+- ⚠️ Differential Tests: **52.1%** (445/854) - Up from 51.3% (+7 tests)
+- ⚠️ TPC-H: **~41%** (estimate based on partial failures)
+- ⚠️ TPC-DS SQL: **~11%** (limited improvement observed)
+- ⚠️ TPC-DS DataFrame: **~35%** (some regressions from DecimalVector errors)
 
-### Target State (Next Milestone)
+### Revised Target State (Next Milestone)
 - ✅ Maven Unit Tests: **100%** (maintain) - **ACHIEVED**
-- ⏳ Differential Tests: **>65%** (560+/854) - **Expected with type fixes**
-- ⏳ TPC-H: **>60%** (13+/22) - **Expected improvement**
-- ⏳ TPC-DS: **>20%** (20+/99) - **Expected improvement**
+- ⏳ Differential Tests: **>60%** (510+/854) - **Requires Arrow layer fix**
+- ⏳ TPC-H: **>55%** (12+/22) - **Requires DECIMAL fixes**
+- ⏳ TPC-DS SQL: **>15%** (15+/99) - **Requires DECIMAL precision**
+- ⏳ TPC-DS DataFrame: **>45%** (15+/34) - **Requires Arrow layer fix**
+
+**Why Targets Revised**:
+- Arrow serialization layer issues more complex than anticipated
+- New DECIMAL precision/rounding issues discovered
+- Window function issues still unaddressed
+- Estimated 2-3 additional fix cycles needed for original 65% target
 
 ### Ultimate Goal
 - ✅ Maven Unit Tests: **100%**
@@ -374,18 +574,34 @@ python3 -m pytest differential/test_joins_differential.py -v
 
 ## Recent Changes
 
-**2026-02-06 (Afternoon) - Type Casting Fixes**:
-- ✅ **MAJOR FIX**: Implemented type-aware SUM aggregation
-  - DECIMAL inputs now preserve precision (no longer cast to BIGINT)
-  - INTEGER inputs cast to BIGINT for overflow prevention
-  - Fixes ~100+ TPC-DS tests with conditional aggregations (Q43, Q48, Q62, Q99)
-- ✅ **MAJOR FIX**: DateTime extraction functions now return INTEGER
+**2026-02-06 (Evening) - Post-Implementation Analysis**:
+- 📊 **TEST RESULTS**: 445/854 passing (52.1%, up from 51.3%)
+  - Actual improvement: +7 tests
+  - Expected improvement: +100-150 tests
+  - Gap analysis: Arrow serialization layer issues discovered
+- 🔍 **ROOT CAUSE IDENTIFIED**: DECIMAL casting errors persist in Arrow layer
+  - SQL generation correctly preserves DECIMAL ✅
+  - Arrow vector creation forces BIGINT → causes ClassCastException ❌
+  - Affects: TPC-H Q1/Q3/Q5/Q6, TPC-DS Q43/Q62/Q99
+  - Next fix location: `ArrowStreamingExecutor.java`
+- 🆕 **NEW ISSUE DISCOVERED**: DECIMAL precision/rounding differences
+  - ~60 tests show decimal rounding: `31079.94` → `31080.00`
+  - Affects revenue/ratio calculations in TPC-DS
+  - Requires investigation of DuckDB DECIMAL arithmetic
+- ✅ **SUCCESSFUL FIX**: DateTime functions now return INTEGER (~7 tests)
+- ✅ All 976 Maven unit tests passing (100%)
+
+**2026-02-06 (Afternoon) - Type Casting Fixes Implementation**:
+- ⚠️ **PARTIAL FIX**: Implemented type-aware SUM aggregation (SQL layer only)
+  - DECIMAL inputs preserve precision in SQL generation ✅
+  - Arrow serialization still broken ❌
+  - Expected to fix Q43, Q48, Q62, Q99 but didn't
+- ✅ **SUCCESSFUL FIX**: DateTime extraction functions now return INTEGER
   - Added CAST(... AS INTEGER) for year, month, day, dayofmonth, hour, minute, second, quarter, weekofyear, dayofyear
   - DuckDB returns BIGINT, Spark expects INTEGER (32-bit)
-  - Fixes ~20-30 tests with datetime operations
+  - Fixed ~7 tests with datetime operations
 - Updated 8 unit tests to expect new CAST format
 - All 976 Maven unit tests passing (100%)
-- **Expected impact**: 51.3% → 65%+ differential test pass rate
 
 **2026-02-06 (Morning)**:
 - Fixed aggregate function nullable mismatches
