@@ -45,6 +45,41 @@ Organizations that:
 
 **Last Updated**: 2025-12-17
 
+## Workflow Orchestration
+
+### 1. Plan Mode Default
+Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)If something goes sideways, STOP and re-plan immediately - don't keep pushingUse plan mode for verification steps, not just buildingWrite detailed specs upfront to reduce ambiguity
+
+### 2. Subagent Strategy to keep main context window clean
+Offload research, exploration, and parallel analysis to subagentsFor complex problems, throw more compute at it via subagentsOne task per subagent for focused execution.
+**Use subagent for running compile tasks**: every time you need to recompile the project by running maven, use a subagent and let it return success if the compilation succeeded or the focused error message
+**Use subagent for running test suites**: every time you need to run unit or integration tests, use a subagent and let it return a summary of number of tests succeeded, failed and which tests specifically failed, further analysis of failing tests can be done by running subagents for singular tests and they should return a summary of the output.
+
+### 3. Self-Improvement Loop
+After ANY correction from the user: update 'tasks/lessons.md' with the patternWrite rules for yourself that prevent the same mistakeRuthlessly iterate on these lessons until mistake rate dropsReview lessons at session start for relevant project
+
+### 4. Verification Before Done
+Never mark a task complete without proving it worksDiff behavior between main and your changes when relevantAsk yourself: "Would a staff engineer approve this?"Run tests, check logs, demonstrate correctness
+
+### 5. Demand Elegance (Balanced)
+For non-trivial changes: pause and ask "is there a more elegant way?"If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"Skip this for simple, obvious fixes - don't over-engineerChallenge your own work before presenting it
+
+### 6. Autonomous Bug Fixing
+When given a bug report: just fix it. Don't ask for hand-holdingPoint at logs, errors, failing tests -> then resolve themZero context switching required from the userGo fix failing CI tests without being told how
+
+## Task Management
+**Plan First**: Write plan to 'tasks/todo.md' with checkable items
+**Verify Plan**: Check in before starting implementation
+**Track Progress**: Mark items complete as you go
+**Explain Changes**: High-level summary at each step
+**Document Results**: Add review to 'tasks/todo.md'
+**Capture Lessons**: Update 'tasks/lessons.md' after corrections
+
+## Core Principles
+**Simplicity First**: Make every change as simple as possible. Impact minimal code.
+**No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
+**Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
+
 ## Documentation Structure Rules
 
 **Permanent Rule**: The thunderduck project follows a focused documentation structure:

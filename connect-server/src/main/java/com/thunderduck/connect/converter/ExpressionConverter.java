@@ -895,6 +895,11 @@ public class ExpressionConverter {
      */
     private DataType convertDataType(org.apache.spark.connect.proto.DataType protoType) {
         switch (protoType.getKindCase()) {
+            case NULL:
+                // Untyped NULL literal - return StringType as placeholder
+                // This will be handled specially in type unification
+                logger.debug("Converting NULL DataType to StringType (untyped NULL)");
+                return StringType.get();
             case BOOLEAN:
                 return BooleanType.get();
             case BYTE:

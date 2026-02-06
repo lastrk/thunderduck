@@ -1741,11 +1741,26 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
                 ArrowBatchIterator iterator = baseIterator;
 
-                // Wrap with SchemaCorrectedBatchIterator if logical schema provided
+                // Wrap with SchemaCorrectedBatchIterator to correct schema
                 // This corrects nullable flags from DuckDB (all true) to match Spark semantics
-                if (logicalSchema != null) {
-                    iterator = new SchemaCorrectedBatchIterator(iterator, logicalSchema, executor.getAllocator());
+                // and handles type conversions (e.g., Decimal to BigInt)
+                StructType effectiveSchema = logicalSchema;
+                if (effectiveSchema == null) {
+                    // For SQL-only queries without a logical plan, infer schema from Arrow output
+                    // This ensures schema correction still happens for direct SQL execution
+                    // Note: hasNext() may load first batch to make schema available
+                    if (iterator.hasNext()) {
+                        org.apache.arrow.vector.types.pojo.Schema arrowSchema = iterator.getSchema();
+                        effectiveSchema = com.thunderduck.runtime.ArrowInterchange.arrowSchemaToStructType(arrowSchema);
+                        logger.debug("[{}] Inferred logical schema from Arrow output: {} fields",
+                            operationId, effectiveSchema.size());
+                    } else {
+                        // Empty result set - use empty schema
+                        effectiveSchema = new StructType(java.util.Collections.emptyList());
+                        logger.debug("[{}] Empty result set, using empty schema", operationId);
+                    }
                 }
+                iterator = new SchemaCorrectedBatchIterator(iterator, effectiveSchema, executor.getAllocator());
 
                 // Wrap with TailBatchIterator if tail operation requested
                 if (tailLimit >= 0) {
