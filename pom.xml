@@ -310,7 +310,7 @@
                                 <configuration>
                                     <target>
                                         <!-- Validate extension directory exists -->
-                                        <available file="${project.basedir}/duckdb_ext/Makefile"
+                                        <available file="${maven.multiModuleProjectDirectory}/duckdb_ext/Makefile"
                                                   property="extension.dir.exists"/>
                                         <fail unless="extension.dir.exists"
                                               message="duckdb_ext/Makefile not found. Extension source missing."/>
@@ -356,24 +356,24 @@
                                         <echo message="Building DuckDB extension for platform: ${extension.platform}"/>
 
                                         <!-- Build extension using Make -->
-                                        <exec executable="make" dir="${project.basedir}/duckdb_ext"
+                                        <exec executable="make" dir="${maven.multiModuleProjectDirectory}/duckdb_ext"
                                               failonerror="true">
                                             <env key="GEN" value="ninja"/>
                                             <arg value="release"/>
                                         </exec>
 
                                         <!-- Verify output exists -->
-                                        <available file="${project.basedir}/duckdb_ext/build/release/extension/thdck_spark_funcs/thdck_spark_funcs.duckdb_extension"
+                                        <available file="${maven.multiModuleProjectDirectory}/duckdb_ext/build/release/extension/thdck_spark_funcs/thdck_spark_funcs.duckdb_extension"
                                                   property="extension.built"/>
                                         <fail unless="extension.built"
                                               message="Extension build completed but output file not found. Check DuckDB version alignment."/>
 
                                         <!-- Create target directory -->
-                                        <mkdir dir="${project.basedir}/core/src/main/resources/extensions/${extension.platform}"/>
+                                        <mkdir dir="${maven.multiModuleProjectDirectory}/core/src/main/resources/extensions/${extension.platform}"/>
 
                                         <!-- Copy extension to resources -->
-                                        <copy file="${project.basedir}/duckdb_ext/build/release/extension/thdck_spark_funcs/thdck_spark_funcs.duckdb_extension"
-                                              tofile="${project.basedir}/core/src/main/resources/extensions/${extension.platform}/thdck_spark_funcs.duckdb_extension"
+                                        <copy file="${maven.multiModuleProjectDirectory}/duckdb_ext/build/release/extension/thdck_spark_funcs/thdck_spark_funcs.duckdb_extension"
+                                              tofile="${maven.multiModuleProjectDirectory}/core/src/main/resources/extensions/${extension.platform}/thdck_spark_funcs.duckdb_extension"
                                               overwrite="true"/>
 
                                         <echo message="Extension bundled at: core/src/main/resources/extensions/${extension.platform}/thdck_spark_funcs.duckdb_extension"/>
