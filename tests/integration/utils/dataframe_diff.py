@@ -10,6 +10,7 @@ from decimal import Decimal
 from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType, StructField, DataType
 import difflib
+import os
 import threading
 
 
@@ -56,14 +57,16 @@ class DataFrameDiff:
     Compare two DataFrames and produce detailed diff output
     """
 
-    def __init__(self, epsilon: float = 1e-6):
+    def __init__(self, epsilon: float = 1e-6, relaxed: bool = False):
         """
         Initialize DataFrame diff utility
 
         Args:
             epsilon: Tolerance for floating point comparisons
+            relaxed: If True, skip type/nullable checks and use lenient numeric matching
         """
         self.epsilon = epsilon
+        self.relaxed = relaxed
 
     def compare(
         self,
@@ -196,12 +199,14 @@ class DataFrameDiff:
                     f"  Column {i}: name mismatch - Reference='{ref_name}', Test='{test_name}'"
                 )
 
-            if ref_type != test_type:
+            # In relaxed mode, skip type checking entirely
+            if not self.relaxed and ref_type != test_type:
                 mismatches.append(
                     f"  Column '{ref_name}': type mismatch - Reference={ref_type}, Test={test_type}"
                 )
 
-            if ref_nullable != test_nullable and not ignore_nullable:
+            # In relaxed mode, skip nullable checking entirely
+            if not self.relaxed and not ignore_nullable and ref_nullable != test_nullable:
                 mismatches.append(
                     f"  Column '{ref_name}': nullable mismatch - Reference={ref_nullable}, Test={test_nullable}"
                 )
@@ -228,7 +233,8 @@ class DataFrameDiff:
             ref_val = ref_dict[col_name]
             test_val = test_dict[col_name]
 
-            if not self._values_equal(ref_val, test_val):
+            equal = self._values_equal_relaxed(ref_val, test_val) if self.relaxed else self._values_equal(ref_val, test_val)
+            if not equal:
                 diffs.append({
                     'column': col_name,
                     'reference': ref_val,
@@ -271,6 +277,36 @@ class DataFrameDiff:
 
         # Exact equality for everything else
         return ref_val == test_val
+
+    def _values_equal_relaxed(self, ref_val: Any, test_val: Any) -> bool:
+        """
+        Relaxed value comparison: type-agnostic numeric matching.
+
+        In relaxed mode, we don't care about type differences between
+        numeric types (int vs float vs Decimal) — only that the values
+        are numerically equivalent.
+        """
+        # NULL handling — same as strict
+        if ref_val is None and test_val is None:
+            return True
+        if ref_val is None or test_val is None:
+            return False
+
+        # Both numeric (int, float, Decimal) — convert to float, compare
+        if isinstance(ref_val, (int, float, Decimal)) and isinstance(test_val, (int, float, Decimal)):
+            ref_f = float(ref_val)
+            test_f = float(test_val)
+            # For integral values: exact integer comparison first
+            if ref_f == int(ref_f) and test_f == int(test_f):
+                return int(ref_f) == int(test_f)
+            # For fractional values: epsilon comparison
+            return abs(ref_f - test_f) < self.epsilon
+
+        # Everything else: direct equality, fallback to string comparison
+        try:
+            return ref_val == test_val
+        except Exception:
+            return str(ref_val) == str(test_val)
 
     def _format_diff_output(
         self,
@@ -338,6 +374,16 @@ class DataFrameDiff:
         return "\n".join(output)
 
 
+def _is_relaxed_mode():
+    """Check if running in relaxed comparison mode.
+
+    Returns True for 'relaxed' and 'auto' modes (without extension, types won't
+    match exactly). Only 'strict' mode uses strict comparison.
+    """
+    mode = os.environ.get('THUNDERDUCK_COMPAT_MODE', 'auto')
+    return mode.lower() in ('relaxed', 'auto')
+
+
 # Convenience function for pytest
 def assert_dataframes_equal(
     reference_df: DataFrame,
@@ -374,6 +420,10 @@ def assert_dataframes_equal(
         TimeoutError: If query execution times out (basic mode)
         HardError subclass: On timeout, crash, or connection failure (orchestrator mode)
     """
+    relaxed = _is_relaxed_mode()
+    # In relaxed mode, use a wider epsilon for numeric comparison
+    effective_epsilon = max(epsilon, 0.001) if relaxed else epsilon
+
     if orchestrator is not None:
         # Use V2 path with timing and health checks
         from .exceptions import ResultMismatchError
@@ -384,15 +434,16 @@ def assert_dataframes_equal(
                 thunderduck_df=test_df,
                 query_name=query_name,
                 timeout=timeout,
-                epsilon=epsilon,
+                epsilon=effective_epsilon,
                 max_diff_rows=max_diff_rows,
-                ignore_nullable=ignore_nullable
+                ignore_nullable=ignore_nullable,
+                relaxed=relaxed
             )
         except ResultMismatchError as e:
             raise AssertionError(str(e)) from e
     else:
         # Use basic path (existing behavior)
-        diff = DataFrameDiff(epsilon=epsilon)
+        diff = DataFrameDiff(epsilon=effective_epsilon, relaxed=relaxed)
         passed, message, stats = diff.compare(
             reference_df, test_df, query_name, max_diff_rows, timeout, ignore_nullable
         )
@@ -412,7 +463,9 @@ def compare_differential(
     query_name: str,
     timeout: int = None,
     epsilon: float = 1e-6,
-    max_diff_rows: int = 10
+    max_diff_rows: int = 10,
+    ignore_nullable: bool = False,
+    relaxed: bool = False
 ) -> None:
     """
     Compare DataFrames with proper error handling using the orchestrator.
@@ -431,6 +484,8 @@ def compare_differential(
         timeout: Collection timeout (uses orchestrator default if None)
         epsilon: Tolerance for floating point comparisons
         max_diff_rows: Maximum number of diff rows to show
+        ignore_nullable: If True, ignore nullable mismatches
+        relaxed: If True, skip type/nullable checks and use lenient numeric matching
 
     Raises:
         HardError subclass: On timeout, crash, or connection failure
@@ -458,9 +513,9 @@ def compare_differential(
         raise
 
     # 1. Compare schemas first (doesn't require collection)
-    diff = DataFrameDiff(epsilon=epsilon)
+    diff = DataFrameDiff(epsilon=epsilon, relaxed=relaxed)
     schema_match, schema_msg = diff._compare_schemas(
-        spark_df.schema, thunderduck_df.schema
+        spark_df.schema, thunderduck_df.schema, ignore_nullable
     )
 
     if not schema_match:

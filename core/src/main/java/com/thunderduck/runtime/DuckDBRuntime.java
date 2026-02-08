@@ -85,9 +85,33 @@ public class DuckDBRuntime implements AutoCloseable {
         this.connection = rawConn.unwrap(DuckDBConnection.class);
         configureConnection();
 
-        // Attempt to load bundled extensions
-        boolean extensionLoaded = loadBundledExtensions();
-        // TODO: Pass extensionLoaded to FunctionRegistry when that integration is ready
+        // Load extensions based on configured compatibility mode
+        SparkCompatMode.Mode mode = SparkCompatMode.getConfiguredMode();
+        switch (mode) {
+            case RELAXED:
+                logger.info("Relaxed Spark compatibility mode - extension loading skipped");
+                break;
+            case STRICT:
+                boolean strictLoaded = loadBundledExtensions();
+                SparkCompatMode.setExtensionLoaded(strictLoaded);
+                if (!strictLoaded) {
+                    throw new SQLException(
+                        "Strict Spark compatibility mode requires the thdck_spark_funcs extension, " +
+                        "but it could not be loaded. Build with: mvn clean package -DskipTests -Pbuild-extension");
+                }
+                logger.info("Strict Spark compatibility mode - extension loaded");
+                break;
+            case AUTO:
+            default:
+                boolean autoLoaded = loadBundledExtensions();
+                SparkCompatMode.setExtensionLoaded(autoLoaded);
+                if (autoLoaded) {
+                    logger.info("Strict Spark compatibility mode - extension loaded");
+                } else {
+                    logger.info("Relaxed Spark compatibility mode - extension not available");
+                }
+                break;
+        }
 
         logger.info("DuckDB runtime initialized with streaming results enabled");
     }

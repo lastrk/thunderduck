@@ -2,12 +2,16 @@ package com.thunderduck.connect.server;
 
 import com.thunderduck.connect.service.SparkConnectServiceImpl;
 import com.thunderduck.connect.session.SessionManager;
+import com.thunderduck.runtime.DuckDBRuntime;
+import com.thunderduck.runtime.SparkCompatMode;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -163,18 +167,60 @@ public class SparkConnectServer {
      */
     public static void main(String[] args) {
         try {
-            // Parse command-line arguments
-            int port = args.length > 0 ? Integer.parseInt(args[0]) : 15002;
-            long sessionTimeout = args.length > 1 ? Long.parseLong(args[1]) : 300_000;
+            // Separate named flags (--strict, --relaxed) from positional args
+            List<String> positionalArgs = new ArrayList<>();
+            SparkCompatMode.Mode compatMode = null;
+
+            for (String arg : args) {
+                if ("--strict".equals(arg)) {
+                    compatMode = SparkCompatMode.Mode.STRICT;
+                } else if ("--relaxed".equals(arg)) {
+                    compatMode = SparkCompatMode.Mode.RELAXED;
+                } else {
+                    positionalArgs.add(arg);
+                }
+            }
+
+            // Fall back to system property if no CLI flag
+            if (compatMode == null) {
+                String sysProp = System.getProperty("thunderduck.spark.compat.mode");
+                compatMode = SparkCompatMode.parse(sysProp);
+            }
+
+            // Configure mode early, before any DuckDBRuntime is created
+            SparkCompatMode.configure(compatMode);
+
+            // Parse positional args: [port] [sessionTimeoutMs]
+            int port = positionalArgs.size() > 0 ? Integer.parseInt(positionalArgs.get(0)) : 15002;
+            long sessionTimeout = positionalArgs.size() > 1 ? Long.parseLong(positionalArgs.get(1)) : 300_000;
+
+            // Startup probe: create a throwaway DuckDBRuntime to trigger extension loading
+            // and set SparkCompatMode.extensionLoaded before accepting connections
+            logger.info("Probing extension availability (mode={})", compatMode);
+            try (DuckDBRuntime probe = DuckDBRuntime.create("jdbc:duckdb::memory:__probe")) {
+                // Extension loading happens in constructor; result is now in SparkCompatMode
+            }
+
+            // If strict mode and extension didn't load, fail fast
+            if (compatMode == SparkCompatMode.Mode.STRICT && !SparkCompatMode.isExtensionLoaded()) {
+                logger.error("Strict Spark compatibility mode requested but extension failed to load");
+                System.exit(1);
+            }
 
             // Create and start server
             SparkConnectServer server = new SparkConnectServer(port, sessionTimeout);
             server.start();
 
+            // Determine compat label for banner
+            String compatLabel = SparkCompatMode.isExtensionLoaded()
+                ? "STRICT (extension loaded)"
+                : "RELAXED (vanilla DuckDB functions)";
+
             logger.info("================================================");
             logger.info("Spark Connect Server is running");
             logger.info("Port: {}", port);
             logger.info("Session timeout: {}ms", sessionTimeout);
+            logger.info("Spark compatibility: {}", compatLabel);
             logger.info("DuckDB: Session-scoped in-memory databases");
             logger.info("================================================");
             logger.info("Connect with PySpark:");

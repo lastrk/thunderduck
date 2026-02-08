@@ -214,7 +214,7 @@ When comparing results with potential ties:
 ### How It Works
 
 1. Extension is built separately via CMake (`cd thunderduck-duckdb-extension && GEN=ninja make release`)
-2. Compiled `.thunderduck-duckdb-extensionension` binary is placed in `core/src/main/resources/extensions/<platform>/`
+2. Compiled `.duckdb_extension` binary is placed in `core/src/main/resources/extensions/<platform>/`
 3. `DuckDBRuntime` auto-detects and loads the extension at connection creation
 4. `FunctionRegistry` checks extension availability and maps to extension functions when loaded
 5. If extension is absent or fails to load, server continues with vanilla DuckDB functions
@@ -259,7 +259,7 @@ cd thunderduck-duckdb-extension && GEN=ninja make release && cd ..
 # Bundle for current platform
 PLATFORM=linux_amd64  # or osx_arm64, linux_arm64, etc.
 mkdir -p core/src/main/resources/extensions/$PLATFORM
-cp thunderduck-duckdb-extension/build/release/extension/thdck_spark_funcs/thdck_spark_funcs.thunderduck-duckdb-extensionension \
+cp thunderduck-duckdb-extension/build/release/extension/thdck_spark_funcs/thdck_spark_funcs.duckdb_extension \
    core/src/main/resources/extensions/$PLATFORM/
 
 # Rebuild JAR with extension included
@@ -412,6 +412,23 @@ mvn -f /workspace/pom.xml install -pl core -DskipTests -q
 
 # Kill servers + rebuild (common combo)
 pkill -9 -f java 2>/dev/null; sleep 2; mvn -f /workspace/pom.xml clean package -DskipTests -q
+```
+
+### Spark Compatibility Mode
+
+```bash
+# Strict mode (extension must be loaded, server fails if missing)
+THUNDERDUCK_COMPAT_MODE=strict python3 -m pytest ...
+
+# Relaxed mode (no extension, vanilla DuckDB)
+THUNDERDUCK_COMPAT_MODE=relaxed python3 -m pytest ...
+
+# Auto mode (default: loads extension if available)
+python3 -m pytest ...
+
+# Server CLI flags (alternative to env var)
+java -jar connect-server.jar --strict
+java -jar connect-server.jar --relaxed
 ```
 
 ### Integration Tests (pytest)

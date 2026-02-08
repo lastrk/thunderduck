@@ -1047,47 +1047,23 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             selectExprs.add(expr.toSQL());
         }
 
-        // Get child schema for type-aware SQL generation (e.g., CAST for AVG of decimal)
-        com.thunderduck.types.StructType childSchema = null;
-        try {
-            childSchema = plan.child().schema();
-        } catch (Exception e) {
-            // Child schema unavailable - proceed without type-specific handling
-        }
-
         // Add aggregate expressions
         for (Aggregate.AggregateExpression aggExpr : plan.aggregateExpressions()) {
             String aggSQL = aggExpr.toSQL();
 
-            // For AVG of decimal columns, wrap with CAST to preserve decimal type
-            // (DuckDB returns DOUBLE for AVG, but Spark preserves DECIMAL)
-            // Spark: AVG(DECIMAL(p,s)) -> DECIMAL(p+4, s+4)
-            if (childSchema != null &&
-                aggExpr.function().equalsIgnoreCase("AVG") &&
-                aggExpr.argument() != null) {
-
-                com.thunderduck.types.DataType argType = resolveExpressionType(aggExpr.argument(), childSchema);
-                if (argType instanceof com.thunderduck.types.DecimalType) {
-                    com.thunderduck.types.DecimalType decType = (com.thunderduck.types.DecimalType) argType;
-                    int newPrecision = Math.min(decType.precision() + 4, 38);
-                    int newScale = Math.min(decType.scale() + 4, newPrecision);
-                    aggSQL = String.format("CAST(%s AS DECIMAL(%d,%d))",
-                        aggSQL, newPrecision, newScale);
+            // In strict mode, route SUM/AVG/COUNT to extension aggregate functions.
+            // In relaxed mode, use plain DuckDB aggregates (no CASTs, no rewrites).
+            if (com.thunderduck.runtime.SparkCompatMode.isStrictMode()) {
+                // Normalize function name: strip _DISTINCT suffix for matching
+                String baseFuncName = aggExpr.function().toUpperCase();
+                if (baseFuncName.endsWith("_DISTINCT")) {
+                    baseFuncName = baseFuncName.substring(0, baseFuncName.length() - "_DISTINCT".length());
                 }
-            }
 
-            // For SUM of decimal columns, wrap with CAST to match Spark precision rules
-            // Spark: SUM(DECIMAL(p,s)) -> DECIMAL(p+10, s), capped at max precision 38
-            if (childSchema != null &&
-                aggExpr.function().equalsIgnoreCase("SUM") &&
-                aggExpr.argument() != null) {
-
-                com.thunderduck.types.DataType argType = resolveExpressionType(aggExpr.argument(), childSchema);
-                if (argType instanceof com.thunderduck.types.DecimalType) {
-                    com.thunderduck.types.DecimalType decType = (com.thunderduck.types.DecimalType) argType;
-                    int newPrecision = Math.min(decType.precision() + 10, 38);
-                    aggSQL = String.format("CAST(%s AS DECIMAL(%d,%d))",
-                        aggSQL, newPrecision, decType.scale());
+                if (baseFuncName.equals("SUM")) {
+                    aggSQL = aggSQL.replaceFirst("(?i)\\bSUM\\b", "spark_sum");
+                } else if (baseFuncName.equals("AVG")) {
+                    aggSQL = aggSQL.replaceFirst("(?i)\\bAVG\\b", "spark_avg");
                 }
             }
 

@@ -5,6 +5,7 @@ Pytest configuration for Thunderduck Spark Connect integration tests
 import pytest
 from pyspark.sql import SparkSession
 from pathlib import Path
+import os
 import sys
 import atexit
 import signal
@@ -310,10 +311,18 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "window: mark test as window function test"
     )
+    config.addinivalue_line(
+        "markers", "skip_relaxed: skip test in relaxed compatibility mode"
+    )
+    config.addinivalue_line(
+        "markers", "skip_strict: skip test in strict compatibility mode"
+    )
 
 
 def pytest_collection_modifyitems(config, items):
-    """Add markers automatically based on test names"""
+    """Add markers automatically based on test names and handle mode-specific skipping"""
+    compat_mode = os.environ.get('THUNDERDUCK_COMPAT_MODE', 'auto').lower()
+
     for item in items:
         # Add tpch marker to tests with 'tpch' in name
         if 'tpch' in item.nodeid.lower():
@@ -326,6 +335,19 @@ def pytest_collection_modifyitems(config, items):
         # Add sql marker to tests with 'sql' in name
         if '_sql' in item.nodeid.lower():
             item.add_marker(pytest.mark.sql)
+
+        # Mode-specific skipping
+        if compat_mode in ('relaxed', 'auto'):
+            marker = item.get_closest_marker('skip_relaxed')
+            if marker:
+                reason = marker.kwargs.get('reason', 'Skipped in relaxed mode')
+                item.add_marker(pytest.mark.skip(reason=reason))
+
+        if compat_mode == 'strict':
+            marker = item.get_closest_marker('skip_strict')
+            if marker:
+                reason = marker.kwargs.get('reason', 'Skipped in strict mode')
+                item.add_marker(pytest.mark.skip(reason=reason))
 
 
 # TPC-DS Fixtures
@@ -432,7 +454,6 @@ def load_tpcds_query(tpcds_queries_dir):
 #   THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true  - Continue on hard errors
 # ============================================================================
 
-import os
 from utils.test_orchestrator import TestOrchestrator
 from utils.exceptions import HardError
 
@@ -473,9 +494,11 @@ def dual_server_manager():
     # Kill any existing servers first to ensure clean slate
     kill_all_servers()
 
+    compat_mode = os.environ.get('THUNDERDUCK_COMPAT_MODE', None)
     manager = DualServerManager(
         thunderduck_port=15002,
-        spark_reference_port=15003
+        spark_reference_port=15003,
+        compat_mode=compat_mode
     )
 
     print("\n" + "="*80)

@@ -16,9 +16,10 @@ from typing import Optional
 class ServerManager:
     """Manages Spark Connect server lifecycle for integration tests"""
 
-    def __init__(self, host: str = "localhost", port: int = 15002):
+    def __init__(self, host: str = "localhost", port: int = 15002, compat_mode: Optional[str] = None):
         self.host = host
         self.port = port
+        self.compat_mode = compat_mode  # "strict", "relaxed", or None (auto)
         self.process: Optional[subprocess.Popen] = None
         self.workspace_dir = Path(__file__).parent.parent.parent.parent
         self.server_jar = self.workspace_dir / "connect-server/target/thunderduck-connect-server-0.1.0-SNAPSHOT.jar"
@@ -89,9 +90,13 @@ class ServerManager:
             "--add-opens=java.base/java.nio=ALL-UNNAMED",
             "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
             "-Djava.security.properties=" + str(self.workspace_dir / "duckdb.security"),
-            "-jar",
-            str(self.server_jar)
         ]
+
+        # Add compat mode system property if specified
+        if self.compat_mode:
+            java_cmd.append(f"-Dthunderduck.spark.compat.mode={self.compat_mode}")
+
+        java_cmd.extend(["-jar", str(self.server_jar)])
 
         print(f"Starting Spark Connect server on {self.host}:{self.port}...")
         print(f"Command: {' '.join(java_cmd)}")

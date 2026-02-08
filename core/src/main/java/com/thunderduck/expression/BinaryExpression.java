@@ -1,5 +1,6 @@
 package com.thunderduck.expression;
 
+import com.thunderduck.runtime.SparkCompatMode;
 import com.thunderduck.types.*;
 import java.util.Objects;
 
@@ -150,6 +151,9 @@ public class BinaryExpression extends Expression {
      * @return the SQL string
      */
     public String toSQL() {
+        if (operator == Operator.DIVIDE && SparkCompatMode.isStrictMode()) {
+            return String.format("spark_decimal_div(%s, %s)", left.toSQL(), right.toSQL());
+        }
         return String.format("(%s %s %s)", left.toSQL(), operator.symbol(), right.toSQL());
     }
 
