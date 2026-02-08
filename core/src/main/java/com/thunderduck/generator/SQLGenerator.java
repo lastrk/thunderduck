@@ -534,8 +534,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             case RIGHT: return "RIGHT OUTER JOIN";
             case FULL: return "FULL OUTER JOIN";
             case CROSS: return "CROSS JOIN";
-            case LEFT_SEMI: return "LEFT SEMI JOIN";
-            case LEFT_ANTI: return "LEFT ANTI JOIN";
+            case LEFT_SEMI: return "SEMI JOIN";
+            case LEFT_ANTI: return "ANTI JOIN";
             default: throw new UnsupportedOperationException("Unknown join type: " + joinType);
         }
     }
@@ -1414,7 +1414,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * handling of joins where both tables have columns with the same name.
      *
      * For semi-joins and anti-joins, uses EXISTS/NOT EXISTS patterns
-     * since DuckDB doesn't support LEFT SEMI JOIN syntax directly.
+     * using EXISTS/NOT EXISTS for proper column alias scoping.
      */
     private void visitJoin(Join plan) {
         // Handle SEMI and ANTI joins differently (using EXISTS/NOT EXISTS)

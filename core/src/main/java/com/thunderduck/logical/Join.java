@@ -283,11 +283,9 @@ public class Join extends LogicalPlan {
             case CROSS:
                 return "CROSS JOIN";
             case LEFT_SEMI:
-                // DuckDB supports LEFT SEMI JOIN
-                return "LEFT SEMI JOIN";
+                return "SEMI JOIN";
             case LEFT_ANTI:
-                // DuckDB supports LEFT ANTI JOIN
-                return "LEFT ANTI JOIN";
+                return "ANTI JOIN";
             default:
                 throw new IllegalStateException("Unsupported join type: " + joinType);
         }
