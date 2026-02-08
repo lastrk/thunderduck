@@ -378,6 +378,7 @@ public class FunctionRegistry {
         DIRECT_MAPPINGS.put("endswith", "ends_with");
         DIRECT_MAPPINGS.put("contains", "contains");
         DIRECT_MAPPINGS.put("rlike", "regexp_matches");
+        CUSTOM_TRANSLATORS.put("like", args -> "(" + args[0] + " LIKE " + args[1] + ")");
 
         // Other string functions
         DIRECT_MAPPINGS.put("ascii", "ascii");

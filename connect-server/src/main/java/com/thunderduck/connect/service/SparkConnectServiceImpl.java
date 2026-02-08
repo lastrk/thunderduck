@@ -732,6 +732,16 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         .withCause(e)
                         .asRuntimeException());
                 }
+            } else if (request.hasIsLocal()) {
+                // IS_LOCAL analysis - ThunderDuck is always local (single-node)
+                AnalyzePlanResponse response = AnalyzePlanResponse.newBuilder()
+                    .setSessionId(sessionId)
+                    .setIsLocal(AnalyzePlanResponse.IsLocal.newBuilder()
+                        .setIsLocal(true)
+                        .build())
+                    .build();
+                responseObserver.onNext(response);
+                responseObserver.onCompleted();
             } else {
                 // Other analysis types not yet implemented
                 logger.warn("Unsupported analyze type: {}", request.getAnalyzeCase());
