@@ -12,6 +12,7 @@ import com.thunderduck.runtime.ArrowStreamingExecutor;
 import com.thunderduck.runtime.QueryExecutor;
 import com.thunderduck.runtime.TailBatchIterator;
 import com.thunderduck.runtime.SchemaCorrectedBatchIterator;
+import com.thunderduck.runtime.SparkCompatMode;
 import com.thunderduck.logical.Tail;
 import com.thunderduck.types.StructType;
 import com.thunderduck.schema.SchemaInferrer;
@@ -697,11 +698,15 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         sql = sqlGenerator.generate(logicalPlan);
                         com.thunderduck.types.StructType duckDBSchema = inferSchemaFromDuckDB(sql, sessionId);
 
-                        // Merge: use DuckDB types but preserve nullable flags from logical plan
-                        // DuckDB returns all columns as nullable=true, but the logical plan
-                        // has correct nullable info from input schemas (e.g., LocalDataRelation)
-                        com.thunderduck.types.StructType logicalSchema = logicalPlan.schema();
-                        schema = mergeSchemas(duckDBSchema, logicalSchema);
+                        if (SparkCompatMode.isRelaxedMode()) {
+                            // Relaxed mode: use DuckDB's actual types as-is
+                            schema = duckDBSchema;
+                        } else {
+                            // Strict mode: DuckDB types are correct (extension handles Spark semantics),
+                            // only merge nullable flags from logical plan
+                            com.thunderduck.types.StructType logicalSchema = logicalPlan.schema();
+                            schema = mergeNullableOnly(duckDBSchema, logicalSchema);
+                        }
                     }
 
                     // Convert to Spark Connect proto DataType
@@ -1741,26 +1746,16 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
                 ArrowBatchIterator iterator = baseIterator;
 
-                // Wrap with SchemaCorrectedBatchIterator to correct schema
-                // This corrects nullable flags from DuckDB (all true) to match Spark semantics
-                // and handles type conversions (e.g., Decimal to BigInt)
-                StructType effectiveSchema = logicalSchema;
-                if (effectiveSchema == null) {
-                    // For SQL-only queries without a logical plan, infer schema from Arrow output
-                    // This ensures schema correction still happens for direct SQL execution
-                    // Note: hasNext() may load first batch to make schema available
-                    if (iterator.hasNext()) {
-                        org.apache.arrow.vector.types.pojo.Schema arrowSchema = iterator.getSchema();
-                        effectiveSchema = com.thunderduck.runtime.ArrowInterchange.arrowSchemaToStructType(arrowSchema);
-                        logger.debug("[{}] Inferred logical schema from Arrow output: {} fields",
-                            operationId, effectiveSchema.size());
-                    } else {
-                        // Empty result set - use empty schema
-                        effectiveSchema = new StructType(java.util.Collections.emptyList());
-                        logger.debug("[{}] Empty result set, using empty schema", operationId);
-                    }
+                if (SparkCompatMode.isRelaxedMode() || logicalSchema == null) {
+                    // Relaxed mode: no schema correction — return DuckDB's Arrow batches as-is.
+                    // Also skip correction when there's no logical schema (direct SQL queries).
+                    logger.debug("[{}] Skipping schema correction (relaxed={}, logicalSchema={})",
+                        operationId, SparkCompatMode.isRelaxedMode(), logicalSchema != null);
+                } else {
+                    // Strict mode: correct nullable flags only (DuckDB returns all nullable=true,
+                    // but Spark has correct nullable semantics from the logical plan)
+                    iterator = new SchemaCorrectedBatchIterator(iterator, logicalSchema, executor.getAllocator());
                 }
-                iterator = new SchemaCorrectedBatchIterator(iterator, effectiveSchema, executor.getAllocator());
 
                 // Wrap with TailBatchIterator if tail operation requested
                 if (tailLimit >= 0) {
@@ -2124,81 +2119,37 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     }
 
     /**
-     * Merges two schemas: uses types from duckDBSchema but nullable flags from logicalSchema.
+     * Merges nullable flags from logical schema onto DuckDB's schema.
      *
      * <p>DuckDB returns all columns as nullable=true. The logical plan has correct nullable
-     * info from input schemas (e.g., LocalDataRelation with Arrow data from PySpark).
-     * This method preserves the DuckDB data types (important for aggregates) while using
-     * the logical plan's nullable flags (important for schema fidelity).
+     * info from input schemas (e.g., COUNT is non-nullable, column references inherit from source).
+     * This method keeps DuckDB's data types unchanged and only corrects nullable flags.
      *
      * @param duckDBSchema Schema from DuckDB execution (correct types, all nullable)
-     * @param logicalSchema Schema from logical plan (correct nullable, may have different types)
-     * @return Merged schema with DuckDB types and logical plan nullable flags
+     * @param logicalSchema Schema from logical plan (correct nullable flags)
+     * @return Schema with DuckDB types and logical plan's nullable flags
      */
-    private com.thunderduck.types.StructType mergeSchemas(
+    private com.thunderduck.types.StructType mergeNullableOnly(
             com.thunderduck.types.StructType duckDBSchema,
             com.thunderduck.types.StructType logicalSchema) {
 
         if (logicalSchema == null || logicalSchema.size() != duckDBSchema.size()) {
-            // Can't merge if schemas have different sizes - just return DuckDB schema
-            logger.debug("Schema sizes differ, returning DuckDB schema");
             return duckDBSchema;
         }
 
-        java.util.List<com.thunderduck.types.StructField> mergedFields = new java.util.ArrayList<>();
+        java.util.List<com.thunderduck.types.StructField> fields = new java.util.ArrayList<>();
         for (int i = 0; i < duckDBSchema.size(); i++) {
             com.thunderduck.types.StructField duckField = duckDBSchema.fields().get(i);
             com.thunderduck.types.StructField logicalField = logicalSchema.fields().get(i);
-
-            // Type merging strategy:
-            // 1. DecimalType: prefer logical plan's type (computed using Spark rules)
-            // 2. IntegerType vs LongType: prefer logical (date extraction functions return INT in Spark)
-            // 3. LongType vs DoubleType: prefer logical (unix_timestamp returns LONG in Spark)
-            // 4. Complex types (Map, Array, Struct): prefer logical plan's type for correct nullability info
-            //    DuckDB reports all complex type elements as nullable, but logical plan has the correct info
-            // 5. Other types: use DuckDB's type (handles aggregates, etc.)
-            com.thunderduck.types.DataType finalType;
-            com.thunderduck.types.DataType logicalType = logicalField.dataType();
-            com.thunderduck.types.DataType duckType = duckField.dataType();
-
-            if (logicalType instanceof com.thunderduck.types.DecimalType) {
-                // Use logical plan's decimal type - it was computed using Spark's rules
-                finalType = logicalType;
-            } else if (logicalType instanceof com.thunderduck.types.IntegerType
-                       && duckType instanceof com.thunderduck.types.LongType) {
-                // DuckDB returns BIGINT for date extraction functions, but Spark expects INTEGER
-                finalType = logicalType;
-            } else if (logicalType instanceof com.thunderduck.types.LongType
-                       && duckType instanceof com.thunderduck.types.DoubleType) {
-                // DuckDB returns DOUBLE for unix_timestamp, but Spark expects LONG
-                finalType = logicalType;
-            } else if (logicalType instanceof com.thunderduck.types.LongType
-                       && duckType instanceof com.thunderduck.types.DecimalType) {
-                // DuckDB returns DECIMAL(38,0) for SUM on integers, but Spark expects LONG
-                finalType = logicalType;
-            } else if (logicalType instanceof com.thunderduck.types.DoubleType
-                       && duckType instanceof com.thunderduck.types.DecimalType) {
-                // DuckDB returns DECIMAL for SUM on doubles, but Spark expects DOUBLE
-                finalType = logicalType;
-            } else if (logicalType instanceof com.thunderduck.types.MapType
-                       || logicalType instanceof com.thunderduck.types.ArrayType
-                       || logicalType instanceof com.thunderduck.types.StructType) {
-                // Complex types: use logical plan's type for correct containsNull/valueContainsNull info
-                // DuckDB reports all complex type elements as nullable, but logical plan knows the truth
-                finalType = logicalType;
-            } else {
-                // Use DuckDB's type for other cases (correct for aggregates)
-                finalType = duckType;
-            }
-
-            mergedFields.add(new com.thunderduck.types.StructField(
+            // Keep DuckDB's types, use logical plan's nullable flags
+            fields.add(new com.thunderduck.types.StructField(
                 duckField.name(),
-                finalType,
+                duckField.dataType(),
                 logicalField.nullable()
             ));
         }
 
-        return new com.thunderduck.types.StructType(mergedFields);
+        return new com.thunderduck.types.StructType(fields);
     }
 
     /**

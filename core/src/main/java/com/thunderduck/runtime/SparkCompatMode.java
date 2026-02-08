@@ -43,6 +43,11 @@ public final class SparkCompatMode {
         return extensionLoaded;
     }
 
+    /** True when running without the extension (vanilla DuckDB types). */
+    public static boolean isRelaxedMode() {
+        return !extensionLoaded;
+    }
+
     /**
      * Parse a mode string (case-insensitive).
      *

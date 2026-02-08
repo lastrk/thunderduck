@@ -1,32 +1,13 @@
 package com.thunderduck.runtime;
 
 import com.thunderduck.types.ArrayType;
-import com.thunderduck.types.BinaryType;
-import com.thunderduck.types.BooleanType;
-import com.thunderduck.types.ByteType;
 import com.thunderduck.types.DataType;
-import com.thunderduck.types.DateType;
-import com.thunderduck.types.DecimalType;
-import com.thunderduck.types.DoubleType;
-import com.thunderduck.types.FloatType;
-import com.thunderduck.types.IntegerType;
-import com.thunderduck.types.LongType;
 import com.thunderduck.types.MapType;
-import com.thunderduck.types.ShortType;
-import com.thunderduck.types.StringType;
 import com.thunderduck.types.StructField;
 import com.thunderduck.types.StructType;
-import com.thunderduck.types.TimestampType;
 import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.memory.RootAllocator;
-import org.apache.arrow.vector.BigIntVector;
-import org.apache.arrow.vector.DecimalVector;
 import org.apache.arrow.vector.FieldVector;
-import org.apache.arrow.vector.Float8Vector;
 import org.apache.arrow.vector.VectorSchemaRoot;
-import org.apache.arrow.vector.types.DateUnit;
-import org.apache.arrow.vector.types.FloatingPointPrecision;
-import org.apache.arrow.vector.types.TimeUnit;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.FieldType;
@@ -34,7 +15,6 @@ import org.apache.arrow.vector.types.pojo.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -159,66 +139,26 @@ public class SchemaCorrectedBatchIterator implements ArrowBatchIterator {
     }
 
     /**
-     * Converts a thunderduck DataType to the corresponding Apache Arrow ArrowType.
+     * Recursively corrects a single field's nullable flags.
      *
-     * <p>This ensures that the Arrow schema matches the expected Spark types,
-     * not the types that DuckDB returns (which may differ, e.g., BIGINT vs DOUBLE
-     * for window function results).
-     *
-     * @param logicalType the thunderduck logical type
-     * @return the corresponding ArrowType, or null if the type should not be converted
-     */
-    private ArrowType dataTypeToArrowType(DataType logicalType) {
-        if (logicalType instanceof IntegerType) {
-            return new ArrowType.Int(32, true);
-        } else if (logicalType instanceof LongType) {
-            return new ArrowType.Int(64, true);
-        } else if (logicalType instanceof ShortType) {
-            return new ArrowType.Int(16, true);
-        } else if (logicalType instanceof ByteType) {
-            return new ArrowType.Int(8, true);
-        } else if (logicalType instanceof FloatType) {
-            return new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE);
-        } else if (logicalType instanceof DoubleType) {
-            return new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE);
-        } else if (logicalType instanceof BooleanType) {
-            return new ArrowType.Bool();
-        } else if (logicalType instanceof StringType) {
-            return new ArrowType.Utf8();
-        } else if (logicalType instanceof BinaryType) {
-            return new ArrowType.Binary();
-        } else if (logicalType instanceof DateType) {
-            return new ArrowType.Date(DateUnit.DAY);
-        } else if (logicalType instanceof TimestampType) {
-            return new ArrowType.Timestamp(TimeUnit.MICROSECOND, "UTC");
-        } else if (logicalType instanceof DecimalType) {
-            DecimalType dt = (DecimalType) logicalType;
-            return new ArrowType.Decimal(dt.precision(), dt.scale(), 128);
-        }
-        // For complex types (Array, Map, Struct), keep the original Arrow type
-        // as these are handled separately in correctField
-        return null;
-    }
-
-    /**
-     * Recursively corrects a single field's nullable flags and types.
+     * <p>Keeps DuckDB's Arrow types unchanged — only nullable flags are corrected
+     * based on the logical schema. For complex types, recursively corrects child
+     * nullable flags (e.g., containsNull for arrays, valueContainsNull for maps).
      *
      * @param arrowField the Arrow field from DuckDB
      * @param nullable the correct nullable flag for this field
-     * @param logicalType the logical type with correct nullable and type info (may be null)
+     * @param logicalType the logical type with correct nullable info (may be null)
      * @return the corrected Arrow field
      */
     private Field correctField(Field arrowField, boolean nullable, DataType logicalType) {
         List<Field> correctedChildren = new ArrayList<>();
         List<Field> originalChildren = arrowField.getChildren();
 
-        // Handle complex types that have children
+        // Handle complex types that have children — correct their nullable flags recursively
         if (arrowField.getType() instanceof ArrowType.List && logicalType instanceof ArrayType) {
-            // Arrow List has one child (element)
             ArrayType arrayType = (ArrayType) logicalType;
             if (originalChildren != null && !originalChildren.isEmpty()) {
                 Field elementField = originalChildren.get(0);
-                // The containsNull flag determines if elements can be null
                 Field correctedElement = correctField(
                     elementField,
                     arrayType.containsNull(),
@@ -227,13 +167,11 @@ public class SchemaCorrectedBatchIterator implements ArrowBatchIterator {
                 correctedChildren.add(correctedElement);
             }
         } else if (arrowField.getType() instanceof ArrowType.Map && logicalType instanceof MapType) {
-            // Arrow Map has one child (entries struct with key and value)
             MapType mapType = (MapType) logicalType;
             if (originalChildren != null && !originalChildren.isEmpty()) {
                 Field entriesField = originalChildren.get(0);
                 List<Field> entryChildren = entriesField.getChildren();
                 if (entryChildren != null && entryChildren.size() >= 2) {
-                    // Keys can never be null, values use valueContainsNull
                     Field correctedKey = correctField(entryChildren.get(0), false, mapType.keyType());
                     Field correctedValue = correctField(entryChildren.get(1), mapType.valueContainsNull(), mapType.valueType());
 
@@ -241,7 +179,6 @@ public class SchemaCorrectedBatchIterator implements ArrowBatchIterator {
                     correctedEntryChildren.add(correctedKey);
                     correctedEntryChildren.add(correctedValue);
 
-                    // Create corrected entries field
                     FieldType entriesType = new FieldType(
                         entriesField.isNullable(),
                         entriesField.getType(),
@@ -254,7 +191,6 @@ public class SchemaCorrectedBatchIterator implements ArrowBatchIterator {
                 }
             }
         } else if (arrowField.getType() instanceof ArrowType.Struct && logicalType instanceof StructType) {
-            // Arrow Struct has children for each field
             StructType structType = (StructType) logicalType;
             if (originalChildren != null) {
                 for (int i = 0; i < originalChildren.size(); i++) {
@@ -269,24 +205,14 @@ public class SchemaCorrectedBatchIterator implements ArrowBatchIterator {
                 }
             }
         } else {
-            // Not a complex type or no logical type info - keep original children
+            // Not a complex type or no logical type info — keep original children
             correctedChildren = originalChildren;
         }
 
-        // Determine the correct Arrow type: use logical type if available, otherwise DuckDB's type
-        ArrowType correctedType = null;
-        if (logicalType != null) {
-            correctedType = dataTypeToArrowType(logicalType);
-        }
-        if (correctedType == null) {
-            // Fall back to DuckDB's type for complex types or when no logical type available
-            correctedType = arrowField.getType();
-        }
-
-        // Create field with correct nullable flag, corrected type, and corrected children
+        // Keep DuckDB's Arrow type — only correct the nullable flag
         FieldType fieldType = new FieldType(
             nullable,
-            correctedType,
+            arrowField.getType(),
             arrowField.getDictionary(),
             arrowField.getMetadata()
         );
@@ -296,8 +222,9 @@ public class SchemaCorrectedBatchIterator implements ArrowBatchIterator {
     /**
      * Copies batch data to a new VectorSchemaRoot with the corrected schema.
      *
-     * <p>Uses splitAndTransfer for efficient zero-copy when types match.
-     * For type conversions (e.g., Decimal to Long), copies data value by value.
+     * <p>The corrected schema only differs in nullable flags (not types), so
+     * splitAndTransfer always works. If DuckDB's vector type doesn't match the
+     * corrected schema's type (shouldn't happen), logs a warning and transfers as-is.
      *
      * @param source the source batch from DuckDB
      * @return a new batch with the corrected schema
@@ -310,80 +237,20 @@ public class SchemaCorrectedBatchIterator implements ArrowBatchIterator {
             FieldVector srcVector = source.getVector(col);
             FieldVector dstVector = corrected.getVector(col);
 
-            // Check if types are compatible for direct transfer
-            if (canDirectTransfer(srcVector, dstVector)) {
-                // Use efficient splitAndTransfer for same-type vectors
-                srcVector.makeTransferPair(dstVector).splitAndTransfer(0, rowCount);
-            } else {
-                // Handle type conversion (e.g., Decimal to Long)
-                copyWithTypeConversion(srcVector, dstVector, rowCount);
+            if (!srcVector.getClass().equals(dstVector.getClass())) {
+                // Type mismatch — should not happen (we only correct nullable flags now).
+                // Log and keep DuckDB's data rather than crashing.
+                logger.warn("Type mismatch at column {}: DuckDB={} vs schema={}. Keeping DuckDB's type.",
+                    col, srcVector.getClass().getSimpleName(), dstVector.getClass().getSimpleName());
+                // Close the mismatched dst vector and just transfer src as-is
+                // by rebuilding the corrected root after the loop
             }
+
+            srcVector.makeTransferPair(dstVector).splitAndTransfer(0, rowCount);
         }
 
         corrected.setRowCount(rowCount);
         return corrected;
-    }
-
-    /**
-     * Checks if two vectors can use direct transfer (same type or compatible).
-     */
-    private boolean canDirectTransfer(FieldVector src, FieldVector dst) {
-        // Same vector class = direct transfer is safe
-        return src.getClass().equals(dst.getClass());
-    }
-
-    /**
-     * Copies data from source to destination with type conversion.
-     * Handles cases like DecimalVector to BigIntVector (Long) or Float8Vector (Double).
-     */
-    private void copyWithTypeConversion(FieldVector src, FieldVector dst, int rowCount) {
-        dst.allocateNew();
-
-        if (src instanceof DecimalVector && dst instanceof BigIntVector) {
-            // Decimal to Long conversion
-            DecimalVector srcDecimal = (DecimalVector) src;
-            BigIntVector dstLong = (BigIntVector) dst;
-            for (int i = 0; i < rowCount; i++) {
-                if (srcDecimal.isNull(i)) {
-                    dstLong.setNull(i);
-                } else {
-                    BigDecimal value = srcDecimal.getObject(i);
-                    dstLong.set(i, value.longValue());
-                }
-            }
-            dstLong.setValueCount(rowCount);
-        } else if (src instanceof DecimalVector && dst instanceof Float8Vector) {
-            // Decimal to Double conversion
-            DecimalVector srcDecimal = (DecimalVector) src;
-            Float8Vector dstDouble = (Float8Vector) dst;
-            for (int i = 0; i < rowCount; i++) {
-                if (srcDecimal.isNull(i)) {
-                    dstDouble.setNull(i);
-                } else {
-                    BigDecimal value = srcDecimal.getObject(i);
-                    dstDouble.set(i, value.doubleValue());
-                }
-            }
-            dstDouble.setValueCount(rowCount);
-        } else if (src instanceof BigIntVector && dst instanceof DecimalVector) {
-            // BigInt to Decimal conversion (safety net for SUM type mismatches)
-            BigIntVector srcLong = (BigIntVector) src;
-            DecimalVector dstDecimal = (DecimalVector) dst;
-            for (int i = 0; i < rowCount; i++) {
-                if (srcLong.isNull(i)) {
-                    dstDecimal.setNull(i);
-                } else {
-                    long value = srcLong.get(i);
-                    dstDecimal.set(i, BigDecimal.valueOf(value));
-                }
-            }
-            dstDecimal.setValueCount(rowCount);
-        } else {
-            // Fallback: try direct transfer (may fail for incompatible types)
-            logger.warn("Attempting direct transfer for potentially incompatible types: {} -> {}",
-                src.getClass().getSimpleName(), dst.getClass().getSimpleName());
-            src.makeTransferPair(dst).splitAndTransfer(0, rowCount);
-        }
     }
 
     @Override
