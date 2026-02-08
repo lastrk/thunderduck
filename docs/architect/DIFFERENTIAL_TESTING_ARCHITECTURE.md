@@ -1,6 +1,6 @@
 # Differential Testing Architecture
 
-**Last Updated:** 2025-12-16
+**Last Updated:** 2026-02-08
 **Status:** Production Ready
 **Spark Version:** 4.0.1
 
@@ -8,18 +8,37 @@
 
 The differential testing framework compares Thunderduck against Apache Spark 4.0.1 to ensure exact compatibility. Both systems run via Spark Connect protocol for fair comparison.
 
-**Test Coverage (266 tests - ALL PASSING):**
+**Key Achievement: 22/22 TPC-H DataFrame Parity** -- All TPC-H queries pass differential testing.
+
+**Test Coverage (35+ test files across multiple categories):**
 
 | Test Category | Tests | Status |
 |--------------|-------|--------|
-| TPC-H SQL (Differential) | 23 | ✅ ALL PASS |
-| TPC-H DataFrame API (Differential) | 4 | ✅ ALL PASS |
-| TPC-DS SQL (Differential) | 102 | ✅ ALL PASS |
-| TPC-DS DataFrame API (Differential) | 24 | ✅ ALL PASS |
-| DataFrame Function Parity (Differential) | 57 | ✅ ALL PASS |
-| Multi-dimensional Aggregations (Differential) | 21 | ✅ ALL PASS |
-| Window Functions (Differential) | 35 | ✅ ALL PASS |
-| **Total Differential Tests** | **266** | ✅ **ALL PASS** |
+| TPC-H DataFrame API | 22 | ✅ ALL PASS (Q1-Q22, 100% parity) |
+| TPC-H SQL (Parameterized) | Varies | ✅ ALL PASS |
+| TPC-DS DataFrame API | 33 | ✅ ALL PASS |
+| DataFrame Function Parity | 57 | ✅ ALL PASS |
+| Multi-dimensional Aggregations | 21 | ✅ ALL PASS |
+| Window Functions | 35 | ✅ ALL PASS |
+| Join Types (ON + USING) | 26 | ✅ ALL PASS |
+| Set Operations | 14 | ✅ ALL PASS |
+| Date/Time Functions | 18 | ✅ ALL PASS |
+| Sorting Edge Cases | 12 | ✅ ALL PASS |
+| Type Casting | 14 | ✅ ALL PASS |
+| Statistics | 16 | ✅ ALL PASS |
+| Conditional Expressions | 12 | ✅ ALL PASS |
+| Distinct Operations | 12 | ✅ ALL PASS |
+| Aggregation Functions | 15 | ✅ ALL PASS |
+| And more... | | ✅ |
+
+### Compatibility Modes
+
+Tests support two comparison modes:
+
+| Mode | Environment Variable | Behavior |
+|------|---------------------|----------|
+| **Strict** | `THUNDERDUCK_COMPAT_MODE=strict` | Extension loaded, exact type comparison |
+| **Relaxed** | `THUNDERDUCK_COMPAT_MODE=relaxed` | No extension, type-relaxed comparison |
 
 ## Architecture
 
@@ -171,24 +190,31 @@ tests/
 ├── integration/
 │   ├── .venv/                            # Python virtual environment
 │   ├── .env                              # Environment config
-│   ├── conftest.py                       # Pytest fixtures
+│   ├── conftest.py                       # Pytest fixtures (session + class scoped)
 │   │
-│   │── # Differential Test Suites (266 tests total)
-│   ├── test_differential_v2.py           # TPC-H SQL + DataFrame tests (27 tests)
-│   ├── test_tpcds_differential.py        # TPC-DS SQL + DataFrame tests (126 tests)
-│   ├── test_dataframe_functions.py       # Function parity tests (57 tests)
-│   ├── test_multidim_aggregations.py     # pivot, unpivot, cube, rollup (21 tests)
-│   ├── test_window_functions.py          # Window function tests (35 tests)
+│   ├── differential/                     # Differential Test Suites (35+ files)
+│   │   ├── test_tpch_differential.py     # TPC-H DataFrame Q1-Q22 (22 tests)
+│   │   ├── test_differential_v2.py       # TPC-H SQL + basic operations
+│   │   ├── test_tpcds_dataframe_differential.py  # TPC-DS DataFrame tests
+│   │   ├── test_dataframe_functions.py   # Function parity tests (57 tests)
+│   │   ├── test_multidim_aggregations.py # pivot, unpivot, cube, rollup (21 tests)
+│   │   ├── test_window_functions.py      # Window function tests (35 tests)
+│   │   ├── test_joins_differential.py    # Join type tests (15 tests)
+│   │   ├── test_using_joins_differential.py  # USING join tests (11 tests)
+│   │   ├── test_set_operations_differential.py  # Set operations (14 tests)
+│   │   ├── test_datetime_functions_differential.py  # Date/time (18 tests)
+│   │   ├── test_aggregation_functions_differential.py  # Aggregation (15 tests)
+│   │   └── ... (many more test files)
+│   │
+│   ├── sql/                              # SQL query files
+│   │   ├── tpch_queries/                 # TPC-H SQL queries (Q1-Q22)
+│   │   └── tpcds_queries/                # TPC-DS SQL queries
 │   │
 │   └── utils/
 │       ├── dual_server_manager.py        # Server orchestration
 │       ├── dataframe_diff.py             # Row-by-row comparison utility
 │       ├── server_manager.py             # Single server manager
 │       └── result_validator.py           # Result validation utilities
-
-benchmarks/
-├── tpch_queries/                         # TPC-H SQL queries (Q1-Q22)
-└── tpcds_queries/                        # TPC-DS SQL queries (Q1-Q99 + variants)
 ```
 
 ## Usage
@@ -199,7 +225,7 @@ benchmarks/
 # One-time setup
 ./tests/scripts/setup-differential-testing.sh
 
-# Run ALL differential tests (266 tests)
+# Run ALL differential tests
 ./tests/scripts/run-differential-tests-v2.sh
 ```
 
@@ -231,28 +257,26 @@ The test runner supports named test groups for targeted testing:
 source tests/integration/.venv/bin/activate
 cd tests/integration
 
-# Run all TPC-H tests (~20 seconds)
-python -m pytest test_differential_v2.py -v
+# Run all TPC-H DataFrame tests (22 tests, Q1-Q22)
+python3 -m pytest differential/test_tpch_differential.py -v
 
-# Run all TPC-DS tests (~5 minutes)
-python -m pytest test_tpcds_differential.py -k "Batch" -v
+# Run TPC-H SQL and basic operations
+python3 -m pytest differential/test_differential_v2.py -v
 
 # Run function parity tests
-python -m pytest test_dataframe_functions.py -v
+python3 -m pytest differential/test_dataframe_functions.py -v
 
 # Run aggregation tests
-python -m pytest test_multidim_aggregations.py -v
+python3 -m pytest differential/test_multidim_aggregations.py -v
 
 # Run window function tests
-python -m pytest test_window_functions.py -v
+python3 -m pytest differential/test_window_functions.py -v
 
 # Run specific TPC-H query
-python -m pytest test_differential_v2.py::TestTPCH_Q1_Differential -v -s
+python3 -m pytest differential/test_differential_v2.py::TestTPCH_Q1_Differential -v -s
 
-# Run by marker
-python -m pytest -m "differential" -v  # All differential tests
-python -m pytest -m "window" -v        # Window function tests
-python -m pytest -m "functions" -v     # Function parity tests
+# Run a specific TPC-H DataFrame query
+python3 -m pytest differential/test_tpch_differential.py::TestTPCHDifferential::test_q01_dataframe -v
 ```
 
 ## Test Output
@@ -342,11 +366,11 @@ python -c "import pyspark; print(pyspark.__version__)"
 
 ## Detailed Test Coverage
 
-### TPC-H Tests (27 tests)
+### TPC-H Tests
 
-- **SQL Tests**: Q1-Q22 (23 queries)
-- **DataFrame API Tests**: Q1, Q3, Q6, Q12 (4 queries)
-- Sanity test
+- **DataFrame API Tests**: Q1-Q22 (22 queries) -- 100% TPC-H DataFrame parity
+- **SQL Tests**: Parameterized SQL queries
+- Sanity test and basic operations
 
 ### TPC-DS Tests (126 tests)
 

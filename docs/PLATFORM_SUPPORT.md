@@ -98,16 +98,17 @@ HardwareProfile profile = HardwareProfile.detect();
 
 ## Known Issues and Workarounds
 
-### Apache Arrow on ARM64
+### Apache Arrow JVM Requirements
 
-**Issue**: Apache Arrow 17.0.0 has a known initialization issue on ARM64 platforms.
+**Issue**: Apache Arrow requires special JVM flags on ALL platforms (not just ARM64) as of Spark 4.0.x.
 
 **Error**:
 ```
-java.lang.NoClassDefFoundError: Could not initialize class org.apache.arrow.memory.util.MemoryUtil
+java.lang.RuntimeException: Failed to initialize MemoryUtil.
+You must start Java with `--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`
 ```
 
-**Root Cause**: JVM module access restrictions in Java 11+ on ARM64.
+**Root Cause**: JVM module access restrictions in Java 11+.
 
 **Solution**: Add JVM arguments to allow Arrow memory access:
 ```xml
@@ -179,10 +180,9 @@ java --add-opens=java.base/java.nio=ALL-UNNAMED \
 
 | Test Suite | x86_64 | ARM64 | Status |
 |------------|--------|-------|--------|
-| Unit Tests (300+) | ✅ Pass | ✅ Pass | 100% parity |
-| Differential Tests (200+) | ✅ Pass | ✅ Pass | 100% Spark parity |
-| Integration Tests (100+) | ✅ Pass | ✅ Pass (with JVM args) | Arrow workaround applied |
-| Performance Tests (70+) | ✅ Pass | ✅ Pass | 95% performance parity |
+| Unit Tests | ✅ Pass | ✅ Pass | 100% parity |
+| Differential Tests (35+ files) | ✅ Pass | ✅ Pass | 100% Spark parity (22/22 TPC-H) |
+| Integration Tests | ✅ Pass | ✅ Pass (with JVM args) | Arrow workaround applied |
 
 ---
 
@@ -245,5 +245,5 @@ thunderduck's multi-architecture design ensures:
 
 ---
 
-**Last Updated**: 2025-10-24
+**Last Updated**: 2026-02-08
 **Status**: Production-ready on both x86_64 and ARM64

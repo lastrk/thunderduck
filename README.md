@@ -4,9 +4,9 @@
 [![Java](https://img.shields.io/badge/java-17-orange.svg)](https://openjdk.java.net/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 
-> **⚠️ Alpha Software**: Despite extensive test coverage, Thunderduck is currently alpha quality software and will undergo extensive testing with real-world workloads before production readiness.
+> **Alpha Software**: Despite extensive test coverage, Thunderduck is currently alpha quality software and will undergo extensive testing with real-world workloads before production readiness.
 
-> **📋 SparkSQL Notice**: Direct SQL execution via `spark.sql()` is **not yet supported**. SparkSQL support will be added once a proper SQL parser is integrated. The **DataFrame API is fully functional** and recommended for all use cases.
+> **SparkSQL Notice**: Direct SQL execution via `spark.sql()` has basic support (DDL, simple queries). Full SparkSQL parsing support will be added once a proper SQL parser is integrated. The **DataFrame API is fully functional** and recommended for all use cases.
 
 **Thunderduck** is a high-performance embedded execution engine that translates Spark DataFrame operations to DuckDB SQL, with the aim to deliver 5-10x faster query execution mode with 6-8x better memory efficiency than an Apache Spark cluster with comparable CPU and RAM resources.
 
@@ -35,7 +35,8 @@ Thunderduck provides a Spark-compatible API that translates DataFrame operations
 - **Multi-architecture support**: x86_64 (Intel/AMD) and ARM64 (AWS Graviton, Apple Silicon)
 - **Zero-copy Arrow data paths** for efficient data interchange
 - **Format support**: Parquet, Delta Lake (PLANNED), Iceberg (PLANNED)
-- **Comprehensive Spark API compatibility** with 85+ DataFrame differential tests
+- **22/22 TPC-H DataFrame parity** -- all TPC-H queries pass differential testing against Spark 4.0.1
+- **Two compatibility modes**: Relaxed (vanilla DuckDB, ~85% Spark compat) and Strict (DuckDB extension, ~100% Spark compat)
 - **Query plan introspection** via EXPLAIN statements
 
 ### Why Thunderduck?
@@ -117,6 +118,7 @@ Thunderduck uses a three-layer architecture:
 - **SQL Generation** (`core/generator/`): DuckDB SQL code generation
 - **Type Mapping** (`core/types/`): Spark ↔ DuckDB type conversion
 - **Function Registry** (`core/functions/`): 500+ function mappings
+- **Spark Compatibility Mode** (`core/runtime/`): Strict/relaxed/auto modes with optional DuckDB extension
 - **Runtime Execution** (`core/runtime/`): Session-scoped DuckDB runtime, Arrow streaming
 - **Format Readers** (`core/io/`): Parquet, (PLANNED) Delta Lake, (PLANNED) Iceberg support
 
@@ -134,13 +136,21 @@ Thunderduck uses a three-layer architecture:
 
 ```bash
 # Clone and build
-git clone https://github.com/yourusername/thunderduck.git
+git clone https://github.com/lastrk/thunderduck.git
 cd thunderduck
 mvn clean package -DskipTests
 
 # Start the Spark Connect server (default port 15002)
 java --add-opens=java.base/java.nio=ALL-UNNAMED \
      -jar connect-server/target/thunderduck-connect-server-*.jar
+
+# Or start in strict mode (requires DuckDB extension, exact Spark type parity)
+java --add-opens=java.base/java.nio=ALL-UNNAMED \
+     -jar connect-server/target/thunderduck-connect-server-*.jar --strict
+
+# Or start in relaxed mode (vanilla DuckDB, no extension needed)
+java --add-opens=java.base/java.nio=ALL-UNNAMED \
+     -jar connect-server/target/thunderduck-connect-server-*.jar --relaxed
 ```
 
 The server will show:
@@ -181,7 +191,7 @@ curl -s localhost:15002 || echo "Server running on port 15002"
 
 # Run differential tests (compares against Spark 4.0.1)
 ./tests/scripts/setup-differential-testing.sh  # One-time setup
-./tests/scripts/run-differential-tests-v2.sh   # Run 266 tests
+./tests/scripts/run-differential-tests-v2.sh   # Run differential tests
 ```
 
 ## Building from Source
@@ -196,11 +206,14 @@ cd thunderduck
 ### Build All Modules
 
 ```bash
+# Fast build (skip tests)
+mvn clean package -DskipTests
+
+# Build with Spark compatibility extension (strict mode support)
+mvn clean package -DskipTests -Pbuild-extension
+
 # Full build with tests
 mvn clean install
-
-# Fast build (skip tests)
-mvn clean install -Pfast
 
 # Build with coverage report
 mvn clean verify -Pcoverage
@@ -270,28 +283,29 @@ Thunderduck includes an optional DuckDB C extension (`thunderduck-duckdb-extensi
 
 Prerequisites: CMake 3.5+, C++17 compiler, Ninja (recommended)
 
+**Using Maven (Recommended):**
+
+```bash
+# Build everything including extension, bundled automatically
+mvn clean package -DskipTests -Pbuild-extension
+```
+
+The Maven `build-extension` profile detects the current platform, builds the extension via CMake/Ninja, copies it to `core/src/main/resources/extensions/<platform>/`, and includes it in the JAR. First build compiles DuckDB core (~2-5 min), subsequent builds are incremental (seconds).
+
+**Manual build (for extension development):**
+
 ```bash
 # Build for current platform
 cd thunderduck-duckdb-extension
 GEN=ninja make release
 
 # Output: build/release/extension/thdck_spark_funcs/thdck_spark_funcs.duckdb_extension
-```
 
-#### Bundling with Thunderduck
-
-Copy the compiled extension into the `core` module's resources so it gets packaged into the JAR:
-
-```bash
-# Determine current platform
+# Copy to resources and rebuild JAR
 PLATFORM=$(duckdb -c "PRAGMA platform" 2>/dev/null || echo "linux_amd64")
-
-# Copy extension binary
 mkdir -p core/src/main/resources/extensions/$PLATFORM
 cp thunderduck-duckdb-extension/build/release/extension/thdck_spark_funcs/thdck_spark_funcs.duckdb_extension \
    core/src/main/resources/extensions/$PLATFORM/
-
-# Rebuild to include extension in JAR
 mvn clean package -DskipTests
 ```
 
@@ -342,12 +356,14 @@ thunderduck/
 │   └── Makefile               # Build shortcuts
 ├── tests/                     # Comprehensive test suite
 │   ├── src/test/java/         # Java unit tests
-│   ├── integration/           # Python differential tests (832 tests)
+│   ├── integration/           # Python differential tests
+│   │   ├── differential/      # Differential test suites (35+ test files)
 │   │   └── sql/               # TPC-H and TPC-DS SQL queries
 │   └── pom.xml
 └── docs/                      # Documentation
-    ├── SPARK_CONNECT_PROTOCOL_SPEC.md
-    └── architect/             # Architecture design documents
+    ├── SPARK_CONNECT_GAP_ANALYSIS.md    # Comprehensive coverage analysis
+    ├── SUPPORTED_OPERATIONS.md          # Quick operation reference
+    └── architect/                       # Architecture design documents
 ```
 
 ## Performance
@@ -358,26 +374,31 @@ TBD
 
 ## Testing
 
-thunderduck includes a comprehensive test suite with 700+ tests:
+Thunderduck includes a comprehensive test suite with differential testing against Apache Spark 4.0.1:
 
 ### Test Categories
 
-- **Unit Tests (300+)**: Type mapping, expression translation, SQL generation
-- **Integration Tests (100+)**: End-to-end pipelines, format readers
-- **Differential Tests (85+)**: Spark 4.0.1 DataFrame API parity validation
-- **End-to-End Tests**: PySpark client → Spark Connect → thunderduck validation
-- **Performance Benchmarks (70+)**: TPC-H queries, micro-benchmarks
+- **Unit Tests**: Type mapping, expression translation, SQL generation (Java/Maven)
+- **Differential Tests**: Compare Thunderduck results against Spark 4.0.1 via Spark Connect protocol (Python/pytest)
+- **End-to-End Tests**: PySpark client -> Spark Connect -> Thunderduck -> DuckDB validation
 
-### Differential Test Breakdown
+### Differential Test Coverage
 
-| Test Suite | Tests | Description |
-|------------|-------|-------------|
-| TPC-DS DataFrame | 33 | DataFrame API implementations of TPC-DS queries |
-| Function Parity | 57 | Array, Map, Null, String, Math functions |
-| Multi-dim Aggregations | 21 | pivot, unpivot, cube, rollup, grouping |
-| Window Functions | 35 | rank, lag/lead, frame specs, analytics |
+| Test Suite | Description |
+|------------|-------------|
+| TPC-H DataFrame (22/22) | All 22 TPC-H queries via DataFrame API -- 100% parity |
+| TPC-DS DataFrame (33) | TPC-DS queries via DataFrame API |
+| Function Parity (57) | Array, Map, Null, String, Math functions |
+| Multi-dim Aggregations (21) | pivot, unpivot, cube, rollup, grouping |
+| Window Functions (35) | rank, lag/lead, frame specs, analytics |
+| Join Types (26) | Inner, left, right, full, semi, anti, cross, USING joins |
+| Set Operations (14) | union, intersect, except with edge cases |
+| Date/Time Functions (18) | Extraction, arithmetic, formatting |
+| Type Casting (14) | Explicit CAST operations |
+| Statistics (16) | cov, corr, describe, summary, crosstab |
+| And more | Conditional expressions, sorting, distinct, schema operations, etc. |
 
-> **Note**: SQL-based tests (TPC-H SQL, TPC-DS SQL) are disabled pending SparkSQL parser integration.
+See [Spark Connect Gap Analysis](docs/SPARK_CONNECT_GAP_ANALYSIS.md) for the full coverage inventory.
 
 ### Running Tests
 
@@ -436,7 +457,17 @@ Run specific test suites using named groups:
 ./tests/scripts/run-differential-tests-v2.sh --help       # Show all options
 ```
 
-> **Note**: `tpch` and `tpcds` SQL test groups are disabled pending SparkSQL parser integration.
+### Compatibility Modes in Tests
+
+Tests support both compatibility modes:
+
+```bash
+# Run in strict mode (extension loaded, exact Spark type parity)
+THUNDERDUCK_COMPAT_MODE=strict python3 -m pytest differential/ -v
+
+# Run in relaxed mode (vanilla DuckDB, type-relaxed comparison)
+THUNDERDUCK_COMPAT_MODE=relaxed python3 -m pytest differential/ -v
+```
 
 ### What It Does
 
@@ -454,16 +485,14 @@ For advanced use cases, you can run pytest directly:
 
 ```bash
 cd tests/integration
-python -m pytest differential/ -v  # Run all differential tests
+python3 -m pytest differential/ -v  # Run all differential tests
 ```
 
 > **Recommended**: Use `./tests/scripts/run-differential-tests-v2.sh` which handles server lifecycle automatically.
 
-### Test Results
+### TPC-H DataFrame Parity
 
-DataFrame API differential tests pass with Thunderduck consistently faster than Spark:
-- **TPC-H Q1**: ~6x faster
-- **Full test suite**: ~3 minutes
+All 22 TPC-H queries (Q1-Q22) pass differential testing via the DataFrame API, achieving 100% TPC-H DataFrame parity. Tests are in `tests/integration/differential/test_tpch_differential.py`.
 
 See [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md) for details.
 
@@ -539,15 +568,15 @@ The Maven integration:
 pip install -r tests/src/test/python/requirements.txt
 
 # Run all E2E tests
-python -m pytest tests/src/test/python/thunderduck_e2e/ -v
+python3 -m pytest tests/src/test/python/thunderduck_e2e/ -v
 
 # Run specific test suite
-python -m pytest tests/src/test/python/thunderduck_e2e/test_dataframes.py -v
-python -m pytest tests/src/test/python/thunderduck_e2e/test_sql.py -v
-python -m pytest tests/src/test/python/thunderduck_e2e/test_tpch.py -v
+python3 -m pytest tests/src/test/python/thunderduck_e2e/test_dataframes.py -v
+python3 -m pytest tests/src/test/python/thunderduck_e2e/test_sql.py -v
+python3 -m pytest tests/src/test/python/thunderduck_e2e/test_tpch.py -v
 
 # Run specific test
-python -m pytest tests/src/test/python/thunderduck_e2e/test_tpch.py::TestTPCH::test_q01_sql -v
+python3 -m pytest tests/src/test/python/thunderduck_e2e/test_tpch.py::TestTPCH::test_q01_sql -v
 ```
 
 ### E2E Test Suite Structure
@@ -590,10 +619,10 @@ def test_q01_dataframe(self):
 # Default location: ./data/tpch_sf001/
 
 # Run all TPC-H DataFrame tests
-python -m pytest tests/src/test/python/thunderduck_e2e/test_tpch.py -v
+python3 -m pytest tests/src/test/python/thunderduck_e2e/test_tpch.py -v
 
 # Run specific query
-python -m pytest tests/src/test/python/thunderduck_e2e/test_tpch.py -k "q01" -v
+python3 -m pytest tests/src/test/python/thunderduck_e2e/test_tpch.py -k "q01" -v
 ```
 
 ### E2E Test Configuration
@@ -642,7 +671,7 @@ The E2E tests are integrated into CI/CD pipelines:
 2. **Enable debug logging**:
    ```bash
    export THUNDERDUCK_LOG_LEVEL=DEBUG
-   python -m pytest tests/src/test/python/thunderduck_e2e/ -v -s
+   python3 -m pytest tests/src/test/python/thunderduck_e2e/ -v -s
    ```
 
 3. **Test connection manually**:
@@ -672,19 +701,19 @@ tests/src/test/python/thunderduck_e2e/test_tpch.py::TestTPCH::test_q02_dataframe
 ### Quality Gates
 
 All PRs must meet these criteria:
-- Line coverage ≥ 85%
-- Branch coverage ≥ 80%
 - All DataFrame differential tests passing (100%)
 - All E2E tests passing (100%)
-- Zero compiler warnings
+- TPC-H 22/22 DataFrame parity maintained
 
 ## Documentation
 
 ### Technical Documentation
 
-- **[Architecture Docs](docs/architect/)**: Documenting key architectural aspects of Thunderduck
-- **[Differential Testing](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)**: Spark parity validation framework (266 tests)
-- **[Protocol Specification](docs/SPARK_CONNECT_PROTOCOL_SPEC.md)**: Spark Connect protocol details
+- **[Architecture Docs](docs/architect/)**: Key architectural aspects of Thunderduck
+- **[Spark Compat Extension](docs/architect/SPARK_COMPAT_EXTENSION.md)**: Two-mode compatibility design (strict/relaxed)
+- **[Differential Testing](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)**: Spark parity validation framework
+- **[Gap Analysis](docs/SPARK_CONNECT_GAP_ANALYSIS.md)**: Comprehensive Spark Connect protocol coverage analysis
+- **[Supported Operations](docs/SUPPORTED_OPERATIONS.md)**: Quick reference of supported Spark operations
 - **[Dev Journal](docs/dev_journal/)**: Milestone completion reports
 
 ## Contributing
@@ -701,7 +730,7 @@ We welcome contributions! Please see the following guidelines:
 
 ```bash
 # Clone and setup
-git clone https://github.com/yourusername/thunderduck.git
+git clone https://github.com/lastrk/thunderduck.git
 cd thunderduck
 
 # Create feature branch

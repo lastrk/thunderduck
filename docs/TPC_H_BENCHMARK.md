@@ -21,7 +21,7 @@ DuckDB has a built-in TPC-H extension that generates data directly:
 
 ```bash
 # Install DuckDB if not already installed
-wget https://github.com/duckdb/duckdb/releases/download/v1.4.3/duckdb_cli-linux-amd64.zip
+wget https://github.com/duckdb/duckdb/releases/download/v1.4.4/duckdb_cli-linux-amd64.zip
 unzip duckdb_cli-linux-amd64.zip
 
 # Generate TPC-H data at scale factor 0.01 (10MB)

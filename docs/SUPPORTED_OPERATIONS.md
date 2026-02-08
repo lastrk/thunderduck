@@ -60,6 +60,20 @@ A quick reference of Spark DataFrame API operations supported by ThunderDuck.
 | `to_date()`, `to_timestamp()` | ✅ |
 | `current_date()`, `current_timestamp()` | ✅ |
 
+## Advanced Transformations
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| `pivot()` | ✅ | With sum, avg, max/min, multiple aggregations |
+| `unpivot()` / `melt()` | ✅ | Wide to long format via DuckDB native UNPIVOT |
+| `cube()` | ✅ | With `grouping()`, `grouping_id()` |
+| `rollup()` | ✅ | Hierarchical aggregation with `grouping()` |
+| `sample()` | ✅ | Bernoulli sampling via DuckDB USING SAMPLE |
+| `na.drop()` / `na.fill()` / `na.replace()` | ✅ | Null handling operations |
+| `alias()` | ✅ | DataFrame aliasing for self-joins |
+| `to(schema)` | ✅ | Column reordering, projection, type casting |
+| `like()` | ✅ | Infix LIKE syntax |
+
 ## Known Limitations
 
 | Feature | Status | Notes |
@@ -67,8 +81,7 @@ A quick reference of Spark DataFrame API operations supported by ThunderDuck.
 | UDFs (User Defined Functions) | ❌ | Use SQL expressions instead |
 | Spark ML Integration | ❌ | Use separate ML framework |
 | Streaming Operations | ❌ | Batch-only by design |
-| PIVOT/UNPIVOT | ⚠️ | Planned |
-| ROLLUP/CUBE | ⚠️ | Planned |
+| `sample(withReplacement=True)` | ❌ | DuckDB has no Poisson sampling |
 
 ## Migration from Spark
 
@@ -92,4 +105,4 @@ result = df.filter(col("status") == "active") \
 
 ---
 
-*See [CURRENT_FOCUS_SPARK_CONNECT_GAP_ANALYSIS.md](/workspace/CURRENT_FOCUS_SPARK_CONNECT_GAP_ANALYSIS.md) for detailed coverage gaps.*
+*See [SPARK_CONNECT_GAP_ANALYSIS.md](SPARK_CONNECT_GAP_ANALYSIS.md) for detailed coverage gaps.*

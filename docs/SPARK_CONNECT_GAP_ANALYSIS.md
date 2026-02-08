@@ -1,9 +1,9 @@
 # Spark Connect 4.0.x Gap Analysis for Thunderduck
 
-**Version:** 4.14
-**Date:** 2025-12-22
+**Version:** 4.16
+**Date:** 2026-02-08
 **Purpose:** Comprehensive analysis of Spark Connect operator support in Thunderduck
-**Validation:** 444 differential tests (444 passing) - see [Differential Testing Architecture](docs/architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
+**Validation:** Differential tests across 35+ test files -- see [Differential Testing Architecture](architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
 
 ---
 
@@ -534,7 +534,7 @@ df.filter(F.col("l_shipdate") <= F.date_sub(F.to_date(F.lit("1998-12-01")), 90))
 
 This section documents operations that are implemented but NOT covered by differential tests.
 
-### 11.1 Current Test Summary: 444 tests across 22 files
+### 11.1 Current Test Summary (35+ test files)
 
 | Category | Test File | Tests | Status |
 |----------|-----------|-------|--------|
@@ -782,14 +782,15 @@ spark.udf.register(...)                       # User-defined functions not suppo
 
 ---
 
-**Document Version:** 4.15
-**Last Updated:** 2025-12-23
+**Document Version:** 4.16
+**Last Updated:** 2026-02-08
 **Author:** Analysis generated from Spark Connect 4.0.x protobuf definitions
 
 ### Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v4.16 | 2026-02-08 | **22/22 TPC-H DataFrame parity achieved.** Added strict/relaxed/auto compatibility modes with DuckDB extension aggregate functions (spark_sum, spark_avg). Eliminated schema correction layer. Fixed semi/anti join syntax, composite aggregates, like() SQL syntax, nested alias scoping. |
 | v4.15 | 2025-12-23 | **Added Section 9: Known Compatibility Gaps.** Documented date_sub with string literal issue - Spark auto-casts ISO date strings but Thunderduck/DuckDB requires explicit DATE cast. This is a bug to fix, not an intentional incompatibility. |
 | v4.14 | 2025-12-22 | **M69: Fixed datetime extraction function type inference.** Extended mergeSchemas() to prefer logical IntegerType over DuckDB's BigIntType for date extraction functions. Fixed datediff argument order (DuckDB returns B-A, not A-B). Cast unix_timestamp to BIGINT. All 444 tests passing. |
 | v4.13 | 2025-12-22 | **M68: Fixed decimal precision mismatch.** Schema merging now uses logical plan's DecimalType (computed using Spark rules) instead of DuckDB's type. Type inference engine fixed to not promote integer multiplication to decimal. All 444 tests passing. |

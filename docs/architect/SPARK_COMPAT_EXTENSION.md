@@ -82,12 +82,21 @@ These differences cannot be fixed by SQL generation alone (e.g., wrapping in `CA
 |-------------------|----------|--------------|
 | `spark_decimal_div(a, b)` | `a / b` (decimal) | Spark 4.1 decimal division with `ROUND_HALF_UP`, 256-bit intermediate arithmetic, correct `DECIMAL(p,s)` result type |
 
+### Extension Aggregate Functions (Strict Mode)
+
+In strict mode, aggregate functions are routed to extension functions that match Spark's return types:
+
+| Extension Function | Replaces | Purpose | Status |
+|-------------------|----------|---------|--------|
+| `spark_sum(col)` | `SUM(col)` | Returns Spark-compatible types for SUM | Implemented |
+| `spark_avg(col)` | `AVG(col)` | Returns Spark-compatible types for AVG | Implemented |
+
+Additionally, the extension registers a `/` operator overload for DECIMAL types so that raw SQL queries (`spark.sql()`) automatically use Spark division semantics when the extension is loaded.
+
 ### Planned Functions
 
 | Extension Function | Replaces | Purpose |
 |-------------------|----------|---------|
-| `spark_decimal_avg(col)` | `AVG(col)` | Returns `DECIMAL(p+4, s+4)` instead of `DOUBLE` |
-| `spark_decimal_sum(col)` | `SUM(col)` | Returns `DECIMAL(min(p+10,38), s)` instead of `DECIMAL(38,s)` |
 | `spark_extract_int(part, date)` | `EXTRACT(part FROM date)` | Returns `INTEGER` instead of `BIGINT` |
 | `spark_checked_add(a, b)` | `a + b` (integer) | Throws on overflow instead of wrapping |
 | `spark_checked_multiply(a, b)` | `a * b` (integer) | Throws on overflow instead of wrapping |
@@ -122,8 +131,8 @@ PLATFORM=osx_arm64 GEN=ninja make release
 The extension **must** be compiled against the exact same DuckDB version used by `duckdb_jdbc` in the Maven build. DuckDB enforces a strict version check at `LOAD` time.
 
 Current versions:
-- `duckdb_jdbc`: **1.4.3.0**
-- Extension DuckDB submodule: Must be `v1.4.3`
+- `duckdb_jdbc`: **1.4.4.0**
+- Extension DuckDB submodule: Must match the JDBC driver version (currently `v1.4.4`)
 
 ## Maven Integration
 
@@ -237,17 +246,23 @@ DuckDBRuntime constructor
 
 ### FunctionRegistry Integration
 
-When the extension is loaded, `FunctionRegistry` swaps specific function mappings:
+When the extension is loaded, the translation engine swaps specific function mappings:
 
 ```java
 // Without extension (relaxed):
 "divide" → "(({0}) / ({1}))"
+"sum"    → "SUM({0})"
+"avg"    → "AVG({0})"
 
 // With extension (strict):
 "divide" → "spark_decimal_div({0}, {1})"
+"sum"    → "spark_sum({0})"
+"avg"    → "spark_avg({0})"
 ```
 
-The translation engine checks `FunctionRegistry.isExtensionAvailable()` and selects the appropriate mapping. This is a compile-time decision per query — no runtime branching in the hot path.
+The translation engine checks `SparkCompatMode.isStrictMode()` and selects the appropriate mapping. This is a compile-time decision per query -- no runtime branching in the hot path.
+
+Additionally, in strict mode the schema correction layer is simplified: DuckDB's Arrow batches flow through with only nullable flag corrections (no type conversion), since the extension functions already produce Spark-correct types.
 
 ## Testing Strategy
 

@@ -1,6 +1,6 @@
 # Thunderduck Documentation
 
-This directory contains comprehensive documentation for the thunderduck project.
+This directory contains documentation for the Thunderduck project.
 
 ---
 
@@ -9,73 +9,49 @@ This directory contains comprehensive documentation for the thunderduck project.
 ### Architecture & Design
 - **[PLATFORM_SUPPORT.md](PLATFORM_SUPPORT.md)** - Multi-architecture support (x86_64, ARM64)
 - **[OPTIMIZATION_STRATEGY.md](OPTIMIZATION_STRATEGY.md)** - Why we use DuckDB's optimizer
-- **[SPARK_CONNECT_PROTOCOL_SPEC.md](SPARK_CONNECT_PROTOCOL_SPEC.md)** - Spark Connect protocol details
-- **[Testing_Strategy.md](Testing_Strategy.md)** - BDD and differential testing approach
+- **[SUPPORTED_OPERATIONS.md](SUPPORTED_OPERATIONS.md)** - Quick reference of supported Spark operations
+- **[SPARK_CONNECT_GAP_ANALYSIS.md](SPARK_CONNECT_GAP_ANALYSIS.md)** - Comprehensive Spark Connect protocol coverage analysis
+- **[SQL_PARSER_RESEARCH.md](SQL_PARSER_RESEARCH.md)** - Research on SQL parser options for SparkSQL support
+- **[TPC_H_BENCHMARK.md](TPC_H_BENCHMARK.md)** - TPC-H data generation and benchmark guide
 
-### Spark Connect Architecture (architect/)
-- **[SPARK_CONNECT_ARCHITECTURE.md](architect/SPARK_CONNECT_ARCHITECTURE.md)** - Server architecture
-- **[SINGLE_SESSION_ARCHITECTURE.md](architect/SINGLE_SESSION_ARCHITECTURE.md)** - Session management design
+### Architecture Documents (architect/)
+- **[SPARK_COMPAT_EXTENSION.md](architect/SPARK_COMPAT_EXTENSION.md)** - Spark compatibility extension (strict/relaxed modes)
+- **[DIFFERENTIAL_TESTING_ARCHITECTURE.md](architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)** - Differential testing framework
+- **[SESSION_MANAGEMENT_ARCHITECTURE.md](architect/SESSION_MANAGEMENT_ARCHITECTURE.md)** - Session management design
+- **[ARROW_STREAMING_ARCHITECTURE.md](architect/ARROW_STREAMING_ARCHITECTURE.md)** - Arrow data streaming
 - **[SPARK_CONNECT_QUICK_REFERENCE.md](architect/SPARK_CONNECT_QUICK_REFERENCE.md)** - Quick reference guide
-
-### Build & Infrastructure (coder/)
-- **[01_Build_Infrastructure_Design.md](coder/01_Build_Infrastructure_Design.md)** - Maven build system
-- **[02_Testing_Infrastructure_Design.md](coder/02_Testing_Infrastructure_Design.md)** - Test framework
-- **[03_Module_Organization_Design.md](coder/03_Module_Organization_Design.md)** - Module structure
-- **[04_CI_CD_Integration_Design.md](coder/04_CI_CD_Integration_Design.md)** - CI/CD pipeline
-- **[05_Data_Generation_Pipeline_Design.md](coder/05_Data_Generation_Pipeline_Design.md)** - Test data generation
-
-### DataFrame API Documentation
-- **[DataFrame_API_Reference.md](DataFrame_API_Reference.md)** - Comprehensive DataFrame API reference, implementation status, and migration guide
-- **[TPC-DS_DataFrame_Implementation.md](TPC-DS_DataFrame_Implementation.md)** - TPC-DS DataFrame test suite with 34 queries (100% validation)
+- **[SPARK_CONNECT_PROTOCOL_COMPLIANCE.md](architect/SPARK_CONNECT_PROTOCOL_COMPLIANCE.md)** - Protocol compliance
+- **[CATALOG_OPERATIONS.md](architect/CATALOG_OPERATIONS.md)** - Catalog operations implementation
+- **[TYPE_MAPPING.md](architect/TYPE_MAPPING.md)** - DuckDB to Spark type mapping
+- **[LAMBDA_AND_CALL_FUNCTION_SPEC.md](architect/LAMBDA_AND_CALL_FUNCTION_SPEC.md)** - Lambda functions and higher-order functions
+- **[STATISTICS_OPERATIONS_SPEC.md](architect/STATISTICS_OPERATIONS_SPEC.md)** - Statistics operations
+- **[UDF_SUPPORT_RESEARCH.md](architect/UDF_SUPPORT_RESEARCH.md)** - UDF support research
 
 ### Research & Analysis (research/)
-Deep technical investigations and root cause analyses conducted during development:
+Deep technical investigations conducted during development:
 
 - **[DUCKDB_TPCDS_DISCOVERY.md](research/DUCKDB_TPCDS_DISCOVERY.md)** - Discovery of DuckDB's TPC-DS implementation patterns
 - **[TPCDS_ROOT_CAUSE_ANALYSIS.md](research/TPCDS_ROOT_CAUSE_ANALYSIS.md)** - Root cause analysis of Q36 & Q86 failures
-- **[Q36_DUCKDB_LIMITATION.md](research/Q36_DUCKDB_LIMITATION.md)** - Documentation of Q36's GROUPING() in PARTITION BY limitation
 - **[GROUPING_FUNCTION_ANALYSIS.md](research/GROUPING_FUNCTION_ANALYSIS.md)** - Analysis of GROUPING() function behavior
-- **[GROUPING_STANDARD_RESEARCH.md](research/GROUPING_STANDARD_RESEARCH.md)** - Research on SQL standard GROUPING() semantics
-- **[GROUPING_ANSWER.md](research/GROUPING_ANSWER.md)** - Definitive answer on GROUPING() standardization
 
-### Testing
-- **[Differential_Testing_Guide.md](Differential_Testing_Guide.md)** - Comprehensive guide for differential and end-to-end testing
+### Pending Design (pending_design/)
+Future feature specifications:
 
-### Test Scripts (../tests/scripts/)
-Shell scripts for running tests and servers:
-
-| Script | Description |
-|--------|-------------|
-| [start-server.sh](../tests/scripts/start-server.sh) | Start Thunderduck Spark Connect server |
-| [start-spark-connect.sh](../tests/scripts/start-spark-connect.sh) | Start Apache Spark Connect server for differential testing |
-| [stop-spark-connect.sh](../tests/scripts/stop-spark-connect.sh) | Stop Apache Spark Connect server |
-| [run-differential-tests.sh](../tests/scripts/run-differential-tests.sh) | Run differential tests against Spark |
-| [run-tpc-spark-connect-tests.sh](../tests/scripts/run-tpc-spark-connect-tests.sh) | Run TPC-H/TPC-DS benchmarks via Spark Connect |
-
-### Troubleshooting & Fixes
-- **[PROTOBUF_FIX_REPORT.md](PROTOBUF_FIX_REPORT.md)** - Resolution of protobuf version conflict causing VerifyError
+- **[DELTA_LAKE_INTEGRATION_SPEC.md](pending_design/DELTA_LAKE_INTEGRATION_SPEC.md)** - Delta Lake integration
+- **[AWS_CREDENTIAL_CHAIN_SPEC.md](pending_design/AWS_CREDENTIAL_CHAIN_SPEC.md)** - AWS credential chain support
+- **[S3_THROUGHPUT_OPTIMIZATION_RESEARCH.md](pending_design/S3_THROUGHPUT_OPTIMIZATION_RESEARCH.md)** - S3 throughput optimization
 
 ### Development Journal (dev_journal/)
-Weekly completion reports documenting the project's development progress:
+Milestone completion reports documenting the project's development progress.
+Reports are prefixed with M[X]_ indicating chronological order (M1 through M71+).
 
-| Week | Report | Key Achievements |
-|------|--------|------------------|
-| 1 | [WEEK1_COMPLETION_REPORT.md](dev_journal/WEEK1_COMPLETION_REPORT.md) | Project setup, initial architecture |
-| 2 | [WEEK2_COMPLETION_REPORT.md](dev_journal/WEEK2_COMPLETION_REPORT.md) | Core infrastructure |
-| 3 | [WEEK3_COMPLETION_REPORT.md](dev_journal/WEEK3_COMPLETION_REPORT.md) | DataFrame API foundation |
-| 4 | [WEEK4_COMPLETION_REPORT.md](dev_journal/WEEK4_COMPLETION_REPORT.md) | TPC-H implementation |
-| 5 | [WEEK5_COMPLETION_REPORT.md](dev_journal/WEEK5_COMPLETION_REPORT.md) | Query optimization |
-| 7 | [WEEK7_FINAL_REPORT.md](dev_journal/WEEK7_FINAL_REPORT.md) | Final report |
-| 8 | [WEEK8_COMPLETION_REPORT.md](dev_journal/WEEK8_COMPLETION_REPORT.md) | Advanced features |
-| 10 | [WEEK10_COMPLETION_REPORT.md](dev_journal/WEEK10_COMPLETION_REPORT.md) | Spark Connect research |
-| 11 | [WEEK11_COMPLETION_REPORT.md](dev_journal/WEEK11_COMPLETION_REPORT.md) | Spark Connect server |
-| 11+ | [WEEK11_POST_CLEANUP_REPORT.md](dev_journal/WEEK11_POST_CLEANUP_REPORT.md) | Post-cleanup documentation |
-| 12 | [WEEK12_COMPLETION_REPORT.md](dev_journal/WEEK12_COMPLETION_REPORT.md) | TPC-H via Spark Connect |
-| 13 | [WEEK13_COMPLETION_REPORT.md](dev_journal/WEEK13_COMPLETION_REPORT.md) | TPC-DS implementation |
-| 14 | [WEEK14_COMPLETION_REPORT.md](dev_journal/WEEK14_COMPLETION_REPORT.md) | DataFrame API expansion |
-| 15 | [WEEK15_COMPLETION_REPORT.md](dev_journal/WEEK15_COMPLETION_REPORT.md) | Window functions |
-| 16 | [WEEK16_COMPLETION_REPORT.md](dev_journal/WEEK16_COMPLETION_REPORT.md) | Production readiness |
-| 17 | [WEEK17_COMPLETION_REPORT.md](dev_journal/WEEK17_COMPLETION_REPORT.md) | Protobuf fix, stabilization |
+Key milestones:
+- **M1-M16**: Core infrastructure, TPC-H/TPC-DS, Spark Connect server
+- **M17-M38**: Session management, DataFrame operations, window functions
+- **M39-M44**: Differential testing framework, catalog operations
+- **M45-M49**: Statistics, lambda functions, complex types, type literals
+- **M50-M64**: Direct alias optimization, type inference, joins, sorting
+- **M68-M71**: Decimal precision, datetime fixes, performance instrumentation
 
 ---
 
@@ -83,19 +59,18 @@ Weekly completion reports documenting the project's development progress:
 
 **Getting Started**:
 - Start with [../README.md](../README.md) - Project overview
-- Then read [PLATFORM_SUPPORT.md](PLATFORM_SUPPORT.md) - Platform selection guide
-- For testing: [Testing_Strategy.md](Testing_Strategy.md)
+- Then read [SUPPORTED_OPERATIONS.md](SUPPORTED_OPERATIONS.md) - What Spark operations are supported
+- For testing: [architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md](architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
 
 **For Developers**:
-- Architecture: [architect/SPARK_CONNECT_ARCHITECTURE.md](architect/SPARK_CONNECT_ARCHITECTURE.md)
-- Build system: [coder/01_Build_Infrastructure_Design.md](coder/01_Build_Infrastructure_Design.md)
-- DataFrame API: [DataFrame_API_Reference.md](DataFrame_API_Reference.md)
+- Compatibility modes: [architect/SPARK_COMPAT_EXTENSION.md](architect/SPARK_COMPAT_EXTENSION.md)
+- Gap analysis: [SPARK_CONNECT_GAP_ANALYSIS.md](SPARK_CONNECT_GAP_ANALYSIS.md)
 - Optimization: [OPTIMIZATION_STRATEGY.md](OPTIMIZATION_STRATEGY.md)
 
 **For Operations**:
 - Platform support: [PLATFORM_SUPPORT.md](PLATFORM_SUPPORT.md)
-- Spark Connect: [architect/SINGLE_SESSION_ARCHITECTURE.md](architect/SINGLE_SESSION_ARCHITECTURE.md)
+- Session management: [architect/SESSION_MANAGEMENT_ARCHITECTURE.md](architect/SESSION_MANAGEMENT_ARCHITECTURE.md)
 
 ---
 
-**Last Updated**: 2025-12-09
+**Last Updated**: 2026-02-08
