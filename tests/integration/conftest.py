@@ -6,6 +6,7 @@ import pytest
 from pyspark.sql import SparkSession
 from pathlib import Path
 import os
+import socket
 import sys
 import atexit
 import signal
@@ -70,6 +71,18 @@ def stop_spark_with_timeout(spark, timeout=10):
     thread.join(timeout=timeout)
     if thread.is_alive():
         print(f"  Warning: SparkSession.stop() did not complete within {timeout}s, continuing...")
+
+
+def _is_port_listening(port, host='localhost', timeout=2):
+    """Check if a port is accepting connections."""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        result = sock.connect_ex((host, port))
+        sock.close()
+        return result == 0
+    except Exception:
+        return False
 
 
 from server_manager import ServerManager
@@ -542,29 +555,57 @@ def orchestrator(dual_server_manager):
 
 # Primary session fixtures (class-scoped for isolation)
 @pytest.fixture(scope="class")
-def spark_reference(orchestrator):
+def spark_reference(orchestrator, dual_server_manager):
     """
     Class-scoped Spark session connected to Apache Spark Connect (reference).
 
     This is the reference implementation (official Apache Spark 4.0.1).
     Fresh session per test class provides isolation while being efficient.
+    Includes health check with auto-restart before session creation.
     """
+    # Health check: verify Spark Reference server is responsive
+    port = orchestrator.spark_port
+    if not _is_port_listening(port):
+        print(f"\n  [spark_reference] Server unhealthy (port {port} not listening), restarting...")
+        dual_server_manager.stop_spark_reference()
+        time.sleep(1)
+        if not dual_server_manager.start_spark_reference(timeout=60):
+            pytest.fail("Failed to restart Spark Reference server")
+
     session = orchestrator.create_spark_session()
     yield session
     stop_spark_with_timeout(session, timeout=5)
+    try:
+        orchestrator._active_sessions.remove(session)
+    except ValueError:
+        pass
 
 
 @pytest.fixture(scope="class")
-def spark_thunderduck(orchestrator):
+def spark_thunderduck(orchestrator, dual_server_manager):
     """
     Class-scoped Spark session connected to Thunderduck Connect (test).
 
     This is the system under test (Thunderduck implementation).
     Fresh session per test class provides isolation while being efficient.
+    Includes health check with auto-restart before session creation.
     """
+    # Health check: verify Thunderduck server is responsive
+    port = orchestrator.thunderduck_port
+    if not _is_port_listening(port):
+        print(f"\n  [spark_thunderduck] Server unhealthy (port {port} not listening), restarting...")
+        dual_server_manager.stop_thunderduck()
+        time.sleep(1)
+        if not dual_server_manager.start_thunderduck(timeout=60):
+            pytest.fail("Failed to restart Thunderduck server")
+
     session = orchestrator.create_thunderduck_session()
     yield session
     stop_spark_with_timeout(session, timeout=5)
+    try:
+        orchestrator._active_sessions.remove(session)
+    except ValueError:
+        pass
 
 
 # Function-scoped sessions (for tests that need per-test isolation)
@@ -579,6 +620,10 @@ def spark_reference_isolated(orchestrator):
     session = orchestrator.create_spark_session()
     yield session
     stop_spark_with_timeout(session, timeout=5)
+    try:
+        orchestrator._active_sessions.remove(session)
+    except ValueError:
+        pass
 
 
 @pytest.fixture
@@ -592,6 +637,10 @@ def thunderduck_isolated(orchestrator):
     session = orchestrator.create_thunderduck_session()
     yield session
     stop_spark_with_timeout(session, timeout=5)
+    try:
+        orchestrator._active_sessions.remove(session)
+    except ValueError:
+        pass
 
 
 # Fresh server fixtures (kills and restarts server)
