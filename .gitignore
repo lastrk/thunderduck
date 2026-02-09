@@ -60,6 +60,10 @@ htmlcov/
 .venv/
 .env
 
+# Java artifcats
+.java-version
+.sdkmanrc
+
 # Claude Code authentication (auto-generated, keep secret)
 .devcontainer/.claude-token
 .devcontainer/.claude-oauth.json
