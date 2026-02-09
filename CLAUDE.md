@@ -194,21 +194,34 @@ Run from `/workspace/tests/integration`. Fixtures auto-start both servers. Use `
 # Env vars prefix (always include)
 ENV="THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true COLLECT_TIMEOUT=30"
 
-# ALL differential tests
-cd /workspace/tests/integration && $ENV python3 -m pytest differential/test_differential_v2.py -v --tb=short
+# --- Full differential test suite (ALL tests across 36 files) ---
+# This is the canonical "run everything" command
+cd /workspace/tests/integration && $ENV python3 -m pytest differential/ -v --tb=short
 
-# Single parameterized SQL query (e.g., Q7)
+# --- Quick check: TPC-H only (51 tests: 29 SQL + 22 DataFrame) ---
+cd /workspace/tests/integration && $ENV python3 -m pytest differential/test_differential_v2.py differential/test_tpch_differential.py -v --tb=short
+
+# --- TPC-DS only (SQL + DataFrame) ---
+cd /workspace/tests/integration && $ENV python3 -m pytest differential/test_tpcds_differential.py differential/test_tpcds_dataframe_differential.py -v --tb=short
+
+# --- Single test file (e.g., joins, window functions, etc.) ---
+cd /workspace/tests/integration && $ENV python3 -m pytest differential/test_joins_differential.py -v --tb=long
+
+# --- Single parameterized SQL query (e.g., TPC-H Q7) ---
 cd /workspace/tests/integration && $ENV python3 -m pytest "differential/test_differential_v2.py::TestTPCH_AllQueries_Differential[7]" -v --tb=long
 
-# Single dedicated SQL test (Q1, Q3, Q6 have their own classes)
+# --- Single dedicated SQL test (Q1, Q3, Q6 have their own classes) ---
 cd /workspace/tests/integration && $ENV python3 -m pytest differential/test_differential_v2.py::TestTPCH_Q1_Differential -v --tb=long
 
-# Single DataFrame test (zero-padded numbers)
+# --- Single DataFrame test (zero-padded numbers) ---
 cd /workspace/tests/integration && $ENV python3 -m pytest differential/test_tpch_differential.py::TestTPCHDifferential::test_q01_dataframe -v --tb=long
-
-# Run both test suites together (catches cross-suite server issues)
-cd /workspace/tests/integration && $ENV python3 -m pytest differential/test_tpch_differential.py differential/test_differential_v2.py -v --tb=short
 ```
+
+**Test tiers:**
+- **Full suite**: `pytest differential/` — runs ALL 36 test files (TPC-H, TPC-DS, joins, aggregations, window functions, array functions, datetime, type casting, etc.)
+- **Quick check**: `test_differential_v2.py test_tpch_differential.py` — TPC-H only (51 tests)
+- **TPC-DS**: `test_tpcds_differential.py test_tpcds_dataframe_differential.py`
+- **Single file/test**: target specific test files or parameterized tests
 
 **Test naming conventions:**
 - Q1, Q3, Q6: dedicated classes `TestTPCH_Q1_Differential` etc.
@@ -240,13 +253,13 @@ Server ports are configurable via `THUNDERDUCK_PORT` and `SPARK_PORT` env vars (
 # Terminal 1 — default ports (15002/15003)
 cd /workspace/tests/integration && \
   THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true COLLECT_TIMEOUT=30 \
-  python3 -m pytest differential/test_differential_v2.py -v --tb=short
+  python3 -m pytest differential/ -v --tb=short
 
 # Terminal 2 — custom ports (15012/15013), different worktree
 cd /workspace2/tests/integration && \
   THUNDERDUCK_PORT=15012 SPARK_PORT=15013 \
   THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true COLLECT_TIMEOUT=30 \
-  python3 -m pytest differential/test_differential_v2.py -v --tb=short
+  python3 -m pytest differential/ -v --tb=short
 ```
 
 **Rules**: Each parallel run needs a unique port pair. Both env vars must be set together to avoid port conflicts. Each worktree needs its own build (`mvn clean package`).
