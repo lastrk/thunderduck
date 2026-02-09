@@ -22,7 +22,7 @@ import java.util.Objects;
  *   email IS NOT NULL          -- not null check
  * </pre>
  */
-public class UnaryExpression extends Expression {
+public final class UnaryExpression implements Expression {
 
     /**
      * Unary operators.

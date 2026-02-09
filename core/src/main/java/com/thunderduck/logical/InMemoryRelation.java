@@ -18,7 +18,7 @@ import java.util.Objects;
  *
  * <p>For SQL generation, this will typically create a VALUES clause or a temporary table.
  */
-public class InMemoryRelation extends LogicalPlan {
+public final class InMemoryRelation extends LogicalPlan {
 
     private final List<Row> data;
 

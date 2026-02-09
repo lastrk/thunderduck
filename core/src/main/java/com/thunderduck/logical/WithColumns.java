@@ -28,7 +28,7 @@ import java.util.Set;
  *   df.withColumn("row_num", row_number().over(window))
  * </pre>
  */
-public class WithColumns extends LogicalPlan {
+public final class WithColumns extends LogicalPlan {
 
     private final List<String> columnNames;
     private final List<Expression> columnExpressions;

@@ -119,23 +119,14 @@ public class SchemaParser {
         if (typeNode.isObject()) {
             String typeName = typeNode.get("type").asText().toLowerCase();
 
-            switch (typeName) {
-                case "array":
-                    JsonNode elementType = typeNode.get("elementType");
-                    return new ArrayType(parseJsonDataType(elementType));
-
-                case "map":
-                    JsonNode keyType = typeNode.get("keyType");
-                    JsonNode valueType = typeNode.get("valueType");
-                    return new MapType(parseJsonDataType(keyType), parseJsonDataType(valueType));
-
-                case "struct":
-                    return parseJsonStructType(typeNode);
-
-                default:
-                    // Could be a primitive type in object form
-                    return parsePrimitiveType(typeName);
-            }
+            return switch (typeName) {
+                case "array" -> new ArrayType(parseJsonDataType(typeNode.get("elementType")));
+                case "map" -> new MapType(
+                    parseJsonDataType(typeNode.get("keyType")),
+                    parseJsonDataType(typeNode.get("valueType")));
+                case "struct" -> parseJsonStructType(typeNode);
+                default -> parsePrimitiveType(typeName);
+            };
         }
 
         throw new IllegalArgumentException("Unsupported type node: " + typeNode);
@@ -232,55 +223,25 @@ public class SchemaParser {
      * @return the DataType
      */
     private static DataType parsePrimitiveType(String typeStr) {
-        switch (typeStr) {
-            // Integer types
-            case "byte":
-            case "tinyint":
-                return ByteType.get();
-            case "short":
-            case "smallint":
-                return ShortType.get();
-            case "int":
-            case "integer":
-                return IntegerType.get();
-            case "long":
-            case "bigint":
-                return LongType.get();
-
-            // Floating point types
-            case "float":
-            case "real":
-                return FloatType.get();
-            case "double":
-                return DoubleType.get();
-
-            // String and boolean
-            case "string":
-            case "varchar":
-            case "text":
-                return StringType.get();
-            case "boolean":
-            case "bool":
-                return BooleanType.get();
-
-            // Temporal types
-            case "date":
-                return DateType.get();
-            case "timestamp":
-                return TimestampType.get();
-
-            // Binary
-            case "binary":
-            case "blob":
-                return BinaryType.get();
-
-            default:
-                // Handle decimal types: decimal(p,s)
+        return switch (typeStr) {
+            case "byte", "tinyint"        -> ByteType.get();
+            case "short", "smallint"      -> ShortType.get();
+            case "int", "integer"         -> IntegerType.get();
+            case "long", "bigint"         -> LongType.get();
+            case "float", "real"          -> FloatType.get();
+            case "double"                 -> DoubleType.get();
+            case "string", "varchar", "text" -> StringType.get();
+            case "boolean", "bool"        -> BooleanType.get();
+            case "date"                   -> DateType.get();
+            case "timestamp"              -> TimestampType.get();
+            case "binary", "blob"         -> BinaryType.get();
+            default -> {
                 if (typeStr.startsWith("decimal(") || typeStr.startsWith("numeric(")) {
-                    return parseDecimalType(typeStr);
+                    yield parseDecimalType(typeStr);
                 }
                 throw new UnsupportedOperationException("Unsupported type: " + typeStr);
-        }
+            }
+        };
     }
 
     /**

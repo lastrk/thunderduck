@@ -59,15 +59,13 @@ public final class SparkCompatMode {
         if (value == null) {
             return Mode.AUTO;
         }
-        switch (value.trim().toLowerCase()) {
-            case "strict":  return Mode.STRICT;
-            case "relaxed": return Mode.RELAXED;
-            case "auto":    return Mode.AUTO;
-            default:
-                throw new IllegalArgumentException(
-                    "Unknown Spark compatibility mode: '" + value +
-                    "'. Valid values: strict, relaxed, auto");
-        }
+        return switch (value.trim().toLowerCase()) {
+            case "strict"  -> Mode.STRICT;
+            case "relaxed" -> Mode.RELAXED;
+            case "auto"    -> Mode.AUTO;
+            default -> throw new IllegalArgumentException(
+                "Unknown Spark compatibility mode: '%s'. Valid values: strict, relaxed, auto".formatted(value));
+        };
     }
 
     /**

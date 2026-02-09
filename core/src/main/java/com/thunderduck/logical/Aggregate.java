@@ -33,7 +33,7 @@ import java.util.Objects;
  * HAVING condition
  * </pre>
  */
-public class Aggregate extends LogicalPlan {
+public final class Aggregate extends LogicalPlan {
 
     private final List<Expression> groupingExpressions;
     private final List<AggregateExpression> aggregateExpressions;
@@ -300,7 +300,7 @@ public class Aggregate extends LogicalPlan {
      *   AVG(DISTINCT amount)
      * </pre>
      */
-    public static class AggregateExpression extends Expression {
+    public static final class AggregateExpression implements Expression {
         private final String function;
         private final Expression argument;
         private final String alias;

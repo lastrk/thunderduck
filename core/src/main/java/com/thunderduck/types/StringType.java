@@ -3,7 +3,7 @@ package com.thunderduck.types;
 /**
  * Data type representing a variable-length string.
  */
-public class StringType extends DataType {
+public final class StringType implements DataType {
 
     private static final StringType INSTANCE = new StringType();
 
@@ -19,11 +19,6 @@ public class StringType extends DataType {
     }
 
     @Override
-    public int defaultSize() {
-        return -1; // Variable length
-    }
-
-    @Override
     public boolean equals(Object obj) {
         return obj instanceof StringType;
     }
@@ -31,5 +26,10 @@ public class StringType extends DataType {
     @Override
     public int hashCode() {
         return typeName().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return typeName();
     }
 }

@@ -22,7 +22,7 @@ import java.util.Objects;
  *   TableScan("/data/iceberg-table", ICEBERG) → iceberg_scan('/data/iceberg-table')
  * </pre>
  */
-public class TableScan extends LogicalPlan {
+public final class TableScan extends LogicalPlan {
 
     /**
      * Supported table formats.
@@ -96,31 +96,16 @@ public class TableScan extends LogicalPlan {
     public String toSQL(SQLGenerator generator) {
         Objects.requireNonNull(generator, "generator must not be null");
 
-        switch (format) {
-            case TABLE:
-                // Regular DuckDB table - use table name directly with proper quoting
-                return String.format("SELECT * FROM %s",
-                    com.thunderduck.generator.SQLQuoting.quoteIdentifier(source));
-
-            case PARQUET:
-                // Use DuckDB's read_parquet function with safe path quoting
-                return String.format("SELECT * FROM read_parquet(%s)",
-                    com.thunderduck.generator.SQLQuoting.quoteFilePath(source));
-
-            case DELTA:
-                // Use DuckDB's delta_scan function with safe path quoting
-                return String.format("SELECT * FROM delta_scan(%s)",
-                    com.thunderduck.generator.SQLQuoting.quoteFilePath(source));
-
-            case ICEBERG:
-                // Use DuckDB's iceberg_scan function with safe path quoting
-                return String.format("SELECT * FROM iceberg_scan(%s)",
-                    com.thunderduck.generator.SQLQuoting.quoteFilePath(source));
-
-            default:
-                throw new UnsupportedOperationException(
-                    "Unsupported table format: " + format);
-        }
+        return switch (format) {
+            case TABLE -> "SELECT * FROM %s".formatted(
+                com.thunderduck.generator.SQLQuoting.quoteIdentifier(source));
+            case PARQUET -> "SELECT * FROM read_parquet(%s)".formatted(
+                com.thunderduck.generator.SQLQuoting.quoteFilePath(source));
+            case DELTA -> "SELECT * FROM delta_scan(%s)".formatted(
+                com.thunderduck.generator.SQLQuoting.quoteFilePath(source));
+            case ICEBERG -> "SELECT * FROM iceberg_scan(%s)".formatted(
+                com.thunderduck.generator.SQLQuoting.quoteFilePath(source));
+        };
     }
 
     @Override

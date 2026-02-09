@@ -4,7 +4,7 @@ package com.thunderduck.types;
  * Data type representing a 16-bit signed integer.
  * Maps to DuckDB SMALLINT and Spark ShortType.
  */
-public class ShortType extends DataType {
+public final class ShortType implements DataType {
 
     private static final ShortType INSTANCE = new ShortType();
 
@@ -32,5 +32,10 @@ public class ShortType extends DataType {
     @Override
     public int hashCode() {
         return typeName().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return typeName();
     }
 }

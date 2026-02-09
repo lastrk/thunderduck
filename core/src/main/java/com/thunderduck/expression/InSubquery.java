@@ -24,7 +24,7 @@ import java.util.Objects;
  *   <li>If subquery contains NULL and value not found, result is NULL (not false)</li>
  * </ul>
  */
-public class InSubquery extends SubqueryExpression {
+public final class InSubquery extends SubqueryExpression {
 
     private final Expression testExpression;
     private final boolean isNegated;

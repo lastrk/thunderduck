@@ -247,7 +247,7 @@ public class RelationConverter {
         // Convert projection expressions and extract aliases
         List<Expression> convertedExpressions = project.getExpressionsList().stream()
                 .map(expressionConverter::convert)
-                .collect(Collectors.toList());
+                .toList();
 
         // Extract aliases and unwrap AliasExpressions
         List<Expression> expressions = new ArrayList<>();
@@ -301,12 +301,12 @@ public class RelationConverter {
         // Convert grouping expressions
         List<Expression> groupingExprs = aggregate.getGroupingExpressionsList().stream()
                 .map(expressionConverter::convert)
-                .collect(Collectors.toList());
+                .toList();
 
         // Convert aggregate expressions
         List<Expression> aggregateExprs = aggregate.getAggregateExpressionsList().stream()
                 .map(expressionConverter::convert)
-                .collect(Collectors.toList());
+                .toList();
 
         // Check for PIVOT group type
         if (aggregate.getGroupType() == org.apache.spark.connect.proto.Aggregate.GroupType.GROUP_TYPE_PIVOT) {
@@ -966,7 +966,7 @@ public class RelationConverter {
         // Convert sort orders
         List<com.thunderduck.logical.Sort.SortOrder> sortOrders = sort.getOrderList().stream()
                 .map(this::convertSortOrder)
-                .collect(Collectors.toList());
+                .toList();
 
         logger.debug("Creating Sort with {} sort orders", sortOrders.size());
         return new com.thunderduck.logical.Sort(input, sortOrders);

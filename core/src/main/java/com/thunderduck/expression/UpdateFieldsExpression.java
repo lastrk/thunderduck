@@ -33,7 +33,7 @@ import java.util.Optional;
  * always be available at conversion time. In such cases, a raw SQL approach
  * or error is used.
  */
-public class UpdateFieldsExpression extends Expression {
+public final class UpdateFieldsExpression implements Expression {
 
     /**
      * The type of struct field operation.
@@ -174,6 +174,11 @@ public class UpdateFieldsExpression extends Expression {
         }
         // Use double quotes for identifiers with special characters
         return "\"" + name.replace("\"", "\"\"") + "\"";
+    }
+
+    @Override
+    public String toString() {
+        return toSQL();
     }
 
     @Override

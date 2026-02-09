@@ -4,7 +4,7 @@ package com.thunderduck.types;
  * Data type representing a double-precision 64-bit floating point number.
  * Maps to DuckDB DOUBLE and Spark DoubleType.
  */
-public class DoubleType extends DataType {
+public final class DoubleType implements DataType {
 
     private static final DoubleType INSTANCE = new DoubleType();
 
@@ -32,5 +32,10 @@ public class DoubleType extends DataType {
     @Override
     public int hashCode() {
         return typeName().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return typeName();
     }
 }

@@ -22,7 +22,7 @@ import com.thunderduck.types.DataType;
  * {@code SELECT 1} as the subquery projection for clarity and potential
  * optimization benefits.
  */
-public class ExistsSubquery extends SubqueryExpression {
+public final class ExistsSubquery extends SubqueryExpression {
 
     private final boolean isNegated;
 

@@ -20,7 +20,7 @@ import java.util.Objects;
  *   df.toDF("new_col1", "new_col2", "new_col3")
  * </pre>
  */
-public class ToDF extends LogicalPlan {
+public final class ToDF extends LogicalPlan {
 
     private final List<String> columnNames;
 

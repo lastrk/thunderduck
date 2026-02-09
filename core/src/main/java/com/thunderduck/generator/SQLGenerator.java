@@ -2,9 +2,7 @@ package com.thunderduck.generator;
 
 import com.thunderduck.exception.SQLGenerationException;
 import com.thunderduck.logical.*;
-import com.thunderduck.expression.Expression;
-import com.thunderduck.expression.BinaryExpression;
-import com.thunderduck.expression.UnresolvedColumn;
+import com.thunderduck.expression.*;
 import com.thunderduck.runtime.SparkCompatMode;
 import com.thunderduck.types.StructField;
 import com.thunderduck.types.StructType;
@@ -139,51 +137,30 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
     private void visit(LogicalPlan plan) {
         Objects.requireNonNull(plan, "plan must not be null");
 
-        if (plan instanceof Project) {
-            visitProject((Project) plan);
-        } else if (plan instanceof Filter) {
-            visitFilter((Filter) plan);
-        } else if (plan instanceof TableScan) {
-            visitTableScan((TableScan) plan);
-        } else if (plan instanceof Sort) {
-            visitSort((Sort) plan);
-        } else if (plan instanceof Limit) {
-            visitLimit((Limit) plan);
-        } else if (plan instanceof Aggregate) {
-            visitAggregate((Aggregate) plan);
-        } else if (plan instanceof Join) {
-            visitJoin((Join) plan);
-        } else if (plan instanceof Union) {
-            visitUnion((Union) plan);
-        } else if (plan instanceof Intersect) {
-            visitIntersect((Intersect) plan);
-        } else if (plan instanceof Except) {
-            visitExcept((Except) plan);
-        } else if (plan instanceof InMemoryRelation) {
-            visitInMemoryRelation((InMemoryRelation) plan);
-        } else if (plan instanceof LocalRelation) {
-            visitLocalRelation((LocalRelation) plan);
-        } else if (plan instanceof LocalDataRelation) {
-            visitLocalDataRelation((LocalDataRelation) plan);
-        } else if (plan instanceof SQLRelation) {
-            visitSQLRelation((SQLRelation) plan);
-        } else if (plan instanceof AliasedRelation) {
-            visitAliasedRelation((AliasedRelation) plan);
-        } else if (plan instanceof Distinct) {
-            visitDistinct((Distinct) plan);
-        } else if (plan instanceof RangeRelation) {
-            visitRangeRelation((RangeRelation) plan);
-        } else if (plan instanceof Tail) {
-            visitTail((Tail) plan);
-        } else if (plan instanceof Sample) {
-            visitSample((Sample) plan);
-        } else if (plan instanceof WithColumns) {
-            visitWithColumns((WithColumns) plan);
-        } else if (plan instanceof ToDF) {
-            visitToDF((ToDF) plan);
-        } else {
-            throw new UnsupportedOperationException(
-                "SQL generation not implemented for: " + plan.getClass().getSimpleName());
+        switch (plan) {
+            case Project p          -> visitProject(p);
+            case Filter f           -> visitFilter(f);
+            case TableScan t        -> visitTableScan(t);
+            case Sort s             -> visitSort(s);
+            case Limit l            -> visitLimit(l);
+            case Aggregate a        -> visitAggregate(a);
+            case Join j             -> visitJoin(j);
+            case Union u            -> visitUnion(u);
+            case Intersect i        -> visitIntersect(i);
+            case Except e           -> visitExcept(e);
+            case InMemoryRelation m -> visitInMemoryRelation(m);
+            case LocalRelation lr   -> visitLocalRelation(lr);
+            case LocalDataRelation d -> visitLocalDataRelation(d);
+            case SQLRelation sq     -> visitSQLRelation(sq);
+            case AliasedRelation ar -> visitAliasedRelation(ar);
+            case Distinct di        -> visitDistinct(di);
+            case RangeRelation r    -> visitRangeRelation(r);
+            case Tail ta            -> visitTail(ta);
+            case Sample sa          -> visitSample(sa);
+            case WithColumns w      -> visitWithColumns(w);
+            case ToDF td            -> visitToDF(td);
+            case SingleRowRelation sr -> throw new UnsupportedOperationException(
+                "SQL generation not implemented for: SingleRowRelation");
         }
     }
 
@@ -528,16 +505,15 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * Gets the SQL keyword for a join type.
      */
     private String getJoinKeyword(Join.JoinType joinType) {
-        switch (joinType) {
-            case INNER: return "INNER JOIN";
-            case LEFT: return "LEFT OUTER JOIN";
-            case RIGHT: return "RIGHT OUTER JOIN";
-            case FULL: return "FULL OUTER JOIN";
-            case CROSS: return "CROSS JOIN";
-            case LEFT_SEMI: return "SEMI JOIN";
-            case LEFT_ANTI: return "ANTI JOIN";
-            default: throw new UnsupportedOperationException("Unknown join type: " + joinType);
-        }
+        return switch (joinType) {
+            case INNER     -> "INNER JOIN";
+            case LEFT      -> "LEFT OUTER JOIN";
+            case RIGHT     -> "RIGHT OUTER JOIN";
+            case FULL      -> "FULL OUTER JOIN";
+            case CROSS     -> "CROSS JOIN";
+            case LEFT_SEMI -> "SEMI JOIN";
+            case LEFT_ANTI -> "ANTI JOIN";
+        };
     }
 
     /**
@@ -761,38 +737,12 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         String source = plan.source();
         TableScan.TableFormat format = plan.format();
 
-        switch (format) {
-            case TABLE:
-                // Regular DuckDB table - use table name directly with proper quoting
-                sql.append("SELECT * FROM ");
-                sql.append(quoteIdentifier(source));
-                break;
-
-            case PARQUET:
-                // Use DuckDB's read_parquet function with safe quoting
-                sql.append("SELECT * FROM read_parquet(");
-                sql.append(quoteFilePath(source));
-                sql.append(")");
-                break;
-
-            case DELTA:
-                // Use DuckDB's delta_scan function with safe quoting
-                sql.append("SELECT * FROM delta_scan(");
-                sql.append(quoteFilePath(source));
-                sql.append(")");
-                break;
-
-            case ICEBERG:
-                // Use DuckDB's iceberg_scan function with safe quoting
-                sql.append("SELECT * FROM iceberg_scan(");
-                sql.append(quoteFilePath(source));
-                sql.append(")");
-                break;
-
-            default:
-                throw new UnsupportedOperationException(
-                    "Unsupported table format: " + format);
-        }
+        sql.append(switch (format) {
+            case TABLE   -> "SELECT * FROM " + quoteIdentifier(source);
+            case PARQUET -> "SELECT * FROM read_parquet(" + quoteFilePath(source) + ")";
+            case DELTA   -> "SELECT * FROM delta_scan(" + quoteFilePath(source) + ")";
+            case ICEBERG -> "SELECT * FROM iceberg_scan(" + quoteFilePath(source) + ")";
+        });
     }
 
     /**
@@ -1150,44 +1100,40 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * @param expr the expression to transform
      * @return the transformed expression (or original if no changes needed)
      */
-    public static com.thunderduck.expression.Expression transformAggregateExpression(com.thunderduck.expression.Expression expr) {
-        if (expr instanceof com.thunderduck.expression.FunctionCall) {
-            com.thunderduck.expression.FunctionCall func = (com.thunderduck.expression.FunctionCall) expr;
+    public static Expression transformAggregateExpression(Expression expr) {
+        if (expr instanceof FunctionCall func) {
             String name = func.functionName().toLowerCase();
             if (name.equals("sum") || name.equals("sum_distinct")) {
-                return new com.thunderduck.expression.FunctionCall("spark_sum", func.arguments(), func.dataType(), func.nullable());
+                return new FunctionCall("spark_sum", func.arguments(), func.dataType(), func.nullable());
             }
             if (name.equals("avg") || name.equals("avg_distinct")) {
-                return new com.thunderduck.expression.FunctionCall("spark_avg", func.arguments(), func.dataType(), func.nullable());
+                return new FunctionCall("spark_avg", func.arguments(), func.dataType(), func.nullable());
             }
             return expr;
         }
-        if (expr instanceof com.thunderduck.expression.BinaryExpression) {
-            com.thunderduck.expression.BinaryExpression bin = (com.thunderduck.expression.BinaryExpression) expr;
-            com.thunderduck.expression.Expression newLeft = transformAggregateExpression(bin.left());
-            com.thunderduck.expression.Expression newRight = transformAggregateExpression(bin.right());
+        if (expr instanceof BinaryExpression bin) {
+            Expression newLeft = transformAggregateExpression(bin.left());
+            Expression newRight = transformAggregateExpression(bin.right());
             if (newLeft != bin.left() || newRight != bin.right()) {
-                return new com.thunderduck.expression.BinaryExpression(newLeft, bin.operator(), newRight);
+                return new BinaryExpression(newLeft, bin.operator(), newRight);
             }
             return expr;
         }
-        if (expr instanceof com.thunderduck.expression.CastExpression) {
-            com.thunderduck.expression.CastExpression cast = (com.thunderduck.expression.CastExpression) expr;
-            com.thunderduck.expression.Expression newInner = transformAggregateExpression(cast.expression());
+        if (expr instanceof CastExpression cast) {
+            Expression newInner = transformAggregateExpression(cast.expression());
             if (newInner != cast.expression()) {
-                return new com.thunderduck.expression.CastExpression(newInner, cast.targetType());
+                return new CastExpression(newInner, cast.targetType());
             }
             return expr;
         }
-        if (expr instanceof com.thunderduck.expression.UnaryExpression) {
-            com.thunderduck.expression.UnaryExpression unary = (com.thunderduck.expression.UnaryExpression) expr;
-            com.thunderduck.expression.Expression newOperand = transformAggregateExpression(unary.operand());
+        if (expr instanceof UnaryExpression unary) {
+            Expression newOperand = transformAggregateExpression(unary.operand());
             if (newOperand != unary.operand()) {
-                return new com.thunderduck.expression.UnaryExpression(unary.operator(), newOperand);
+                return new UnaryExpression(unary.operator(), newOperand);
             }
             return expr;
         }
-        // Literals, columns, etc. — no transformation needed
+        // Literals, columns, etc. -- no transformation needed
         return expr;
     }
 
@@ -1577,26 +1523,15 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             }
 
             // JOIN type
-            switch (plan.joinType()) {
-                case INNER:
-                    sql.append(" INNER JOIN ");
-                    break;
-                case LEFT:
-                    sql.append(" LEFT OUTER JOIN ");
-                    break;
-                case RIGHT:
-                    sql.append(" RIGHT OUTER JOIN ");
-                    break;
-                case FULL:
-                    sql.append(" FULL OUTER JOIN ");
-                    break;
-                case CROSS:
-                    sql.append(" CROSS JOIN ");
-                    break;
-                default:
-                    throw new UnsupportedOperationException(
-                        "Unexpected join type: " + plan.joinType());
-            }
+            sql.append(switch (plan.joinType()) {
+                case INNER     -> " INNER JOIN ";
+                case LEFT      -> " LEFT OUTER JOIN ";
+                case RIGHT     -> " RIGHT OUTER JOIN ";
+                case FULL      -> " FULL OUTER JOIN ";
+                case CROSS     -> " CROSS JOIN ";
+                case LEFT_SEMI -> " SEMI JOIN ";
+                case LEFT_ANTI -> " ANTI JOIN ";
+            });
 
             // RIGHT SIDE - use direct aliasing for TableScan, handle AliasedRelation, wrap others
             if (rightPlan instanceof AliasedRelation) {
@@ -1684,14 +1619,11 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * @return the SQL string with qualified column references
      */
     public String qualifyCondition(Expression expr, Map<Long, String> planIdToAlias) {
-        if (expr instanceof UnresolvedColumn) {
-            UnresolvedColumn col = (UnresolvedColumn) expr;
-
+        if (expr instanceof UnresolvedColumn col) {
             // Already qualified - return as-is
             if (col.isQualified()) {
                 return col.toSQL();
             }
-
             // Use plan_id to determine alias
             if (col.hasPlanId()) {
                 String alias = planIdToAlias.get(col.planId().getAsLong());
@@ -1699,13 +1631,11 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                     return alias + "." + SQLQuoting.quoteIdentifier(col.columnName());
                 }
             }
-
             // No plan_id or no mapping - return unqualified (may cause ambiguity)
             return col.toSQL();
         }
 
-        if (expr instanceof BinaryExpression) {
-            BinaryExpression binExpr = (BinaryExpression) expr;
+        if (expr instanceof BinaryExpression binExpr) {
             String leftSQL = qualifyCondition(binExpr.left(), planIdToAlias);
             String rightSQL = qualifyCondition(binExpr.right(), planIdToAlias);
             if (binExpr.operator() == BinaryExpression.Operator.DIVIDE
@@ -1715,62 +1645,43 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             return "(" + leftSQL + " " + binExpr.operator().symbol() + " " + rightSQL + ")";
         }
 
-        // UnaryExpression: NOT, IS NULL, IS NOT NULL, NEGATE
-        if (expr instanceof com.thunderduck.expression.UnaryExpression) {
-            com.thunderduck.expression.UnaryExpression unaryExpr =
-                (com.thunderduck.expression.UnaryExpression) expr;
+        if (expr instanceof UnaryExpression unaryExpr) {
             String operandSQL = qualifyCondition(unaryExpr.operand(), planIdToAlias);
             if (unaryExpr.operator().isPrefix()) {
-                // NEGATE has no space, NOT has space
-                if (unaryExpr.operator() == com.thunderduck.expression.UnaryExpression.Operator.NEGATE) {
+                if (unaryExpr.operator() == UnaryExpression.Operator.NEGATE) {
                     return "(" + unaryExpr.operator().symbol() + operandSQL + ")";
                 }
                 return "(" + unaryExpr.operator().symbol() + " " + operandSQL + ")";
             } else {
-                // IS NULL, IS NOT NULL are postfix
                 return "(" + operandSQL + " " + unaryExpr.operator().symbol() + ")";
             }
         }
 
-        // AliasExpression: expr AS alias
-        if (expr instanceof com.thunderduck.expression.AliasExpression) {
-            com.thunderduck.expression.AliasExpression aliasExpr =
-                (com.thunderduck.expression.AliasExpression) expr;
+        if (expr instanceof AliasExpression aliasExpr) {
             String innerSQL = qualifyCondition(aliasExpr.expression(), planIdToAlias);
             return innerSQL + " AS " + aliasExpr.alias();
         }
 
-        // CastExpression: CAST(expr AS type)
-        if (expr instanceof com.thunderduck.expression.CastExpression) {
-            com.thunderduck.expression.CastExpression castExpr =
-                (com.thunderduck.expression.CastExpression) expr;
+        if (expr instanceof CastExpression castExpr) {
             String innerSQL = qualifyCondition(castExpr.expression(), planIdToAlias);
             return "CAST(" + innerSQL + " AS " + castExpr.targetType().typeName() + ")";
         }
 
-        // FunctionCall: func(arg1, arg2, ...)
-        if (expr instanceof com.thunderduck.expression.FunctionCall) {
-            com.thunderduck.expression.FunctionCall funcExpr =
-                (com.thunderduck.expression.FunctionCall) expr;
+        if (expr instanceof FunctionCall funcExpr) {
             List<String> qualifiedArgs = new ArrayList<>();
             for (Expression arg : funcExpr.arguments()) {
                 qualifiedArgs.add(qualifyCondition(arg, planIdToAlias));
             }
-            // Use function registry for translation
             String[] argArray = qualifiedArgs.toArray(new String[0]);
             try {
                 return com.thunderduck.functions.FunctionRegistry.translate(
                     funcExpr.functionName(), argArray);
             } catch (UnsupportedOperationException e) {
-                // Fallback to direct function call
                 return funcExpr.functionName() + "(" + String.join(", ", qualifiedArgs) + ")";
             }
         }
 
-        // InExpression: expr IN (val1, val2, ...) or expr NOT IN (...)
-        if (expr instanceof com.thunderduck.expression.InExpression) {
-            com.thunderduck.expression.InExpression inExpr =
-                (com.thunderduck.expression.InExpression) expr;
+        if (expr instanceof InExpression inExpr) {
             String testSQL = qualifyCondition(inExpr.testExpr(), planIdToAlias);
             List<String> valuesSQLs = new ArrayList<>();
             for (Expression val : inExpr.values()) {
@@ -1800,25 +1711,16 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * @return the source SQL if directly aliasable, or null if wrapping is needed
      */
     private String getDirectlyAliasableSource(LogicalPlan plan) {
-        if (!(plan instanceof TableScan)) {
+        if (!(plan instanceof TableScan scan)) {
             return null;
         }
-
-        TableScan scan = (TableScan) plan;
         String source = scan.source();
-
-        switch (scan.format()) {
-            case TABLE:
-                return quoteIdentifier(source);
-            case PARQUET:
-                return "read_parquet(" + quoteFilePath(source) + ")";
-            case DELTA:
-                return "delta_scan(" + quoteFilePath(source) + ")";
-            case ICEBERG:
-                return "iceberg_scan(" + quoteFilePath(source) + ")";
-            default:
-                return null;
-        }
+        return switch (scan.format()) {
+            case TABLE   -> quoteIdentifier(source);
+            case PARQUET -> "read_parquet(" + quoteFilePath(source) + ")";
+            case DELTA   -> "delta_scan(" + quoteFilePath(source) + ")";
+            case ICEBERG -> "iceberg_scan(" + quoteFilePath(source) + ")";
+        };
     }
 
     /**

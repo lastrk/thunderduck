@@ -3,7 +3,7 @@ package com.thunderduck.expression;
 import com.thunderduck.types.DataType;
 
 /**
- * Base class for all expressions in the thunderduck translation layer.
+ * Base interface for all expressions in the thunderduck translation layer.
  *
  * <p>Expressions represent computations that produce values, such as:
  * <ul>
@@ -21,22 +21,26 @@ import com.thunderduck.types.DataType;
  *   <li>GROUP BY clause</li>
  *   <li>ORDER BY clause</li>
  * </ul>
+ *
+ * <p>All concrete implementations in the expression package are {@code final},
+ * preventing further subclassing. The {@link com.thunderduck.logical.Aggregate.AggregateExpression}
+ * in the logical package also implements this interface.
  */
-public abstract class Expression {
+public interface Expression {
 
     /**
      * Returns the data type of the value produced by this expression.
      *
      * @return the data type
      */
-    public abstract DataType dataType();
+    DataType dataType();
 
     /**
      * Returns whether this expression can produce null values.
      *
      * @return true if nullable, false otherwise
      */
-    public abstract boolean nullable();
+    boolean nullable();
 
     /**
      * Converts this expression to its SQL string representation.
@@ -46,17 +50,5 @@ public abstract class Expression {
      *
      * @return the SQL string representation
      */
-    public abstract String toSQL();
-
-    /**
-     * Returns a human-readable string representation of this expression.
-     *
-     * <p>By default, this delegates to {@link #toSQL()}.
-     *
-     * @return a string representation
-     */
-    @Override
-    public String toString() {
-        return toSQL();
-    }
+    String toSQL();
 }

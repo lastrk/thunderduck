@@ -16,7 +16,7 @@ import java.util.OptionalLong;
  * reference belongs to, enabling proper qualification in join conditions
  * where both sides have columns with the same name.
  */
-public class UnresolvedColumn extends Expression {
+public final class UnresolvedColumn implements Expression {
 
     private final String columnName;
     private final String qualifier; // Optional table/alias qualifier

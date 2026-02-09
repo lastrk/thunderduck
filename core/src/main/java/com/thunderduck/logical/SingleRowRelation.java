@@ -9,7 +9,7 @@ import java.util.Collections;
  * <p>This is used for expressions that don't require an input table,
  * such as SELECT 1 or SELECT ABS(-1).
  */
-public class SingleRowRelation extends LogicalPlan {
+public final class SingleRowRelation extends LogicalPlan {
 
     public SingleRowRelation() {
         super();

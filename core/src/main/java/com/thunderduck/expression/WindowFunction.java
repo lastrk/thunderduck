@@ -49,7 +49,7 @@ import java.util.Optional;
  *
  * @see WindowFrame
  */
-public class WindowFunction extends Expression {
+public final class WindowFunction implements Expression {
 
     private final String function;
     private final List<Expression> arguments;
@@ -410,6 +410,11 @@ public class WindowFunction extends Expression {
         sql.append(")");
 
         return wrapWithCastIfRankingFunction(sql.toString());
+    }
+
+    @Override
+    public String toString() {
+        return toSQL();
     }
 
     /**

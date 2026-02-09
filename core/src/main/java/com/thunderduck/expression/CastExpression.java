@@ -13,7 +13,7 @@ import java.util.Objects;
  *   CAST(123 AS VARCHAR)
  * </pre>
  */
-public class CastExpression extends Expression {
+public final class CastExpression implements Expression {
 
     private final Expression expression;
     private final DataType targetType;

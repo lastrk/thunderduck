@@ -21,7 +21,7 @@ import java.util.Objects;
  * <p>Lambda variables are emitted as plain identifiers in the generated SQL.
  * They are NOT quoted since they are internal to the lambda expression.
  */
-public class LambdaVariableExpression extends Expression {
+public final class LambdaVariableExpression implements Expression {
 
     private final String variableName;
     private final DataType dataType;
@@ -81,6 +81,11 @@ public class LambdaVariableExpression extends Expression {
     @Override
     public String toSQL() {
         return variableName;
+    }
+
+    @Override
+    public String toString() {
+        return toSQL();
     }
 
     @Override

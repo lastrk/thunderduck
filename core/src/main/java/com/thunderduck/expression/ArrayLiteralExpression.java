@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  *   <li>Non-empty: ArrayType(unifiedElementType, true)</li>
  * </ul>
  */
-public class ArrayLiteralExpression extends Expression {
+public final class ArrayLiteralExpression implements Expression {
 
     private final List<Expression> elements;
 

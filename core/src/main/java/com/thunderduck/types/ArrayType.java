@@ -10,7 +10,7 @@ import java.util.Objects;
  * <p>DuckDB syntax: INTEGER[]
  * <p>Supports nesting: ARRAY<ARRAY<STRING>> → VARCHAR[][]
  */
-public class ArrayType extends DataType {
+public final class ArrayType implements DataType {
 
     private final DataType elementType;
     private final boolean containsNull;

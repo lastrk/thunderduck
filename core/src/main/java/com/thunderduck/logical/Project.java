@@ -25,7 +25,7 @@ import java.util.Objects;
  * <p>SQL generation:
  * <pre>SELECT expr1, expr2, ... FROM (child)</pre>
  */
-public class Project extends LogicalPlan {
+public final class Project extends LogicalPlan {
 
     private final List<Expression> projections;
     private final List<String> aliases;

@@ -88,10 +88,8 @@ public class DuckDBRuntime implements AutoCloseable {
         // Load extensions based on configured compatibility mode
         SparkCompatMode.Mode mode = SparkCompatMode.getConfiguredMode();
         switch (mode) {
-            case RELAXED:
-                logger.info("Relaxed Spark compatibility mode - extension loading skipped");
-                break;
-            case STRICT:
+            case RELAXED -> logger.info("Relaxed Spark compatibility mode - extension loading skipped");
+            case STRICT -> {
                 boolean strictLoaded = loadBundledExtensions();
                 SparkCompatMode.setExtensionLoaded(strictLoaded);
                 if (!strictLoaded) {
@@ -100,9 +98,8 @@ public class DuckDBRuntime implements AutoCloseable {
                         "but it could not be loaded. Build with: mvn clean package -DskipTests -Pbuild-extension");
                 }
                 logger.info("Strict Spark compatibility mode - extension loaded");
-                break;
-            case AUTO:
-            default:
+            }
+            case AUTO -> {
                 boolean autoLoaded = loadBundledExtensions();
                 SparkCompatMode.setExtensionLoaded(autoLoaded);
                 if (autoLoaded) {
@@ -110,7 +107,7 @@ public class DuckDBRuntime implements AutoCloseable {
                 } else {
                     logger.info("Relaxed Spark compatibility mode - extension not available");
                 }
-                break;
+            }
         }
 
         logger.info("DuckDB runtime initialized with streaming results enabled");

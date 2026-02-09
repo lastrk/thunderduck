@@ -26,7 +26,7 @@ import java.util.Objects;
  *   lambda acc, x: acc + x
  * </pre>
  */
-public class LambdaExpression extends Expression {
+public final class LambdaExpression implements Expression {
 
     private final List<String> parameters;
     private final Expression body;
@@ -115,6 +115,11 @@ public class LambdaExpression extends Expression {
     public String toSQL() {
         String paramList = String.join(", ", parameters);
         return "lambda " + paramList + ": " + body.toSQL();
+    }
+
+    @Override
+    public String toString() {
+        return toSQL();
     }
 
     @Override

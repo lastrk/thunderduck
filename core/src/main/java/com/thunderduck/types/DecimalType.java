@@ -13,7 +13,7 @@ import java.util.Objects;
  * - Precision: 1-38 digits
  * - Scale: 0 to precision
  */
-public class DecimalType extends DataType {
+public final class DecimalType implements DataType {
 
     private final int precision;
     private final int scale;

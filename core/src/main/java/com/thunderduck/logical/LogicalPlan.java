@@ -19,7 +19,12 @@ import java.util.OptionalLong;
  *
  * @see SQLGenerator
  */
-public abstract class LogicalPlan {
+public abstract sealed class LogicalPlan
+    permits Aggregate, AliasedRelation, Distinct, Except, Filter,
+            InMemoryRelation, Intersect, Join, Limit, LocalDataRelation,
+            LocalRelation, Project, RangeRelation, SQLRelation, Sample,
+            SingleRowRelation, Sort, TableScan, Tail, ToDF,
+            Union, WithColumns {
 
     /** Child nodes in the plan tree */
     protected final List<LogicalPlan> children;

@@ -25,7 +25,7 @@ import java.util.Objects;
  *
  * @see DataType
  */
-public class UnresolvedType extends DataType {
+public final class UnresolvedType implements DataType {
 
     private final String hint;
 
@@ -70,6 +70,11 @@ public class UnresolvedType extends DataType {
     @Override
     public int hashCode() {
         return Objects.hash(hint);
+    }
+
+    @Override
+    public String toString() {
+        return typeName();
     }
 
     // ==================== Factory Methods ====================
@@ -133,16 +138,11 @@ public class UnresolvedType extends DataType {
      * @return true if the type contains any UnresolvedType
      */
     public static boolean containsUnresolved(DataType type) {
-        if (type instanceof UnresolvedType) {
-            return true;
-        }
-        if (type instanceof ArrayType) {
-            return containsUnresolved(((ArrayType) type).elementType());
-        }
-        if (type instanceof MapType) {
-            MapType mapType = (MapType) type;
-            return containsUnresolved(mapType.keyType()) || containsUnresolved(mapType.valueType());
-        }
-        return false;
+        return switch (type) {
+            case UnresolvedType u -> true;
+            case ArrayType a      -> containsUnresolved(a.elementType());
+            case MapType m        -> containsUnresolved(m.keyType()) || containsUnresolved(m.valueType());
+            default               -> false;
+        };
     }
 }

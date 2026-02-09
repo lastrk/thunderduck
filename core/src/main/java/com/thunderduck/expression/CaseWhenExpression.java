@@ -37,7 +37,7 @@ import java.util.Objects;
  * condition and result expressions, proper type inference can be performed
  * based on the types of all branches.
  */
-public class CaseWhenExpression extends Expression {
+public final class CaseWhenExpression implements Expression {
 
     private final List<Expression> conditions;
     private final List<Expression> thenBranches;

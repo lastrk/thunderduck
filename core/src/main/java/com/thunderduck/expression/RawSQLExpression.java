@@ -37,7 +37,7 @@ import java.util.Objects;
  *   <li>Report the incompatibility for future translation support</li>
  * </ul>
  */
-public class RawSQLExpression extends Expression {
+public final class RawSQLExpression implements Expression {
 
     private final String sqlText;
 

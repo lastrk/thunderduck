@@ -12,7 +12,7 @@ import java.util.Objects;
  * <p>Keys cannot be null in either Spark or DuckDB.
  * Values can be null if valueContainsNull is true.
  */
-public class MapType extends DataType {
+public final class MapType implements DataType {
 
     private final DataType keyType;
     private final DataType valueType;

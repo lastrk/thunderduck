@@ -17,7 +17,7 @@ import com.thunderduck.types.DataType;
  *   WHERE amount > (SELECT AVG(amount) FROM transactions)
  * </pre>
  */
-public class ScalarSubquery extends SubqueryExpression {
+public final class ScalarSubquery extends SubqueryExpression {
 
     /**
      * Creates a scalar subquery.

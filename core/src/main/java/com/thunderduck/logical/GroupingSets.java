@@ -89,7 +89,7 @@ public class GroupingSets {
             ? Collections.unmodifiableList(
                 sets.stream()
                     .map(set -> Collections.unmodifiableList(new ArrayList<>(set)))
-                    .collect(Collectors.toList()))
+                    .toList())
             : Collections.emptyList();
 
         validate();

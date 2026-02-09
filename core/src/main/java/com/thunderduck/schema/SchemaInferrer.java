@@ -97,107 +97,27 @@ public class SchemaInferrer {
         // Normalize: uppercase and remove size specifiers like VARCHAR(255)
         String normalized = upper.replaceAll("\\(.*\\)", "").trim();
 
-        switch (normalized) {
-            // Integer types
-            case "TINYINT":
-            case "INT1":
-                return ByteType.get();
-            case "SMALLINT":
-            case "INT2":
-            case "SHORT":
-                return ShortType.get();
-            case "INTEGER":
-            case "INT":
-            case "INT4":
-            case "SIGNED":
-                return IntegerType.get();
-            case "BIGINT":
-            case "INT8":
-            case "LONG":
-                return LongType.get();
-            case "HUGEINT":
-            case "INT128":
-                // HUGEINT is 128-bit but Spark Connect only supports up to 64-bit.
-                // SUM() results are already cast to BIGINT in SQL generation (FunctionRegistry).
-                // This fallback handles any edge cases where HUGEINT appears in results.
-                return LongType.get();
-            case "UTINYINT":
-            case "UINT1":
-                return ShortType.get(); // Widen to signed
-            case "USMALLINT":
-            case "UINT2":
-                return IntegerType.get();
-            case "UINTEGER":
-            case "UINT4":
-                return LongType.get();
-            case "UBIGINT":
-            case "UINT8":
-                return LongType.get(); // May lose precision
-
-            // Floating point types
-            case "REAL":
-            case "FLOAT":
-            case "FLOAT4":
-                return FloatType.get();
-            case "DOUBLE":
-            case "FLOAT8":
-                return DoubleType.get();
-            case "DECIMAL":
-            case "NUMERIC":
-                // Default decimal without precision/scale specified
-                return new DecimalType(38, 18);
-
-            // String types
-            case "VARCHAR":
-            case "CHAR":
-            case "BPCHAR":
-            case "TEXT":
-            case "STRING":
-            case "NAME":
-                return StringType.get();
-
-            // Binary types
-            case "BLOB":
-            case "BYTEA":
-            case "BINARY":
-            case "VARBINARY":
-                return BinaryType.get();
-
-            // Boolean
-            case "BOOLEAN":
-            case "BOOL":
-            case "LOGICAL":
-                return BooleanType.get();
-
-            // Date/Time types
-            case "DATE":
-                return DateType.get();
-            case "TIME":
-                return StringType.get(); // No direct Time type
-            case "TIMESTAMP":
-            case "DATETIME":
-            case "TIMESTAMP WITH TIME ZONE":
-            case "TIMESTAMPTZ":
-                return TimestampType.get();
-            case "INTERVAL":
-                return StringType.get(); // Represent as string
-
-            // UUID
-            case "UUID":
-                return StringType.get();
-
-            // JSON
-            case "JSON":
-                return StringType.get();
-
-            default:
-                // For complex types like STRUCT, MAP - return STRING for now
-                // Note: LIST types are now handled separately above
-                if (normalized.startsWith("STRUCT") || normalized.startsWith("MAP")) {
-                    return StringType.get();
-                }
-                return StringType.get(); // Safe fallback
-        }
+        return switch (normalized) {
+            case "TINYINT", "INT1"                     -> ByteType.get();
+            case "SMALLINT", "INT2", "SHORT"           -> ShortType.get();
+            case "INTEGER", "INT", "INT4", "SIGNED"    -> IntegerType.get();
+            case "BIGINT", "INT8", "LONG"              -> LongType.get();
+            case "HUGEINT", "INT128"                   -> LongType.get();
+            case "UTINYINT", "UINT1"                   -> ShortType.get();
+            case "USMALLINT", "UINT2"                  -> IntegerType.get();
+            case "UINTEGER", "UINT4"                   -> LongType.get();
+            case "UBIGINT", "UINT8"                    -> LongType.get();
+            case "REAL", "FLOAT", "FLOAT4"             -> FloatType.get();
+            case "DOUBLE", "FLOAT8"                    -> DoubleType.get();
+            case "DECIMAL", "NUMERIC"                  -> new DecimalType(38, 18);
+            case "VARCHAR", "CHAR", "BPCHAR", "TEXT", "STRING", "NAME" -> StringType.get();
+            case "BLOB", "BYTEA", "BINARY", "VARBINARY" -> BinaryType.get();
+            case "BOOLEAN", "BOOL", "LOGICAL"          -> BooleanType.get();
+            case "DATE"                                -> DateType.get();
+            case "TIMESTAMP", "DATETIME", "TIMESTAMP WITH TIME ZONE", "TIMESTAMPTZ" -> TimestampType.get();
+            case "TIME", "INTERVAL", "UUID", "JSON"    -> StringType.get();
+            default                                    -> StringType.get();
+        };
     }
 
     /**

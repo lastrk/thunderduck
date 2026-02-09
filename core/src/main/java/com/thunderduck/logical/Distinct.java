@@ -20,7 +20,7 @@ import java.util.Objects;
  *   Distinct(input, ["col1", "col2"]) → SELECT DISTINCT col1, col2 FROM (input)
  * </pre>
  */
-public class Distinct extends LogicalPlan {
+public final class Distinct extends LogicalPlan {
 
     private final List<String> columns;
 

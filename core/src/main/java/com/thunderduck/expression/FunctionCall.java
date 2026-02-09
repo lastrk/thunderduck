@@ -23,7 +23,7 @@ import java.util.Objects;
  *
  * <p>The function name is mapped from Spark SQL to DuckDB SQL using {@link FunctionRegistry}.
  */
-public class FunctionCall extends Expression {
+public final class FunctionCall implements Expression {
 
     private final String functionName;
     private final List<Expression> arguments;

@@ -6,7 +6,7 @@ package com.thunderduck.types;
  *
  * <p>Stored as days since Unix epoch (1970-01-01).
  */
-public class DateType extends DataType {
+public final class DateType implements DataType {
 
     private static final DateType INSTANCE = new DateType();
 
@@ -34,5 +34,10 @@ public class DateType extends DataType {
     @Override
     public int hashCode() {
         return typeName().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return typeName();
     }
 }

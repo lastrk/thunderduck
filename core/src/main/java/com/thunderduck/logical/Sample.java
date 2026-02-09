@@ -31,7 +31,7 @@ import java.util.OptionalLong;
  *   <li>Uses Bernoulli sampling to match Spark's per-row probability</li>
  * </ul>
  */
-public class Sample extends LogicalPlan {
+public final class Sample extends LogicalPlan {
 
     private final double fraction;
     private final OptionalLong seed;

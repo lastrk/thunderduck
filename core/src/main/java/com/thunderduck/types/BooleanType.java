@@ -4,7 +4,7 @@ package com.thunderduck.types;
  * Data type representing a boolean value (true or false).
  * Maps to DuckDB BOOLEAN and Spark BooleanType.
  */
-public class BooleanType extends DataType {
+public final class BooleanType implements DataType {
 
     private static final BooleanType INSTANCE = new BooleanType();
 
@@ -32,5 +32,10 @@ public class BooleanType extends DataType {
     @Override
     public int hashCode() {
         return typeName().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return typeName();
     }
 }

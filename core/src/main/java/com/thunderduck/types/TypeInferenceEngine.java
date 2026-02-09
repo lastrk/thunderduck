@@ -117,34 +117,28 @@ public final class TypeInferenceEngine {
         if (left instanceof DoubleType || right instanceof DoubleType) {
             return DoubleType.get();
         }
-
         // If either is Float, result is Float
         if (left instanceof FloatType || right instanceof FloatType) {
             return FloatType.get();
         }
-
         // If either is Decimal, result is Decimal with appropriate precision
         if (left instanceof DecimalType || right instanceof DecimalType) {
             DecimalType leftDec = toDecimalForUnification(left);
             DecimalType rightDec = toDecimalForUnification(right);
             return unifyDecimalTypes(leftDec, rightDec);
         }
-
         // If either is Long, result is Long
         if (left instanceof LongType || right instanceof LongType) {
             return LongType.get();
         }
-
         // If either is Integer, result is Integer
         if (left instanceof IntegerType || right instanceof IntegerType) {
             return IntegerType.get();
         }
-
         // If either is Short, result is Short
         if (left instanceof ShortType || right instanceof ShortType) {
             return ShortType.get();
         }
-
         // Default: return left type or Double for safety
         return left != null ? left : DoubleType.get();
     }
@@ -161,23 +155,14 @@ public final class TypeInferenceEngine {
      * </ul>
      */
     private static DecimalType toDecimalForUnification(DataType type) {
-        if (type instanceof DecimalType) {
-            return (DecimalType) type;
-        }
-        if (type instanceof ByteType) {
-            return new DecimalType(3, 0);
-        }
-        if (type instanceof ShortType) {
-            return new DecimalType(5, 0);
-        }
-        if (type instanceof IntegerType) {
-            return new DecimalType(10, 0);
-        }
-        if (type instanceof LongType) {
-            return new DecimalType(20, 0);
-        }
-        // Default for unknown types
-        return new DecimalType(10, 0);
+        return switch (type) {
+            case DecimalType d  -> d;
+            case ByteType b     -> new DecimalType(3, 0);
+            case ShortType s    -> new DecimalType(5, 0);
+            case IntegerType i  -> new DecimalType(10, 0);
+            case LongType l     -> new DecimalType(20, 0);
+            default             -> new DecimalType(10, 0);
+        };
     }
 
     /**
@@ -292,8 +277,8 @@ public final class TypeInferenceEngine {
      * @return DecimalType if convertible, null otherwise
      */
     private static DecimalType toDecimalType(DataType type, Expression expr) {
-        if (type instanceof DecimalType) {
-            return (DecimalType) type;
+        if (type instanceof DecimalType d) {
+            return d;
         }
 
         // For integer types, promote to Decimal
@@ -301,22 +286,24 @@ public final class TypeInferenceEngine {
         if (type instanceof IntegerType || type instanceof LongType ||
             type instanceof ShortType || type instanceof ByteType) {
 
-            if (expr instanceof Literal) {
-                Literal lit = (Literal) expr;
+            if (expr instanceof Literal lit) {
                 Object value = lit.value();
-                if (value instanceof Number) {
+                if (value instanceof Number num) {
                     // Calculate precision based on actual value
-                    long absValue = Math.abs(((Number) value).longValue());
+                    long absValue = Math.abs(num.longValue());
                     int precision = absValue == 0 ? 1 : (int) Math.log10(absValue) + 1;
                     return new DecimalType(precision, 0);
                 }
             }
 
             // Default precision based on type
-            if (type instanceof ByteType) return new DecimalType(3, 0);
-            if (type instanceof ShortType) return new DecimalType(5, 0);
-            if (type instanceof IntegerType) return new DecimalType(10, 0);
-            if (type instanceof LongType) return new DecimalType(19, 0);
+            return switch (type) {
+                case ByteType b    -> new DecimalType(3, 0);
+                case ShortType s   -> new DecimalType(5, 0);
+                case IntegerType i -> new DecimalType(10, 0);
+                case LongType l    -> new DecimalType(19, 0);
+                default            -> new DecimalType(10, 0);
+            };
         }
 
         // Not convertible to Decimal
@@ -339,54 +326,34 @@ public final class TypeInferenceEngine {
             return StringType.get();
         }
 
-        // Handle AliasExpression - resolve the underlying expression
-        if (expr instanceof AliasExpression) {
-            return resolveType(((AliasExpression) expr).expression(), schema);
+        if (expr instanceof AliasExpression alias) {
+            return resolveType(alias.expression(), schema);
         }
-
-        // Handle UnresolvedColumn - look up type from schema
-        if (expr instanceof UnresolvedColumn) {
-            UnresolvedColumn col = (UnresolvedColumn) expr;
+        if (expr instanceof UnresolvedColumn col) {
             DataType schemaType = lookupColumnType(col.columnName(), schema);
             return schemaType != null ? schemaType : col.dataType();
         }
-
-        // Handle WindowFunction
-        if (expr instanceof WindowFunction) {
-            return resolveWindowFunctionType((WindowFunction) expr, schema);
+        if (expr instanceof WindowFunction wf) {
+            return resolveWindowFunctionType(wf, schema);
         }
-
-        // Handle BinaryExpression
-        if (expr instanceof BinaryExpression) {
-            return resolveBinaryExpressionType((BinaryExpression) expr, schema);
+        if (expr instanceof BinaryExpression bin) {
+            return resolveBinaryExpressionType(bin, schema);
         }
-
-        // Handle FunctionCall
-        if (expr instanceof FunctionCall) {
-            return resolveFunctionCallType((FunctionCall) expr, schema);
+        if (expr instanceof FunctionCall func) {
+            return resolveFunctionCallType(func, schema);
         }
-
-        // Handle CaseWhenExpression - resolve branch types with schema
-        if (expr instanceof CaseWhenExpression) {
-            return resolveCaseWhenType((CaseWhenExpression) expr, schema);
+        if (expr instanceof CaseWhenExpression cw) {
+            return resolveCaseWhenType(cw, schema);
         }
-
-        // Handle ArrayLiteralExpression - resolve element types with schema
-        if (expr instanceof ArrayLiteralExpression) {
-            return resolveArrayLiteralType((ArrayLiteralExpression) expr, schema);
+        if (expr instanceof ArrayLiteralExpression arr) {
+            return resolveArrayLiteralType(arr, schema);
         }
-
-        // Handle MapLiteralExpression - resolve key/value types with schema
-        if (expr instanceof MapLiteralExpression) {
-            return resolveMapLiteralType((MapLiteralExpression) expr, schema);
+        if (expr instanceof MapLiteralExpression map) {
+            return resolveMapLiteralType(map, schema);
         }
-
-        // Handle StructLiteralExpression - resolve field types with schema
-        if (expr instanceof StructLiteralExpression) {
-            return resolveStructLiteralType((StructLiteralExpression) expr, schema);
+        if (expr instanceof StructLiteralExpression st) {
+            return resolveStructLiteralType(st, schema);
         }
-
-        // Handle InExpression - always returns Boolean
         if (expr instanceof InExpression) {
             return BooleanType.get();
         }
@@ -453,17 +420,12 @@ public final class TypeInferenceEngine {
             if (!wf.arguments().isEmpty()) {
                 DataType argType = resolveType(wf.arguments().get(0), schema);
                 if (argType != null) {
-                    if (argType instanceof IntegerType || argType instanceof LongType ||
-                        argType instanceof ShortType || argType instanceof ByteType) {
+                    if (isIntegralType(argType)) {
                         return LongType.get();
-                    }
-                    if (argType instanceof FloatType || argType instanceof DoubleType) {
+                    } else if (argType instanceof FloatType || argType instanceof DoubleType) {
                         return DoubleType.get();
-                    }
-                    if (argType instanceof DecimalType) {
-                        DecimalType decType = (DecimalType) argType;
-                        int newPrecision = Math.min(decType.precision() + 10, 38);
-                        return new DecimalType(newPrecision, decType.scale());
+                    } else if (argType instanceof DecimalType decType) {
+                        return new DecimalType(Math.min(decType.precision() + 10, 38), decType.scale());
                     }
                     return argType;
                 }
@@ -476,7 +438,7 @@ public final class TypeInferenceEngine {
             if (!wf.arguments().isEmpty()) {
                 DataType argType = resolveType(wf.arguments().get(0), schema);
                 if (argType instanceof DecimalType) {
-                    return argType; // AVG(Decimal) returns same precision Decimal
+                    return argType;
                 }
             }
             return DoubleType.get();
@@ -513,8 +475,8 @@ public final class TypeInferenceEngine {
 
         // Division: Decimal/Decimal returns Decimal, otherwise Double
         if (op == BinaryExpression.Operator.DIVIDE) {
-            if (leftType instanceof DecimalType && rightType instanceof DecimalType) {
-                return promoteDecimalDivision((DecimalType) leftType, (DecimalType) rightType);
+            if (leftType instanceof DecimalType leftDec && rightType instanceof DecimalType rightDec) {
+                return promoteDecimalDivision(leftDec, rightDec);
             }
             return DoubleType.get();
         }
@@ -733,14 +695,27 @@ public final class TypeInferenceEngine {
     /**
      * Checks if a type is numeric.
      */
+    /**
+     * Checks if a type is an integral (non-decimal, non-float) numeric type.
+     */
+    private static boolean isIntegralType(DataType type) {
+        return type instanceof IntegerType
+            || type instanceof LongType
+            || type instanceof ShortType
+            || type instanceof ByteType;
+    }
+
+    /**
+     * Checks if a type is numeric.
+     */
     private static boolean isNumericType(DataType type) {
-        return type instanceof IntegerType ||
-               type instanceof LongType ||
-               type instanceof ShortType ||
-               type instanceof ByteType ||
-               type instanceof FloatType ||
-               type instanceof DoubleType ||
-               type instanceof DecimalType;
+        return type instanceof IntegerType
+            || type instanceof LongType
+            || type instanceof ShortType
+            || type instanceof ByteType
+            || type instanceof FloatType
+            || type instanceof DoubleType
+            || type instanceof DecimalType;
     }
 
     // ========================================================================
@@ -755,8 +730,7 @@ public final class TypeInferenceEngine {
         String funcName = func.functionName().toLowerCase();
 
         // Handle ArrayType with unresolved elements
-        if (declaredType instanceof ArrayType) {
-            ArrayType arrType = (ArrayType) declaredType;
+        if (declaredType instanceof ArrayType arrType) {
             boolean hasUnresolved = UnresolvedType.containsUnresolved(arrType) ||
                                    arrType.elementType() instanceof StringType;
             if (hasUnresolved) {
@@ -795,8 +769,7 @@ public final class TypeInferenceEngine {
             // Map extraction functions
             if (FunctionCategories.isMapExtraction(funcName)) {
                 DataType argType = resolveType(func.arguments().get(0), schema);
-                if (argType instanceof MapType) {
-                    MapType mapType = (MapType) argType;
+                if (argType instanceof MapType mapType) {
                     return funcName.equals("map_keys")
                         ? new ArrayType(mapType.keyType(), false)
                         : new ArrayType(mapType.valueType(), mapType.valueContainsNull());
@@ -806,27 +779,27 @@ public final class TypeInferenceEngine {
             // Element extraction
             if (FunctionCategories.isElementExtraction(funcName)) {
                 DataType argType = resolveType(func.arguments().get(0), schema);
-                if (argType instanceof ArrayType) {
-                    return ((ArrayType) argType).elementType();
+                if (argType instanceof ArrayType a) {
+                    return a.elementType();
                 }
-                if (argType instanceof MapType) {
-                    return ((MapType) argType).valueType();
+                if (argType instanceof MapType m) {
+                    return m.valueType();
                 }
             }
 
             // Explode functions
             if (FunctionCategories.isExplodeFunction(funcName)) {
                 DataType argType = resolveType(func.arguments().get(0), schema);
-                if (argType instanceof ArrayType) {
-                    return ((ArrayType) argType).elementType();
+                if (argType instanceof ArrayType a) {
+                    return a.elementType();
                 }
             }
 
             // Flatten
             if (funcName.equals("flatten")) {
                 DataType argType = resolveType(func.arguments().get(0), schema);
-                if (argType instanceof ArrayType) {
-                    DataType elemType = ((ArrayType) argType).elementType();
+                if (argType instanceof ArrayType a) {
+                    DataType elemType = a.elementType();
                     return (elemType instanceof ArrayType) ? elemType : argType;
                 }
             }
@@ -865,25 +838,23 @@ public final class TypeInferenceEngine {
                 return LongType.get();
 
             case "SUM":
-                if (argType instanceof IntegerType || argType instanceof LongType ||
-                    argType instanceof ShortType || argType instanceof ByteType) {
-                    return LongType.get();
-                }
-                if (argType instanceof FloatType || argType instanceof DoubleType) {
+                if (argType != null) {
+                    if (isIntegralType(argType)) {
+                        return LongType.get();
+                    } else if (argType instanceof FloatType || argType instanceof DoubleType) {
+                        return DoubleType.get();
+                    } else if (argType instanceof DecimalType decType) {
+                        int newPrecision = Math.min(decType.precision() + 10, 38);
+                        DataType resultType = new DecimalType(newPrecision, decType.scale());
+                        logger.debug("SUM decimal: input={}, result={}", decType, resultType);
+                        return resultType;
+                    }
                     return DoubleType.get();
-                }
-                if (argType instanceof DecimalType) {
-                    DecimalType decType = (DecimalType) argType;
-                    int newPrecision = Math.min(decType.precision() + 10, 38);
-                    DataType resultType = new DecimalType(newPrecision, decType.scale());
-                    logger.debug("SUM decimal: input={}, result={}", decType, resultType);
-                    return resultType;
                 }
                 return DoubleType.get();
 
             case "AVG":
-                if (argType instanceof DecimalType) {
-                    DecimalType decType = (DecimalType) argType;
+                if (argType instanceof DecimalType decType) {
                     int newPrecision = Math.min(decType.precision() + 4, 38);
                     int newScale = Math.min(decType.scale() + 4, newPrecision);
                     return new DecimalType(newPrecision, newScale);
@@ -991,39 +962,24 @@ public final class TypeInferenceEngine {
             return true;
         }
 
-        // Handle AliasExpression - resolve the underlying expression
-        if (expr instanceof AliasExpression) {
-            return resolveNullable(((AliasExpression) expr).expression(), schema);
+        if (expr instanceof AliasExpression alias) {
+            return resolveNullable(alias.expression(), schema);
         }
-
-        // Handle Literal - non-null if value is not null
-        if (expr instanceof Literal) {
-            return ((Literal) expr).isNull();
+        if (expr instanceof Literal lit) {
+            return lit.isNull();
         }
-
-        // Handle UnresolvedColumn - look up nullable from schema
-        if (expr instanceof UnresolvedColumn) {
-            UnresolvedColumn col = (UnresolvedColumn) expr;
+        if (expr instanceof UnresolvedColumn col) {
             StructField field = findField(col.columnName(), schema);
             return field != null ? field.nullable() : col.nullable();
         }
-
-        // Handle WindowFunction - delegate to its proper nullable logic
         if (expr instanceof WindowFunction) {
             return expr.nullable();
         }
-
-        // Handle BinaryExpression - nullable if any operand is nullable
-        if (expr instanceof BinaryExpression) {
-            BinaryExpression binExpr = (BinaryExpression) expr;
-            boolean leftNullable = resolveNullable(binExpr.left(), schema);
-            boolean rightNullable = resolveNullable(binExpr.right(), schema);
-            return leftNullable || rightNullable;
+        if (expr instanceof BinaryExpression bin) {
+            return resolveNullable(bin.left(), schema) || resolveNullable(bin.right(), schema);
         }
-
-        // Handle FunctionCall
-        if (expr instanceof FunctionCall) {
-            return resolveFunctionCallNullable((FunctionCall) expr, schema);
+        if (expr instanceof FunctionCall func) {
+            return resolveFunctionCallNullable(func, schema);
         }
 
         // Default: use the expression's own nullable()
@@ -1061,28 +1017,26 @@ public final class TypeInferenceEngine {
      * @return the resolved type, or the original if no resolution needed
      */
     public static DataType resolveNestedType(DataType type, StructType schema) {
-        if (type instanceof ArrayType) {
-            ArrayType arrType = (ArrayType) type;
-            DataType elementType = arrType.elementType();
-            DataType resolvedElement = resolveNestedType(elementType, schema);
-            if (resolvedElement != elementType) {
-                return new ArrayType(resolvedElement, arrType.containsNull());
+        return switch (type) {
+            case ArrayType arrType -> {
+                DataType elementType = arrType.elementType();
+                DataType resolvedElement = resolveNestedType(elementType, schema);
+                yield resolvedElement != elementType
+                    ? new ArrayType(resolvedElement, arrType.containsNull())
+                    : arrType;
             }
-            return arrType;
-        } else if (type instanceof MapType) {
-            MapType mapType = (MapType) type;
-            DataType keyType = mapType.keyType();
-            DataType valueType = mapType.valueType();
-            DataType resolvedKey = resolveNestedType(keyType, schema);
-            DataType resolvedValue = resolveNestedType(valueType, schema);
-            if (resolvedKey != keyType || resolvedValue != valueType) {
-                return new MapType(resolvedKey, resolvedValue, mapType.valueContainsNull());
+            case MapType mapType -> {
+                DataType keyType = mapType.keyType();
+                DataType valueType = mapType.valueType();
+                DataType resolvedKey = resolveNestedType(keyType, schema);
+                DataType resolvedValue = resolveNestedType(valueType, schema);
+                yield (resolvedKey != keyType || resolvedValue != valueType)
+                    ? new MapType(resolvedKey, resolvedValue, mapType.valueContainsNull())
+                    : mapType;
             }
-            return mapType;
-        } else if (type instanceof UnresolvedType) {
-            return StringType.get();
-        }
-        return type;
+            case UnresolvedType u -> StringType.get();
+            default -> type;
+        };
     }
 
     // ========================================================================
@@ -1096,8 +1050,8 @@ public final class TypeInferenceEngine {
      * @return the underlying expression if aliased, otherwise the original expression
      */
     public static Expression unwrapAlias(Expression expr) {
-        if (expr instanceof AliasExpression) {
-            return ((AliasExpression) expr).expression();
+        if (expr instanceof AliasExpression alias) {
+            return alias.expression();
         }
         return expr;
     }
@@ -1113,14 +1067,10 @@ public final class TypeInferenceEngine {
      * @return true if this is an untyped NULL literal, false otherwise
      */
     private static boolean isUntypedNull(Expression expr) {
-        if (expr instanceof Literal) {
-            Literal lit = (Literal) expr;
-            // Check if this is a NULL value with StringType (our marker for untyped NULLs)
-            // Typed NULLs (e.g., Literal(null, DecimalType(7,2))) should participate in unification
-            if (lit.isNull() && lit.dataType() instanceof StringType) {
-                return true;
-            }
-        }
-        return false;
+        // Check if this is a NULL value with StringType (our marker for untyped NULLs)
+        // Typed NULLs (e.g., Literal(null, DecimalType(7,2))) should participate in unification
+        return expr instanceof Literal lit
+            && lit.isNull()
+            && lit.dataType() instanceof StringType;
     }
 }

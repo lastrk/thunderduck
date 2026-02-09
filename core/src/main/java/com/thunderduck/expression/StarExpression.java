@@ -16,7 +16,7 @@ import java.util.Objects;
  *   SELECT t1.*, t2.id FROM table1 t1, table2 t2
  * </pre>
  */
-public class StarExpression extends Expression {
+public final class StarExpression implements Expression {
 
     private final String qualifier;
 

@@ -3,7 +3,7 @@ package com.thunderduck.types;
 /**
  * Data type representing a 32-bit signed integer.
  */
-public class IntegerType extends DataType {
+public final class IntegerType implements DataType {
 
     private static final IntegerType INSTANCE = new IntegerType();
 
@@ -31,5 +31,10 @@ public class IntegerType extends DataType {
     @Override
     public int hashCode() {
         return typeName().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return typeName();
     }
 }

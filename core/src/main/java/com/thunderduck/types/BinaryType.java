@@ -4,7 +4,7 @@ package com.thunderduck.types;
  * Data type representing arbitrary binary data (byte arrays).
  * Maps to DuckDB BLOB and Spark BinaryType.
  */
-public class BinaryType extends DataType {
+public final class BinaryType implements DataType {
 
     private static final BinaryType INSTANCE = new BinaryType();
 
@@ -20,11 +20,6 @@ public class BinaryType extends DataType {
     }
 
     @Override
-    public int defaultSize() {
-        return -1; // Variable length
-    }
-
-    @Override
     public boolean equals(Object obj) {
         return obj instanceof BinaryType;
     }
@@ -32,5 +27,10 @@ public class BinaryType extends DataType {
     @Override
     public int hashCode() {
         return typeName().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return typeName();
     }
 }

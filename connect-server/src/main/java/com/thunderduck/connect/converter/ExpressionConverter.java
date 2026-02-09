@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.Stack;
-import java.util.stream.Collectors;
 
 /**
  * Converts Spark Connect Expression types to thunderduck Expression objects.
@@ -229,7 +228,7 @@ public class ExpressionConverter {
         String functionName = func.getFunctionName();
         List<com.thunderduck.expression.Expression> arguments = func.getArgumentsList().stream()
                 .map(this::convert)
-                .collect(Collectors.toList());
+                .toList();
 
         logger.debug("Processing function: {}", functionName);
 

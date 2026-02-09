@@ -34,7 +34,7 @@ import java.util.Set;
  *   <li>LEFT_ANTI - Left anti join (returns left rows without matches)</li>
  * </ul>
  */
-public class Join extends LogicalPlan {
+public final class Join extends LogicalPlan {
 
     private final LogicalPlan left;
     private final LogicalPlan right;
@@ -271,24 +271,15 @@ public class Join extends LogicalPlan {
      * @return the JOIN keyword
      */
     private String getJoinKeyword() {
-        switch (joinType) {
-            case INNER:
-                return "INNER JOIN";
-            case LEFT:
-                return "LEFT OUTER JOIN";
-            case RIGHT:
-                return "RIGHT OUTER JOIN";
-            case FULL:
-                return "FULL OUTER JOIN";
-            case CROSS:
-                return "CROSS JOIN";
-            case LEFT_SEMI:
-                return "SEMI JOIN";
-            case LEFT_ANTI:
-                return "ANTI JOIN";
-            default:
-                throw new IllegalStateException("Unsupported join type: " + joinType);
-        }
+        return switch (joinType) {
+            case INNER     -> "INNER JOIN";
+            case LEFT      -> "LEFT OUTER JOIN";
+            case RIGHT     -> "RIGHT OUTER JOIN";
+            case FULL      -> "FULL OUTER JOIN";
+            case CROSS     -> "CROSS JOIN";
+            case LEFT_SEMI -> "SEMI JOIN";
+            case LEFT_ANTI -> "ANTI JOIN";
+        };
     }
 
     @Override

@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  *   <li>If no match and no NULLs: result is FALSE</li>
  * </ul>
  */
-public class InExpression extends Expression {
+public final class InExpression implements Expression {
 
     private final Expression testExpr;
     private final List<Expression> values;

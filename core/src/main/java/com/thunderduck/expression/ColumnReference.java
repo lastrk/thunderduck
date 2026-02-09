@@ -23,7 +23,7 @@ import java.util.Objects;
  *   <li>Nested: "address.city", "user.contact.email"</li>
  * </ul>
  */
-public class ColumnReference extends Expression {
+public final class ColumnReference implements Expression {
 
     private final String columnName;
     private final String qualifier; // Optional table/alias qualifier

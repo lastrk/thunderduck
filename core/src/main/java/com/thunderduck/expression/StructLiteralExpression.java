@@ -21,7 +21,7 @@ import java.util.Objects;
  *
  * <p>Type inference returns StructType with fields inferred from the literal.
  */
-public class StructLiteralExpression extends Expression {
+public final class StructLiteralExpression implements Expression {
 
     private final List<String> fieldNames;
     private final List<Expression> fieldValues;

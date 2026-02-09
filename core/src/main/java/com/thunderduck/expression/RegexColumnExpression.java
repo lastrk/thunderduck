@@ -26,7 +26,7 @@ import java.util.Optional;
  * <p>Note: Spark colRegex uses backticks around the pattern, which are stripped
  * during conversion. DuckDB COLUMNS() uses RE2 regex syntax.
  */
-public class RegexColumnExpression extends Expression {
+public final class RegexColumnExpression implements Expression {
 
     private final String pattern;
     private final Optional<String> tableAlias;
@@ -102,6 +102,11 @@ public class RegexColumnExpression extends Expression {
         } else {
             return String.format("COLUMNS('%s')", escapedPattern);
         }
+    }
+
+    @Override
+    public String toString() {
+        return toSQL();
     }
 
     @Override

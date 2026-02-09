@@ -30,7 +30,7 @@ import java.util.Objects;
  * <p>The data is stored in Apache Arrow IPC streaming format and will be deserialized
  * and converted to SQL (as VALUES clause or temporary table) during query planning.
  */
-public class LocalDataRelation extends LogicalPlan {
+public final class LocalDataRelation extends LogicalPlan {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalDataRelation.class);
     private static final RootAllocator allocator = new RootAllocator(Long.MAX_VALUE);

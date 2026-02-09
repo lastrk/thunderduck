@@ -18,7 +18,7 @@ import java.util.Objects;
  * <p>SQL generation:
  * <pre>SELECT * FROM (child) WHERE condition</pre>
  */
-public class Filter extends LogicalPlan {
+public final class Filter extends LogicalPlan {
 
     private final Expression condition;
 

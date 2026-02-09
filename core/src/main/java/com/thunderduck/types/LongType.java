@@ -4,7 +4,7 @@ package com.thunderduck.types;
  * Data type representing a 64-bit signed integer.
  * Maps to DuckDB BIGINT and Spark LongType.
  */
-public class LongType extends DataType {
+public final class LongType implements DataType {
 
     private static final LongType INSTANCE = new LongType();
 
@@ -32,5 +32,10 @@ public class LongType extends DataType {
     @Override
     public int hashCode() {
         return typeName().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return typeName();
     }
 }

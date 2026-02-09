@@ -15,7 +15,7 @@ import java.util.Objects;
  *   first_name AS fname
  * </pre>
  */
-public class AliasExpression extends Expression {
+public final class AliasExpression implements Expression {
 
     private final Expression expression;
     private final String alias;

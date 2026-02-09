@@ -1,7 +1,7 @@
 package com.thunderduck.types;
 
 /**
- * Base class for all data types in the thunderduck type system.
+ * Sealed interface for all data types in the thunderduck type system.
  *
  * <p>This represents the data type of a column or expression. The type system
  * is designed to be compatible with Spark's DataType hierarchy while mapping
@@ -14,14 +14,18 @@ package com.thunderduck.types;
  *   <li>Complex types: ArrayType, MapType, StructType</li>
  * </ul>
  */
-public abstract class DataType {
+public sealed interface DataType
+    permits BooleanType, ByteType, ShortType, IntegerType, LongType,
+            FloatType, DoubleType, DecimalType, StringType,
+            DateType, TimestampType, BinaryType,
+            ArrayType, MapType, StructType, UnresolvedType {
 
     /**
      * Returns a human-readable name for this data type.
      *
      * @return the type name
      */
-    public abstract String typeName();
+    String typeName();
 
     /**
      * Returns the default size in bytes for values of this type.
@@ -30,18 +34,7 @@ public abstract class DataType {
      *
      * @return the default size in bytes, or -1 for variable-length types
      */
-    public int defaultSize() {
+    default int defaultSize() {
         return -1;
-    }
-
-    @Override
-    public abstract boolean equals(Object other);
-
-    @Override
-    public abstract int hashCode();
-
-    @Override
-    public String toString() {
-        return typeName();
     }
 }

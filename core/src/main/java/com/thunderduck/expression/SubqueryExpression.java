@@ -20,7 +20,7 @@ import java.util.Objects;
  *   WHERE EXISTS (SELECT 1 FROM orders WHERE orders.product_id = products.id)
  * </pre>
  */
-public abstract class SubqueryExpression extends Expression {
+public abstract class SubqueryExpression implements Expression {
 
     protected final LogicalPlan subquery;
 

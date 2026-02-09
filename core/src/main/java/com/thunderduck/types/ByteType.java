@@ -4,7 +4,7 @@ package com.thunderduck.types;
  * Data type representing an 8-bit signed integer.
  * Maps to DuckDB TINYINT and Spark ByteType.
  */
-public class ByteType extends DataType {
+public final class ByteType implements DataType {
 
     private static final ByteType INSTANCE = new ByteType();
 
@@ -32,5 +32,10 @@ public class ByteType extends DataType {
     @Override
     public int hashCode() {
         return typeName().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return typeName();
     }
 }

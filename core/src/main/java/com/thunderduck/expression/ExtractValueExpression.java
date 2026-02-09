@@ -24,7 +24,7 @@ import java.util.Objects;
  * <p>Note: PySpark uses 0-based indexing for arrays, DuckDB uses 1-based.
  * The converter handles this translation before creating this expression.
  */
-public class ExtractValueExpression extends Expression {
+public final class ExtractValueExpression implements Expression {
 
     /**
      * The type of extraction being performed.
@@ -113,40 +113,29 @@ public class ExtractValueExpression extends Expression {
         String childSql = child.toSQL();
         String extractionSql = extraction.toSQL();
 
-        switch (extractionType) {
-            case STRUCT_FIELD:
+        return switch (extractionType) {
+            case STRUCT_FIELD -> {
                 // Use bracket notation which works for both structs and maps
-                // DuckDB supports struct['field'] syntax which is equivalent to struct.field
-                // This also works for maps, making it a universal solution
-                if (extraction instanceof Literal) {
-                    Object value = ((Literal) extraction).value();
-                    if (value instanceof String) {
-                        // Use bracket notation with quoted string key
-                        return String.format("%s['%s']", childSql, value);
-                    }
+                if (extraction instanceof Literal lit && lit.value() instanceof String strVal) {
+                    yield "%s['%s']".formatted(childSql, strVal);
                 }
-                // Dynamic field access - use bracket notation
-                return String.format("%s[%s]", childSql, extractionSql);
-
-            case ARRAY_INDEX:
-                // Array indexing uses bracket notation
-                // Note: Index should already be 1-based (converted by ExpressionConverter)
-                return String.format("%s[%s]", childSql, extractionSql);
-
-            case MAP_KEY:
-                // Map key access also uses bracket notation
-                // element_at can be used but bracket notation is simpler and works well
-                if (extraction instanceof Literal) {
-                    Object value = ((Literal) extraction).value();
-                    if (value instanceof String) {
-                        return String.format("%s['%s']", childSql, value);
-                    }
+                yield "%s[%s]".formatted(childSql, extractionSql);
+            }
+            case ARRAY_INDEX ->
+                // Array indexing; index should already be 1-based
+                "%s[%s]".formatted(childSql, extractionSql);
+            case MAP_KEY -> {
+                if (extraction instanceof Literal lit && lit.value() instanceof String strVal) {
+                    yield "%s['%s']".formatted(childSql, strVal);
                 }
-                return String.format("%s[%s]", childSql, extractionSql);
+                yield "%s[%s]".formatted(childSql, extractionSql);
+            }
+        };
+    }
 
-            default:
-                throw new IllegalStateException("Unknown extraction type: " + extractionType);
-        }
+    @Override
+    public String toString() {
+        return toSQL();
     }
 
     @Override

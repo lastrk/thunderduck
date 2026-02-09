@@ -7,7 +7,7 @@ package com.thunderduck.types;
  * <p>Both Spark and DuckDB use microsecond precision, ensuring perfect compatibility.
  * Stored as microseconds since Unix epoch (1970-01-01 00:00:00 UTC).
  */
-public class TimestampType extends DataType {
+public final class TimestampType implements DataType {
 
     private static final TimestampType INSTANCE = new TimestampType();
 
@@ -35,5 +35,10 @@ public class TimestampType extends DataType {
     @Override
     public int hashCode() {
         return typeName().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return typeName();
     }
 }

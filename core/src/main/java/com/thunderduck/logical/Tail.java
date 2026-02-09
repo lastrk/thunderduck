@@ -30,7 +30,7 @@ import java.util.Objects;
  * <p>For memory-efficient streaming execution, see {@link com.thunderduck.runtime.TailBatchIterator}
  * which uses a circular buffer to collect only the last N rows while streaming.
  */
-public class Tail extends LogicalPlan {
+public final class Tail extends LogicalPlan {
 
     private final long limit;
 

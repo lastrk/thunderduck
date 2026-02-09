@@ -25,7 +25,7 @@ import java.util.Objects;
  * doesn't have a proper IntervalType. This is acceptable since intervals
  * are primarily used in date arithmetic expressions.
  */
-public class IntervalExpression extends Expression {
+public final class IntervalExpression implements Expression {
 
     /**
      * The type of interval.

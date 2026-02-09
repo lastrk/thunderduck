@@ -23,7 +23,7 @@ import java.util.Objects;
  *   first_name || last_name    -- string concatenation
  * </pre>
  */
-public class BinaryExpression extends Expression {
+public final class BinaryExpression implements Expression {
 
     /**
      * Binary operators.

@@ -12,7 +12,7 @@ import java.util.Objects;
  * <p>This is analogous to Spark's StructType and represents the schema of a DataFrame/Dataset.
  * Each field has a name, data type, and nullability flag.
  */
-public class StructType extends DataType {
+public final class StructType implements DataType {
 
     /** Empty struct type with no fields. */
     public static final StructType EMPTY = new StructType(Collections.emptyList());

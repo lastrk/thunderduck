@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  *   <li>Non-empty: MapType(unifiedKeyType, unifiedValueType, true)</li>
  * </ul>
  */
-public class MapLiteralExpression extends Expression {
+public final class MapLiteralExpression implements Expression {
 
     private final List<Expression> keys;
     private final List<Expression> values;

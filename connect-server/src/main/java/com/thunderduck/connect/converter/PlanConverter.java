@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Converts Spark Connect Protocol Buffers plans to thunderduck LogicalPlans.
@@ -93,6 +92,6 @@ public class PlanConverter {
     public List<Expression> convertExpressions(List<org.apache.spark.connect.proto.Expression> exprs) {
         return exprs.stream()
                 .map(this::convertExpression)
-                .collect(Collectors.toList());
+                .toList();
     }
 }
