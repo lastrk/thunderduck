@@ -268,9 +268,10 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             expr = resolvePolymorphicFunctions(expr, childSchema);
             sql.append(expr.toSQL());
 
-            // Add alias if provided
+            // Add alias if provided and expression doesn't already have one
+            // (AliasExpression.toSQL() already includes AS alias)
             String alias = aliases.get(i);
-            if (alias != null && !alias.isEmpty()) {
+            if (alias != null && !alias.isEmpty() && !(expr instanceof AliasExpression)) {
                 sql.append(" AS ");
                 // Always quote aliases for security and consistency
                 sql.append(SQLQuoting.quoteIdentifier(alias));

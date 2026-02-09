@@ -65,7 +65,7 @@ public final class AliasExpression implements Expression {
      * @return the SQL string
      */
     public String toSQL() {
-        return String.format("%s AS %s", expression, alias);
+        return String.format("%s AS %s", expression.toSQL(), alias);
     }
 
     @Override
