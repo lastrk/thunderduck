@@ -578,18 +578,16 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
         if (pred.kind.getType() ==
                 org.apache.spark.sql.catalyst.parser.SqlBaseLexer.RLIKE) {
             Expression pattern = visitValueExpr(pred.pattern);
-            String notStr = negated ? "NOT " : "";
-            return new RawSQLExpression(
-                notStr + "regexp_matches(" + value.toSQL() + ", " + pattern.toSQL() + ")");
+            // rlike → regexp_matches via FunctionRegistry
+            Expression rlike = new FunctionCall("rlike", List.of(value, pattern),
+                com.thunderduck.types.BooleanType.get(), true);
+            return negated ? UnaryExpression.not(rlike) : rlike;
         }
 
         if (pred.kind.getType() ==
                 org.apache.spark.sql.catalyst.parser.SqlBaseLexer.NULL) {
-            // IS [NOT] NULL
-            if (negated) {
-                return new RawSQLExpression(value.toSQL() + " IS NOT NULL");
-            }
-            return new RawSQLExpression(value.toSQL() + " IS NULL");
+            // IS [NOT] NULL — proper AST nodes with BooleanType and nullable=false
+            return negated ? UnaryExpression.isNotNull(value) : UnaryExpression.isNull(value);
         }
 
         if (pred.kind.getType() ==
@@ -632,8 +630,7 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
             }
             if (unary.operator.getType() ==
                     org.apache.spark.sql.catalyst.parser.SqlBaseLexer.TILDE) {
-                // Bitwise NOT: pass through as raw SQL
-                return new RawSQLExpression("~" + child.toSQL());
+                return new UnaryExpression(UnaryExpression.Operator.BITWISE_NOT, child);
             }
             // PLUS is identity
             return child;
@@ -859,7 +856,7 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
         if (ctx instanceof SqlBaseParser.SubscriptContext sub) {
             Expression base = visitPrimaryExpr(sub.value);
             Expression index = visitValueExpr(sub.index);
-            return new RawSQLExpression(base.toSQL() + "[" + index.toSQL() + "]");
+            return ExtractValueExpression.arrayElement(base, index);
         }
 
         // Lambda expressions

@@ -30,6 +30,7 @@ public final class UnaryExpression implements Expression {
     public enum Operator {
         NEGATE("-", "negation"),
         NOT("NOT", "logical NOT"),
+        BITWISE_NOT("~", "bitwise NOT"),
         IS_NULL("IS NULL", "null check"),
         IS_NOT_NULL("IS NOT NULL", "not null check");
 
@@ -50,7 +51,7 @@ public final class UnaryExpression implements Expression {
         }
 
         public boolean isPrefix() {
-            return this == NEGATE || this == NOT;
+            return this == NEGATE || this == NOT || this == BITWISE_NOT;
         }
 
         public boolean isPostfix() {
@@ -120,8 +121,8 @@ public final class UnaryExpression implements Expression {
      */
     public String toSQL() {
         if (operator.isPrefix()) {
-            // For NEGATE, no space between operator and operand
-            if (operator == Operator.NEGATE) {
+            // For NEGATE and BITWISE_NOT, no space between operator and operand
+            if (operator == Operator.NEGATE || operator == Operator.BITWISE_NOT) {
                 return String.format("(%s%s)", operator.symbol(), operand.toSQL());
             }
             // For NOT, include space
