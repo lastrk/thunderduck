@@ -38,9 +38,33 @@ public final class Aggregate extends LogicalPlan {
     private final List<Expression> groupingExpressions;
     private final List<AggregateExpression> aggregateExpressions;
     private final Expression havingCondition;
+    private final GroupingSets groupingSets;
 
     /**
-     * Creates an aggregate node with optional HAVING clause.
+     * Creates an aggregate node with optional HAVING clause and grouping sets.
+     *
+     * @param child the child node
+     * @param groupingExpressions the grouping expressions (empty for global aggregation)
+     * @param aggregateExpressions the aggregate expressions (sum, avg, count, etc.)
+     * @param havingCondition the HAVING condition (can be null)
+     * @param groupingSets the grouping sets specification (ROLLUP, CUBE, etc.), or null for simple GROUP BY
+     */
+    public Aggregate(LogicalPlan child,
+                    List<Expression> groupingExpressions,
+                    List<AggregateExpression> aggregateExpressions,
+                    Expression havingCondition,
+                    GroupingSets groupingSets) {
+        super(child);
+        this.groupingExpressions = new ArrayList<>(
+            Objects.requireNonNull(groupingExpressions, "groupingExpressions must not be null"));
+        this.aggregateExpressions = new ArrayList<>(
+            Objects.requireNonNull(aggregateExpressions, "aggregateExpressions must not be null"));
+        this.havingCondition = havingCondition;  // Can be null
+        this.groupingSets = groupingSets;  // Can be null for simple GROUP BY
+    }
+
+    /**
+     * Creates an aggregate node with optional HAVING clause (backward compatibility).
      *
      * @param child the child node
      * @param groupingExpressions the grouping expressions (empty for global aggregation)
@@ -51,12 +75,7 @@ public final class Aggregate extends LogicalPlan {
                     List<Expression> groupingExpressions,
                     List<AggregateExpression> aggregateExpressions,
                     Expression havingCondition) {
-        super(child);
-        this.groupingExpressions = new ArrayList<>(
-            Objects.requireNonNull(groupingExpressions, "groupingExpressions must not be null"));
-        this.aggregateExpressions = new ArrayList<>(
-            Objects.requireNonNull(aggregateExpressions, "aggregateExpressions must not be null"));
-        this.havingCondition = havingCondition;  // Can be null
+        this(child, groupingExpressions, aggregateExpressions, havingCondition, null);
     }
 
     /**
@@ -69,7 +88,7 @@ public final class Aggregate extends LogicalPlan {
     public Aggregate(LogicalPlan child,
                     List<Expression> groupingExpressions,
                     List<AggregateExpression> aggregateExpressions) {
-        this(child, groupingExpressions, aggregateExpressions, null);
+        this(child, groupingExpressions, aggregateExpressions, null, null);
     }
 
     /**
@@ -97,6 +116,15 @@ public final class Aggregate extends LogicalPlan {
      */
     public Expression havingCondition() {
         return havingCondition;
+    }
+
+    /**
+     * Returns the grouping sets specification (ROLLUP, CUBE, GROUPING SETS).
+     *
+     * @return the grouping sets, or null for simple GROUP BY
+     */
+    public GroupingSets groupingSets() {
+        return groupingSets;
     }
 
     /**
@@ -151,9 +179,12 @@ public final class Aggregate extends LogicalPlan {
                 aggSQL = aggExpr.toSQL();
             }
 
-            // Add alias if provided
+            // Add alias if provided, or auto-alias unaliased count(*) as "count(1)"
+            // to match Spark's column naming convention
             if (aggExpr.alias() != null && !aggExpr.alias().isEmpty()) {
                 aggSQL += " AS " + com.thunderduck.generator.SQLQuoting.quoteIdentifier(aggExpr.alias());
+            } else if (aggExpr.isUnaliasedCountStar()) {
+                aggSQL += " AS \"count(1)\"";
             }
             selectExprs.add(aggSQL);
         }
@@ -169,16 +200,22 @@ public final class Aggregate extends LogicalPlan {
         // Note: GROUP BY cannot have aliases, so we unwrap AliasExpressions
         if (!groupingExpressions.isEmpty()) {
             sql.append(" GROUP BY ");
-            List<String> groupExprs = new ArrayList<>();
-            for (Expression expr : groupingExpressions) {
-                // Unwrap AliasExpression for GROUP BY - aliases not allowed here
-                if (expr instanceof AliasExpression) {
-                    groupExprs.add(((AliasExpression) expr).expression().toSQL());
-                } else {
-                    groupExprs.add(expr.toSQL());
+
+            // Emit ROLLUP/CUBE/GROUPING SETS wrapper if present
+            if (groupingSets != null) {
+                sql.append(groupingSets.toSQL());
+            } else {
+                List<String> groupExprs = new ArrayList<>();
+                for (Expression expr : groupingExpressions) {
+                    // Unwrap AliasExpression for GROUP BY - aliases not allowed here
+                    if (expr instanceof AliasExpression) {
+                        groupExprs.add(((AliasExpression) expr).expression().toSQL());
+                    } else {
+                        groupExprs.add(expr.toSQL());
+                    }
                 }
+                sql.append(String.join(", ", groupExprs));
             }
-            sql.append(String.join(", ", groupExprs));
         }
 
         // HAVING clause
@@ -217,7 +254,15 @@ public final class Aggregate extends LogicalPlan {
 
         // Add aggregate fields
         for (AggregateExpression aggExpr : aggregateExpressions) {
-            String name = aggExpr.alias() != null ? aggExpr.alias() : aggExpr.toSQL();
+            String name;
+            if (aggExpr.alias() != null) {
+                name = aggExpr.alias();
+            } else if (aggExpr.isUnaliasedCountStar()) {
+                // Match Spark's column naming: unaliased count(*) is named "count(1)"
+                name = "count(1)";
+            } else {
+                name = aggExpr.toSQL();
+            }
             DataType type;
             boolean nullable;
 
@@ -282,12 +327,17 @@ public final class Aggregate extends LogicalPlan {
 
     @Override
     public String toString() {
-        if (havingCondition != null) {
-            return String.format("Aggregate(groupBy=%s, agg=%s, having=%s)",
-                               groupingExpressions, aggregateExpressions, havingCondition);
+        StringBuilder sb = new StringBuilder("Aggregate(groupBy=");
+        sb.append(groupingExpressions);
+        if (groupingSets != null) {
+            sb.append(", groupingSets=").append(groupingSets);
         }
-        return String.format("Aggregate(groupBy=%s, agg=%s)",
-                           groupingExpressions, aggregateExpressions);
+        sb.append(", agg=").append(aggregateExpressions);
+        if (havingCondition != null) {
+            sb.append(", having=").append(havingCondition);
+        }
+        sb.append(")");
+        return sb.toString();
     }
 
     /**
@@ -392,6 +442,40 @@ public final class Aggregate extends LogicalPlan {
          */
         public boolean isComposite() {
             return rawExpression != null;
+        }
+
+        /**
+         * Returns whether this is an unaliased COUNT(*) expression.
+         *
+         * <p>Spark names the output column of an unaliased {@code count(*)} as {@code "count(1)"}.
+         * This method detects the pattern so that SQL generation layers can add the appropriate
+         * alias ({@code AS "count(1)"}) to match Spark's column naming convention.
+         *
+         * <p>COUNT(*) is detected when the function is "count" (case-insensitive) and either:
+         * <ul>
+         *   <li>The argument is null (no-argument count)</li>
+         *   <li>The argument is a Literal with value "*"</li>
+         * </ul>
+         *
+         * @return true if this is an unaliased count(*) expression
+         */
+        public boolean isUnaliasedCountStar() {
+            if (alias != null && !alias.isEmpty()) {
+                return false;
+            }
+            if (function == null || !function.equalsIgnoreCase("count")) {
+                return false;
+            }
+            // count(*) when argument is null
+            if (argument == null) {
+                return true;
+            }
+            // count(*) when argument is Literal("*")
+            if (argument instanceof com.thunderduck.expression.Literal &&
+                "*".equals(((com.thunderduck.expression.Literal) argument).value())) {
+                return true;
+            }
+            return false;
         }
 
         /**

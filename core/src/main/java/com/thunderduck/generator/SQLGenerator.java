@@ -786,6 +786,11 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         }
         sql.append(" ORDER BY ");
 
+        // Check if child aggregate uses ROLLUP/CUBE/GROUPING SETS.
+        // These produce NULL values for subtotal/grand-total rows, which must sort first
+        // to match Spark's behavior. Force NULLS FIRST on all sort columns.
+        boolean forceNullsFirst = hasRollupDescendant(plan.child());
+
         java.util.List<Sort.SortOrder> sortOrders = plan.sortOrders();
         for (int i = 0; i < sortOrders.size(); i++) {
             if (i > 0) {
@@ -802,13 +807,39 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                 sql.append(" ASC");
             }
 
-            // Add null ordering
-            if (order.nullOrdering() == Sort.NullOrdering.NULLS_FIRST) {
+            // Add null ordering: force NULLS FIRST when ROLLUP is detected
+            if (forceNullsFirst || order.nullOrdering() == Sort.NullOrdering.NULLS_FIRST) {
                 sql.append(" NULLS FIRST");
             } else {
                 sql.append(" NULLS LAST");
             }
         }
+    }
+
+    /**
+     * Checks if a descendant logical plan node contains an Aggregate with ROLLUP,
+     * CUBE, or GROUPING SETS grouping type.
+     *
+     * <p>Walks through transparent intermediate nodes (Project, Filter, Limit)
+     * that can appear between a Sort and its underlying Aggregate. This is needed
+     * because a Sort typically wraps Project(Aggregate(...)), not Aggregate directly.
+     *
+     * <p>When ROLLUP/CUBE/GROUPING SETS is detected, the Sort must force NULLS FIRST
+     * on all ORDER BY columns. These grouping operations produce NULL values for
+     * subtotal and grand-total rows, and Spark sorts these first by default.
+     *
+     * @param plan the child plan node to inspect
+     * @return true if a ROLLUP/CUBE/GROUPING SETS aggregate is found
+     */
+    private boolean hasRollupDescendant(LogicalPlan plan) {
+        if (plan instanceof Aggregate agg) {
+            return agg.groupingSets() != null;
+        }
+        // Walk through transparent nodes that can appear between Sort and Aggregate
+        if (plan instanceof Project p) return hasRollupDescendant(p.child());
+        if (plan instanceof Filter f) return hasRollupDescendant(f.child());
+        if (plan instanceof Limit l) return hasRollupDescendant(l.child());
+        return false;
     }
 
     /**
@@ -1071,9 +1102,12 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                 aggSQL = aggExpr.toSQL();
             }
 
-            // Add alias if provided
+            // Add alias if provided, or auto-alias unaliased count(*) as "count(1)"
+            // to match Spark's column naming convention
             if (aggExpr.alias() != null && !aggExpr.alias().isEmpty()) {
                 aggSQL += " AS " + SQLQuoting.quoteIdentifier(aggExpr.alias());
+            } else if (aggExpr.isUnaliasedCountStar()) {
+                aggSQL += " AS \"count(1)\"";
             }
             selectExprs.add(aggSQL);
         }
@@ -1096,16 +1130,22 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         // Note: GROUP BY cannot have aliases, so we unwrap AliasExpressions
         if (!plan.groupingExpressions().isEmpty()) {
             sql.append(" GROUP BY ");
-            java.util.List<String> groupExprs = new java.util.ArrayList<>();
-            for (com.thunderduck.expression.Expression expr : plan.groupingExpressions()) {
-                // Unwrap AliasExpression for GROUP BY - aliases not allowed here
-                if (expr instanceof com.thunderduck.expression.AliasExpression) {
-                    groupExprs.add(((com.thunderduck.expression.AliasExpression) expr).expression().toSQL());
-                } else {
-                    groupExprs.add(expr.toSQL());
+
+            // Emit ROLLUP/CUBE/GROUPING SETS wrapper if present
+            if (plan.groupingSets() != null) {
+                sql.append(plan.groupingSets().toSQL());
+            } else {
+                java.util.List<String> groupExprs = new java.util.ArrayList<>();
+                for (com.thunderduck.expression.Expression expr : plan.groupingExpressions()) {
+                    // Unwrap AliasExpression for GROUP BY - aliases not allowed here
+                    if (expr instanceof com.thunderduck.expression.AliasExpression) {
+                        groupExprs.add(((com.thunderduck.expression.AliasExpression) expr).expression().toSQL());
+                    } else {
+                        groupExprs.add(expr.toSQL());
+                    }
                 }
+                sql.append(String.join(", ", groupExprs));
             }
-            sql.append(String.join(", ", groupExprs));
         }
 
         // HAVING clause
@@ -1153,6 +1193,13 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             Expression newOperand = transformAggregateExpression(unary.operand());
             if (newOperand != unary.operand()) {
                 return new UnaryExpression(unary.operator(), newOperand);
+            }
+            return expr;
+        }
+        if (expr instanceof AliasExpression alias) {
+            Expression newInner = transformAggregateExpression(alias.expression());
+            if (newInner != alias.expression()) {
+                return new AliasExpression(newInner, alias.alias());
             }
             return expr;
         }

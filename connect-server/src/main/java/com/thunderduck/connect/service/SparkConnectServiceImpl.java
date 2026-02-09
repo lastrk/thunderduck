@@ -290,8 +290,12 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     // DuckDB returns all columns as nullable, but Spark has specific rules
                     StructType logicalSchema = logicalPlan.schema();
 
-                    // Apply SQL preprocessing for Spark compatibility (spark_sum, spark_avg, etc.)
-                    generatedSQL = preprocessSQL(generatedSQL);
+                    // NOTE: preprocessSQL() is NOT called on the DataFrame path.
+                    // All transformations are handled at the AST layer:
+                    //   - count(*) aliasing  → Aggregate.toSQL() / SQLGenerator.visitAggregate()
+                    //   - CAST(TRUNC)        → CastExpression.toSQL()
+                    //   - spark_sum/spark_avg → SQLGenerator.transformAggregateExpression() / WindowFunction
+                    //   - ROLLUP NULLS FIRST → SQLGenerator.visitSort() / Sort.toSQL()
                     timing.stopSqlGenerate();
                     logger.info("Generated SQL from plan: {}", generatedSQL);
 
@@ -730,8 +734,8 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         sql = sqlGenerator.generate(logicalPlan);
                         com.thunderduck.types.StructType logicalSchema = logicalPlan.schema();
 
-                        // Apply SQL preprocessing for Spark compatibility (spark_sum, spark_avg, casts)
-                        sql = preprocessSQL(sql);
+                        // NOTE: preprocessSQL() is NOT called on the DataFrame path (schema analysis).
+                        // All transformations are handled at the AST layer by SQLGenerator.
                         com.thunderduck.types.StructType duckDBSchema = inferSchemaFromDuckDB(sql, sessionId);
 
                         if (SparkCompatMode.isRelaxedMode()) {
@@ -905,15 +909,10 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         // Additional NULL ordering for ROLLUP queries
         // While DuckDB is configured with default_null_order='NULLS FIRST',
         // ROLLUP queries need explicit NULLS FIRST in ORDER BY for all columns
+        // NOTE: AST-level support exists in SQLGenerator.visitSort() and Sort.toSQL()
+        // but RelationConverter does not yet populate groupingSets on Aggregate nodes.
+        // This string-based logic remains until that wiring is complete.
         if (sql.toLowerCase().contains("group by rollup") && sql.toLowerCase().contains("order by")) {
-            // Find ORDER BY clause and add NULLS FIRST to ALL columns
-            // This is tricky because we need to handle:
-            // 1. Simple columns: col1, col2
-            // 2. Columns with DESC/ASC: col1 DESC, col2 ASC
-            // 3. CASE expressions: CASE WHEN ... END
-            // 4. Function calls: func(col)
-
-            // First, find the ORDER BY clause
             String sqlLowerCase = sql.toLowerCase();
             int orderByIndex = sqlLowerCase.lastIndexOf("order by");
             int limitIndex = sqlLowerCase.indexOf("limit", orderByIndex);
@@ -923,16 +922,12 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             String afterOrderBy = "";
 
             if (limitIndex > 0) {
-                // Skip the "order by" prefix (8 chars)
                 orderByClause = sql.substring(orderByIndex + 8, limitIndex).trim();
                 afterOrderBy = sql.substring(limitIndex);
             } else {
-                // Skip the "order by" prefix (8 chars)
                 orderByClause = sql.substring(orderByIndex + 8).trim();
             }
 
-            // Split the ORDER BY clause by commas (being careful with CASE expressions)
-            // For simplicity, let's just add NULLS FIRST after DESC/ASC or at the end of each expression
             StringBuilder newOrderBy = new StringBuilder();
             int i = 0;
             int parenLevel = 0;
@@ -941,12 +936,9 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
             while (i < orderByClause.length()) {
                 char c = orderByClause.charAt(i);
-
-                // Track parentheses
                 if (c == '(') parenLevel++;
                 else if (c == ')') parenLevel--;
 
-                // Track CASE expressions
                 String upcoming = orderByClause.substring(i).toLowerCase();
                 if (upcoming.startsWith("case ")) caseLevel++;
                 else if (upcoming.startsWith("end") && caseLevel > 0) {
@@ -956,23 +948,13 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     continue;
                 }
 
-                // Check for comma separator (only at top level)
                 if (c == ',' && parenLevel == 0 && caseLevel == 0) {
-                    // Process the current expression
                     String expr = currentExpr.toString().trim();
                     if (!expr.isEmpty()) {
-                        // Check if it already has NULLS FIRST/LAST
                         if (!expr.toUpperCase().contains("NULLS ")) {
-                            // Check if it ends with DESC or ASC
-                            if (expr.toUpperCase().endsWith(" DESC") || expr.toUpperCase().endsWith(" ASC")) {
-                                expr += " NULLS FIRST";
-                            } else {
-                                expr += " NULLS FIRST";
-                            }
+                            expr += " NULLS FIRST";
                         }
-                        if (newOrderBy.length() > 0) {
-                            newOrderBy.append(", ");
-                        }
+                        if (newOrderBy.length() > 0) newOrderBy.append(", ");
                         newOrderBy.append(expr);
                     }
                     currentExpr = new StringBuilder();
@@ -982,19 +964,15 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 i++;
             }
 
-            // Don't forget the last expression
             String expr = currentExpr.toString().trim();
             if (!expr.isEmpty()) {
                 if (!expr.toUpperCase().contains("NULLS ")) {
                     expr += " NULLS FIRST";
                 }
-                if (newOrderBy.length() > 0) {
-                    newOrderBy.append(", ");
-                }
+                if (newOrderBy.length() > 0) newOrderBy.append(", ");
                 newOrderBy.append(expr);
             }
 
-            // Reconstruct the query
             sql = beforeOrderBy + "ORDER BY " + newOrderBy.toString() + " " + afterOrderBy;
         }
 

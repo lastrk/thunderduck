@@ -64,6 +64,11 @@ public final class Sort extends LogicalPlan {
 
         String childSQL = generator.generate(child());
 
+        // Check if child aggregate uses ROLLUP/CUBE/GROUPING SETS.
+        // These produce NULL values for subtotal/grand-total rows, which must sort first
+        // to match Spark's behavior. Force NULLS FIRST on all sort columns.
+        boolean forceNullsFirst = hasRollupDescendant(child());
+
         List<String> orderClauses = new ArrayList<>();
         for (SortOrder order : sortOrders) {
             StringBuilder clause = new StringBuilder();
@@ -76,8 +81,8 @@ public final class Sort extends LogicalPlan {
                 clause.append(" ASC");
             }
 
-            // Add null ordering
-            if (order.nullOrdering() == NullOrdering.NULLS_FIRST) {
+            // Add null ordering: force NULLS FIRST when ROLLUP is detected
+            if (forceNullsFirst || order.nullOrdering() == NullOrdering.NULLS_FIRST) {
                 clause.append(" NULLS FIRST");
             } else {
                 clause.append(" NULLS LAST");
@@ -88,6 +93,26 @@ public final class Sort extends LogicalPlan {
 
         return String.format("SELECT * FROM (%s) AS %s ORDER BY %s",
             childSQL, generator.generateSubqueryAlias(), String.join(", ", orderClauses));
+    }
+
+    /**
+     * Checks if a descendant logical plan node contains an Aggregate with ROLLUP,
+     * CUBE, or GROUPING SETS grouping type.
+     *
+     * <p>Walks through transparent intermediate nodes (Project, Filter, Limit)
+     * that can appear between a Sort and its underlying Aggregate.
+     *
+     * @param plan the child plan node to inspect
+     * @return true if a ROLLUP/CUBE/GROUPING SETS aggregate is found
+     */
+    private static boolean hasRollupDescendant(LogicalPlan plan) {
+        if (plan instanceof Aggregate agg) {
+            return agg.groupingSets() != null;
+        }
+        if (plan instanceof Project p) return hasRollupDescendant(p.child());
+        if (plan instanceof Filter f) return hasRollupDescendant(f.child());
+        if (plan instanceof Limit l) return hasRollupDescendant(l.child());
+        return false;
     }
 
     @Override

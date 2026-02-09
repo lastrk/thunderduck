@@ -2,6 +2,7 @@ package com.thunderduck.expression;
 
 import com.thunderduck.expression.window.WindowFrame;
 import com.thunderduck.logical.Sort;
+import com.thunderduck.runtime.SparkCompatMode;
 import com.thunderduck.types.ByteType;
 import com.thunderduck.types.DataType;
 import com.thunderduck.types.DecimalType;
@@ -437,6 +438,10 @@ public final class WindowFunction implements Expression {
                 return "FIRST_VALUE";
             case "LAST":
                 return "LAST_VALUE";
+            case "SUM":
+                return SparkCompatMode.isStrictMode() ? "spark_sum" : "SUM";
+            case "AVG":
+                return SparkCompatMode.isStrictMode() ? "spark_avg" : "AVG";
             default:
                 return funcUpper;
         }

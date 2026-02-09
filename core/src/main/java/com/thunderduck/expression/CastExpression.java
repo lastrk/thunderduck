@@ -1,7 +1,11 @@
 package com.thunderduck.expression;
 
 import com.thunderduck.types.DataType;
+import com.thunderduck.types.DecimalType;
+import com.thunderduck.types.DoubleType;
+import com.thunderduck.types.FloatType;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Expression that casts another expression to a different data type.
@@ -58,13 +62,64 @@ public final class CastExpression implements Expression {
         return expression.nullable();
     }
 
+    /** Date extraction functions that already return integers -- no TRUNC needed. */
+    private static final Set<String> INTEGER_RETURNING_FUNCTIONS = Set.of(
+        "year", "month", "day", "hour", "minute", "second",
+        "quarter", "dayofweek", "dayofyear", "weekofyear"
+    );
+
     /**
      * Converts this cast expression to its SQL string representation.
+     *
+     * <p>When the target type is INTEGER or INT, the inner expression is wrapped
+     * with TRUNC to match Spark's truncation-toward-zero semantics (DuckDB may
+     * round instead). The TRUNC wrapper is skipped when the inner expression is
+     * already an integer type, a date-extraction function, or already a TRUNC call.
      *
      * @return the SQL string
      */
     public String toSQL() {
-        return String.format("CAST(%s AS %s)", expression, targetType.typeName());
+        String innerSQL = expression.toSQL();
+        String targetName = targetType.typeName().toUpperCase();
+
+        if (targetName.equals("INTEGER") || targetName.equals("INT")) {
+            if (!needsTrunc(expression)) {
+                return String.format("CAST(%s AS %s)", innerSQL, targetType.typeName());
+            }
+            return String.format("CAST(TRUNC(%s) AS %s)", innerSQL, targetType.typeName());
+        }
+
+        return String.format("CAST(%s AS %s)", innerSQL, targetType.typeName());
+    }
+
+    /**
+     * Determines whether the inner expression needs a TRUNC wrapper for an
+     * INTEGER cast.
+     *
+     * @param expr the inner expression
+     * @return true if TRUNC should be applied
+     */
+    private static boolean needsTrunc(Expression expr) {
+        // Only apply TRUNC for floating-point numeric types where DuckDB
+        // might round instead of truncating toward zero (Spark semantics).
+        // TRUNC is NOT valid for VARCHAR, BOOLEAN, DATE, TIMESTAMP, etc.
+        DataType srcType = expr.dataType();
+        if (!(srcType instanceof DoubleType
+                || srcType instanceof FloatType
+                || srcType instanceof DecimalType)) {
+            return false;
+        }
+
+        // If the source is a function call that already returns integers
+        // (e.g., date extraction) or is already TRUNC, skip the wrapper
+        if (expr instanceof FunctionCall fc) {
+            String name = fc.functionName().toLowerCase();
+            if (INTEGER_RETURNING_FUNCTIONS.contains(name) || name.equals("trunc")) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Override
