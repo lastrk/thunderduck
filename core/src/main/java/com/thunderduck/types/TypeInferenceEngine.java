@@ -808,6 +808,22 @@ public final class TypeInferenceEngine {
             if (FunctionCategories.isTypePreserving(funcName)) {
                 return resolveType(func.arguments().get(0), schema);
             }
+
+            // Aggregate functions: resolve return type based on argument type
+            // This handles SUM/AVG/MIN/MAX/COUNT when used in composite expressions
+            // (e.g., SUM(a) / SUM(b)) where the declared type is UnresolvedType
+            String upperFuncName = funcName.toUpperCase();
+            if (upperFuncName.equals("SUM") || upperFuncName.equals("SUM_DISTINCT") ||
+                upperFuncName.equals("AVG") || upperFuncName.equals("AVG_DISTINCT") ||
+                upperFuncName.equals("MIN") || upperFuncName.equals("MAX") ||
+                upperFuncName.equals("FIRST") || upperFuncName.equals("LAST") ||
+                upperFuncName.equals("COUNT") || upperFuncName.equals("COUNT_DISTINCT")) {
+                DataType argType = resolveType(func.arguments().get(0), schema);
+                DataType aggResult = resolveAggregateReturnType(upperFuncName, argType);
+                if (aggResult != null) {
+                    return aggResult;
+                }
+            }
         }
 
         return declaredType;

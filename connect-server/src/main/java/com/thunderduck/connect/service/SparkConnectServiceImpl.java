@@ -14,6 +14,7 @@ import com.thunderduck.runtime.TailBatchIterator;
 import com.thunderduck.runtime.SchemaCorrectedBatchIterator;
 import com.thunderduck.runtime.SparkCompatMode;
 import com.thunderduck.logical.Tail;
+import com.thunderduck.types.StructField;
 import com.thunderduck.types.StructType;
 import com.thunderduck.schema.SchemaInferrer;
 import io.grpc.Context;
@@ -282,12 +283,31 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     // Generate SQL from LogicalPlan
                     timing.startSqlGenerate();
                     String generatedSQL = sqlGenerator.generate(logicalPlan);
-                    timing.stopSqlGenerate();
-                    logger.info("Generated SQL from plan: {}", generatedSQL);
 
                     // Get logical schema for correct nullable flags
                     // DuckDB returns all columns as nullable, but Spark has specific rules
                     StructType logicalSchema = logicalPlan.schema();
+
+                    // Apply SQL preprocessing for Spark compatibility (spark_sum, spark_avg, etc.)
+                    generatedSQL = preprocessSQL(generatedSQL);
+                    timing.stopSqlGenerate();
+                    logger.info("Generated SQL from plan: {}", generatedSQL);
+
+                    // In strict mode, fix decimal precision for complex aggregate expressions
+                    // The logical schema from Java type inference may have DuckDB's intermediate
+                    // precision (e.g., DECIMAL(28,4)) instead of Spark's expected precision (DECIMAL(38,4)).
+                    // This correction ensures SchemaCorrectedBatchIterator promotes Arrow output correctly.
+                    if (SparkCompatMode.isStrictMode() && logicalSchema != null) {
+                        logicalSchema = fixCountNullable(generatedSQL, logicalSchema);
+                        logicalSchema = fixDecimalPrecisionForComplexAggregates(generatedSQL, logicalSchema);
+
+                        // Fix DECIMAL->DOUBLE mismatch at the SQL level:
+                        // When PySpark uses F.lit(100.00) or / 7.0, the logical schema says DOUBLE,
+                        // but DuckDB treats 100.0 as DECIMAL and returns DECIMAL.
+                        // Instead of converting Arrow vectors row-by-row, we add CAST(... AS DOUBLE)
+                        // in the SQL so DuckDB does the conversion natively.
+                        generatedSQL = fixDecimalToDoubleCasts(generatedSQL, logicalSchema, session.getSessionId());
+                    }
 
                     // Check if this is a Tail plan - use TailBatchIterator wrapper
                     if (logicalPlan instanceof Tail) {
@@ -666,6 +686,11 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         sql = preprocessSQL(sql);
                         logger.debug("Analyzing SQL query schema: {}", sql.substring(0, Math.min(100, sql.length())));
                         schema = inferSchemaFromDuckDB(sql, sessionId);
+                        // In strict mode, fix nullable flags and decimal precision for SQL queries
+                        if (SparkCompatMode.isStrictMode() && schema != null) {
+                            schema = fixCountNullable(sql, schema);
+                            schema = fixDecimalPrecisionForComplexAggregates(sql, schema);
+                        }
 
                     } else if (plan.hasCommand() && plan.getCommand().hasSqlCommand()) {
                         // SQL command - infer schema
@@ -683,6 +708,11 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         sql = preprocessSQL(sql);
                         logger.debug("Analyzing SQL command schema: {}", sql.substring(0, Math.min(100, sql.length())));
                         schema = inferSchemaFromDuckDB(sql, sessionId);
+                        // In strict mode, fix nullable flags and decimal precision for SQL queries
+                        if (SparkCompatMode.isStrictMode() && schema != null) {
+                            schema = fixCountNullable(sql, schema);
+                            schema = fixDecimalPrecisionForComplexAggregates(sql, schema);
+                        }
 
                     } else if (plan.hasRoot() && isStatisticsRelation(plan.getRoot())) {
                         // Statistics relation - generate SQL and infer schema
@@ -696,16 +726,20 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         // whose return types depend on DuckDB execution, not static type inference.
                         LogicalPlan logicalPlan = createPlanConverter(session).convert(plan);
                         sql = sqlGenerator.generate(logicalPlan);
+                        com.thunderduck.types.StructType logicalSchema = logicalPlan.schema();
+
+                        // Apply SQL preprocessing for Spark compatibility (spark_sum, spark_avg, casts)
+                        sql = preprocessSQL(sql);
                         com.thunderduck.types.StructType duckDBSchema = inferSchemaFromDuckDB(sql, sessionId);
 
                         if (SparkCompatMode.isRelaxedMode()) {
                             // Relaxed mode: use DuckDB's actual types as-is
                             schema = duckDBSchema;
                         } else {
-                            // Strict mode: DuckDB types are correct (extension handles Spark semantics),
-                            // only merge nullable flags from logical plan
-                            com.thunderduck.types.StructType logicalSchema = logicalPlan.schema();
+                            // Strict mode: merge nullable from logical plan, fix decimal precision
                             schema = mergeNullableOnly(duckDBSchema, logicalSchema);
+                            schema = fixCountNullable(sql, schema);
+                            schema = fixDecimalPrecisionForComplexAggregates(sql, schema);
                         }
                     }
 
@@ -806,11 +840,37 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         // Fix Q90: Remove "at" before "cross join"
         sql = sql.replaceAll("\\)\\s+at\\s+cross\\s+join", ") cross join");
 
+        // Fix date extraction functions: DuckDB returns BIGINT, Spark returns INTEGER
+        // Wrap year(...) with CAST(... AS INTEGER) for Spark compatibility
+        // Must match function calls only (not 'year' in INTERVAL '1' year)
+        // Skip if already wrapped in CAST(year(...) AS INTEGER) (e.g., generated SQL from DataFrame path)
+        // Done before the integer division fix since that fix targets explicit CAST(x AS INTEGER)
+        if (!sql.toUpperCase().contains("CAST(YEAR(")) {
+            sql = sql.replaceAll("(?i)\\byear\\s*\\(([^)]+)\\)", "CAST(year($1) AS INTEGER)");
+        }
+
         // Fix integer division/casting for Spark compatibility
         // Spark's cast(x/y as integer) truncates, DuckDB might round
         // Replace cast(expr as integer) with CAST(TRUNC(expr) AS INTEGER)
-        sql = sql.replaceAll("(?i)cast\\s*\\((.*?)\\s+as\\s+integer\\s*\\)",
+        // Skip CAST(year(...) AS INTEGER) since those are already correctly typed
+        sql = sql.replaceAll("(?i)cast\\s*\\((?!year\\s*\\()(.*?)\\s+as\\s+integer\\s*\\)",
                             "CAST(TRUNC($1) AS INTEGER)");
+
+        // In strict mode, use Spark-compatible aggregate functions from the DuckDB extension
+        // spark_sum returns DECIMAL(min(p+10,38), s) for decimal input, BIGINT for integer input
+        // spark_avg returns DECIMAL(min(p+4,38), min(s+4,18)) for decimal input
+        // This matches Spark's type semantics exactly
+        // Column naming (spark_sum -> sum) is handled by normalizeAggregateColumnName in schema layer
+        if (SparkCompatMode.isStrictMode()) {
+            sql = sql.replaceAll("(?i)\\bSUM\\s*\\(", "spark_sum(");
+            sql = sql.replaceAll("(?i)\\bAVG\\s*\\(", "spark_avg(");
+
+            // Fix decimal division precision: when the outermost SELECT has division
+            // of aggregate results over multiplication expressions, the intermediate
+            // DuckDB precision differs from Spark, causing wrong division scale.
+            // Wrap these expressions in CAST(... AS DECIMAL(38,6)) to match Spark output.
+            sql = fixDivisionDecimalCasts(sql);
+        }
 
         // Fix case of DESC/ASC keywords - DuckDB requires uppercase
         // Using a simple replacement approach
@@ -1664,6 +1724,19 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             return;
         }
 
+        // In strict mode, build nullable schema from SQL analysis for COUNT columns
+        if (SparkCompatMode.isStrictMode()) {
+            try {
+                StructType nullableSchema = inferNullableSchemaFromSQL(sql, session.getSessionId());
+                if (nullableSchema != null) {
+                    executeSQLStreaming(sql, nullableSchema, session, responseObserver);
+                    return;
+                }
+            } catch (Exception e) {
+                logger.debug("Could not infer nullable schema from SQL, falling back to default: {}", e.getMessage());
+            }
+        }
+
         // All queries use streaming (zero-copy Arrow batch iteration)
         executeSQLStreaming(sql, session, responseObserver);
     }
@@ -2116,8 +2189,10 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             java.util.List<com.thunderduck.types.StructField> fields = new java.util.ArrayList<>();
             for (org.apache.arrow.vector.types.pojo.Field arrowField : arrowSchema.getFields()) {
                 com.thunderduck.types.DataType fieldType = convertArrowFieldToDataType(arrowField);
+                // In strict mode, normalize column names: spark_sum -> sum, spark_avg -> avg
+                String colName = normalizeAggregateColumnName(arrowField.getName());
                 fields.add(new com.thunderduck.types.StructField(
-                    arrowField.getName(),
+                    colName,
                     fieldType,
                     arrowField.isNullable()
                 ));
@@ -2151,15 +2226,952 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         for (int i = 0; i < duckDBSchema.size(); i++) {
             com.thunderduck.types.StructField duckField = duckDBSchema.fields().get(i);
             com.thunderduck.types.StructField logicalField = logicalSchema.fields().get(i);
-            // Keep DuckDB's types, use logical plan's nullable flags
+
+            com.thunderduck.types.DataType effectiveType = duckField.dataType();
+
+            // When Spark's logical plan says DoubleType but DuckDB returns DecimalType,
+            // use Spark's DoubleType. This happens when PySpark uses F.lit(100.00) or / 7.0
+            // which creates DoubleType in Spark, but DuckDB treats 100.0 as DECIMAL.
+            // Spark's type coercion: DOUBLE op DECIMAL -> DOUBLE.
+            if (logicalField.dataType() instanceof com.thunderduck.types.DoubleType
+                && duckField.dataType() instanceof com.thunderduck.types.DecimalType) {
+                effectiveType = com.thunderduck.types.DoubleType.get();
+                logger.debug("Column '{}': logical DoubleType overrides DuckDB {}", duckField.name(), duckField.dataType());
+            }
+
             fields.add(new com.thunderduck.types.StructField(
                 duckField.name(),
-                duckField.dataType(),
+                effectiveType,
                 logicalField.nullable()
             ));
         }
 
         return new com.thunderduck.types.StructType(fields);
+    }
+
+    /**
+     * Normalizes column names that contain extension function names back to standard SQL names.
+     *
+     * <p>When strict mode rewrites SUM/AVG to spark_sum/spark_avg, DuckDB names columns
+     * using the extension function name (e.g., "spark_sum(l_quantity)"). This normalizes
+     * them back to the original names (e.g., "sum(l_quantity)") for Spark compatibility.
+     */
+    private String normalizeAggregateColumnName(String name) {
+        if (name == null) return name;
+        return name.replace("spark_sum(", "sum(").replace("spark_avg(", "avg(");
+    }
+
+    /**
+     * Fixes decimal precision for SUM/AVG results of complex expressions in SQL queries.
+     *
+     * <p>DuckDB computes intermediate expression types (multiplications) with different
+     * precision rules than Spark. When spark_sum operates on a multiplication result,
+     * DuckDB's lower intermediate precision propagates into spark_sum's return type.
+     *
+     * <p>Example: SUM(col1 * (1 - col2))
+     * <ul>
+     *   <li>Spark: DECIMAL(15,2) * DECIMAL(16,2) = DECIMAL(32,4) -> SUM = DECIMAL(38,4)</li>
+     *   <li>DuckDB: DECIMAL(15,2) * DECIMAL(16,2) = DECIMAL(18,4) -> spark_sum = DECIMAL(28,4)</li>
+     * </ul>
+     *
+     * <p>This method detects SUM/AVG columns with complex expressions (containing * or /)
+     * and promotes their precision to DECIMAL(38, s) to match Spark behavior.
+     *
+     * @param sql the original SQL query
+     * @param schema the DuckDB schema
+     * @return schema with promoted decimal precision where needed
+     */
+    // Decimal promotion strategies for different expression patterns
+    private static final int DECIMAL_NO_CHANGE = 0;           // Extension handles correctly
+    private static final int DECIMAL_PROMOTE_PRECISION = 1;    // Promote precision to 38, keep scale
+    private static final int DECIMAL_FIX_DIVISION_TYPE = 2;    // Fix both precision and scale for division
+
+    private StructType fixDecimalPrecisionForComplexAggregates(String sql, StructType schema) {
+        if (schema == null || schema.size() == 0) return schema;
+
+        int[] promotionStrategy = detectComplexAggregateColumns(sql, schema.size());
+
+        boolean hasChanges = false;
+        java.util.List<StructField> fields = new java.util.ArrayList<>();
+
+        for (int i = 0; i < schema.size(); i++) {
+            StructField field = schema.fields().get(i);
+
+            if (promotionStrategy[i] != DECIMAL_NO_CHANGE && field.dataType() instanceof com.thunderduck.types.DecimalType) {
+                com.thunderduck.types.DecimalType decType = (com.thunderduck.types.DecimalType) field.dataType();
+
+                if (promotionStrategy[i] == DECIMAL_FIX_DIVISION_TYPE) {
+                    int targetScale = 6;
+                    int targetPrecision = 38;
+                    if (decType.precision() != targetPrecision || decType.scale() != targetScale) {
+                        StructField promoted = new StructField(
+                            field.name(),
+                            new com.thunderduck.types.DecimalType(targetPrecision, targetScale),
+                            field.nullable()
+                        );
+                        fields.add(promoted);
+                        hasChanges = true;
+                        logger.debug("Fixed decimal type for division aggregate '{}': DECIMAL({},{}) -> DECIMAL({},{})",
+                            field.name(), decType.precision(), decType.scale(), targetPrecision, targetScale);
+                        continue;
+                    }
+                } else if (promotionStrategy[i] == DECIMAL_PROMOTE_PRECISION && decType.precision() < 38) {
+                    StructField promoted = new StructField(
+                        field.name(),
+                        new com.thunderduck.types.DecimalType(38, decType.scale()),
+                        field.nullable()
+                    );
+                    fields.add(promoted);
+                    hasChanges = true;
+                    logger.debug("Promoted decimal precision for complex aggregate '{}': DECIMAL({},{}) -> DECIMAL(38,{})",
+                        field.name(), decType.precision(), decType.scale(), decType.scale());
+                    continue;
+                }
+            }
+
+            fields.add(field);
+        }
+
+        return hasChanges ? new StructType(fields) : schema;
+    }
+
+    /**
+     * Detects which output columns in a SQL query come from expressions involving decimal
+     * arithmetic (SUM/AVG combined with multiplication or division).
+     */
+    private int[] detectComplexAggregateColumns(String sql, int columnCount) {
+        int[] result = new int[columnCount];
+
+        try {
+            String effectiveSql = unwrapSelectStar(sql);
+            String upperSql = effectiveSql.toUpperCase().trim();
+
+            int selectIdx = findOutermostKeyword(upperSql, "SELECT");
+            if (selectIdx < 0) return result;
+
+            int fromIdx = findOutermostKeyword(upperSql.substring(selectIdx + 6), "FROM");
+            if (fromIdx < 0) return result;
+            fromIdx += selectIdx + 6;
+
+            String selectList = effectiveSql.substring(selectIdx + 6, fromIdx).trim();
+
+            if (selectList.toUpperCase().startsWith("DISTINCT")) {
+                selectList = selectList.substring(8).trim();
+            }
+
+            java.util.List<String> selectItems = splitSelectList(selectList);
+            java.util.Set<String> arithmeticAliases = collectArithmeticAliases(sql);
+
+            for (int i = 0; i < Math.min(selectItems.size(), columnCount); i++) {
+                String item = selectItems.get(i).trim();
+                String itemUpper = item.toUpperCase();
+
+                boolean hasDivisionAroundAggregate = containsArithmeticWithAggregate(itemUpper);
+                boolean hasSumOfMultiplication = containsAggregateWithArithmeticInside(item);
+                boolean hasAggregateOfArithmeticAlias = containsAggregateOfArithmeticAlias(item, arithmeticAliases);
+
+                if (hasSumOfMultiplication && hasDivisionAroundAggregate) {
+                    result[i] = DECIMAL_FIX_DIVISION_TYPE;
+                    continue;
+                }
+
+                if (hasSumOfMultiplication) {
+                    result[i] = DECIMAL_PROMOTE_PRECISION;
+                    continue;
+                }
+
+                if (hasDivisionAroundAggregate) {
+                    if (hasAggregateOfArithmeticAlias) {
+                        result[i] = DECIMAL_FIX_DIVISION_TYPE;
+                    } else {
+                        result[i] = DECIMAL_NO_CHANGE;
+                    }
+                    continue;
+                }
+
+                if (hasAggregateOfArithmeticAlias) {
+                    result[i] = DECIMAL_PROMOTE_PRECISION;
+                    continue;
+                }
+
+                String alias = extractAliasOrReference(item);
+                if (alias != null && arithmeticAliases.contains(alias.toLowerCase())) {
+                    result[i] = DECIMAL_PROMOTE_PRECISION;
+                    continue;
+                }
+            }
+        } catch (Exception e) {
+            logger.debug("Could not detect complex aggregate columns in SQL: {}", e.getMessage());
+        }
+
+        return result;
+    }
+
+    private boolean containsArithmeticWithAggregate(String itemUpper) {
+        boolean hasAggregate = itemUpper.matches("(?s).*\\b(?:SPARK_SUM|SPARK_AVG|SUM|AVG)\\s*\\(.*");
+        if (!hasAggregate) return false;
+
+        String stripped = stripAggregateBodies(itemUpper);
+        return stripped.contains("*") || stripped.contains("/")
+            || stripped.toUpperCase().contains("SPARK_DECIMAL_DIV(");
+    }
+
+    private boolean containsAggregateWithArithmeticInside(String item) {
+        String upper = item.toUpperCase();
+        for (String prefix : new String[]{"SPARK_SUM(", "SPARK_AVG(", "SUM(", "AVG("}) {
+            int idx = upper.indexOf(prefix);
+            while (idx >= 0) {
+                if (idx > 0) {
+                    char prev = item.charAt(idx - 1);
+                    if (Character.isLetterOrDigit(prev) || prev == '_') {
+                        idx = upper.indexOf(prefix, idx + 1);
+                        continue;
+                    }
+                }
+                int parenStart = idx + prefix.length() - 1;
+                int parenEnd = findMatchingCloseParen(item, parenStart);
+                if (parenEnd > 0) {
+                    String body = item.substring(parenStart + 1, parenEnd);
+                    if (body.contains("*") || body.contains("/")) {
+                        return true;
+                    }
+                }
+                idx = upper.indexOf(prefix, idx + 1);
+            }
+        }
+        return false;
+    }
+
+    private String stripAggregateBodies(String expr) {
+        StringBuilder sb = new StringBuilder();
+        String upper = expr.toUpperCase();
+        int i = 0;
+        while (i < expr.length()) {
+            boolean isAgg = false;
+            int funcEnd = -1;
+            for (String agg : new String[]{"SPARK_SUM(", "SPARK_AVG(", "SUM(", "AVG("}) {
+                if (upper.startsWith(agg, i)) {
+                    isAgg = true;
+                    funcEnd = i + agg.length() - 1;
+                    break;
+                }
+            }
+            if (isAgg && funcEnd >= 0) {
+                int closeIdx = findMatchingCloseParen(expr, funcEnd);
+                if (closeIdx > 0) {
+                    sb.append("AGG_RESULT");
+                    i = closeIdx + 1;
+                    continue;
+                }
+            }
+            sb.append(expr.charAt(i));
+            i++;
+        }
+        return sb.toString();
+    }
+
+    private boolean containsAggregateOfArithmeticAlias(String item, java.util.Set<String> arithmeticAliases) {
+        if (arithmeticAliases.isEmpty()) return false;
+
+        String upper = item.toUpperCase();
+        for (String prefix : new String[]{"SPARK_SUM(", "SPARK_AVG(", "SUM(", "AVG("}) {
+            int idx = upper.indexOf(prefix);
+            while (idx >= 0) {
+                int parenStart = idx + prefix.length() - 1;
+                int parenEnd = findMatchingCloseParen(item, parenStart);
+                if (parenEnd > 0) {
+                    String argStr = item.substring(parenStart + 1, parenEnd).trim();
+                    for (String alias : arithmeticAliases) {
+                        if (argStr.toLowerCase().contains(alias)) {
+                            return true;
+                        }
+                    }
+                }
+                idx = upper.indexOf(prefix, idx + 1);
+            }
+        }
+        return false;
+    }
+
+    private String extractAliasOrReference(String selectItem) {
+        String item = selectItem.trim();
+        String upper = item.toUpperCase();
+
+        int depth = 0;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        int lastAsPos = -1;
+        for (int i = 0; i < item.length() - 2; i++) {
+            char c = item.charAt(i);
+            if (c == '\'' && !inDoubleQuote) { inSingleQuote = !inSingleQuote; continue; }
+            if (c == '"' && !inSingleQuote) { inDoubleQuote = !inDoubleQuote; continue; }
+            if (!inSingleQuote && !inDoubleQuote) {
+                if (c == '(') depth++;
+                else if (c == ')') depth--;
+                else if (depth == 0 && upper.startsWith("AS ", i)
+                         && (i == 0 || !Character.isLetterOrDigit(item.charAt(i - 1)))) {
+                    lastAsPos = i;
+                }
+            }
+        }
+
+        if (lastAsPos >= 0) {
+            String alias = item.substring(lastAsPos + 3).trim();
+            if (alias.startsWith("\"") && alias.endsWith("\"")) {
+                alias = alias.substring(1, alias.length() - 1);
+            }
+            return alias;
+        }
+
+        if (item.matches("(?i)[a-z_][a-z0-9_]*")) {
+            return item;
+        }
+
+        return null;
+    }
+
+    private java.util.Set<String> collectArithmeticAliases(String sql) {
+        java.util.Set<String> aliases = new java.util.HashSet<>();
+
+        java.util.regex.Pattern aliasPattern = java.util.regex.Pattern.compile(
+            "(?i)\\s+AS\\s+(?:\"([^\"]+)\"|([a-z_][a-z0-9_]*))",
+            java.util.regex.Pattern.CASE_INSENSITIVE
+        );
+
+        java.util.regex.Matcher aliasMatcher = aliasPattern.matcher(sql);
+        while (aliasMatcher.find()) {
+            int asStart = aliasMatcher.start();
+            String beforeAs = sql.substring(0, asStart).trim();
+
+            int exprStart = findExpressionStart(beforeAs);
+            if (exprStart < 0) continue;
+
+            String expr = beforeAs.substring(exprStart).trim();
+
+            if (expr.matches("(?s).*[\\w)]\\s*[*/]\\s*[\\w(].*")) {
+                String alias = aliasMatcher.group(1) != null ? aliasMatcher.group(1).toLowerCase()
+                    : aliasMatcher.group(2).toLowerCase();
+                aliases.add(alias);
+                logger.trace("Found arithmetic alias '{}' from expression: {}", alias, expr);
+            }
+        }
+
+        return aliases;
+    }
+
+    private int findExpressionStart(String sql) {
+        int depth = 0;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+
+        for (int i = sql.length() - 1; i >= 0; i--) {
+            char c = sql.charAt(i);
+            if (c == '\'' && !inDoubleQuote) { inSingleQuote = !inSingleQuote; continue; }
+            if (c == '"' && !inSingleQuote) { inDoubleQuote = !inDoubleQuote; continue; }
+            if (inSingleQuote || inDoubleQuote) continue;
+
+            if (c == ')') depth++;
+            else if (c == '(') depth--;
+
+            if (depth == 0 && c == ',') {
+                return i + 1;
+            }
+
+            if (depth == 0 && i >= 6) {
+                String possibleKeyword = sql.substring(i - 6, i + 1).toUpperCase();
+                if (possibleKeyword.endsWith("SELECT") &&
+                    (i - 6 == 0 || !Character.isLetterOrDigit(sql.charAt(i - 7)))) {
+                    return i + 1;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Rewrites SQL to add explicit DECIMAL(38,6) CASTs around division expressions
+     * involving aggregates of multiplication.
+     */
+    private String fixDivisionDecimalCasts(String sql) {
+        try {
+            String wrapperPrefix = findSelectStarWrapperPrefix(sql);
+            if (wrapperPrefix != null) {
+                return fixDivisionDecimalCastsInWrapped(sql, wrapperPrefix);
+            }
+
+            return fixDivisionDecimalCastsCore(sql);
+        } catch (Exception e) {
+            logger.debug("Could not apply division decimal casts: {}", e.getMessage());
+            return sql;
+        }
+    }
+
+    private String findSelectStarWrapperPrefix(String sql) {
+        String trimmed = sql.trim();
+        String upper = trimmed.toUpperCase();
+
+        if (!upper.startsWith("SELECT")) return null;
+        int idx = 6;
+        while (idx < upper.length() && Character.isWhitespace(upper.charAt(idx))) idx++;
+
+        if (upper.startsWith("DISTINCT", idx)) {
+            idx += 8;
+            while (idx < upper.length() && Character.isWhitespace(upper.charAt(idx))) idx++;
+        }
+
+        if (idx >= upper.length() || upper.charAt(idx) != '*') return null;
+        int afterStar = idx + 1;
+        while (afterStar < upper.length() && Character.isWhitespace(upper.charAt(afterStar))) afterStar++;
+
+        if (!upper.startsWith("FROM", afterStar)) return null;
+        int afterFrom = afterStar + 4;
+        while (afterFrom < upper.length() && Character.isWhitespace(upper.charAt(afterFrom))) afterFrom++;
+
+        if (afterFrom >= trimmed.length() || trimmed.charAt(afterFrom) != '(') return null;
+
+        return trimmed.substring(0, afterFrom + 1);
+    }
+
+    private String fixDivisionDecimalCastsInWrapped(String sql, String prefix) {
+        String trimmed = sql.trim();
+        int openParen = prefix.length() - 1;
+        int closeParen = findMatchingCloseParen(trimmed, openParen);
+        if (closeParen < 0) return sql;
+
+        String inner = trimmed.substring(openParen + 1, closeParen);
+        String suffix = trimmed.substring(closeParen);
+
+        String fixedInner = fixDivisionDecimalCasts(inner);
+
+        if (fixedInner.equals(inner)) return sql;
+        return prefix.substring(0, prefix.length() - 1) + "(" + fixedInner + suffix;
+    }
+
+    private String fixDivisionDecimalCastsCore(String sql) {
+        String upperSql = sql.toUpperCase().trim();
+
+        int selectIdx = findOutermostKeyword(upperSql, "SELECT");
+        if (selectIdx < 0) return sql;
+
+        int fromIdx = findOutermostKeyword(upperSql.substring(selectIdx + 6), "FROM");
+        if (fromIdx < 0) return sql;
+        fromIdx += selectIdx + 6;
+
+        String selectList = sql.substring(selectIdx + 6, fromIdx).trim();
+        String beforeSelect = sql.substring(0, selectIdx + 6);
+        String afterFrom = sql.substring(fromIdx);
+
+        String distinctPrefix = "";
+        if (selectList.toUpperCase().startsWith("DISTINCT")) {
+            distinctPrefix = selectList.substring(0, 8) + " ";
+            selectList = selectList.substring(8).trim();
+        }
+
+        java.util.List<String> selectItems = splitSelectList(selectList);
+        java.util.Set<String> arithmeticAliases = collectArithmeticAliases(sql);
+
+        boolean modified = false;
+        java.util.List<String> newItems = new java.util.ArrayList<>();
+
+        for (String item : selectItems) {
+            String trimmed = item.trim();
+            String trimmedUpper = trimmed.toUpperCase();
+
+            boolean hasDivision = containsArithmeticWithAggregate(trimmedUpper);
+            if (!hasDivision) {
+                newItems.add(item);
+                continue;
+            }
+
+            boolean hasMultiplicationInput = containsAggregateOfArithmeticAlias(trimmed, arithmeticAliases)
+                || containsAggregateWithArithmeticInside(trimmed);
+
+            if (!hasMultiplicationInput) {
+                newItems.add(item);
+                continue;
+            }
+
+            String expr = trimmed;
+            String aliasSuffix = "";
+
+            int asPos = findLastTopLevelAs(trimmed);
+            if (asPos >= 0) {
+                expr = trimmed.substring(0, asPos).trim();
+                aliasSuffix = " " + trimmed.substring(asPos);
+            }
+
+            String castExpr = "CAST(" + expr + " AS DECIMAL(38,6))" + aliasSuffix;
+            newItems.add(castExpr);
+            modified = true;
+            logger.debug("Added DECIMAL(38,6) cast for division expression: {}", trimmed);
+        }
+
+        if (!modified) return sql;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(beforeSelect).append(" ").append(distinctPrefix);
+        for (int i = 0; i < newItems.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append(newItems.get(i));
+        }
+        sb.append(" ").append(afterFrom);
+
+        return sb.toString();
+    }
+
+    private String unwrapSelectStar(String sql) {
+        String current = sql.trim();
+        int maxIterations = 20;
+
+        for (int iter = 0; iter < maxIterations; iter++) {
+            String upper = current.toUpperCase().trim();
+
+            if (!upper.startsWith("SELECT")) return current;
+
+            int idx = 6;
+            while (idx < upper.length() && Character.isWhitespace(upper.charAt(idx))) idx++;
+
+            if (upper.startsWith("DISTINCT", idx)) {
+                idx += 8;
+                while (idx < upper.length() && Character.isWhitespace(upper.charAt(idx))) idx++;
+            }
+
+            if (idx >= upper.length() || upper.charAt(idx) != '*') {
+                return current;
+            }
+
+            int afterStar = idx + 1;
+            while (afterStar < upper.length() && Character.isWhitespace(upper.charAt(afterStar))) afterStar++;
+
+            if (afterStar >= upper.length() || !upper.startsWith("FROM", afterStar)) {
+                return current;
+            }
+
+            int afterFrom = afterStar + 4;
+            while (afterFrom < upper.length() && Character.isWhitespace(upper.charAt(afterFrom))) afterFrom++;
+
+            if (afterFrom >= current.length() || current.charAt(afterFrom) != '(') {
+                return current;
+            }
+
+            int closeParen = findMatchingCloseParen(current, afterFrom);
+            if (closeParen < 0) return current;
+
+            String inner = current.substring(afterFrom + 1, closeParen).trim();
+            current = inner;
+        }
+
+        return current;
+    }
+
+    private int findLastTopLevelAs(String item) {
+        String upper = item.toUpperCase();
+        int depth = 0;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        int lastAsPos = -1;
+
+        for (int i = 0; i < item.length() - 2; i++) {
+            char c = item.charAt(i);
+            if (c == '\'' && !inDoubleQuote) { inSingleQuote = !inSingleQuote; continue; }
+            if (c == '"' && !inSingleQuote) { inDoubleQuote = !inDoubleQuote; continue; }
+            if (!inSingleQuote && !inDoubleQuote) {
+                if (c == '(') depth++;
+                else if (c == ')') depth--;
+                else if (depth == 0 && upper.startsWith("AS ", i)
+                         && (i == 0 || !Character.isLetterOrDigit(item.charAt(i - 1)))) {
+                    lastAsPos = i;
+                }
+            }
+        }
+        return lastAsPos;
+    }
+
+    /**
+     * Fixes DECIMAL-to-DOUBLE type mismatches at the SQL level.
+     *
+     * <p>When PySpark uses F.lit(100.00) or divides by 7.0, the logical schema expects
+     * DOUBLE because Spark's type coercion says DOUBLE op DECIMAL -> DOUBLE. But DuckDB
+     * treats numeric literals like 100.0 as DECIMAL, so the SQL result is DECIMAL.
+     *
+     * <p>This method detects such mismatches by comparing the logical schema against what
+     * DuckDB would return, and wraps the affected SELECT expressions with CAST(... AS DOUBLE).
+     * This moves the conversion into DuckDB's SQL engine where it's efficient, instead of
+     * doing row-by-row Arrow vector conversion in Java.
+     *
+     * @param sql the SQL query (after preprocessing)
+     * @param logicalSchema the logical plan schema with expected types
+     * @param sessionId the session ID for DuckDB schema inference
+     * @return modified SQL with DOUBLE casts where needed, or original SQL if no changes needed
+     */
+    private String fixDecimalToDoubleCasts(String sql, StructType logicalSchema, String sessionId) {
+        try {
+            // Infer what DuckDB would actually return
+            StructType duckDBSchema = inferSchemaFromDuckDB(sql, sessionId);
+            if (duckDBSchema == null || duckDBSchema.size() == 0) return sql;
+            if (logicalSchema.size() != duckDBSchema.size()) return sql;
+
+            // Find columns where logical schema says DOUBLE but DuckDB returns DECIMAL
+            java.util.List<Integer> doubleCastColumns = new java.util.ArrayList<>();
+            for (int i = 0; i < logicalSchema.size(); i++) {
+                StructField logicalField = logicalSchema.fields().get(i);
+                StructField duckField = duckDBSchema.fields().get(i);
+                if (logicalField.dataType() instanceof com.thunderduck.types.DoubleType
+                    && duckField.dataType() instanceof com.thunderduck.types.DecimalType) {
+                    doubleCastColumns.add(i);
+                    logger.debug("Column {} '{}' needs DECIMAL->DOUBLE SQL cast (logical=DoubleType, DuckDB={})",
+                        i, logicalField.name(), duckField.dataType());
+                }
+            }
+
+            if (doubleCastColumns.isEmpty()) return sql;
+
+            // Apply CAST(... AS DOUBLE) to the affected columns
+            return applyDoubleCastsToSelectItems(sql, doubleCastColumns);
+        } catch (Exception e) {
+            logger.debug("Could not apply DECIMAL->DOUBLE SQL casts: {}", e.getMessage());
+            return sql;
+        }
+    }
+
+    /**
+     * Wraps specific SELECT items with CAST(... AS DOUBLE) based on column indices.
+     * Handles wrapped SELECT * FROM (...) patterns by operating on the inner query.
+     */
+    private String applyDoubleCastsToSelectItems(String sql, java.util.List<Integer> columnIndices) {
+        // Handle SELECT * FROM (...) wrappers
+        String wrapperPrefix = findSelectStarWrapperPrefix(sql);
+        if (wrapperPrefix != null) {
+            String trimmed = sql.trim();
+            int openParen = wrapperPrefix.length() - 1;
+            int closeParen = findMatchingCloseParen(trimmed, openParen);
+            if (closeParen < 0) return sql;
+
+            String inner = trimmed.substring(openParen + 1, closeParen);
+            String suffix = trimmed.substring(closeParen);
+
+            String fixedInner = applyDoubleCastsToSelectItems(inner, columnIndices);
+            if (fixedInner.equals(inner)) return sql;
+            return wrapperPrefix.substring(0, wrapperPrefix.length() - 1) + "(" + fixedInner + suffix;
+        }
+
+        // Find the outermost SELECT list
+        String upperSql = sql.toUpperCase().trim();
+        int selectIdx = findOutermostKeyword(upperSql, "SELECT");
+        if (selectIdx < 0) return sql;
+
+        int fromIdx = findOutermostKeyword(upperSql.substring(selectIdx + 6), "FROM");
+        if (fromIdx < 0) return sql;
+        fromIdx += selectIdx + 6;
+
+        String selectList = sql.substring(selectIdx + 6, fromIdx).trim();
+        String beforeSelect = sql.substring(0, selectIdx + 6);
+        String afterFrom = sql.substring(fromIdx);
+
+        String distinctPrefix = "";
+        if (selectList.toUpperCase().startsWith("DISTINCT")) {
+            distinctPrefix = selectList.substring(0, 8) + " ";
+            selectList = selectList.substring(8).trim();
+        }
+
+        java.util.List<String> selectItems = splitSelectList(selectList);
+
+        boolean modified = false;
+        java.util.List<String> newItems = new java.util.ArrayList<>();
+
+        for (int i = 0; i < selectItems.size(); i++) {
+            if (columnIndices.contains(i)) {
+                String item = selectItems.get(i).trim();
+
+                // Separate expression from alias
+                String expr = item;
+                String aliasSuffix = "";
+                int asPos = findLastTopLevelAs(item);
+                if (asPos >= 0) {
+                    expr = item.substring(0, asPos).trim();
+                    aliasSuffix = " " + item.substring(asPos);
+                }
+
+                String castExpr = "CAST(" + expr + " AS DOUBLE)" + aliasSuffix;
+                newItems.add(castExpr);
+                modified = true;
+                logger.debug("Added DOUBLE cast for column {}: {}", i, item);
+            } else {
+                newItems.add(selectItems.get(i));
+            }
+        }
+
+        if (!modified) return sql;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(beforeSelect).append(" ").append(distinctPrefix);
+        for (int i = 0; i < newItems.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append(newItems.get(i));
+        }
+        sb.append(" ").append(afterFrom);
+
+        return sb.toString();
+    }
+
+    /**
+     * Infers a schema with corrected nullable flags for raw SQL queries.
+     */
+    private StructType inferNullableSchemaFromSQL(String sql, String sessionId) throws Exception {
+        StructType duckDBSchema = inferSchemaFromDuckDB(sql, sessionId);
+        if (duckDBSchema == null || duckDBSchema.size() == 0) {
+            return null;
+        }
+
+        StructType result = fixCountNullable(sql, duckDBSchema);
+        result = fixDecimalPrecisionForComplexAggregates(sql, result);
+        return result;
+    }
+
+    /**
+     * Fixes nullable flags for COUNT columns in a schema based on SQL analysis.
+     */
+    private StructType fixCountNullable(String sql, StructType schema) {
+        boolean[] isCountColumn = detectCountColumns(sql, schema.size());
+
+        boolean hasCorrections = false;
+        java.util.List<StructField> fields = new java.util.ArrayList<>();
+        for (int i = 0; i < schema.size(); i++) {
+            StructField field = schema.fields().get(i);
+            if (isCountColumn[i] && field.nullable()) {
+                fields.add(new StructField(field.name(), field.dataType(), false));
+                hasCorrections = true;
+            } else {
+                fields.add(field);
+            }
+        }
+
+        return hasCorrections ? new StructType(fields) : schema;
+    }
+
+    private boolean[] detectCountColumns(String sql, int columnCount) {
+        boolean[] result = new boolean[columnCount];
+
+        try {
+            java.util.Set<String> countAliases = collectCountAliases(sql);
+
+            String upperSql = sql.toUpperCase().trim();
+
+            int selectIdx = findOutermostKeyword(upperSql, "SELECT");
+            if (selectIdx < 0) return result;
+
+            int fromIdx = findOutermostKeyword(upperSql.substring(selectIdx + 6), "FROM");
+            if (fromIdx < 0) return result;
+            fromIdx += selectIdx + 6;
+
+            String selectList = sql.substring(selectIdx + 6, fromIdx).trim();
+
+            if (selectList.toUpperCase().startsWith("DISTINCT")) {
+                selectList = selectList.substring(8).trim();
+            }
+
+            java.util.List<String> selectItems = splitSelectList(selectList);
+
+            for (int i = 0; i < Math.min(selectItems.size(), columnCount); i++) {
+                String item = selectItems.get(i).trim();
+                String itemUpper = item.toUpperCase();
+
+                if (itemUpper.matches(".*\\bCOUNT\\s*\\(.*")) {
+                    result[i] = true;
+                    continue;
+                }
+
+                String colName = extractColumnName(item);
+                if (colName != null && countAliases.contains(colName.toUpperCase())) {
+                    result[i] = true;
+                }
+            }
+        } catch (Exception e) {
+            logger.debug("Could not detect COUNT columns in SQL: {}", e.getMessage());
+        }
+
+        return result;
+    }
+
+    private java.util.Set<String> collectCountAliases(String sql) {
+        java.util.Set<String> aliases = new java.util.HashSet<>();
+
+        java.util.regex.Pattern countAsPattern = java.util.regex.Pattern.compile(
+            "(?i)\\bcount\\s*\\([^)]*\\)\\s+(?:as\\s+)?([\"']?\\w+[\"']?)");
+        java.util.regex.Matcher matcher = countAsPattern.matcher(sql);
+        while (matcher.find()) {
+            String alias = matcher.group(1).replaceAll("[\"']", "").trim();
+            if (!alias.equalsIgnoreCase("FROM") && !alias.equalsIgnoreCase("WHERE") &&
+                !alias.equalsIgnoreCase("GROUP") && !alias.equalsIgnoreCase("ORDER") &&
+                !alias.equalsIgnoreCase("HAVING") && !alias.equalsIgnoreCase("LIMIT") &&
+                !alias.equalsIgnoreCase("AND") && !alias.equalsIgnoreCase("OR")) {
+                aliases.add(alias.toUpperCase());
+            }
+        }
+
+        detectRenamedCountColumns(sql, aliases);
+
+        return aliases;
+    }
+
+    private void detectRenamedCountColumns(String sql, java.util.Set<String> aliases) {
+        java.util.regex.Pattern renamePattern = java.util.regex.Pattern.compile(
+            "(?i)\\)\\s+AS\\s+\\w+\\s*\\(([^)]+)\\)");
+        java.util.regex.Matcher renameMatcher = renamePattern.matcher(sql);
+
+        while (renameMatcher.find()) {
+            String columnList = renameMatcher.group(1).trim();
+            String[] columns = columnList.split("\\s*,\\s*");
+
+            int subqueryEnd = renameMatcher.start();
+
+            int subqueryStart = findMatchingOpenParen(sql, subqueryEnd);
+            if (subqueryStart < 0) continue;
+
+            String subquery = sql.substring(subqueryStart + 1, subqueryEnd);
+
+            String subqueryUpper = subquery.toUpperCase().trim();
+            int selectIdx = findOutermostKeyword(subqueryUpper, "SELECT");
+            if (selectIdx < 0) continue;
+
+            int fromIdx = findOutermostKeyword(subqueryUpper.substring(selectIdx + 6), "FROM");
+            if (fromIdx < 0) continue;
+            fromIdx += selectIdx + 6;
+
+            String selectList = subquery.substring(selectIdx + 6, fromIdx).trim();
+            java.util.List<String> selectItems = splitSelectList(selectList);
+
+            for (int i = 0; i < Math.min(selectItems.size(), columns.length); i++) {
+                String item = selectItems.get(i).trim().toUpperCase();
+                if (item.matches(".*\\bCOUNT\\s*\\(.*")) {
+                    String renamedCol = columns[i].trim().replaceAll("[\"']", "");
+                    aliases.add(renamedCol.toUpperCase());
+                }
+            }
+        }
+    }
+
+    private int findMatchingOpenParen(String sql, int closeParenPos) {
+        int depth = 0;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+
+        for (int i = closeParenPos; i >= 0; i--) {
+            char c = sql.charAt(i);
+
+            if (c == '\'' && !inDoubleQuote) {
+                inSingleQuote = !inSingleQuote;
+            } else if (c == '"' && !inSingleQuote) {
+                inDoubleQuote = !inDoubleQuote;
+            } else if (!inSingleQuote && !inDoubleQuote) {
+                if (c == ')') depth++;
+                else if (c == '(') {
+                    depth--;
+                    if (depth == 0) return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private int findMatchingCloseParen(String sql, int openParenPos) {
+        int depth = 1;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+
+        for (int i = openParenPos + 1; i < sql.length(); i++) {
+            char c = sql.charAt(i);
+
+            if (c == '\'' && !inDoubleQuote) {
+                inSingleQuote = !inSingleQuote;
+            } else if (c == '"' && !inSingleQuote) {
+                inDoubleQuote = !inDoubleQuote;
+            } else if (!inSingleQuote && !inDoubleQuote) {
+                if (c == '(') depth++;
+                else if (c == ')') {
+                    depth--;
+                    if (depth == 0) return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private String extractColumnName(String selectItem) {
+        String item = selectItem.trim();
+
+        if (item.matches("(?i)[a-z_][a-z0-9_]*")) {
+            return item;
+        }
+
+        return null;
+    }
+
+    private int findOutermostKeyword(String sql, String keyword) {
+        int depth = 0;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        String upperSql = sql.toUpperCase();
+
+        for (int i = 0; i <= upperSql.length() - keyword.length(); i++) {
+            char c = sql.charAt(i);
+
+            if (c == '\'' && !inDoubleQuote) {
+                inSingleQuote = !inSingleQuote;
+                continue;
+            }
+            if (c == '"' && !inSingleQuote) {
+                inDoubleQuote = !inDoubleQuote;
+                continue;
+            }
+
+            if (!inSingleQuote && !inDoubleQuote) {
+                if (c == '(') depth++;
+                else if (c == ')') depth--;
+                else if (depth == 0 && upperSql.startsWith(keyword, i)) {
+                    if (i > 0) {
+                        char prev = sql.charAt(i - 1);
+                        if (Character.isLetterOrDigit(prev) || prev == '_') continue;
+                    }
+                    int end = i + keyword.length();
+                    if (end < sql.length()) {
+                        char next = sql.charAt(end);
+                        if (Character.isLetterOrDigit(next) || next == '_') continue;
+                    }
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private java.util.List<String> splitSelectList(String selectList) {
+        java.util.List<String> items = new java.util.ArrayList<>();
+        int depth = 0;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        int start = 0;
+
+        for (int i = 0; i < selectList.length(); i++) {
+            char c = selectList.charAt(i);
+
+            if (c == '\'' && !inDoubleQuote) {
+                inSingleQuote = !inSingleQuote;
+            } else if (c == '"' && !inSingleQuote) {
+                inDoubleQuote = !inDoubleQuote;
+            } else if (!inSingleQuote && !inDoubleQuote) {
+                if (c == '(') depth++;
+                else if (c == ')') depth--;
+                else if (c == ',' && depth == 0) {
+                    items.add(selectList.substring(start, i));
+                    start = i + 1;
+                }
+            }
+        }
+        items.add(selectList.substring(start));
+
+        return items;
     }
 
     /**

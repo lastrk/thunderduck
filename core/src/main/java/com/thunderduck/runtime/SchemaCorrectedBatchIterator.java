@@ -2,12 +2,14 @@ package com.thunderduck.runtime;
 
 import com.thunderduck.types.ArrayType;
 import com.thunderduck.types.DataType;
+import com.thunderduck.types.DoubleType;
 import com.thunderduck.types.MapType;
 import com.thunderduck.types.StructField;
 import com.thunderduck.types.StructType;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.FieldType;
@@ -130,12 +132,27 @@ public class SchemaCorrectedBatchIterator implements ArrowBatchIterator {
                 logicalType = field.dataType();
             }
 
+            // Normalize column names: spark_sum -> sum, spark_avg -> avg
+            // This ensures columns named by extension functions match Spark's naming conventions
+            String normalizedName = normalizeAggregateColumnName(duckField.getName());
+            Field nameFixedField = normalizedName.equals(duckField.getName())
+                ? duckField
+                : new Field(normalizedName, duckField.getFieldType(), duckField.getChildren());
+
             // Correct the field including children for complex types
-            Field correctedField = correctField(duckField, nullable, logicalType);
+            Field correctedField = correctField(nameFixedField, nullable, logicalType);
             correctedFields.add(correctedField);
         }
 
         return new Schema(correctedFields, duckdbSchema.getCustomMetadata());
+    }
+
+    /**
+     * Normalizes column names that contain extension function names back to standard SQL names.
+     */
+    private String normalizeAggregateColumnName(String name) {
+        if (name == null) return name;
+        return name.replace("spark_sum(", "sum(").replace("spark_avg(", "avg(");
     }
 
     /**
@@ -209,10 +226,32 @@ public class SchemaCorrectedBatchIterator implements ArrowBatchIterator {
             correctedChildren = originalChildren;
         }
 
-        // Keep DuckDB's Arrow type — only correct the nullable flag
+        // Correct nullable flag and potentially type conversions
+        ArrowType correctedType = arrowField.getType();
+
+        // When logical schema specifies a different Decimal precision, use it
+        // This handles cases where DuckDB's intermediate expression precision differs from Spark's
+        // (e.g., spark_sum of multiplication: DuckDB DECIMAL(28,4) vs Spark DECIMAL(38,4))
+        // Both use Decimal128 (16 bytes), so changing precision is metadata-only
+        if (logicalType instanceof com.thunderduck.types.DecimalType
+            && arrowField.getType() instanceof ArrowType.Decimal) {
+            com.thunderduck.types.DecimalType logicalDecimal = (com.thunderduck.types.DecimalType) logicalType;
+            ArrowType.Decimal arrowDecimal = (ArrowType.Decimal) arrowField.getType();
+
+            // Only promote precision upward (never narrow) and only when scale matches
+            if (logicalDecimal.precision() > arrowDecimal.getPrecision()
+                && logicalDecimal.scale() == arrowDecimal.getScale()) {
+                correctedType = new ArrowType.Decimal(
+                    logicalDecimal.precision(),
+                    logicalDecimal.scale(),
+                    arrowDecimal.getBitWidth()
+                );
+            }
+        }
+
         FieldType fieldType = new FieldType(
             nullable,
-            arrowField.getType(),
+            correctedType,
             arrowField.getDictionary(),
             arrowField.getMetadata()
         );
