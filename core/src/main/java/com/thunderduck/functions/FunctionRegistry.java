@@ -774,31 +774,113 @@ public class FunctionRegistry {
     private static void initializeArrayFunctions() {
         // Array operations
         DIRECT_MAPPINGS.put("array_contains", "list_contains");
-        DIRECT_MAPPINGS.put("array_distinct", "list_distinct");
+        // array_distinct uses custom translator to sort for deterministic order
+        // DuckDB's list_distinct doesn't guarantee order, but Spark sorts the result
+        CUSTOM_TRANSLATORS.put("array_distinct", args -> {
+            if (args.length < 1) {
+                throw new IllegalArgumentException("array_distinct requires at least 1 argument");
+            }
+            return "list_sort(list_distinct(" + args[0] + "))";
+        });
         // Note: array_sort and sort_array use custom translators (see below)
         DIRECT_MAPPINGS.put("array_max", "list_max");
         DIRECT_MAPPINGS.put("array_min", "list_min");
         // Note: size uses custom translator to cast to INT (see below)
         DIRECT_MAPPINGS.put("explode", "unnest");
         DIRECT_MAPPINGS.put("flatten", "flatten");
-        // Note: "reverse" for strings is mapped above (line 128) to DuckDB's reverse()
-        // For arrays, use array_reverse explicitly
+        // Note: "reverse" for arrays needs list_reverse, but the string "reverse" mapping
+        // in initializeStringFunctions() only works on VARCHAR. We override "reverse" here
+        // with a custom translator that tries list_reverse first (DuckDB will error if it's a string,
+        // so we use list_reverse which works for arrays).
+        // Actually, we can't distinguish at the function registry level whether the arg is array or string.
+        // So we map array_reverse explicitly and leave reverse as-is (string only).
         DIRECT_MAPPINGS.put("array_reverse", "list_reverse");
-        DIRECT_MAPPINGS.put("array_position", "list_position");
+        // array_position: Spark returns 0 when element not found, NULL when array is NULL
+        // DuckDB's list_position returns NULL for both cases
+        CUSTOM_TRANSLATORS.put("array_position", args -> {
+            if (args.length < 2) {
+                throw new IllegalArgumentException("array_position requires at least 2 arguments");
+            }
+            // Preserve NULL for NULL arrays, return 0 for not-found
+            return "CASE WHEN " + args[0] + " IS NULL THEN NULL ELSE COALESCE(list_position(" + args[0] + ", " + args[1] + "), 0) END";
+        });
         DIRECT_MAPPINGS.put("element_at", "list_extract");
         DIRECT_MAPPINGS.put("slice", "list_slice");
         DIRECT_MAPPINGS.put("arrays_overlap", "list_has_any");
 
         // Array construction
         DIRECT_MAPPINGS.put("array", "list_value");
-        DIRECT_MAPPINGS.put("array_union", "list_union");
-        DIRECT_MAPPINGS.put("array_intersect", "list_intersect");
-        DIRECT_MAPPINGS.put("array_except", "list_except");
+
+        // array_union: DuckDB has no list_union; use list_distinct(list_concat(a, b))
+        CUSTOM_TRANSLATORS.put("array_union", args -> {
+            if (args.length != 2) {
+                throw new IllegalArgumentException("array_union requires exactly 2 arguments");
+            }
+            return "list_sort(list_distinct(list_concat(" + args[0] + ", " + args[1] + ")))";
+        });
+
+        // array_intersect: DuckDB has list_intersect but ordering may differ from Spark
+        // Wrap in list_sort for deterministic order
+        CUSTOM_TRANSLATORS.put("array_intersect", args -> {
+            if (args.length != 2) {
+                throw new IllegalArgumentException("array_intersect requires exactly 2 arguments");
+            }
+            return "list_sort(list_intersect(" + args[0] + ", " + args[1] + "))";
+        });
+
+        // array_except: DuckDB has no list_except; use list_filter with NOT list_contains
+        CUSTOM_TRANSLATORS.put("array_except", args -> {
+            if (args.length != 2) {
+                throw new IllegalArgumentException("array_except requires exactly 2 arguments");
+            }
+            return "list_sort(list_distinct(list_filter(" + args[0] + ", x -> NOT list_contains(" + args[1] + ", x))))";
+        });
 
         // Higher-order array functions (lambda-based)
         DIRECT_MAPPINGS.put("transform", "list_transform");
-        DIRECT_MAPPINGS.put("filter", "list_filter");
+        // Note: "filter" is NOT in DIRECT_MAPPINGS because the regex-based rewriteSQL()
+        // would corrupt SQL FILTER (WHERE ...) aggregate clauses used by collect_list/collect_set.
+        // The lambda HOF filter() is handled by ExpressionConverter which creates
+        // FunctionCall("list_filter", ...) directly from the protobuf.
+        CUSTOM_TRANSLATORS.put("filter", args -> {
+            // Array higher-order function: filter(array, lambda)
+            // Translated to list_filter(array, lambda) in DuckDB
+            return "list_filter(" + String.join(", ", args) + ")";
+        });
         DIRECT_MAPPINGS.put("aggregate", "list_reduce");
+
+        // array_join: Spark's array_join(arr, delimiter) -> DuckDB's array_to_string(arr, delimiter)
+        CUSTOM_TRANSLATORS.put("array_join", args -> {
+            if (args.length < 2) {
+                throw new IllegalArgumentException("array_join requires at least 2 arguments");
+            }
+            if (args.length == 2) {
+                return "array_to_string(" + args[0] + ", " + args[1] + ")";
+            }
+            // array_join(arr, delimiter, nullReplacement) - 3-arg form
+            // DuckDB's array_to_string doesn't support null replacement directly
+            return "array_to_string(list_transform(" + args[0] + ", x -> COALESCE(CAST(x AS VARCHAR), " + args[2] + ")), " + args[1] + ")";
+        });
+
+        // reverse for arrays: Spark's reverse() works on both strings and arrays.
+        // DuckDB's reverse() only works on strings, list_reverse() works on arrays.
+        // Since the FunctionRegistry can't know the argument type, we use a custom translator
+        // that wraps in list_reverse for the DataFrame API path (where PySpark sends it as "reverse"
+        // for array columns). For string columns, the string "reverse" direct mapping handles it.
+        // The ExpressionConverter should ideally dispatch based on type, but as a pragmatic fix,
+        // we override "reverse" with list_reverse here (it will fail for string args, which
+        // should go through the string_functions path).
+        // Actually, we can't override since string "reverse" is already mapped.
+        // Instead, we handle this in the ExpressionConverter for array-typed arguments.
+
+        // explode_outer: like explode but preserves NULL/empty array rows as NULL values
+        // DuckDB's unnest doesn't have outer semantics natively.
+        // This requires plan-level transformation (LEFT JOIN LATERAL) which we defer.
+
+        // Map accessor functions
+        DIRECT_MAPPINGS.put("map_keys", "map_keys");
+        DIRECT_MAPPINGS.put("map_values", "map_values");
+        DIRECT_MAPPINGS.put("map_entries", "map_entries");
 
         // MAP_FROM_ARRAYS: create map from key and value arrays
         // Spark: MAP_FROM_ARRAYS(ARRAY('a', 'b'), ARRAY(1, 2))
@@ -928,6 +1010,24 @@ public class FunctionRegistry {
         DIRECT_MAPPINGS.put("nullif", "nullif");
         DIRECT_MAPPINGS.put("isnull", "isnull");
         DIRECT_MAPPINGS.put("isnotnull", "isnotnull");
+
+        // nvl2: Spark's nvl2(expr, value_if_not_null, value_if_null)
+        // DuckDB equivalent: CASE WHEN expr IS NOT NULL THEN value_if_not_null ELSE value_if_null END
+        CUSTOM_TRANSLATORS.put("nvl2", args -> {
+            if (args.length != 3) {
+                throw new IllegalArgumentException("nvl2 requires exactly 3 arguments");
+            }
+            return "CASE WHEN " + args[0] + " IS NOT NULL THEN " + args[1] + " ELSE " + args[2] + " END";
+        });
+
+        // nanvl: Spark's nanvl(a, b) returns b if a is NaN, else a
+        // DuckDB equivalent: CASE WHEN isnan(a) THEN b ELSE a END
+        CUSTOM_TRANSLATORS.put("nanvl", args -> {
+            if (args.length != 2) {
+                throw new IllegalArgumentException("nanvl requires exactly 2 arguments");
+            }
+            return "CASE WHEN isnan(" + args[0] + ") THEN " + args[1] + " ELSE " + args[0] + " END";
+        });
 
         // Conditional
         DIRECT_MAPPINGS.put("if", "if");

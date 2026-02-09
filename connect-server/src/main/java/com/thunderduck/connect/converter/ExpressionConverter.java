@@ -296,6 +296,16 @@ public class ExpressionConverter {
             functionName = functionName + "_DISTINCT";
         }
 
+        // Handle polymorphic functions: reverse() works on both strings and arrays in Spark,
+        // but DuckDB requires reverse() for strings and list_reverse() for arrays.
+        // Dispatch based on the first argument's inferred type.
+        if (functionName.equalsIgnoreCase("reverse") && !arguments.isEmpty()) {
+            DataType argType = arguments.get(0).dataType();
+            if (argType instanceof ArrayType) {
+                functionName = "list_reverse";
+            }
+        }
+
         logger.trace("Creating function call: {} with {} arguments", functionName, arguments.size());
         // Infer return type and nullable based on function semantics
         DataType returnType = inferFunctionReturnType(functionName, arguments);
@@ -369,10 +379,20 @@ public class ExpressionConverter {
             return UnresolvedType.functionReturn();
         }
 
+        // Handle polymorphic reverse: returns StringType for string args, ArrayType for array args
+        // The argument type may be UnresolvedType at this point; default to StringType
+        if (lower.equals("reverse")) {
+            if (!args.isEmpty() && args.get(0).dataType() instanceof ArrayType) {
+                return args.get(0).dataType();
+            }
+            // Default: assume string reverse (will be resolved later if needed)
+            return StringType.get();
+        }
+
         // String functions
         if (lower.matches("concat|concat_ws|upper|lower|ucase|lcase|" +
                           "trim|ltrim|rtrim|" +
-                          "lpad|rpad|repeat|reverse|" +
+                          "lpad|rpad|repeat|" +
                           "substring|substr|left|right|" +
                           "replace|translate|regexp_replace|regexp_extract|" +
                           "split|initcap|format_string|printf")) {

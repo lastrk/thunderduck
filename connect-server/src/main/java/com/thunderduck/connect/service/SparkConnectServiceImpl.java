@@ -853,7 +853,10 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         // Spark's cast(x/y as integer) truncates, DuckDB might round
         // Replace cast(expr as integer) with CAST(TRUNC(expr) AS INTEGER)
         // Skip CAST(year(...) AS INTEGER) since those are already correctly typed
-        sql = sql.replaceAll("(?i)cast\\s*\\((?!year\\s*\\()(.*?)\\s+as\\s+integer\\s*\\)",
+        // IMPORTANT: Use [^()]* instead of .*? to prevent crossing parenthesis boundaries
+        // when multiple CAST expressions appear in the same SQL (e.g., VALUES clause).
+        // The old .*? regex would greedily expand across CAST boundaries causing corruption.
+        sql = sql.replaceAll("(?i)cast\\s*\\((?!year\\s*\\()([^()]*)\\s+as\\s+integer\\s*\\)",
                             "CAST(TRUNC($1) AS INTEGER)");
 
         // In strict mode, use Spark-compatible aggregate functions from the DuckDB extension

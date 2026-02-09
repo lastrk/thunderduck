@@ -4,8 +4,11 @@ import com.thunderduck.exception.SQLGenerationException;
 import com.thunderduck.logical.*;
 import com.thunderduck.expression.*;
 import com.thunderduck.runtime.SparkCompatMode;
+import com.thunderduck.types.ArrayType;
+import com.thunderduck.types.DataType;
 import com.thunderduck.types.StructField;
 import com.thunderduck.types.StructType;
+import com.thunderduck.types.TypeInferenceEngine;
 import java.util.*;
 
 import static com.thunderduck.generator.SQLQuoting.*;
@@ -238,12 +241,22 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         List<Expression> projections = plan.projections();
         List<String> aliases = plan.aliases();
 
+        // Get child schema for resolving polymorphic functions
+        StructType childSchema = null;
+        try {
+            childSchema = plan.child().schema();
+        } catch (Exception ignored) {
+            // Schema resolution may fail; proceed without it
+        }
+
         for (int i = 0; i < projections.size(); i++) {
             if (i > 0) {
                 sql.append(", ");
             }
 
             Expression expr = projections.get(i);
+            // Resolve polymorphic functions (e.g., reverse -> list_reverse for arrays)
+            expr = resolvePolymorphicFunctions(expr, childSchema);
             sql.append(expr.toSQL());
 
             // Add alias if provided
@@ -2348,8 +2361,16 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             // Escape single quotes by doubling them
             String escaped = ((String) value).replace("'", "''");
             return "'" + escaped + "'";
-        } else if (value instanceof Number) {
-            return value.toString();
+        } else if (value instanceof Number num) {
+            // Handle special float/double values (NaN, Infinity)
+            if (value instanceof Double d) {
+                if (d.isNaN()) return "'NaN'::DOUBLE";
+                if (d.isInfinite()) return d > 0 ? "'Infinity'::DOUBLE" : "'-Infinity'::DOUBLE";
+            } else if (value instanceof Float f) {
+                if (f.isNaN()) return "'NaN'::FLOAT";
+                if (f.isInfinite()) return f > 0 ? "'Infinity'::FLOAT" : "'-Infinity'::FLOAT";
+            }
+            return num.toString();
         } else if (value instanceof Boolean) {
             return (Boolean) value ? "TRUE" : "FALSE";
         } else if (value instanceof java.time.LocalDate) {
@@ -2557,5 +2578,43 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         }
 
         return "SELECT " + String.join(", ", selectItems);
+    }
+
+    /**
+     * Resolves polymorphic function names based on argument types from the child schema.
+     *
+     * <p>Some Spark functions (like {@code reverse}) work on both strings and arrays,
+     * but DuckDB requires different function names: {@code reverse()} for strings
+     * and {@code list_reverse()} for arrays. This method resolves the correct function
+     * name by checking the argument type against the child schema.
+     *
+     * @param expr the expression to resolve
+     * @param childSchema the child schema for type resolution (may be null)
+     * @return the expression with resolved function names, or the original if no resolution needed
+     */
+    private Expression resolvePolymorphicFunctions(Expression expr, StructType childSchema) {
+        if (childSchema == null || !(expr instanceof FunctionCall fc)) {
+            // Also check AliasExpression wrapping a FunctionCall
+            if (expr instanceof AliasExpression ae) {
+                Expression resolved = resolvePolymorphicFunctions(ae.expression(), childSchema);
+                if (resolved != ae.expression()) {
+                    return new AliasExpression(resolved, ae.alias());
+                }
+            }
+            return expr;
+        }
+
+        String funcName = fc.functionName().toLowerCase();
+
+        // Dispatch reverse -> list_reverse for array arguments
+        if (funcName.equals("reverse") && fc.argumentCount() == 1) {
+            Expression arg = fc.arguments().get(0);
+            DataType argType = TypeInferenceEngine.resolveType(arg, childSchema);
+            if (argType instanceof ArrayType) {
+                return new FunctionCall("list_reverse", fc.arguments(), fc.dataType(), fc.nullable());
+            }
+        }
+
+        return expr;
     }
 }

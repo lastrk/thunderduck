@@ -1,6 +1,7 @@
 package com.thunderduck.expression;
 
 import com.thunderduck.functions.FunctionRegistry;
+import com.thunderduck.types.ArrayType;
 import com.thunderduck.types.DataType;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -120,13 +121,22 @@ public final class FunctionCall implements Expression {
             .map(Expression::toSQL)
             .toArray(String[]::new);
 
+        // Handle polymorphic functions that need type-based dispatch.
+        // Spark's reverse() works on both strings and arrays, but DuckDB requires
+        // reverse() for strings and list_reverse() for arrays.
+        String effectiveName = functionName;
+        if (functionName.equalsIgnoreCase("reverse") && !arguments.isEmpty()
+                && arguments.get(0).dataType() instanceof ArrayType) {
+            effectiveName = "list_reverse";
+        }
+
         // Translate using function registry
         try {
-            return FunctionRegistry.translate(functionName, argStrings);
+            return FunctionRegistry.translate(effectiveName, argStrings);
         } catch (UnsupportedOperationException e) {
             // Fallback to direct function call if not in registry
             String argsSQL = String.join(", ", argStrings);
-            return functionName + "(" + argsSQL + ")";
+            return effectiveName + "(" + argsSQL + ")";
         }
     }
 
