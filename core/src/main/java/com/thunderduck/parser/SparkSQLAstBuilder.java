@@ -528,16 +528,9 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
 
         if (pred.kind.getType() ==
                 org.apache.spark.sql.catalyst.parser.SqlBaseLexer.BETWEEN) {
-            // BETWEEN lower AND upper
             Expression lower = visitValueExpr(pred.lower);
             Expression upper = visitValueExpr(pred.upper);
-            Expression result = new RawSQLExpression(
-                value.toSQL() + " BETWEEN " + lower.toSQL() + " AND " + upper.toSQL());
-            if (negated) {
-                return new RawSQLExpression(
-                    value.toSQL() + " NOT BETWEEN " + lower.toSQL() + " AND " + upper.toSQL());
-            }
-            return result;
+            return new BetweenExpression(value, lower, upper, negated);
         }
 
         if (pred.kind.getType() ==
@@ -567,12 +560,10 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
                 org.apache.spark.sql.catalyst.parser.SqlBaseLexer.LIKE ||
             pred.kind.getType() ==
                 org.apache.spark.sql.catalyst.parser.SqlBaseLexer.ILIKE) {
-            String op = pred.kind.getType() ==
-                org.apache.spark.sql.catalyst.parser.SqlBaseLexer.ILIKE ? "ILIKE" : "LIKE";
+            boolean ilike = pred.kind.getType() ==
+                org.apache.spark.sql.catalyst.parser.SqlBaseLexer.ILIKE;
             Expression pattern = visitValueExpr(pred.pattern);
-            String notStr = negated ? "NOT " : "";
-            return new RawSQLExpression(
-                value.toSQL() + " " + notStr + op + " " + pattern.toSQL());
+            return new LikeExpression(value, pattern, negated, ilike);
         }
 
         if (pred.kind.getType() ==
