@@ -5,6 +5,7 @@ Manages both Apache Spark Connect (reference) and Thunderduck Connect servers
 for differential testing.
 """
 
+import os
 import subprocess
 import time
 import socket
@@ -114,12 +115,15 @@ class DualServerManager:
 
         print(f"Starting Spark Connect server...")
         try:
+            env = os.environ.copy()
+            env['SPARK_PORT'] = str(self.spark_reference_port)
             result = subprocess.run(
                 [str(script_path)],
                 cwd=str(self.workspace_dir),
                 capture_output=True,
                 text=True,
-                timeout=timeout
+                timeout=timeout,
+                env=env
             )
 
             if result.returncode != 0:

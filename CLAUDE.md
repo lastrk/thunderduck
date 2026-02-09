@@ -225,12 +225,31 @@ mvn -f /workspace/pom.xml test -pl tests -Dtest=TypeInferenceEngineTest  # singl
 
 ### Server Management
 
-Ports: Thunderduck = `15002`, Spark Reference = `15003`. Pytest fixtures auto-manage servers.
+Ports: Thunderduck = `15002`, Spark Reference = `15003` (configurable via `THUNDERDUCK_PORT` / `SPARK_PORT` env vars). Pytest fixtures auto-manage servers.
 
 ```bash
 pkill -9 -f java 2>/dev/null          # kill all servers
 pkill -9 -f thunderduck-connect-server # kill Thunderduck only
 ```
+
+### Parallel Test Runs
+
+Server ports are configurable via `THUNDERDUCK_PORT` and `SPARK_PORT` env vars (defaults: 15002/15003). This allows running multiple differential test suites in parallel on separate port pairs — useful for worktree-based development or testing different branches simultaneously.
+
+```bash
+# Terminal 1 — default ports (15002/15003)
+cd /workspace/tests/integration && \
+  THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true COLLECT_TIMEOUT=30 \
+  python3 -m pytest differential/test_differential_v2.py -v --tb=short
+
+# Terminal 2 — custom ports (15012/15013), different worktree
+cd /workspace2/tests/integration && \
+  THUNDERDUCK_PORT=15012 SPARK_PORT=15013 \
+  THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true COLLECT_TIMEOUT=30 \
+  python3 -m pytest differential/test_differential_v2.py -v --tb=short
+```
+
+**Rules**: Each parallel run needs a unique port pair. Both env vars must be set together to avoid port conflicts. Each worktree needs its own build (`mvn clean package`).
 
 ### Change-and-Test Workflow
 

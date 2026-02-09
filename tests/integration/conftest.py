@@ -508,9 +508,11 @@ def dual_server_manager():
     kill_all_servers()
 
     compat_mode = os.environ.get('THUNDERDUCK_COMPAT_MODE', None)
+    td_port = int(os.environ.get('THUNDERDUCK_PORT', 15002))
+    spark_port = int(os.environ.get('SPARK_PORT', 15003))
     manager = DualServerManager(
-        thunderduck_port=15002,
-        spark_reference_port=15003,
+        thunderduck_port=td_port,
+        spark_reference_port=spark_port,
         compat_mode=compat_mode
     )
 

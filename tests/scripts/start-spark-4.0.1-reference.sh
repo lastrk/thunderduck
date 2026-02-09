@@ -7,7 +7,7 @@ set -e
 
 SPARK_HOME="${SPARK_HOME:-/home/vscode/spark/current}"
 SPARK_VERSION="4.0.1"
-SPARK_PORT=15003
+SPARK_PORT="${SPARK_PORT:-15003}"
 
 # Colors for output
 RED='\033[0;31m'

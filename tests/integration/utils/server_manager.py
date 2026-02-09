@@ -96,7 +96,7 @@ class ServerManager:
         if self.compat_mode:
             java_cmd.append(f"-Dthunderduck.spark.compat.mode={self.compat_mode}")
 
-        java_cmd.extend(["-jar", str(self.server_jar)])
+        java_cmd.extend(["-jar", str(self.server_jar), str(self.port)])
 
         print(f"Starting Spark Connect server on {self.host}:{self.port}...")
         print(f"Command: {' '.join(java_cmd)}")
