@@ -22,7 +22,7 @@ import java.util.Objects;
  *   TableScan("/data/iceberg-table", ICEBERG) → iceberg_scan('/data/iceberg-table')
  * </pre>
  */
-public class TableScan extends LogicalPlan {
+public final class TableScan extends LogicalPlan {
 
     /**
      * Supported table formats.

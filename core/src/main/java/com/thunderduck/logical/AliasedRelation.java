@@ -21,7 +21,7 @@ import java.util.Objects;
  * wrap them in another subquery with a generated alias. This class preserves the
  * user alias so Join.toSQL() can use it directly.
  */
-public class AliasedRelation extends LogicalPlan {
+public final class AliasedRelation extends LogicalPlan {
 
     private final LogicalPlan child;
     private final String alias;

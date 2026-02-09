@@ -22,7 +22,7 @@ import java.util.Objects;
  * (left) UNION (right)       // For all=false (distinct)
  * </pre>
  */
-public class Union extends LogicalPlan {
+public final class Union extends LogicalPlan {
 
     private final LogicalPlan left;
     private final LogicalPlan right;

@@ -17,7 +17,7 @@ import java.util.Objects;
  * <p>SQL generation:
  * <pre>SELECT * FROM (child) LIMIT limit OFFSET offset</pre>
  */
-public class Limit extends LogicalPlan {
+public final class Limit extends LogicalPlan {
 
     private final long limit;
     private final long offset;

@@ -10,7 +10,7 @@ import com.thunderduck.types.StructType;
  * for operations like PIVOT where the schema is known at plan time
  * and needs to preserve nullable information for Spark compatibility.
  */
-public class SQLRelation extends LogicalPlan {
+public final class SQLRelation extends LogicalPlan {
 
     private final String sql;
     private final StructType schema;

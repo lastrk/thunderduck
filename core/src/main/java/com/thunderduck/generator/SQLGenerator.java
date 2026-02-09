@@ -137,51 +137,30 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
     private void visit(LogicalPlan plan) {
         Objects.requireNonNull(plan, "plan must not be null");
 
-        if (plan instanceof Project) {
-            visitProject((Project) plan);
-        } else if (plan instanceof Filter) {
-            visitFilter((Filter) plan);
-        } else if (plan instanceof TableScan) {
-            visitTableScan((TableScan) plan);
-        } else if (plan instanceof Sort) {
-            visitSort((Sort) plan);
-        } else if (plan instanceof Limit) {
-            visitLimit((Limit) plan);
-        } else if (plan instanceof Aggregate) {
-            visitAggregate((Aggregate) plan);
-        } else if (plan instanceof Join) {
-            visitJoin((Join) plan);
-        } else if (plan instanceof Union) {
-            visitUnion((Union) plan);
-        } else if (plan instanceof Intersect) {
-            visitIntersect((Intersect) plan);
-        } else if (plan instanceof Except) {
-            visitExcept((Except) plan);
-        } else if (plan instanceof InMemoryRelation) {
-            visitInMemoryRelation((InMemoryRelation) plan);
-        } else if (plan instanceof LocalRelation) {
-            visitLocalRelation((LocalRelation) plan);
-        } else if (plan instanceof LocalDataRelation) {
-            visitLocalDataRelation((LocalDataRelation) plan);
-        } else if (plan instanceof SQLRelation) {
-            visitSQLRelation((SQLRelation) plan);
-        } else if (plan instanceof AliasedRelation) {
-            visitAliasedRelation((AliasedRelation) plan);
-        } else if (plan instanceof Distinct) {
-            visitDistinct((Distinct) plan);
-        } else if (plan instanceof RangeRelation) {
-            visitRangeRelation((RangeRelation) plan);
-        } else if (plan instanceof Tail) {
-            visitTail((Tail) plan);
-        } else if (plan instanceof Sample) {
-            visitSample((Sample) plan);
-        } else if (plan instanceof WithColumns) {
-            visitWithColumns((WithColumns) plan);
-        } else if (plan instanceof ToDF) {
-            visitToDF((ToDF) plan);
-        } else {
-            throw new UnsupportedOperationException(
-                "SQL generation not implemented for: " + plan.getClass().getSimpleName());
+        switch (plan) {
+            case Project p          -> visitProject(p);
+            case Filter f           -> visitFilter(f);
+            case TableScan t        -> visitTableScan(t);
+            case Sort s             -> visitSort(s);
+            case Limit l            -> visitLimit(l);
+            case Aggregate a        -> visitAggregate(a);
+            case Join j             -> visitJoin(j);
+            case Union u            -> visitUnion(u);
+            case Intersect i        -> visitIntersect(i);
+            case Except e           -> visitExcept(e);
+            case InMemoryRelation m -> visitInMemoryRelation(m);
+            case LocalRelation lr   -> visitLocalRelation(lr);
+            case LocalDataRelation d -> visitLocalDataRelation(d);
+            case SQLRelation sq     -> visitSQLRelation(sq);
+            case AliasedRelation ar -> visitAliasedRelation(ar);
+            case Distinct di        -> visitDistinct(di);
+            case RangeRelation r    -> visitRangeRelation(r);
+            case Tail ta            -> visitTail(ta);
+            case Sample sa          -> visitSample(sa);
+            case WithColumns w      -> visitWithColumns(w);
+            case ToDF td            -> visitToDF(td);
+            case SingleRowRelation sr -> throw new UnsupportedOperationException(
+                "SQL generation not implemented for: SingleRowRelation");
         }
     }
 

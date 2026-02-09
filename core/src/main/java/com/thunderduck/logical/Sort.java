@@ -21,7 +21,7 @@ import java.util.Objects;
  * <p>SQL generation:
  * <pre>SELECT * FROM (child) ORDER BY expr1 ASC, expr2 DESC, ...</pre>
  */
-public class Sort extends LogicalPlan {
+public final class Sort extends LogicalPlan {
 
     private final List<SortOrder> sortOrders;
 

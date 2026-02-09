@@ -16,7 +16,7 @@ import java.util.Objects;
  * <p>SQL generation will produce a SELECT with no rows:
  * <pre>SELECT * FROM (VALUES ()) AS t WHERE FALSE</pre>
  */
-public class LocalRelation extends LogicalPlan {
+public final class LocalRelation extends LogicalPlan {
 
     /**
      * Creates an empty local relation.

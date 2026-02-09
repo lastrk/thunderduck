@@ -29,7 +29,7 @@ import java.util.Collections;
  * @see <a href="https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.sql.SparkSession.range.html">
  *      PySpark SparkSession.range()</a>
  */
-public class RangeRelation extends LogicalPlan {
+public final class RangeRelation extends LogicalPlan {
 
     /** The schema for Range: single column "id" of type BIGINT, non-nullable */
     private static final StructType RANGE_SCHEMA = new StructType(

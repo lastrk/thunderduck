@@ -8,7 +8,7 @@ import java.util.Arrays;
  *
  * <p>Returns rows from the left relation that don't appear in the right relation.
  */
-public class Except extends LogicalPlan {
+public final class Except extends LogicalPlan {
 
     private final LogicalPlan left;
     private final LogicalPlan right;

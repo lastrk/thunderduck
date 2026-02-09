@@ -34,7 +34,7 @@ import java.util.Set;
  *   <li>LEFT_ANTI - Left anti join (returns left rows without matches)</li>
  * </ul>
  */
-public class Join extends LogicalPlan {
+public final class Join extends LogicalPlan {
 
     private final LogicalPlan left;
     private final LogicalPlan right;

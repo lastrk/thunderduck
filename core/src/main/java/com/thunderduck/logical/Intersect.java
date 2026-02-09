@@ -8,7 +8,7 @@ import java.util.Arrays;
  *
  * <p>Returns rows that appear in both left and right relations.
  */
-public class Intersect extends LogicalPlan {
+public final class Intersect extends LogicalPlan {
 
     private final LogicalPlan left;
     private final LogicalPlan right;
