@@ -96,6 +96,7 @@ markers = [
     "slow: Slow running tests",
     "dataframe: DataFrame API tests",
     "sql: SQL tests",
+    "timeout: Per-test timeout in seconds",
 ]
 
 # Timeout settings
