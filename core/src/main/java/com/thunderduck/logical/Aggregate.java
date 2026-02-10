@@ -526,10 +526,12 @@ public final class Aggregate extends LogicalPlan {
             // Also handle "sum_DISTINCT" variant (ExpressionConverter appends _DISTINCT suffix).
             if (isSumFunction(function) && argument != null) {
                 boolean isDistinctSuffix = function.toUpperCase().endsWith("_DISTINCT");
+                // Use lowercase to match Spark's auto-generated column naming convention.
+                // DuckDB is case-insensitive for function names.
                 if (distinct || isDistinctSuffix) {
-                    return "SUM(DISTINCT " + argSQL + ")";
+                    return "sum(DISTINCT " + argSQL + ")";
                 }
-                return "SUM(" + finalArgSQL + ")";
+                return "sum(" + finalArgSQL + ")";
             }
 
             // Translate function name using registry (handles sort_array -> list_sort, etc.)

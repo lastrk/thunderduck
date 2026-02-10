@@ -62,10 +62,15 @@ public final class AliasExpression implements Expression {
     /**
      * Converts this alias expression to its SQL string representation.
      *
+     * <p>The alias is quoted if it contains spaces, special characters, or is a
+     * SQL reserved word, ensuring compatibility with DuckDB's parser. Simple
+     * identifiers are left unquoted for readability.
+     *
      * @return the SQL string
      */
     public String toSQL() {
-        return String.format("%s AS %s", expression.toSQL(), alias);
+        return String.format("%s AS %s", expression.toSQL(),
+            com.thunderduck.generator.SQLQuoting.quoteIdentifierIfNeeded(alias));
     }
 
     @Override
