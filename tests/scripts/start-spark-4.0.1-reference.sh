@@ -8,6 +8,7 @@ set -e
 SPARK_HOME="${SPARK_HOME:-/home/vscode/spark/current}"
 SPARK_VERSION="4.0.1"
 SPARK_PORT="${SPARK_PORT:-15003}"
+SPARK_WAREHOUSE_DIR="${SPARK_WAREHOUSE_DIR:-}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -48,6 +49,13 @@ echo -e "${BLUE}Starting Spark Connect server on port ${SPARK_PORT}...${NC}"
 # Set required JVM options for Apache Arrow (Spark 4.0.x requirement)
 export SPARK_SUBMIT_OPTS="--add-opens=java.base/java.nio=ALL-UNNAMED"
 
+# Build warehouse dir argument if provided
+WAREHOUSE_CONF=""
+if [ -n "$SPARK_WAREHOUSE_DIR" ]; then
+    echo -e "${BLUE}Using custom warehouse dir: ${SPARK_WAREHOUSE_DIR}${NC}"
+    WAREHOUSE_CONF="--conf spark.sql.warehouse.dir=${SPARK_WAREHOUSE_DIR}"
+fi
+
 # Start Spark Connect server (no pipe to avoid subprocess issues)
 "$SPARK_HOME/sbin/start-connect-server.sh" \
     --master "local[*]" \
@@ -60,6 +68,7 @@ export SPARK_SUBMIT_OPTS="--add-opens=java.base/java.nio=ALL-UNNAMED"
     --conf spark.sql.autoBroadcastJoinThreshold=-1 \
     --conf spark.ui.enabled=true \
     --conf spark.ui.port=4041 \
+    ${WAREHOUSE_CONF} \
     > "${SPARK_LOG_DIR}/start.log" 2>&1
 
 # Wait for server to start

@@ -6,7 +6,9 @@ for differential testing.
 """
 
 import os
+import shutil
 import subprocess
+import tempfile
 import time
 import socket
 from pathlib import Path
@@ -46,6 +48,11 @@ class DualServerManager:
         # Spark Connect container name
         self.spark_container_name = "spark-connect-reference"
         self.spark_container_running = False
+
+        # Create a unique temporary warehouse directory for this session.
+        # This prevents LOCATION_ALREADY_EXISTS errors when a stale
+        # spark-warehouse/ directory exists from a previous test run.
+        self._spark_warehouse_dir = tempfile.mkdtemp(prefix="spark-warehouse-")
 
     def is_spark_process_running(self) -> bool:
         """Check if Spark Connect process is running"""
@@ -106,9 +113,11 @@ class DualServerManager:
             raise FileNotFoundError(f"Spark Connect start script not found: {script_path}")
 
         print(f"Starting Spark Connect server...")
+        print(f"  Warehouse dir: {self._spark_warehouse_dir}")
         try:
             env = os.environ.copy()
             env['SPARK_PORT'] = str(self.spark_reference_port)
+            env['SPARK_WAREHOUSE_DIR'] = self._spark_warehouse_dir
             result = subprocess.run(
                 [str(script_path)],
                 cwd=str(self.workspace_dir),
@@ -223,13 +232,21 @@ class DualServerManager:
         return spark_ok, thunderduck_ok
 
     def stop_both(self):
-        """Stop both servers"""
+        """Stop both servers and clean up temporary resources"""
         print("\n" + "=" * 80)
         print("Stopping Both Servers")
         print("=" * 80)
 
         self.stop_thunderduck()
         self.stop_spark_reference()
+
+        # Clean up temporary warehouse directory
+        if self._spark_warehouse_dir and os.path.exists(self._spark_warehouse_dir):
+            try:
+                shutil.rmtree(self._spark_warehouse_dir)
+                print(f"  Cleaned up warehouse dir: {self._spark_warehouse_dir}")
+            except Exception as e:
+                print(f"  Warning: Could not clean up warehouse dir: {e}")
 
         print("✓ Both servers stopped")
 

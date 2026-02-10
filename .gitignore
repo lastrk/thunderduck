@@ -20,6 +20,9 @@ playground/__marimo__/
 # DuckDB session files
 thunderduck_sessions/
 
+# Spark warehouse directory (created by Spark reference server for managed tables)
+spark-warehouse/
+
 # logs
 logs/*
 **/*.log
