@@ -2780,10 +2780,18 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * @return SQL representation with CAST wrapper for numeric types
      */
     private String formatTypedSQLValue(Object value, org.apache.arrow.vector.types.pojo.ArrowType type) {
-        String formatted = formatSQLValue(value);
         if (value == null) {
-            return formatted; // NULL doesn't need CAST
+            return "NULL"; // NULL doesn't need CAST
         }
+
+        // Handle Map type: Arrow MapVector returns List<JsonStringHashMap> which must
+        // be formatted as MAP(['key1', 'key2'], [val1, val2]) instead of an array literal.
+        if (type.getTypeID() == org.apache.arrow.vector.types.pojo.ArrowType.ArrowTypeID.Map
+                && value instanceof java.util.List<?> entries) {
+            return formatMapFromEntries(entries);
+        }
+
+        String formatted = formatSQLValue(value);
 
         // Only wrap numeric types that DuckDB might infer incorrectly
         switch (type.getTypeID()) {
@@ -2795,6 +2803,46 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             default:
                 return formatted; // Other types (String, Date, etc.) are fine as-is
         }
+    }
+
+    /**
+     * Formats a list of map entries (from Arrow MapVector) as a DuckDB MAP literal.
+     *
+     * <p>Arrow MapVector returns each row as a List of JsonStringHashMap entries,
+     * each with "key" and "value" fields. This formats them as MAP([keys], [values]).
+     *
+     * @param entries the list of map entries from Arrow
+     * @return SQL MAP literal
+     */
+    private String formatMapFromEntries(java.util.List<?> entries) {
+        if (entries.isEmpty()) {
+            return "MAP([], [])";
+        }
+
+        StringBuilder keys = new StringBuilder("[");
+        StringBuilder vals = new StringBuilder("[");
+        boolean first = true;
+
+        for (Object entry : entries) {
+            if (!first) {
+                keys.append(", ");
+                vals.append(", ");
+            }
+            first = false;
+
+            if (entry instanceof java.util.Map<?, ?> map) {
+                keys.append(formatSQLValue(map.get("key")));
+                vals.append(formatSQLValue(map.get("value")));
+            } else {
+                // Fallback: shouldn't happen for well-formed Arrow data
+                keys.append("NULL");
+                vals.append("NULL");
+            }
+        }
+
+        keys.append("]");
+        vals.append("]");
+        return "MAP(" + keys + ", " + vals + ")";
     }
 
     /**
