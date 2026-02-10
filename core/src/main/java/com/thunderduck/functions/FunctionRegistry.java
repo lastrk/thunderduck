@@ -825,6 +825,9 @@ public class FunctionRegistry {
             // Preserve NULL for NULL arrays, return 0 for not-found
             return "CASE WHEN " + args[0] + " IS NULL THEN NULL ELSE COALESCE(list_position(" + args[0] + ", " + args[1] + "), 0) END";
         });
+        // element_at: DuckDB's element_at() only works on maps, not arrays.
+        // Use list_extract for arrays (the common case). Map element_at is handled
+        // by type-aware dispatch in FunctionCall.toSQL() when MapType is available.
         DIRECT_MAPPINGS.put("element_at", "list_extract");
         DIRECT_MAPPINGS.put("slice", "list_slice");
         DIRECT_MAPPINGS.put("arrays_overlap", "list_has_any");
@@ -915,7 +918,8 @@ public class FunctionRegistry {
         // Note: exists, forall require special handling in ExpressionConverter
         // as they need to wrap list_transform with list_any/list_all
 
-        // size() returns INT in Spark but DuckDB len() returns BIGINT - need CAST
+        // size() returns INT in Spark. DuckDB len() works on arrays,
+        // cardinality() works on maps. Type-based dispatch happens in FunctionCall.toSQL().
         CUSTOM_TRANSLATORS.put("size", args -> {
             if (args.length < 1) {
                 throw new IllegalArgumentException("size requires at least 1 argument");

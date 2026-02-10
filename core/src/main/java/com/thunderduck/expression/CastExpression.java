@@ -1,9 +1,12 @@
 package com.thunderduck.expression;
 
+import com.thunderduck.types.ArrayType;
 import com.thunderduck.types.DataType;
 import com.thunderduck.types.DecimalType;
 import com.thunderduck.types.DoubleType;
 import com.thunderduck.types.FloatType;
+import com.thunderduck.types.MapType;
+import com.thunderduck.types.TypeMapper;
 import java.util.Objects;
 import java.util.Set;
 
@@ -80,16 +83,37 @@ public final class CastExpression implements Expression {
      */
     public String toSQL() {
         String innerSQL = expression.toSQL();
-        String targetName = targetType.typeName().toUpperCase();
+        // Use DuckDB type syntax for complex types (ArrayType, MapType)
+        // e.g., ARRAY<INT> -> INTEGER[], MAP<STRING,INT> -> MAP(VARCHAR, INTEGER)
+        String duckdbType = resolveDuckDBTypeName(targetType);
+        String targetName = duckdbType.toUpperCase();
 
         if (targetName.equals("INTEGER") || targetName.equals("INT")) {
             if (!needsTrunc(expression)) {
-                return String.format("CAST(%s AS %s)", innerSQL, targetType.typeName());
+                return String.format("CAST(%s AS %s)", innerSQL, duckdbType);
             }
-            return String.format("CAST(TRUNC(%s) AS %s)", innerSQL, targetType.typeName());
+            return String.format("CAST(TRUNC(%s) AS %s)", innerSQL, duckdbType);
         }
 
-        return String.format("CAST(%s AS %s)", innerSQL, targetType.typeName());
+        return String.format("CAST(%s AS %s)", innerSQL, duckdbType);
+    }
+
+    /**
+     * Resolves the DuckDB type name for a target type.
+     * Uses TypeMapper for complex types (ArrayType, MapType) to get proper
+     * DuckDB syntax (e.g., INTEGER[] instead of array&lt;integer&gt;).
+     * Falls back to typeName() for primitive types.
+     */
+    private static String resolveDuckDBTypeName(DataType type) {
+        if (type instanceof ArrayType || type instanceof MapType) {
+            try {
+                return TypeMapper.toDuckDBType(type);
+            } catch (Exception e) {
+                // Fallback to typeName if mapping fails
+                return type.typeName();
+            }
+        }
+        return type.typeName();
     }
 
     /**

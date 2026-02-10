@@ -1336,6 +1336,12 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
         aggSQL = wrapWithTypeCastIfNeeded(aggSQL, aggExpr, childSchema);
 
+        // In relaxed mode, DuckDB's SUM returns HUGEINT for BIGINT inputs,
+        // which means it never overflows (Spark's SUM returns BIGINT and throws
+        // ArithmeticException on overflow). Wrap SUM(BIGINT) with CAST(... AS BIGINT)
+        // to match Spark's overflow behavior.
+        aggSQL = wrapSumWithBigintCastIfNeeded(aggSQL, aggExpr, childSchema);
+
         if (aggExpr.alias() != null && !aggExpr.alias().isEmpty()) {
             aggSQL += " AS " + SQLQuoting.quoteIdentifier(aggExpr.alias());
         } else if (aggExpr.isUnaliasedCountStar()) {
@@ -1462,6 +1468,47 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             return "CAST(" + aggSQL + " AS DECIMAL(" + decType.precision() + ", " + decType.scale() + "))";
         }
 
+        return aggSQL;
+    }
+
+    /**
+     * Wraps SUM(BIGINT) with CAST(... AS BIGINT) in relaxed mode to match Spark's
+     * overflow behavior. DuckDB's SUM promotes BIGINT to HUGEINT (no overflow),
+     * but Spark's SUM(BIGINT) returns BIGINT and throws on overflow.
+     *
+     * <p>Only applies to simple (non-composite) SUM aggregates where the input
+     * argument resolves to LongType (BIGINT) or IntegerType.
+     */
+    private String wrapSumWithBigintCastIfNeeded(String aggSQL, Aggregate.AggregateExpression aggExpr,
+                                                  com.thunderduck.types.StructType childSchema) {
+        // Only for non-composite SUM in relaxed mode
+        if (aggExpr.isComposite() || aggExpr.function() == null || childSchema == null) {
+            return aggSQL;
+        }
+        // In strict mode, spark_sum already handles this
+        if (com.thunderduck.runtime.SparkCompatMode.isStrictMode()) {
+            return aggSQL;
+        }
+
+        String funcName = aggExpr.function().toUpperCase();
+        if (funcName.endsWith("_DISTINCT")) {
+            funcName = funcName.substring(0, funcName.length() - "_DISTINCT".length());
+        }
+        if (!funcName.equals("SUM")) {
+            return aggSQL;
+        }
+
+        // Resolve the input argument type
+        if (aggExpr.argument() != null) {
+            com.thunderduck.types.DataType argType =
+                com.thunderduck.types.TypeInferenceEngine.resolveType(aggExpr.argument(), childSchema);
+            if (argType instanceof com.thunderduck.types.LongType
+                    || argType instanceof com.thunderduck.types.IntegerType
+                    || argType instanceof com.thunderduck.types.ShortType
+                    || argType instanceof com.thunderduck.types.ByteType) {
+                return "CAST(" + aggSQL + " AS BIGINT)";
+            }
+        }
         return aggSQL;
     }
 
@@ -2676,12 +2723,27 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             // Timestamp without timezone in seconds
             long secs = v.get(index);
             return java.time.Instant.ofEpochSecond(secs);
+        } else if (vector instanceof org.apache.arrow.vector.complex.MapVector mapVector) {
+            // IMPORTANT: MapVector extends ListVector, so this check MUST come before
+            // the ListVector check. MapVector.getObject() returns List<JsonStringHashMap>
+            // where each entry has "key" and "value" fields. Convert to a proper
+            // java.util.Map so formatSQLValue produces MAP([k1,k2], [v1,v2]) syntax
+            // instead of [{...}, ...] array-of-struct syntax (which DuckDB interprets
+            // as MAP(K,V)[] rather than MAP(K,V)).
+            Object raw = mapVector.getObject(index);
+            if (raw instanceof java.util.List<?> entries) {
+                java.util.LinkedHashMap<Object, Object> result = new java.util.LinkedHashMap<>();
+                for (Object entry : entries) {
+                    if (entry instanceof java.util.Map<?, ?> entryMap) {
+                        result.put(entryMap.get("key"), entryMap.get("value"));
+                    }
+                }
+                return result;
+            }
+            return raw;
         } else if (vector instanceof org.apache.arrow.vector.complex.ListVector listVector) {
             // Handle array/list types - return as List to preserve structure
             return listVector.getObject(index);  // Returns java.util.List
-        } else if (vector instanceof org.apache.arrow.vector.complex.MapVector mapVector) {
-            // Handle map types - return as List of Map.Entry-like structures
-            return mapVector.getObject(index);  // Returns List of structs (key, value)
         }
 
         // Fallback: try to get object representation
