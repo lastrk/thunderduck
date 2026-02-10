@@ -146,7 +146,7 @@ public final class Project extends LogicalPlan {
             } else if (expr instanceof com.thunderduck.expression.UnresolvedColumn uc) {
                 fieldName = uc.columnName();
             } else {
-                fieldName = expr.toSQL();
+                fieldName = buildSparkColumnName(expr);
             }
 
             // Resolve data type and nullable from child schema
@@ -156,6 +156,100 @@ public final class Project extends LogicalPlan {
             fields.add(new StructField(fieldName, resolvedType, resolvedNullable));
         }
         return new StructType(fields);
+    }
+
+    /**
+     * Builds Spark-compatible column names for unaliased expressions.
+     *
+     * <p>Handles special cases:
+     * <ul>
+     *   <li>count(*) -> "count(1)" (Spark convention)</li>
+     *   <li>RawSQLExpression with "AS alias" -> just the alias</li>
+     *   <li>CastExpression -> uppercase DECIMAL in type names</li>
+     *   <li>Default: use expr.toSQL()</li>
+     * </ul>
+     */
+    public static String buildSparkColumnName(Expression expr) {
+        // count(*) → Spark names this "count(1)"
+        if (expr instanceof com.thunderduck.expression.FunctionCall fc
+                && fc.functionName().equalsIgnoreCase("count")) {
+            java.util.List<Expression> args = fc.arguments();
+            if (args.isEmpty()) {
+                return "count(1)";
+            }
+            if (args.size() == 1) {
+                Expression arg = args.get(0);
+                // count(*) with StarExpression argument
+                if (arg instanceof com.thunderduck.expression.StarExpression) {
+                    return "count(1)";
+                }
+                // count(*) with Literal("*") argument
+                if (arg instanceof com.thunderduck.expression.Literal lit
+                        && "*".equals(lit.value())) {
+                    return "count(1)";
+                }
+            }
+        }
+
+        // RawSQLExpression: detect embedded "AS alias" and extract just the alias.
+        // selectExpr("split(name, ' ') as name_parts") should produce column name "name_parts".
+        if (expr instanceof com.thunderduck.expression.RawSQLExpression) {
+            String sql = expr.toSQL();
+            String extracted = extractTrailingAlias(sql);
+            if (extracted != null) {
+                return extracted;
+            }
+            return sql;
+        }
+
+        // For other expressions, generate SQL and normalize CAST type names to uppercase
+        // to match Spark's convention (e.g., DECIMAL not decimal).
+        String sql = expr.toSQL();
+        return normalizeTypeCaseInColumnName(sql);
+    }
+
+    /**
+     * Extracts a trailing alias from a SQL expression string.
+     * Matches patterns like "expr AS alias" or "expr as alias" (case-insensitive).
+     * Returns null if no trailing alias is found.
+     */
+    static String extractTrailingAlias(String sql) {
+        // Match " AS identifier" or " as identifier" at the end of the expression.
+        // The alias can be a simple identifier or a backtick/double-quoted identifier.
+        java.util.regex.Matcher m = java.util.regex.Pattern
+            .compile("\\s+[Aa][Ss]\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*$")
+            .matcher(sql);
+        if (m.find()) {
+            return m.group(1);
+        }
+        // Try backtick-quoted alias
+        m = java.util.regex.Pattern
+            .compile("\\s+[Aa][Ss]\\s+`([^`]+)`\\s*$")
+            .matcher(sql);
+        if (m.find()) {
+            return m.group(1);
+        }
+        // Try double-quoted alias
+        m = java.util.regex.Pattern
+            .compile("\\s+[Aa][Ss]\\s+\"([^\"]+)\"\\s*$")
+            .matcher(sql);
+        if (m.find()) {
+            return m.group(1);
+        }
+        return null;
+    }
+
+    /**
+     * Normalizes type names in CAST expressions within column names to uppercase,
+     * matching Spark's convention (e.g., DECIMAL not decimal, INT not int).
+     */
+    static String normalizeTypeCaseInColumnName(String name) {
+        // Replace lowercase type names after "AS " in CAST expressions with uppercase.
+        // Pattern: CAST(... AS typename) — normalize typename to uppercase.
+        return java.util.regex.Pattern
+            .compile("(?i)(CAST\\([^)]*\\bAS\\s+)(decimal|int|integer|bigint|double|float|string|boolean|date|timestamp|tinyint|smallint)((?:\\([^)]*\\))?\\))")
+            .matcher(name)
+            .replaceAll(mr -> mr.group(1) + mr.group(2).toUpperCase() + mr.group(3));
     }
 
     /**

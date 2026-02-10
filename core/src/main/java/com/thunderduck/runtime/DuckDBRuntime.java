@@ -156,10 +156,41 @@ public class DuckDBRuntime implements AutoCloseable {
             // Set NULL ordering to match Spark SQL
             stmt.execute("SET default_null_order='NULLS FIRST'");
 
+            // Register Spark-compatible UDF macros not available natively in DuckDB
+            registerSparkCompatMacros(stmt);
+
             logger.debug("DuckDB configured: memory={}, threads={}, cores={}",
                 hardware.recommendedMemoryLimit(), hardware.recommendedThreadCount(),
                 hardware.cpuCores());
         }
+    }
+
+    /**
+     * Register Spark-compatible SQL macros for functions not available natively in DuckDB.
+     *
+     * <p>These macros provide Spark-equivalent behavior for functions like initcap()
+     * that DuckDB does not have built-in. They are created as OR REPLACE to be idempotent.
+     *
+     * @param stmt the statement to execute DDL on
+     * @throws SQLException if macro creation fails
+     */
+    private void registerSparkCompatMacros(Statement stmt) throws SQLException {
+        // initcap: capitalize first letter of each word (word boundary = whitespace only)
+        // Spark's initcap treats only whitespace as word boundaries (not commas, etc.).
+        // Implementation: iterate character by character; if preceding char is a space
+        // (or position is first), uppercase current char; otherwise lowercase.
+        stmt.execute(
+            "CREATE OR REPLACE MACRO initcap(s) AS " +
+            "CASE WHEN s IS NULL THEN NULL ELSE (" +
+            "SELECT string_agg(" +
+            "CASE " +
+            "WHEN i = 1 OR substring(lower(s), i-1, 1) = ' ' " +
+            "THEN upper(substring(lower(s), i, 1)) " +
+            "ELSE substring(lower(s), i, 1) " +
+            "END, '' ORDER BY i) " +
+            "FROM generate_series(1, length(s)) AS t(i)) END"
+        );
+        logger.debug("Registered Spark-compatible macros (initcap)");
     }
 
     /**

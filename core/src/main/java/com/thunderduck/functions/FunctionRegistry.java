@@ -366,7 +366,25 @@ public class FunctionRegistry {
         DIRECT_MAPPINGS.put("substring", "substring");
         DIRECT_MAPPINGS.put("substr", "substr");
         DIRECT_MAPPINGS.put("length", "length");
-        DIRECT_MAPPINGS.put("concat", "concat");
+        // concat: Spark returns NULL if any arg is NULL; DuckDB skips NULLs.
+        // Use || operator which propagates NULLs correctly.
+        CUSTOM_TRANSLATORS.put("concat", args -> {
+            if (args.length == 0) {
+                return "''";
+            }
+            if (args.length == 1) {
+                return "CAST(" + args[0] + " AS VARCHAR)";
+            }
+            StringBuilder sb = new StringBuilder("(");
+            for (int i = 0; i < args.length; i++) {
+                if (i > 0) {
+                    sb.append(" || ");
+                }
+                sb.append("CAST(").append(args[i]).append(" AS VARCHAR)");
+            }
+            sb.append(")");
+            return sb.toString();
+        });
         DIRECT_MAPPINGS.put("replace", "replace");
         DIRECT_MAPPINGS.put("reverse", "reverse");
         DIRECT_MAPPINGS.put("repeat", "repeat");
@@ -381,12 +399,33 @@ public class FunctionRegistry {
         DIRECT_MAPPINGS.put("rpad", "rpad");
 
         // Splitting and joining
-        DIRECT_MAPPINGS.put("split", "string_split");
+        // split: Spark split(str, pattern, limit) has optional 3rd arg.
+        // DuckDB string_split(str, delim) only takes 2 args.
+        // When limit=-1 (default from PySpark), just drop the 3rd arg.
+        CUSTOM_TRANSLATORS.put("split", args -> {
+            if (args.length < 2) {
+                throw new IllegalArgumentException("split requires at least 2 arguments");
+            }
+            // DuckDB's string_split only takes 2 args - ignore limit parameter
+            return "string_split(" + args[0] + ", " + args[1] + ")";
+        });
         DIRECT_MAPPINGS.put("concat_ws", "concat_ws");
 
         // Regular expressions
         DIRECT_MAPPINGS.put("regexp_extract", "regexp_extract");
-        DIRECT_MAPPINGS.put("regexp_replace", "regexp_replace");
+        // regexp_replace: Spark replaces ALL occurrences by default; DuckDB replaces only the first.
+        // Append 'g' flag for global replacement to match Spark semantics.
+        CUSTOM_TRANSLATORS.put("regexp_replace", args -> {
+            if (args.length < 3) {
+                throw new IllegalArgumentException("regexp_replace requires at least 3 arguments");
+            }
+            // If caller already provides a 4th arg (flags), append 'g' if not present
+            if (args.length >= 4) {
+                return "regexp_replace(" + args[0] + ", " + args[1] + ", " + args[2] + ", " + args[3] + ")";
+            }
+            // Default: add 'g' flag for global replacement
+            return "regexp_replace(" + args[0] + ", " + args[1] + ", " + args[2] + ", 'g')";
+        });
         DIRECT_MAPPINGS.put("regexp_like", "regexp_matches");
 
         // String predicates
@@ -692,7 +731,9 @@ public class FunctionRegistry {
             if (args.length < 1) {
                 throw new IllegalArgumentException("sum requires at least 1 argument");
             }
-            return "SUM(" + args[0] + ")";
+            // Use lowercase to match Spark's auto-generated column naming convention
+            // (e.g., sum(col) not SUM(col)). DuckDB is case-insensitive for function names.
+            return "sum(" + args[0] + ")";
         });
         DIRECT_MAPPINGS.put("avg", "avg");
         DIRECT_MAPPINGS.put("mean", "avg");
@@ -745,6 +786,9 @@ public class FunctionRegistry {
         // Grouping functions (used with ROLLUP/CUBE/GROUPING SETS)
         // DuckDB supports grouping() with identical semantics to Spark
         DIRECT_MAPPINGS.put("grouping", "grouping");
+        // grouping_id uses the same bit ordering in both Spark and DuckDB:
+        // bit (N-1-i) is set for the i-th argument when that column is NOT in the
+        // current grouping key. Direct mapping preserves this convention.
         DIRECT_MAPPINGS.put("grouping_id", "grouping_id");
 
         // DISTINCT aggregate functions - DISTINCT keyword goes inside parentheses
@@ -898,8 +942,15 @@ public class FunctionRegistry {
         // Instead, we handle this in the ExpressionConverter for array-typed arguments.
 
         // explode_outer: like explode but preserves NULL/empty array rows as NULL values
-        // DuckDB's unnest doesn't have outer semantics natively.
-        // This requires plan-level transformation (LEFT JOIN LATERAL) which we defer.
+        // DuckDB's unnest drops NULL array rows. Fix: replace NULL arrays with [NULL]
+        // so unnest produces one row with NULL value.
+        CUSTOM_TRANSLATORS.put("explode_outer", args -> {
+            if (args.length < 1) {
+                throw new IllegalArgumentException("explode_outer requires at least 1 argument");
+            }
+            String arg = args[0];
+            return "unnest(CASE WHEN " + arg + " IS NULL THEN list_value(NULL) ELSE " + arg + " END)";
+        });
 
         // Map accessor functions
         DIRECT_MAPPINGS.put("map_keys", "map_keys");

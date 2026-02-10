@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -155,6 +156,14 @@ public class RelationConverter {
                 return convertSampleBy(relation.getSampleBy());
             case TO_SCHEMA:
                 return convertToSchema(relation.getToSchema());
+            case DESCRIBE:
+                return convertDescribe(relation.getDescribe());
+            case SUMMARY:
+                return convertSummary(relation.getSummary());
+            case COV:
+                return convertCov(relation.getCov());
+            case CORR:
+                return convertCorr(relation.getCorr());
             default:
                 throw new PlanConversionException("Unsupported relation type: " + relation.getRelTypeCase());
         }
@@ -374,6 +383,14 @@ public class RelationConverter {
                             }
                         };
                         logger.debug("Wrapped {} arguments in ROW() for countDistinct", args.size());
+                    } else if (funcLower.equals("grouping_id") || funcLower.equals("grouping")) {
+                        // grouping_id needs all arguments preserved — use composite expression.
+                        // The FunctionRegistry custom translator handles bit-order reversal
+                        // (Spark vs DuckDB use opposite bit ordering for grouping_id).
+                        aggExprs.add(new com.thunderduck.logical.Aggregate.AggregateExpression(
+                            new FunctionCall(functionName, args, func.dataType(), func.nullable(), func.distinct()),
+                            alias));
+                        continue;
                     } else {
                         // For other multi-arg functions, just use the first argument
                         // (may need to handle more cases in the future)
@@ -2307,5 +2324,193 @@ public class RelationConverter {
             logger.warn("Failed to infer schema for parquet {}: {}", path, e.getMessage());
             return null;
         }
+    }
+
+    // ===================== Statistics Relation Converters =====================
+
+    /**
+     * Converts a StatDescribe relation to a SQLRelation.
+     *
+     * <p>Generates UNION ALL SQL for 5 statistics rows: count, mean, stddev, min, max.
+     * Each row has a 'summary' column plus one column per input column.
+     */
+    private LogicalPlan convertDescribe(StatDescribe describe) {
+        LogicalPlan inputPlan = convert(describe.getInput());
+        SQLGenerator generator = new SQLGenerator();
+        String inputSql = generator.generate(inputPlan);
+
+        List<String> cols = new ArrayList<>(describe.getColsList());
+
+        // If no columns specified, infer from schema
+        if (cols.isEmpty()) {
+            StructType inputSchema = inputPlan.schema();
+            if (inputSchema != null) {
+                for (StructField field : inputSchema.fields()) {
+                    cols.add(field.name());
+                }
+            }
+            // Fallback to DuckDB schema inference if plan schema is empty
+            if (cols.isEmpty() && schemaInferrer != null) {
+                StructType dbSchema = schemaInferrer.inferSchema(inputSql);
+                if (dbSchema != null) {
+                    for (StructField field : dbSchema.fields()) {
+                        cols.add(field.name());
+                    }
+                }
+            }
+        }
+
+        if (cols.isEmpty()) {
+            return new SQLRelation("SELECT 'count' AS summary WHERE FALSE");
+        }
+
+        String[] stats = {"count", "mean", "stddev", "min", "max"};
+        StringBuilder unionQuery = new StringBuilder();
+
+        for (int s = 0; s < stats.length; s++) {
+            if (s > 0) unionQuery.append(" UNION ALL ");
+            unionQuery.append("SELECT '").append(stats[s]).append("' AS summary");
+
+            for (String col : cols) {
+                String quotedCol = SQLQuoting.quoteIdentifier(col);
+                String aggExpr = getDescribeStatExpression(stats[s], quotedCol);
+                unionQuery.append(", ").append(aggExpr).append(" AS ").append(quotedCol);
+            }
+
+            unionQuery.append(" FROM (").append(inputSql).append(") AS _stat_input");
+        }
+
+        return new SQLRelation(unionQuery.toString());
+    }
+
+    /**
+     * Converts a StatSummary relation to a SQLRelation.
+     *
+     * <p>Generates UNION ALL SQL for configurable statistics including percentiles.
+     */
+    private LogicalPlan convertSummary(StatSummary summary) {
+        LogicalPlan inputPlan = convert(summary.getInput());
+        SQLGenerator generator = new SQLGenerator();
+        String inputSql = generator.generate(inputPlan);
+
+        List<String> statistics = new ArrayList<>(summary.getStatisticsList());
+        if (statistics.isEmpty()) {
+            statistics = Arrays.asList("count", "mean", "stddev", "min", "25%", "50%", "75%", "max");
+        }
+
+        // Get all columns from input schema
+        List<String> cols = new ArrayList<>();
+        StructType inputSchema = inputPlan.schema();
+        if (inputSchema != null) {
+            for (StructField field : inputSchema.fields()) {
+                cols.add(field.name());
+            }
+        }
+        // Fallback to DuckDB schema inference
+        if (cols.isEmpty() && schemaInferrer != null) {
+            StructType dbSchema = schemaInferrer.inferSchema(inputSql);
+            if (dbSchema != null) {
+                for (StructField field : dbSchema.fields()) {
+                    cols.add(field.name());
+                }
+            }
+        }
+
+        if (cols.isEmpty()) {
+            return new SQLRelation("SELECT 'count' AS summary WHERE FALSE");
+        }
+
+        StringBuilder unionQuery = new StringBuilder();
+
+        for (int s = 0; s < statistics.size(); s++) {
+            String stat = statistics.get(s);
+            if (s > 0) unionQuery.append(" UNION ALL ");
+            unionQuery.append("SELECT '").append(stat).append("' AS summary");
+
+            for (String col : cols) {
+                String quotedCol = SQLQuoting.quoteIdentifier(col);
+                String aggExpr = getSummaryStatExpression(stat, quotedCol);
+                unionQuery.append(", ").append(aggExpr).append(" AS ").append(quotedCol);
+            }
+
+            unionQuery.append(" FROM (").append(inputSql).append(") AS _stat_input");
+        }
+
+        return new SQLRelation(unionQuery.toString());
+    }
+
+    /**
+     * Converts a StatCov relation to a SQLRelation.
+     *
+     * <p>Spark's stat.cov() replaces NULLs with 0.0 before computing covariance
+     * (see StatFunctions.calculateCovImpl in Spark source).
+     */
+    private LogicalPlan convertCov(StatCov cov) {
+        LogicalPlan inputPlan = convert(cov.getInput());
+        SQLGenerator generator = new SQLGenerator();
+        String inputSql = generator.generate(inputPlan);
+
+        String col1 = SQLQuoting.quoteIdentifier(cov.getCol1());
+        String col2 = SQLQuoting.quoteIdentifier(cov.getCol2());
+
+        String sql = String.format(
+            "SELECT COVAR_SAMP(COALESCE(%s, 0.0), COALESCE(%s, 0.0)) AS cov FROM (%s) AS _stat_input",
+            col1, col2, inputSql
+        );
+
+        return new SQLRelation(sql);
+    }
+
+    /**
+     * Converts a StatCorr relation to a SQLRelation.
+     */
+    private LogicalPlan convertCorr(StatCorr corr) {
+        LogicalPlan inputPlan = convert(corr.getInput());
+        SQLGenerator generator = new SQLGenerator();
+        String inputSql = generator.generate(inputPlan);
+
+        String col1 = SQLQuoting.quoteIdentifier(corr.getCol1());
+        String col2 = SQLQuoting.quoteIdentifier(corr.getCol2());
+
+        String sql = String.format(
+            "SELECT CORR(%s, %s) AS corr FROM (%s) AS _stat_input",
+            col1, col2, inputSql
+        );
+
+        return new SQLRelation(sql);
+    }
+
+    /**
+     * Get the SQL expression for a describe statistic.
+     */
+    private String getDescribeStatExpression(String stat, String quotedCol) {
+        return switch (stat) {
+            case "count" -> String.format("CAST(COUNT(%s) AS VARCHAR)", quotedCol);
+            case "mean" -> String.format("CAST(AVG(TRY_CAST(%s AS DOUBLE)) AS VARCHAR)", quotedCol);
+            case "stddev" -> String.format("CAST(STDDEV_SAMP(TRY_CAST(%s AS DOUBLE)) AS VARCHAR)", quotedCol);
+            case "min" -> String.format("CAST(MIN(%s) AS VARCHAR)", quotedCol);
+            case "max" -> String.format("CAST(MAX(%s) AS VARCHAR)", quotedCol);
+            default -> "NULL";
+        };
+    }
+
+    /**
+     * Get the SQL expression for a summary statistic.
+     */
+    private String getSummaryStatExpression(String stat, String quotedCol) {
+        // Check for percentile format (e.g., "25%", "50%", "75%")
+        // Spark's summary() uses nearest-rank method (PERCENTILE_DISC), not linear interpolation
+        if (stat.endsWith("%")) {
+            try {
+                double percentile = Double.parseDouble(stat.substring(0, stat.length() - 1)) / 100.0;
+                return String.format(
+                    "CAST(QUANTILE_DISC(TRY_CAST(%s AS DOUBLE), %f) AS VARCHAR)",
+                    quotedCol, percentile
+                );
+            } catch (NumberFormatException e) {
+                return "NULL";
+            }
+        }
+        return getDescribeStatExpression(stat, quotedCol);
     }
 }

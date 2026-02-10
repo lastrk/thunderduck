@@ -268,6 +268,10 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                 sql.append(" AS ");
                 // Always quote aliases for security and consistency
                 sql.append(SQLQuoting.quoteIdentifier(alias));
+            } else if (alias == null && !(expr instanceof AliasExpression)
+                    && !(expr instanceof com.thunderduck.expression.UnresolvedColumn)
+                    && !(expr instanceof com.thunderduck.expression.StarExpression)) {
+                appendAutoAlias(expr, expr.toSQL());
             }
         }
 
@@ -323,6 +327,10 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             if (alias != null && !alias.isEmpty() && !(expr instanceof AliasExpression)) {
                 sql.append(" AS ");
                 sql.append(SQLQuoting.quoteIdentifier(alias));
+            } else if (alias == null && !(expr instanceof AliasExpression)
+                    && !(expr instanceof com.thunderduck.expression.UnresolvedColumn)
+                    && !(expr instanceof com.thunderduck.expression.StarExpression)) {
+                appendAutoAlias(expr, qualifiedExpr);
             }
         }
 
@@ -362,6 +370,10 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             if (alias != null && !alias.isEmpty() && !(expr instanceof AliasExpression)) {
                 sql.append(" AS ");
                 sql.append(SQLQuoting.quoteIdentifier(alias));
+            } else if (alias == null && !(expr instanceof AliasExpression)
+                    && !(expr instanceof com.thunderduck.expression.UnresolvedColumn)
+                    && !(expr instanceof com.thunderduck.expression.StarExpression)) {
+                appendAutoAlias(expr, qualifiedExpr);
             }
         }
 
@@ -2028,12 +2040,13 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
         if (expr instanceof AliasExpression aliasExpr) {
             String innerSQL = qualifyCondition(aliasExpr.expression(), planIdToAlias);
-            return innerSQL + " AS " + aliasExpr.alias();
+            return innerSQL + " AS " + SQLQuoting.quoteIdentifierIfNeeded(aliasExpr.alias());
         }
 
         if (expr instanceof CastExpression castExpr) {
             String innerSQL = qualifyCondition(castExpr.expression(), planIdToAlias);
-            return "CAST(" + innerSQL + " AS " + castExpr.targetType().typeName() + ")";
+            // Delegate to CastExpression to get proper uppercase type names
+            return "CAST(" + innerSQL + " AS " + CastExpression.uppercaseTypeName(castExpr.targetType()) + ")";
         }
 
         if (expr instanceof FunctionCall funcExpr) {
@@ -2105,6 +2118,33 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * single SELECT statement AND inlining won't shift the aliasCounter (which would
      * break join alias prediction for DataFrame paths).
      */
+    /**
+     * Appends an AS alias to the SQL buffer when the Spark-convention column name
+     * differs from the DuckDB expression text. This ensures that DuckDB returns
+     * column names matching Spark's auto-generated naming convention.
+     *
+     * <p>Examples:
+     * <ul>
+     *   <li>count(*) needs AS "count(1)" — DuckDB internally names it "count_star()"</li>
+     *   <li>CAST(x AS decimal(15,4)) needs AS "CAST(x AS DECIMAL(15,4))" — Spark uppercases type names</li>
+     * </ul>
+     *
+     * @param expr the expression (for Spark column name computation)
+     * @param exprSQL the SQL text already appended to the buffer (to compare against)
+     */
+    private void appendAutoAlias(Expression expr, String exprSQL) {
+        // Don't add auto-alias for RawSQLExpression that already contains an embedded alias.
+        // e.g., "string_split(name, ' ') as name_parts" — DuckDB will use 'name_parts'.
+        if (expr instanceof com.thunderduck.expression.RawSQLExpression) {
+            return;
+        }
+        String sparkName = Project.buildSparkColumnName(expr);
+        if (sparkName != null && !sparkName.equals(exprSQL)) {
+            sql.append(" AS ");
+            sql.append(SQLQuoting.quoteIdentifier(sparkName));
+        }
+    }
+
     private boolean canAppendClause(LogicalPlan plan) {
         // Aggregate: always safe -- generates SELECT ... FROM ... GROUP BY ...
         if (plan instanceof Aggregate) return true;
@@ -2842,10 +2882,18 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * @return SQL representation with CAST wrapper for numeric types
      */
     private String formatTypedSQLValue(Object value, org.apache.arrow.vector.types.pojo.ArrowType type) {
-        String formatted = formatSQLValue(value);
         if (value == null) {
-            return formatted; // NULL doesn't need CAST
+            return "NULL"; // NULL doesn't need CAST
         }
+
+        // Handle Map type: Arrow MapVector returns List<JsonStringHashMap> which must
+        // be formatted as MAP(['key1', 'key2'], [val1, val2]) instead of an array literal.
+        if (type.getTypeID() == org.apache.arrow.vector.types.pojo.ArrowType.ArrowTypeID.Map
+                && value instanceof java.util.List<?> entries) {
+            return formatMapFromEntries(entries);
+        }
+
+        String formatted = formatSQLValue(value);
 
         // Only wrap numeric types that DuckDB might infer incorrectly
         switch (type.getTypeID()) {
@@ -2857,6 +2905,46 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             default:
                 return formatted; // Other types (String, Date, etc.) are fine as-is
         }
+    }
+
+    /**
+     * Formats a list of map entries (from Arrow MapVector) as a DuckDB MAP literal.
+     *
+     * <p>Arrow MapVector returns each row as a List of JsonStringHashMap entries,
+     * each with "key" and "value" fields. This formats them as MAP([keys], [values]).
+     *
+     * @param entries the list of map entries from Arrow
+     * @return SQL MAP literal
+     */
+    private String formatMapFromEntries(java.util.List<?> entries) {
+        if (entries.isEmpty()) {
+            return "MAP([], [])";
+        }
+
+        StringBuilder keys = new StringBuilder("[");
+        StringBuilder vals = new StringBuilder("[");
+        boolean first = true;
+
+        for (Object entry : entries) {
+            if (!first) {
+                keys.append(", ");
+                vals.append(", ");
+            }
+            first = false;
+
+            if (entry instanceof java.util.Map<?, ?> map) {
+                keys.append(formatSQLValue(map.get("key")));
+                vals.append(formatSQLValue(map.get("value")));
+            } else {
+                // Fallback: shouldn't happen for well-formed Arrow data
+                keys.append("NULL");
+                vals.append("NULL");
+            }
+        }
+
+        keys.append("]");
+        vals.append("]");
+        return "MAP(" + keys + ", " + vals + ")";
     }
 
     /**

@@ -85,35 +85,48 @@ public final class CastExpression implements Expression {
         String innerSQL = expression.toSQL();
         // Use DuckDB type syntax for complex types (ArrayType, MapType)
         // e.g., ARRAY<INT> -> INTEGER[], MAP<STRING,INT> -> MAP(VARCHAR, INTEGER)
-        String duckdbType = resolveDuckDBTypeName(targetType);
-        String targetName = duckdbType.toUpperCase();
+        // For simple types, use uppercase to match Spark column naming convention.
+        String sqlTypeName = resolveDuckDBTypeName(targetType);
+        String targetName = targetType.typeName().toUpperCase();
 
         if (targetName.equals("INTEGER") || targetName.equals("INT")) {
             if (!needsTrunc(expression)) {
-                return String.format("CAST(%s AS %s)", innerSQL, duckdbType);
+                return String.format("CAST(%s AS %s)", innerSQL, sqlTypeName);
             }
-            return String.format("CAST(TRUNC(%s) AS %s)", innerSQL, duckdbType);
+            return String.format("CAST(TRUNC(%s) AS %s)", innerSQL, sqlTypeName);
         }
 
-        return String.format("CAST(%s AS %s)", innerSQL, duckdbType);
+        return String.format("CAST(%s AS %s)", innerSQL, sqlTypeName);
+    }
+
+    /**
+     * Returns the type name in uppercase, preserving parameterized suffixes.
+     * E.g., "decimal(15,4)" → "DECIMAL(15,4)", "varchar" → "VARCHAR".
+     */
+    public static String uppercaseTypeName(DataType type) {
+        String name = type.typeName();
+        int parenIdx = name.indexOf('(');
+        if (parenIdx >= 0) {
+            return name.substring(0, parenIdx).toUpperCase() + name.substring(parenIdx);
+        }
+        return name.toUpperCase();
     }
 
     /**
      * Resolves the DuckDB type name for a target type.
      * Uses TypeMapper for complex types (ArrayType, MapType) to get proper
      * DuckDB syntax (e.g., INTEGER[] instead of array&lt;integer&gt;).
-     * Falls back to typeName() for primitive types.
+     * Falls back to uppercaseTypeName() for primitive types.
      */
     private static String resolveDuckDBTypeName(DataType type) {
         if (type instanceof ArrayType || type instanceof MapType) {
             try {
                 return TypeMapper.toDuckDBType(type);
             } catch (Exception e) {
-                // Fallback to typeName if mapping fails
-                return type.typeName();
+                return uppercaseTypeName(type);
             }
         }
-        return type.typeName();
+        return uppercaseTypeName(type);
     }
 
     /**

@@ -79,8 +79,10 @@ public class StatisticsOperationHandler {
             String col2 = cov.getCol2();
 
             // Build SQL using DuckDB's COVAR_SAMP function
+            // Spark's stat.cov() replaces NULLs with 0.0 before computing covariance
+            // (see StatFunctions.calculateCovImpl in Spark source)
             String sql = String.format(
-                "SELECT COVAR_SAMP(%s, %s) AS cov FROM (%s) AS _stat_input",
+                "SELECT COVAR_SAMP(COALESCE(%s, 0.0), COALESCE(%s, 0.0)) AS cov FROM (%s) AS _stat_input",
                 quoteIdentifier(col1),
                 quoteIdentifier(col2),
                 inputSql
@@ -798,11 +800,12 @@ public class StatisticsOperationHandler {
      */
     private String getStatisticExpression(String stat, String quotedCol) {
         // Check for percentile format (e.g., "25%", "50%", "75%")
+        // Spark's summary() uses nearest-rank method (PERCENTILE_DISC/QUANTILE_DISC)
         if (stat.endsWith("%")) {
             try {
                 double percentile = Double.parseDouble(stat.substring(0, stat.length() - 1)) / 100.0;
                 return String.format(
-                    "CAST(QUANTILE_CONT(TRY_CAST(%s AS DOUBLE), %f) AS VARCHAR)",
+                    "CAST(QUANTILE_DISC(TRY_CAST(%s AS DOUBLE), %f) AS VARCHAR)",
                     quotedCol, percentile
                 );
             } catch (NumberFormatException e) {
