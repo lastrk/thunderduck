@@ -152,13 +152,107 @@ public final class BinaryExpression implements Expression {
      */
     public String toSQL() {
         if (operator == Operator.DIVIDE && SparkCompatMode.isStrictMode()) {
-            return String.format("spark_decimal_div(%s, %s)", left.toSQL(), right.toSQL());
+            return generateStrictModeDivision();
         }
         // Spark uses + for string concatenation; DuckDB requires ||
         if (operator == Operator.ADD && isStringConcatenation()) {
             return String.format("(%s || %s)", left.toSQL(), right.toSQL());
         }
         return String.format("(%s %s %s)", left.toSQL(), operator.symbol(), right.toSQL());
+    }
+
+    /**
+     * Generates type-aware division SQL for strict mode.
+     *
+     * <p>Spark's division behavior by type:
+     * <ul>
+     *   <li>DECIMAL / DECIMAL -> spark_decimal_div (extension function)</li>
+     *   <li>integer / integer -> DOUBLE (cast both to DOUBLE first)</li>
+     *   <li>DECIMAL / integer -> spark_decimal_div with integer cast to DECIMAL</li>
+     *   <li>integer / DECIMAL -> spark_decimal_div with integer cast to DECIMAL</li>
+     *   <li>Any FLOAT/DOUBLE involved -> native division (returns DOUBLE)</li>
+     *   <li>Unknown/unresolved types -> native division (safe fallback)</li>
+     * </ul>
+     */
+    private String generateStrictModeDivision() {
+        DataType leftType = left.dataType();
+        DataType rightType = right.dataType();
+
+        // If either type is unknown, fall back to native division
+        if (leftType == null || rightType == null) {
+            return String.format("(%s / %s)", left.toSQL(), right.toSQL());
+        }
+
+        boolean leftDecimal = leftType instanceof DecimalType;
+        boolean rightDecimal = rightType instanceof DecimalType;
+        boolean leftIntegral = isIntegralType(leftType);
+        boolean rightIntegral = isIntegralType(rightType);
+        boolean leftFloating = isFloatingType(leftType);
+        boolean rightFloating = isFloatingType(rightType);
+
+        // Any FLOAT/DOUBLE involved -> native division (Spark returns DOUBLE)
+        if (leftFloating || rightFloating) {
+            return String.format("(%s / %s)", left.toSQL(), right.toSQL());
+        }
+
+        // Both DECIMAL -> spark_decimal_div
+        if (leftDecimal && rightDecimal) {
+            return String.format("spark_decimal_div(%s, %s)", left.toSQL(), right.toSQL());
+        }
+
+        // Both integral -> Spark returns DOUBLE for int/int division
+        if (leftIntegral && rightIntegral) {
+            return String.format("(CAST(%s AS DOUBLE) / CAST(%s AS DOUBLE))",
+                    left.toSQL(), right.toSQL());
+        }
+
+        // DECIMAL / integer -> cast integer to DECIMAL, then spark_decimal_div
+        if (leftDecimal && rightIntegral) {
+            int p = integralPrecision(rightType);
+            return String.format("spark_decimal_div(%s, CAST(%s AS DECIMAL(%d,0)))",
+                    left.toSQL(), right.toSQL(), p);
+        }
+
+        // integer / DECIMAL -> cast integer to DECIMAL, then spark_decimal_div
+        if (leftIntegral && rightDecimal) {
+            int p = integralPrecision(leftType);
+            return String.format("spark_decimal_div(CAST(%s AS DECIMAL(%d,0)), %s)",
+                    left.toSQL(), p, right.toSQL());
+        }
+
+        // Fallback for any other type combination (e.g., string, date, unknown)
+        return String.format("(%s / %s)", left.toSQL(), right.toSQL());
+    }
+
+    /**
+     * Returns true if the type is an integral (byte, short, int, long) type.
+     */
+    private static boolean isIntegralType(DataType type) {
+        return type instanceof ByteType || type instanceof ShortType ||
+               type instanceof IntegerType || type instanceof LongType;
+    }
+
+    /**
+     * Returns true if the type is a floating-point (float, double) type.
+     */
+    private static boolean isFloatingType(DataType type) {
+        return type instanceof FloatType || type instanceof DoubleType;
+    }
+
+    /**
+     * Returns the appropriate DECIMAL precision for casting an integral type.
+     * Maps to the maximum number of digits the type can represent:
+     * - ByteType (TINYINT): 3 digits
+     * - ShortType (SMALLINT): 5 digits
+     * - IntegerType (INT): 10 digits
+     * - LongType (BIGINT): 20 digits (19 digits + sign coverage)
+     */
+    private static int integralPrecision(DataType type) {
+        if (type instanceof ByteType) return 3;
+        if (type instanceof ShortType) return 5;
+        if (type instanceof IntegerType) return 10;
+        if (type instanceof LongType) return 20;
+        return 10; // safe default
     }
 
     /**
