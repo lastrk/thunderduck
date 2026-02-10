@@ -13,6 +13,9 @@ import org.apache.spark.sql.catalyst.parser.SqlBaseParserBaseVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,6 +47,29 @@ import java.util.List;
 public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
 
     private static final Logger logger = LoggerFactory.getLogger(SparkSQLAstBuilder.class);
+
+    /**
+     * Optional DuckDB connection for resolving table schemas.
+     * When non-null, table references are resolved to their actual column schemas
+     * via PRAGMA table_info, enabling inferSchema() for all plan shapes.
+     */
+    private final Connection connection;
+
+    /**
+     * Creates an AST builder without schema resolution (backward compatible).
+     */
+    public SparkSQLAstBuilder() {
+        this(null);
+    }
+
+    /**
+     * Creates an AST builder with optional schema resolution.
+     *
+     * @param connection DuckDB connection for table schema resolution (can be null)
+     */
+    public SparkSQLAstBuilder(Connection connection) {
+        this.connection = connection;
+    }
 
     // ==================== Entry Points ====================
 
@@ -450,7 +476,19 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
 
         // Wrap in SQLRelation that generates: SELECT * FROM tableName
         String quotedName = quoteIdentifierIfNeeded(tableName);
-        LogicalPlan plan = new SQLRelation("SELECT * FROM " + quotedName);
+
+        // Resolve table schema when connection is available
+        StructType tableSchema = null;
+        if (connection != null) {
+            tableSchema = resolveTableSchema(tableName);
+        }
+
+        LogicalPlan plan;
+        if (tableSchema != null && tableSchema.size() > 0) {
+            plan = new SQLRelation("SELECT * FROM " + quotedName, tableSchema);
+        } else {
+            plan = new SQLRelation("SELECT * FROM " + quotedName);
+        }
 
         // Apply table alias (explicit alias from SQL)
         plan = applyTableAlias(plan, ctx.tableAlias());
@@ -1999,6 +2037,100 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
             return text.substring(1, text.length() - 1).replace("\\\"", "\"");
         }
         return ctx.getText();
+    }
+
+    // ==================== Table Schema Resolution ====================
+
+    /**
+     * Resolves the schema of a table by querying DuckDB.
+     *
+     * <p>Uses {@code PRAGMA table_info('tableName')} to retrieve column names and types,
+     * then converts them to a Thunderduck StructType. If the query fails (e.g., table
+     * doesn't exist, view, or CTE reference), returns null to fall back to empty schema.
+     *
+     * @param tableName the table name to resolve
+     * @return the resolved schema, or null if resolution fails
+     */
+    private StructType resolveTableSchema(String tableName) {
+        try {
+            // Use SELECT * FROM table LIMIT 0 to get schema for both tables and views
+            // This is more robust than PRAGMA table_info which only works for base tables
+            String schemaQuery = "SELECT * FROM " + quoteIdentifierIfNeeded(tableName) + " LIMIT 0";
+            try (Statement stmt = connection.createStatement();
+                 ResultSet rs = stmt.executeQuery(schemaQuery)) {
+
+                java.sql.ResultSetMetaData meta = rs.getMetaData();
+                int columnCount = meta.getColumnCount();
+
+                if (columnCount == 0) return null;
+
+                List<StructField> fields = new ArrayList<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    String colName = meta.getColumnName(i);
+                    String typeName = meta.getColumnTypeName(i).toUpperCase();
+                    int nullable = meta.isNullable(i);
+
+                    DataType dataType = mapDuckDBTypeToThunderduck(typeName, meta, i);
+                    boolean isNullable = (nullable != java.sql.ResultSetMetaData.columnNoNulls);
+
+                    fields.add(new StructField(colName, dataType, isNullable));
+                }
+
+                logger.debug("Resolved schema for table '{}': {} columns", tableName, fields.size());
+                return new StructType(fields);
+            }
+        } catch (Exception e) {
+            // Table doesn't exist, is a CTE reference, or other error — fall back gracefully
+            logger.debug("Could not resolve schema for table '{}': {}", tableName, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Maps a DuckDB SQL type name to a Thunderduck DataType.
+     *
+     * @param typeName the DuckDB type name (e.g., "INTEGER", "VARCHAR", "DECIMAL(18,2)")
+     * @param meta the result set metadata for precision/scale info
+     * @param columnIndex 1-based column index
+     * @return the corresponding Thunderduck DataType
+     */
+    private DataType mapDuckDBTypeToThunderduck(String typeName, java.sql.ResultSetMetaData meta, int columnIndex) {
+        try {
+            return switch (typeName) {
+                case "BOOLEAN" -> BooleanType.get();
+                case "TINYINT" -> ByteType.get();
+                case "SMALLINT" -> ShortType.get();
+                case "INTEGER", "INT" -> IntegerType.get();
+                case "BIGINT", "LONG", "INT8", "HUGEINT" -> LongType.get();
+                case "FLOAT", "REAL", "FLOAT4" -> FloatType.get();
+                case "DOUBLE", "FLOAT8" -> DoubleType.get();
+                case "VARCHAR", "TEXT", "STRING", "CHAR", "BPCHAR" -> StringType.get();
+                case "DATE" -> DateType.get();
+                case "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMPTZ",
+                     "TIMESTAMP_NS", "TIMESTAMP_MS", "TIMESTAMP_S" -> TimestampType.get();
+                case "BLOB", "BYTEA", "BINARY", "VARBINARY" -> BinaryType.get();
+                case "DECIMAL", "NUMERIC" -> {
+                    int precision = meta.getPrecision(columnIndex);
+                    int scale = meta.getScale(columnIndex);
+                    if (precision <= 0) precision = 10;
+                    yield new DecimalType(precision, scale);
+                }
+                default -> {
+                    // Handle parameterized types like DECIMAL(18,2)
+                    if (typeName.startsWith("DECIMAL") || typeName.startsWith("NUMERIC")) {
+                        int precision = meta.getPrecision(columnIndex);
+                        int scale = meta.getScale(columnIndex);
+                        if (precision <= 0) precision = 10;
+                        yield new DecimalType(precision, scale);
+                    }
+                    logger.debug("Unknown DuckDB type '{}', mapping to StringType", typeName);
+                    yield StringType.get();
+                }
+            };
+        } catch (Exception e) {
+            logger.debug("Error mapping DuckDB type '{}': {}", typeName, e.getMessage());
+            return StringType.get();
+        }
     }
 
     // ==================== Utility Methods ====================

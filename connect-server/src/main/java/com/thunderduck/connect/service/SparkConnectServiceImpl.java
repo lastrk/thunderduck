@@ -136,11 +136,16 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             logger.debug("Plan type: {}", plan.getOpTypeCase());
 
             // Handle SQL queries (both direct and command-wrapped)
+            // Track both the SQL string and the LogicalPlan for schema-aware execution
             String sql = null;
+            LogicalPlan sqlPlan = null;  // LogicalPlan from SparkSQL parsing (for schema)
             boolean isShowString = false;
             int showStringNumRows = 20;  // default
             int showStringTruncate = 20; // default
             boolean showStringVertical = false;
+
+            // Get the DuckDB connection for schema-aware parsing
+            java.sql.Connection duckdbConn = session.getRuntime().getConnection();
 
             if (plan.hasRoot()) {
                 Relation root = plan.getRoot();
@@ -156,11 +161,13 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     showStringVertical = showString.getVertical();
 
                     if (input.hasSql()) {
-                        // Parse SparkSQL via the ANTLR parser
+                        // Parse SparkSQL via the ANTLR parser (schema-aware)
                         SQL innerSqlRelation = input.getSql();
                         String innerQuery = innerSqlRelation.getQuery();
                         logger.info("ShowString with spark.sql() query: {}", innerQuery);
-                        sql = transformSparkSQL(innerQuery);
+                        TransformResult result = transformSparkSQLWithPlan(innerQuery, duckdbConn);
+                        sql = result.sql();
+                        sqlPlan = result.plan();
                     } else {
                         // Deserialize non-SQL relation and generate SQL
                         try {
@@ -194,8 +201,10 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         logger.info("After parameter substitution: {}", query);
                     }
 
-                    // Transform SparkSQL to DuckDB SQL via parser
-                    sql = transformSparkSQL(query);
+                    // Transform SparkSQL to DuckDB SQL via schema-aware parser
+                    TransformResult result = transformSparkSQLWithPlan(query, duckdbConn);
+                    sql = result.sql();
+                    sqlPlan = result.plan();
                 } else if (root.hasCatalog()) {
                     // Handle catalog operations (dropTempView, etc.)
                     executeCatalogOperation(root.getCatalog(), session, responseObserver);
@@ -235,7 +244,9 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 }
 
                 if (query != null && !query.isEmpty()) {
-                    sql = transformSparkSQL(query);
+                    TransformResult result = transformSparkSQLWithPlan(query, duckdbConn);
+                    sql = result.sql();
+                    sqlPlan = result.plan();
                 } else {
                     logger.error("SqlCommand has no query");
                     throw new IllegalArgumentException("SqlCommand has no query");
@@ -257,8 +268,8 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     executeShowString(sql, session, showStringNumRows, showStringTruncate,
                         showStringVertical, responseObserver);
                 } else {
-                    // Regular SQL execution
-                    executeSQL(sql, session, responseObserver);
+                    // Execute SQL with plan schema for correct nullable flags and types
+                    executeSQLWithPlan(sql, sqlPlan, session, responseObserver);
                 }
             } else if (plan.hasRoot()) {
                 // Non-SQL plan - use plan deserialization
@@ -660,15 +671,18 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     com.thunderduck.types.StructType schema = null;
                     String sql = null;
 
+                    // Get connection for schema-aware parsing
+                    java.sql.Connection analyzeConn = session.getRuntime().getConnection();
+
                     // Check if this is a SQL query (special handling needed)
                     if (plan.hasRoot() && plan.getRoot().hasSql()) {
-                        // Direct SQL query - parse and transform via SparkSQL parser
+                        // Direct SQL query - parse and transform via schema-aware parser
                         String sparkSQL = plan.getRoot().getSql().getQuery();
-                        TransformResult result = transformSparkSQLWithPlan(sparkSQL);
+                        TransformResult result = transformSparkSQLWithPlan(sparkSQL, analyzeConn);
                         sql = result.sql();
                         logger.debug("Analyzing SQL query schema: {}", sql.substring(0, Math.min(100, sql.length())));
 
-                        // Use LogicalPlan schema when available (parser succeeded)
+                        // Use LogicalPlan schema when available (schema-aware parser succeeded)
                         if (result.plan() != null) {
                             try {
                                 schema = result.plan().inferSchema();
@@ -679,10 +693,6 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         // Fallback: infer from DuckDB if plan schema unavailable
                         if (schema == null) {
                             schema = inferSchemaFromDuckDB(sql, sessionId);
-                            if (SparkCompatMode.isStrictMode() && schema != null) {
-                                schema = fixCountNullable(sql, schema);
-                                schema = fixDecimalPrecisionForComplexAggregates(sql, schema);
-                            }
                         }
 
                     } else if (plan.hasCommand() && plan.getCommand().hasSqlCommand()) {
@@ -698,12 +708,12 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                             sparkSQL = sqlCommand.getSql();
                         }
 
-                        // Transform SparkSQL to DuckDB SQL (parser + preprocessing)
-                        TransformResult result = transformSparkSQLWithPlan(sparkSQL);
+                        // Transform SparkSQL to DuckDB SQL via schema-aware parser
+                        TransformResult result = transformSparkSQLWithPlan(sparkSQL, analyzeConn);
                         sql = result.sql();
                         logger.debug("Analyzing SQL command schema: {}", sql.substring(0, Math.min(100, sql.length())));
 
-                        // Use LogicalPlan schema when available (parser succeeded)
+                        // Use LogicalPlan schema when available (schema-aware parser succeeded)
                         if (result.plan() != null) {
                             try {
                                 schema = result.plan().inferSchema();
@@ -714,10 +724,6 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         // Fallback: infer from DuckDB if plan schema unavailable
                         if (schema == null) {
                             schema = inferSchemaFromDuckDB(sql, sessionId);
-                            if (SparkCompatMode.isStrictMode() && schema != null) {
-                                schema = fixCountNullable(sql, schema);
-                                schema = fixDecimalPrecisionForComplexAggregates(sql, schema);
-                            }
                         }
 
                     } else if (plan.hasRoot() && isStatisticsRelation(plan.getRoot())) {
@@ -800,16 +806,24 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
      */
     private record TransformResult(String sql, LogicalPlan plan) {}
 
-    private TransformResult transformSparkSQLWithPlan(String sparkSQL) {
+    private TransformResult transformSparkSQLWithPlan(String sparkSQL, java.sql.Connection connection) {
         SparkSQLParser parser = SparkSQLParser.getInstance();
-        LogicalPlan plan = parser.parse(sparkSQL);
+        LogicalPlan plan = parser.parse(sparkSQL, connection);
         String duckdbSQL = sqlGenerator.generate(plan);
         logger.info("SparkSQL parser transformed: {} -> {}", sparkSQL, duckdbSQL);
         return new TransformResult(duckdbSQL, plan);
     }
 
+    private TransformResult transformSparkSQLWithPlan(String sparkSQL) {
+        return transformSparkSQLWithPlan(sparkSQL, null);
+    }
+
+    private String transformSparkSQL(String sparkSQL, java.sql.Connection connection) {
+        return transformSparkSQLWithPlan(sparkSQL, connection).sql();
+    }
+
     private String transformSparkSQL(String sparkSQL) {
-        return transformSparkSQLWithPlan(sparkSQL).sql();
+        return transformSparkSQLWithPlan(sparkSQL, null).sql();
     }
 
     /**
@@ -1180,14 +1194,55 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     }
 
     /**
-     * Execute SQL query and stream results as Arrow batches.
+     * Execute SQL query with an associated LogicalPlan for schema-aware execution.
+     *
+     * <p>When the LogicalPlan has a valid schema (via schema-aware parsing),
+     * it is used directly for correct nullable flags and types. This eliminates
+     * the need for regex-based schema fixup methods.
+     *
+     * <p>Falls back to DuckDB-only execution when plan schema is unavailable.
+     *
+     * @param sql SQL query string
+     * @param plan the LogicalPlan from SparkSQL parsing (can be null)
+     * @param session Session object
+     * @param responseObserver Response stream
+     */
+    private void executeSQLWithPlan(String sql, LogicalPlan plan, Session session,
+                                    StreamObserver<ExecutePlanResponse> responseObserver) {
+        // DDL statements don't return results - handle separately
+        if (isDDLStatement(sql)) {
+            executeDDL(sql, session, responseObserver);
+            return;
+        }
+
+        // Try to use the LogicalPlan schema for correct types and nullable flags
+        StructType logicalSchema = null;
+        if (plan != null) {
+            try {
+                logicalSchema = plan.inferSchema();
+                if (logicalSchema != null && logicalSchema.size() > 0) {
+                    logger.debug("Using LogicalPlan schema for SQL execution: {} fields", logicalSchema.size());
+                } else {
+                    logicalSchema = null;
+                }
+            } catch (Exception e) {
+                logger.debug("LogicalPlan schema inference failed for SQL path, falling back: {}", e.getMessage());
+            }
+        }
+
+        if (logicalSchema != null) {
+            executeSQLStreaming(sql, logicalSchema, session, responseObserver);
+        } else {
+            // Fallback: no plan schema available — execute without schema correction
+            executeSQLStreaming(sql, session, responseObserver);
+        }
+    }
+
+    /**
+     * Execute SQL query and stream results as Arrow batches (legacy path without plan schema).
      *
      * <p>Handles both queries (SELECT) and DDL statements (CREATE, DROP, ALTER, etc.).
      * DDL statements return an empty result set with success status.
-     *
-     * <p>If streaming is enabled (via -Dthunderduck.streaming.enabled=true), uses
-     * the new ArrowStreamingExecutor for batch-by-batch streaming. Otherwise, uses
-     * the legacy full-materialization path.
      *
      * @param sql SQL query string
      * @param session Session object
@@ -1199,19 +1254,6 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         if (isDDLStatement(sql)) {
             executeDDL(sql, session, responseObserver);
             return;
-        }
-
-        // In strict mode, build nullable schema from SQL analysis for COUNT columns
-        if (SparkCompatMode.isStrictMode()) {
-            try {
-                StructType nullableSchema = inferNullableSchemaFromSQL(sql, session.getSessionId());
-                if (nullableSchema != null) {
-                    executeSQLStreaming(sql, nullableSchema, session, responseObserver);
-                    return;
-                }
-            } catch (Exception e) {
-                logger.debug("Could not infer nullable schema from SQL, falling back to default: {}", e.getMessage());
-            }
         }
 
         // All queries use streaming (zero-copy Arrow batch iteration)
@@ -1692,641 +1734,6 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
     private String normalizeAggregateColumnName(String name) {
         if (name == null) return name;
         return name.replace("spark_sum(", "sum(").replace("spark_avg(", "avg(");
-    }
-
-    /**
-     * Fixes decimal precision for SUM/AVG results of complex expressions in SQL queries.
-     *
-     * <p>DuckDB computes intermediate expression types (multiplications) with different
-     * precision rules than Spark. When spark_sum operates on a multiplication result,
-     * DuckDB's lower intermediate precision propagates into spark_sum's return type.
-     *
-     * <p>Example: SUM(col1 * (1 - col2))
-     * <ul>
-     *   <li>Spark: DECIMAL(15,2) * DECIMAL(16,2) = DECIMAL(32,4) -> SUM = DECIMAL(38,4)</li>
-     *   <li>DuckDB: DECIMAL(15,2) * DECIMAL(16,2) = DECIMAL(18,4) -> spark_sum = DECIMAL(28,4)</li>
-     * </ul>
-     *
-     * <p>This method detects SUM/AVG columns with complex expressions (containing * or /)
-     * and promotes their precision to DECIMAL(38, s) to match Spark behavior.
-     *
-     * @param sql the original SQL query
-     * @param schema the DuckDB schema
-     * @return schema with promoted decimal precision where needed
-     */
-    // Decimal promotion strategies for different expression patterns
-    private static final int DECIMAL_NO_CHANGE = 0;           // Extension handles correctly
-    private static final int DECIMAL_PROMOTE_PRECISION = 1;    // Promote precision to 38, keep scale
-    private static final int DECIMAL_FIX_DIVISION_TYPE = 2;    // Fix both precision and scale for division
-
-    private StructType fixDecimalPrecisionForComplexAggregates(String sql, StructType schema) {
-        if (schema == null || schema.size() == 0) return schema;
-
-        int[] promotionStrategy = detectComplexAggregateColumns(sql, schema.size());
-
-        boolean hasChanges = false;
-        java.util.List<StructField> fields = new java.util.ArrayList<>();
-
-        for (int i = 0; i < schema.size(); i++) {
-            StructField field = schema.fields().get(i);
-
-            if (promotionStrategy[i] != DECIMAL_NO_CHANGE && field.dataType() instanceof com.thunderduck.types.DecimalType) {
-                com.thunderduck.types.DecimalType decType = (com.thunderduck.types.DecimalType) field.dataType();
-
-                if (promotionStrategy[i] == DECIMAL_FIX_DIVISION_TYPE) {
-                    int targetScale = 6;
-                    int targetPrecision = 38;
-                    if (decType.precision() != targetPrecision || decType.scale() != targetScale) {
-                        StructField promoted = new StructField(
-                            field.name(),
-                            new com.thunderduck.types.DecimalType(targetPrecision, targetScale),
-                            field.nullable()
-                        );
-                        fields.add(promoted);
-                        hasChanges = true;
-                        logger.debug("Fixed decimal type for division aggregate '{}': DECIMAL({},{}) -> DECIMAL({},{})",
-                            field.name(), decType.precision(), decType.scale(), targetPrecision, targetScale);
-                        continue;
-                    }
-                } else if (promotionStrategy[i] == DECIMAL_PROMOTE_PRECISION && decType.precision() < 38) {
-                    StructField promoted = new StructField(
-                        field.name(),
-                        new com.thunderduck.types.DecimalType(38, decType.scale()),
-                        field.nullable()
-                    );
-                    fields.add(promoted);
-                    hasChanges = true;
-                    logger.debug("Promoted decimal precision for complex aggregate '{}': DECIMAL({},{}) -> DECIMAL(38,{})",
-                        field.name(), decType.precision(), decType.scale(), decType.scale());
-                    continue;
-                }
-            }
-
-            fields.add(field);
-        }
-
-        return hasChanges ? new StructType(fields) : schema;
-    }
-
-    /**
-     * Detects which output columns in a SQL query come from expressions involving decimal
-     * arithmetic (SUM/AVG combined with multiplication or division).
-     */
-    private int[] detectComplexAggregateColumns(String sql, int columnCount) {
-        int[] result = new int[columnCount];
-
-        try {
-            String effectiveSql = unwrapSelectStar(sql);
-            String upperSql = effectiveSql.toUpperCase().trim();
-
-            int selectIdx = findOutermostKeyword(upperSql, "SELECT");
-            if (selectIdx < 0) return result;
-
-            int fromIdx = findOutermostKeyword(upperSql.substring(selectIdx + 6), "FROM");
-            if (fromIdx < 0) return result;
-            fromIdx += selectIdx + 6;
-
-            String selectList = effectiveSql.substring(selectIdx + 6, fromIdx).trim();
-
-            if (selectList.toUpperCase().startsWith("DISTINCT")) {
-                selectList = selectList.substring(8).trim();
-            }
-
-            java.util.List<String> selectItems = splitSelectList(selectList);
-            java.util.Set<String> arithmeticAliases = collectArithmeticAliases(sql);
-
-            for (int i = 0; i < Math.min(selectItems.size(), columnCount); i++) {
-                String item = selectItems.get(i).trim();
-                String itemUpper = item.toUpperCase();
-
-                boolean hasDivisionAroundAggregate = containsArithmeticWithAggregate(itemUpper);
-                boolean hasSumOfMultiplication = containsAggregateWithArithmeticInside(item);
-                boolean hasAggregateOfArithmeticAlias = containsAggregateOfArithmeticAlias(item, arithmeticAliases);
-
-                if (hasSumOfMultiplication && hasDivisionAroundAggregate) {
-                    result[i] = DECIMAL_FIX_DIVISION_TYPE;
-                    continue;
-                }
-
-                if (hasSumOfMultiplication) {
-                    result[i] = DECIMAL_PROMOTE_PRECISION;
-                    continue;
-                }
-
-                if (hasDivisionAroundAggregate) {
-                    if (hasAggregateOfArithmeticAlias) {
-                        result[i] = DECIMAL_FIX_DIVISION_TYPE;
-                    } else {
-                        result[i] = DECIMAL_NO_CHANGE;
-                    }
-                    continue;
-                }
-
-                if (hasAggregateOfArithmeticAlias) {
-                    result[i] = DECIMAL_PROMOTE_PRECISION;
-                    continue;
-                }
-
-                String alias = extractAliasOrReference(item);
-                if (alias != null && arithmeticAliases.contains(alias.toLowerCase())) {
-                    result[i] = DECIMAL_PROMOTE_PRECISION;
-                    continue;
-                }
-            }
-        } catch (Exception e) {
-            logger.debug("Could not detect complex aggregate columns in SQL: {}", e.getMessage());
-        }
-
-        return result;
-    }
-
-    private boolean containsArithmeticWithAggregate(String itemUpper) {
-        boolean hasAggregate = itemUpper.matches("(?s).*\\b(?:SPARK_SUM|SPARK_AVG|SUM|AVG)\\s*\\(.*");
-        if (!hasAggregate) return false;
-
-        String stripped = stripAggregateBodies(itemUpper);
-        return stripped.contains("*") || stripped.contains("/")
-            || stripped.toUpperCase().contains("SPARK_DECIMAL_DIV(");
-    }
-
-    private boolean containsAggregateWithArithmeticInside(String item) {
-        String upper = item.toUpperCase();
-        for (String prefix : new String[]{"SPARK_SUM(", "SPARK_AVG(", "SUM(", "AVG("}) {
-            int idx = upper.indexOf(prefix);
-            while (idx >= 0) {
-                if (idx > 0) {
-                    char prev = item.charAt(idx - 1);
-                    if (Character.isLetterOrDigit(prev) || prev == '_') {
-                        idx = upper.indexOf(prefix, idx + 1);
-                        continue;
-                    }
-                }
-                int parenStart = idx + prefix.length() - 1;
-                int parenEnd = findMatchingCloseParen(item, parenStart);
-                if (parenEnd > 0) {
-                    String body = item.substring(parenStart + 1, parenEnd);
-                    if (body.contains("*") || body.contains("/")) {
-                        return true;
-                    }
-                }
-                idx = upper.indexOf(prefix, idx + 1);
-            }
-        }
-        return false;
-    }
-
-    private String stripAggregateBodies(String expr) {
-        StringBuilder sb = new StringBuilder();
-        String upper = expr.toUpperCase();
-        int i = 0;
-        while (i < expr.length()) {
-            boolean isAgg = false;
-            int funcEnd = -1;
-            for (String agg : new String[]{"SPARK_SUM(", "SPARK_AVG(", "SUM(", "AVG("}) {
-                if (upper.startsWith(agg, i)) {
-                    isAgg = true;
-                    funcEnd = i + agg.length() - 1;
-                    break;
-                }
-            }
-            if (isAgg && funcEnd >= 0) {
-                int closeIdx = findMatchingCloseParen(expr, funcEnd);
-                if (closeIdx > 0) {
-                    sb.append("AGG_RESULT");
-                    i = closeIdx + 1;
-                    continue;
-                }
-            }
-            sb.append(expr.charAt(i));
-            i++;
-        }
-        return sb.toString();
-    }
-
-    private boolean containsAggregateOfArithmeticAlias(String item, java.util.Set<String> arithmeticAliases) {
-        if (arithmeticAliases.isEmpty()) return false;
-
-        String upper = item.toUpperCase();
-        for (String prefix : new String[]{"SPARK_SUM(", "SPARK_AVG(", "SUM(", "AVG("}) {
-            int idx = upper.indexOf(prefix);
-            while (idx >= 0) {
-                int parenStart = idx + prefix.length() - 1;
-                int parenEnd = findMatchingCloseParen(item, parenStart);
-                if (parenEnd > 0) {
-                    String argStr = item.substring(parenStart + 1, parenEnd).trim();
-                    for (String alias : arithmeticAliases) {
-                        if (argStr.toLowerCase().contains(alias)) {
-                            return true;
-                        }
-                    }
-                }
-                idx = upper.indexOf(prefix, idx + 1);
-            }
-        }
-        return false;
-    }
-
-    private String extractAliasOrReference(String selectItem) {
-        String item = selectItem.trim();
-        String upper = item.toUpperCase();
-
-        int depth = 0;
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
-        int lastAsPos = -1;
-        for (int i = 0; i < item.length() - 2; i++) {
-            char c = item.charAt(i);
-            if (c == '\'' && !inDoubleQuote) { inSingleQuote = !inSingleQuote; continue; }
-            if (c == '"' && !inSingleQuote) { inDoubleQuote = !inDoubleQuote; continue; }
-            if (!inSingleQuote && !inDoubleQuote) {
-                if (c == '(') depth++;
-                else if (c == ')') depth--;
-                else if (depth == 0 && upper.startsWith("AS ", i)
-                         && (i == 0 || !Character.isLetterOrDigit(item.charAt(i - 1)))) {
-                    lastAsPos = i;
-                }
-            }
-        }
-
-        if (lastAsPos >= 0) {
-            String alias = item.substring(lastAsPos + 3).trim();
-            if (alias.startsWith("\"") && alias.endsWith("\"")) {
-                alias = alias.substring(1, alias.length() - 1);
-            }
-            return alias;
-        }
-
-        if (item.matches("(?i)[a-z_][a-z0-9_]*")) {
-            return item;
-        }
-
-        return null;
-    }
-
-    private java.util.Set<String> collectArithmeticAliases(String sql) {
-        java.util.Set<String> aliases = new java.util.HashSet<>();
-
-        java.util.regex.Pattern aliasPattern = java.util.regex.Pattern.compile(
-            "(?i)\\s+AS\\s+(?:\"([^\"]+)\"|([a-z_][a-z0-9_]*))",
-            java.util.regex.Pattern.CASE_INSENSITIVE
-        );
-
-        java.util.regex.Matcher aliasMatcher = aliasPattern.matcher(sql);
-        while (aliasMatcher.find()) {
-            int asStart = aliasMatcher.start();
-            String beforeAs = sql.substring(0, asStart).trim();
-
-            int exprStart = findExpressionStart(beforeAs);
-            if (exprStart < 0) continue;
-
-            String expr = beforeAs.substring(exprStart).trim();
-
-            if (expr.matches("(?s).*[\\w)]\\s*[*/]\\s*[\\w(].*")) {
-                String alias = aliasMatcher.group(1) != null ? aliasMatcher.group(1).toLowerCase()
-                    : aliasMatcher.group(2).toLowerCase();
-                aliases.add(alias);
-                logger.trace("Found arithmetic alias '{}' from expression: {}", alias, expr);
-            }
-        }
-
-        return aliases;
-    }
-
-    private int findExpressionStart(String sql) {
-        int depth = 0;
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
-
-        for (int i = sql.length() - 1; i >= 0; i--) {
-            char c = sql.charAt(i);
-            if (c == '\'' && !inDoubleQuote) { inSingleQuote = !inSingleQuote; continue; }
-            if (c == '"' && !inSingleQuote) { inDoubleQuote = !inDoubleQuote; continue; }
-            if (inSingleQuote || inDoubleQuote) continue;
-
-            if (c == ')') depth++;
-            else if (c == '(') depth--;
-
-            if (depth == 0 && c == ',') {
-                return i + 1;
-            }
-
-            if (depth == 0 && i >= 6) {
-                String possibleKeyword = sql.substring(i - 6, i + 1).toUpperCase();
-                if (possibleKeyword.endsWith("SELECT") &&
-                    (i - 6 == 0 || !Character.isLetterOrDigit(sql.charAt(i - 7)))) {
-                    return i + 1;
-                }
-            }
-        }
-
-        return 0;
-    }
-
-    private String unwrapSelectStar(String sql) {
-        String current = sql.trim();
-        int maxIterations = 20;
-
-        for (int iter = 0; iter < maxIterations; iter++) {
-            String upper = current.toUpperCase().trim();
-
-            if (!upper.startsWith("SELECT")) return current;
-
-            int idx = 6;
-            while (idx < upper.length() && Character.isWhitespace(upper.charAt(idx))) idx++;
-
-            if (upper.startsWith("DISTINCT", idx)) {
-                idx += 8;
-                while (idx < upper.length() && Character.isWhitespace(upper.charAt(idx))) idx++;
-            }
-
-            if (idx >= upper.length() || upper.charAt(idx) != '*') {
-                return current;
-            }
-
-            int afterStar = idx + 1;
-            while (afterStar < upper.length() && Character.isWhitespace(upper.charAt(afterStar))) afterStar++;
-
-            if (afterStar >= upper.length() || !upper.startsWith("FROM", afterStar)) {
-                return current;
-            }
-
-            int afterFrom = afterStar + 4;
-            while (afterFrom < upper.length() && Character.isWhitespace(upper.charAt(afterFrom))) afterFrom++;
-
-            if (afterFrom >= current.length() || current.charAt(afterFrom) != '(') {
-                return current;
-            }
-
-            int closeParen = findMatchingCloseParen(current, afterFrom);
-            if (closeParen < 0) return current;
-
-            String inner = current.substring(afterFrom + 1, closeParen).trim();
-            current = inner;
-        }
-
-        return current;
-    }
-
-
-
-
-    /**
-     * Infers a schema with corrected nullable flags for raw SQL queries.
-     */
-    private StructType inferNullableSchemaFromSQL(String sql, String sessionId) throws Exception {
-        StructType duckDBSchema = inferSchemaFromDuckDB(sql, sessionId);
-        if (duckDBSchema == null || duckDBSchema.size() == 0) {
-            return null;
-        }
-
-        StructType result = fixCountNullable(sql, duckDBSchema);
-        result = fixDecimalPrecisionForComplexAggregates(sql, result);
-        return result;
-    }
-
-    /**
-     * Fixes nullable flags for COUNT columns in a schema based on SQL analysis.
-     */
-    private StructType fixCountNullable(String sql, StructType schema) {
-        boolean[] isCountColumn = detectCountColumns(sql, schema.size());
-
-        boolean hasCorrections = false;
-        java.util.List<StructField> fields = new java.util.ArrayList<>();
-        for (int i = 0; i < schema.size(); i++) {
-            StructField field = schema.fields().get(i);
-            if (isCountColumn[i] && field.nullable()) {
-                fields.add(new StructField(field.name(), field.dataType(), false));
-                hasCorrections = true;
-            } else {
-                fields.add(field);
-            }
-        }
-
-        return hasCorrections ? new StructType(fields) : schema;
-    }
-
-    private boolean[] detectCountColumns(String sql, int columnCount) {
-        boolean[] result = new boolean[columnCount];
-
-        try {
-            java.util.Set<String> countAliases = collectCountAliases(sql);
-
-            String upperSql = sql.toUpperCase().trim();
-
-            int selectIdx = findOutermostKeyword(upperSql, "SELECT");
-            if (selectIdx < 0) return result;
-
-            int fromIdx = findOutermostKeyword(upperSql.substring(selectIdx + 6), "FROM");
-            if (fromIdx < 0) return result;
-            fromIdx += selectIdx + 6;
-
-            String selectList = sql.substring(selectIdx + 6, fromIdx).trim();
-
-            if (selectList.toUpperCase().startsWith("DISTINCT")) {
-                selectList = selectList.substring(8).trim();
-            }
-
-            java.util.List<String> selectItems = splitSelectList(selectList);
-
-            for (int i = 0; i < Math.min(selectItems.size(), columnCount); i++) {
-                String item = selectItems.get(i).trim();
-                String itemUpper = item.toUpperCase();
-
-                if (itemUpper.matches(".*\\bCOUNT\\s*\\(.*")) {
-                    result[i] = true;
-                    continue;
-                }
-
-                String colName = extractColumnName(item);
-                if (colName != null && countAliases.contains(colName.toUpperCase())) {
-                    result[i] = true;
-                }
-            }
-        } catch (Exception e) {
-            logger.debug("Could not detect COUNT columns in SQL: {}", e.getMessage());
-        }
-
-        return result;
-    }
-
-    private java.util.Set<String> collectCountAliases(String sql) {
-        java.util.Set<String> aliases = new java.util.HashSet<>();
-
-        java.util.regex.Pattern countAsPattern = java.util.regex.Pattern.compile(
-            "(?i)\\bcount\\s*\\([^)]*\\)\\s+(?:as\\s+)?([\"']?\\w+[\"']?)");
-        java.util.regex.Matcher matcher = countAsPattern.matcher(sql);
-        while (matcher.find()) {
-            String alias = matcher.group(1).replaceAll("[\"']", "").trim();
-            if (!alias.equalsIgnoreCase("FROM") && !alias.equalsIgnoreCase("WHERE") &&
-                !alias.equalsIgnoreCase("GROUP") && !alias.equalsIgnoreCase("ORDER") &&
-                !alias.equalsIgnoreCase("HAVING") && !alias.equalsIgnoreCase("LIMIT") &&
-                !alias.equalsIgnoreCase("AND") && !alias.equalsIgnoreCase("OR")) {
-                aliases.add(alias.toUpperCase());
-            }
-        }
-
-        detectRenamedCountColumns(sql, aliases);
-
-        return aliases;
-    }
-
-    private void detectRenamedCountColumns(String sql, java.util.Set<String> aliases) {
-        java.util.regex.Pattern renamePattern = java.util.regex.Pattern.compile(
-            "(?i)\\)\\s+AS\\s+\\w+\\s*\\(([^)]+)\\)");
-        java.util.regex.Matcher renameMatcher = renamePattern.matcher(sql);
-
-        while (renameMatcher.find()) {
-            String columnList = renameMatcher.group(1).trim();
-            String[] columns = columnList.split("\\s*,\\s*");
-
-            int subqueryEnd = renameMatcher.start();
-
-            int subqueryStart = findMatchingOpenParen(sql, subqueryEnd);
-            if (subqueryStart < 0) continue;
-
-            String subquery = sql.substring(subqueryStart + 1, subqueryEnd);
-
-            String subqueryUpper = subquery.toUpperCase().trim();
-            int selectIdx = findOutermostKeyword(subqueryUpper, "SELECT");
-            if (selectIdx < 0) continue;
-
-            int fromIdx = findOutermostKeyword(subqueryUpper.substring(selectIdx + 6), "FROM");
-            if (fromIdx < 0) continue;
-            fromIdx += selectIdx + 6;
-
-            String selectList = subquery.substring(selectIdx + 6, fromIdx).trim();
-            java.util.List<String> selectItems = splitSelectList(selectList);
-
-            for (int i = 0; i < Math.min(selectItems.size(), columns.length); i++) {
-                String item = selectItems.get(i).trim().toUpperCase();
-                if (item.matches(".*\\bCOUNT\\s*\\(.*")) {
-                    String renamedCol = columns[i].trim().replaceAll("[\"']", "");
-                    aliases.add(renamedCol.toUpperCase());
-                }
-            }
-        }
-    }
-
-    private int findMatchingOpenParen(String sql, int closeParenPos) {
-        int depth = 0;
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
-
-        for (int i = closeParenPos; i >= 0; i--) {
-            char c = sql.charAt(i);
-
-            if (c == '\'' && !inDoubleQuote) {
-                inSingleQuote = !inSingleQuote;
-            } else if (c == '"' && !inSingleQuote) {
-                inDoubleQuote = !inDoubleQuote;
-            } else if (!inSingleQuote && !inDoubleQuote) {
-                if (c == ')') depth++;
-                else if (c == '(') {
-                    depth--;
-                    if (depth == 0) return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-    private int findMatchingCloseParen(String sql, int openParenPos) {
-        int depth = 1;
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
-
-        for (int i = openParenPos + 1; i < sql.length(); i++) {
-            char c = sql.charAt(i);
-
-            if (c == '\'' && !inDoubleQuote) {
-                inSingleQuote = !inSingleQuote;
-            } else if (c == '"' && !inSingleQuote) {
-                inDoubleQuote = !inDoubleQuote;
-            } else if (!inSingleQuote && !inDoubleQuote) {
-                if (c == '(') depth++;
-                else if (c == ')') {
-                    depth--;
-                    if (depth == 0) return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-    private String extractColumnName(String selectItem) {
-        String item = selectItem.trim();
-
-        if (item.matches("(?i)[a-z_][a-z0-9_]*")) {
-            return item;
-        }
-
-        return null;
-    }
-
-    private int findOutermostKeyword(String sql, String keyword) {
-        int depth = 0;
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
-        String upperSql = sql.toUpperCase();
-
-        for (int i = 0; i <= upperSql.length() - keyword.length(); i++) {
-            char c = sql.charAt(i);
-
-            if (c == '\'' && !inDoubleQuote) {
-                inSingleQuote = !inSingleQuote;
-                continue;
-            }
-            if (c == '"' && !inSingleQuote) {
-                inDoubleQuote = !inDoubleQuote;
-                continue;
-            }
-
-            if (!inSingleQuote && !inDoubleQuote) {
-                if (c == '(') depth++;
-                else if (c == ')') depth--;
-                else if (depth == 0 && upperSql.startsWith(keyword, i)) {
-                    if (i > 0) {
-                        char prev = sql.charAt(i - 1);
-                        if (Character.isLetterOrDigit(prev) || prev == '_') continue;
-                    }
-                    int end = i + keyword.length();
-                    if (end < sql.length()) {
-                        char next = sql.charAt(end);
-                        if (Character.isLetterOrDigit(next) || next == '_') continue;
-                    }
-                    return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-    private java.util.List<String> splitSelectList(String selectList) {
-        java.util.List<String> items = new java.util.ArrayList<>();
-        int depth = 0;
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
-        int start = 0;
-
-        for (int i = 0; i < selectList.length(); i++) {
-            char c = selectList.charAt(i);
-
-            if (c == '\'' && !inDoubleQuote) {
-                inSingleQuote = !inSingleQuote;
-            } else if (c == '"' && !inSingleQuote) {
-                inDoubleQuote = !inDoubleQuote;
-            } else if (!inSingleQuote && !inDoubleQuote) {
-                if (c == '(') depth++;
-                else if (c == ')') depth--;
-                else if (c == ',' && depth == 0) {
-                    items.add(selectList.substring(start, i));
-                    start = i + 1;
-                }
-            }
-        }
-        items.add(selectList.substring(start));
-
-        return items;
     }
 
     /**

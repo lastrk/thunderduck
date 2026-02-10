@@ -8,6 +8,8 @@ import org.apache.spark.sql.catalyst.parser.SqlBaseParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
+
 /**
  * Entry point for parsing SparkSQL into Thunderduck LogicalPlan AST.
  *
@@ -74,6 +76,25 @@ public class SparkSQLParser {
      * @throws UnsupportedOperationException if the SQL uses unsupported features
      */
     public LogicalPlan parse(String sql) {
+        return parse(sql, null);
+    }
+
+    /**
+     * Parses a SparkSQL query string into a Thunderduck LogicalPlan with schema resolution.
+     *
+     * <p>When a DuckDB connection is provided, table references are resolved to their
+     * actual schemas via {@code DESCRIBE tableName}. This enables {@code inferSchema()}
+     * to succeed for all plan shapes, eliminating the need for regex-based schema fixups.
+     *
+     * <p>When connection is null, behaves identically to {@link #parse(String)}.
+     *
+     * @param sql the SparkSQL query string
+     * @param connection optional DuckDB connection for table schema resolution (can be null)
+     * @return the logical plan AST
+     * @throws SparkSQLParseException if the SQL is syntactically invalid
+     * @throws UnsupportedOperationException if the SQL uses unsupported features
+     */
+    public LogicalPlan parse(String sql, Connection connection) {
         if (sql == null || sql.isBlank()) {
             throw new SparkSQLParseException(0, 0, "", "SQL query must not be null or empty");
         }
@@ -107,7 +128,7 @@ public class SparkSQLParser {
         }
 
         // Build AST from parse tree
-        SparkSQLAstBuilder astBuilder = new SparkSQLAstBuilder();
+        SparkSQLAstBuilder astBuilder = new SparkSQLAstBuilder(connection);
         LogicalPlan plan = (LogicalPlan) astBuilder.visit(tree);
 
         logger.debug("Successfully parsed SparkSQL into LogicalPlan: {}", plan);
