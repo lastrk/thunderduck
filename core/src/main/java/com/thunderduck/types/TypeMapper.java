@@ -230,35 +230,4 @@ public class TypeMapper {
         return -1;
     }
 
-    /**
-     * Splits a string by a delimiter, respecting parentheses nesting.
-     *
-     * @param str the string to split
-     * @param delimiter the delimiter character
-     * @return the split parts
-     */
-    /*private static String[] splitTopLevel(String str, char delimiter) {
-        java.util.List<String> parts = new java.util.ArrayList<>();
-        int depth = 0;
-        int start = 0;
-
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            if (c == '(') {
-                depth++;
-            } else if (c == ')') {
-                depth--;
-            } else if (c == delimiter && depth == 0) {
-                parts.add(str.substring(start, i));
-                start = i + 1;
-            }
-        }
-
-        // Add the last part
-        if (start < str.length()) {
-            parts.add(str.substring(start));
-        }
-
-        return parts.toArray(new String[0]);
-    }*/
 }

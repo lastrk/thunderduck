@@ -13,9 +13,8 @@ from pathlib import Path
 from pyspark.sql import functions as F
 from pyspark.sql.functions import col, lit, when
 
-# Add utils to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
-from dataframe_diff import assert_dataframes_equal
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.dataframe_diff import assert_dataframes_equal
 
 
 @pytest.mark.differential

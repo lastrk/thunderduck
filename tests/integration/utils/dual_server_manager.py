@@ -12,6 +12,7 @@ import socket
 from pathlib import Path
 from typing import Optional, Tuple
 from server_manager import ServerManager
+from port_utils import is_port_listening, wait_for_port as _wait_for_port
 
 
 class DualServerManager:
@@ -69,18 +70,9 @@ class DualServerManager:
 
     def wait_for_port(self, port: int, timeout: int = 60) -> bool:
         """Wait for a port to be accepting connections"""
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            try:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.settimeout(1)
-                    result = s.connect_ex(("localhost", port))
-                    if result == 0:
-                        time.sleep(1)  # Give it a moment to fully initialize
-                        return True
-            except (socket.error, socket.timeout):
-                pass
-            time.sleep(1)
+        if _wait_for_port(port, host='localhost', timeout=timeout):
+            time.sleep(1)  # Give it a moment to fully initialize
+            return True
         return False
 
     def start_spark_reference(self, timeout: int = 60) -> bool:

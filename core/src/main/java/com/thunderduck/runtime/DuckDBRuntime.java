@@ -238,15 +238,6 @@ public class DuckDBRuntime implements AutoCloseable {
     }
 
     /**
-     * Get the hardware profile used for configuration.
-     *
-     * @return the hardware profile
-     */
-    public HardwareProfile getHardwareProfile() {
-        return hardware;
-    }
-
-    /**
      * Check if this runtime is closed.
      *
      * @return true if closed

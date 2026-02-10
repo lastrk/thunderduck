@@ -173,129 +173,15 @@ public final class Aggregate extends LogicalPlan {
         return children.get(0);
     }
 
+    /**
+     * Delegates to {@link com.thunderduck.generator.SQLGenerator#visitAggregate} via
+     * {@code generator.generate(this)} to ensure a single canonical implementation
+     * for aggregate SQL generation. This eliminates the dual-path divergence where
+     * Aggregate.toSQL() and SQLGenerator.visitAggregate() could drift out of sync.
+     */
     @Override
     public String toSQL(SQLGenerator generator) {
-        if (aggregateExpressions.isEmpty()) {
-            throw new IllegalArgumentException("Cannot generate SQL for aggregation with no aggregate expressions");
-        }
-
-        StringBuilder sql = new StringBuilder();
-
-        // Resolve child schema once for type-aware SQL generation
-        StructType childSchema = null;
-        try {
-            childSchema = child().schema();
-        } catch (Exception e) {
-            // Child schema resolution failed — proceed without type-aware corrections
-        }
-
-        // SELECT clause with grouping expressions and aggregates
-        sql.append("SELECT ");
-
-        // Render grouping expressions
-        List<String> groupingRendered = new ArrayList<>();
-        for (Expression expr : groupingExpressions) {
-            groupingRendered.add(expr.toSQL());
-        }
-
-        // Render aggregate expressions
-        List<String> aggregateRendered = new ArrayList<>();
-        for (AggregateExpression aggExpr : aggregateExpressions) {
-            aggregateRendered.add(renderAggregateExpression(aggExpr, childSchema));
-        }
-
-        // Combine in correct order: use selectOrder if present, else grouping-first
-        List<String> selectExprs = new ArrayList<>();
-        if (selectOrder != null) {
-            for (SelectEntry entry : selectOrder) {
-                if (entry.isAggregate()) {
-                    selectExprs.add(aggregateRendered.get(entry.index()));
-                } else {
-                    selectExprs.add(groupingRendered.get(entry.index()));
-                }
-            }
-        } else {
-            selectExprs.addAll(groupingRendered);
-            selectExprs.addAll(aggregateRendered);
-        }
-
-        sql.append(String.join(", ", selectExprs));
-
-        // FROM clause
-        sql.append(" FROM (");
-        sql.append(generator.generate(child()));
-        sql.append(") AS ").append(generator.generateSubqueryAlias());
-
-        // GROUP BY clause
-        // Note: GROUP BY cannot have aliases, so we unwrap AliasExpressions
-        if (!groupingExpressions.isEmpty()) {
-            sql.append(" GROUP BY ");
-
-            // Emit ROLLUP/CUBE/GROUPING SETS wrapper if present
-            if (groupingSets != null) {
-                sql.append(groupingSets.toSQL());
-            } else {
-                List<String> groupExprs = new ArrayList<>();
-                for (Expression expr : groupingExpressions) {
-                    // Unwrap AliasExpression for GROUP BY - aliases not allowed here
-                    if (expr instanceof AliasExpression) {
-                        groupExprs.add(((AliasExpression) expr).expression().toSQL());
-                    } else {
-                        groupExprs.add(expr.toSQL());
-                    }
-                }
-                sql.append(String.join(", ", groupExprs));
-            }
-        }
-
-        // HAVING clause
-        if (havingCondition != null) {
-            sql.append(" HAVING ");
-            sql.append(havingCondition.toSQL());
-        }
-
-        return sql.toString();
-    }
-
-    /**
-     * Renders a single aggregate expression to SQL with strict mode transformations and aliasing.
-     */
-    private static String renderAggregateExpression(AggregateExpression aggExpr, StructType childSchema) {
-        String aggSQL;
-        String originalSQL = null;
-
-        if (com.thunderduck.runtime.SparkCompatMode.isStrictMode() && aggExpr.isComposite()) {
-            originalSQL = aggExpr.rawExpression().toSQL();
-            Expression transformed = com.thunderduck.generator.SQLGenerator.transformAggregateExpression(aggExpr.rawExpression());
-            aggSQL = transformed.toSQL();
-        } else if (com.thunderduck.runtime.SparkCompatMode.isStrictMode() && !aggExpr.isComposite()) {
-            aggSQL = aggExpr.toSQL();
-            String baseFuncName = aggExpr.function().toUpperCase();
-            if (baseFuncName.endsWith("_DISTINCT")) {
-                baseFuncName = baseFuncName.substring(0, baseFuncName.length() - "_DISTINCT".length());
-            }
-            if (baseFuncName.equals("SUM") || baseFuncName.equals("AVG")) {
-                originalSQL = aggSQL;
-                if (baseFuncName.equals("SUM")) {
-                    aggSQL = aggSQL.replaceFirst("(?i)\\bSUM\\b", "spark_sum");
-                } else {
-                    aggSQL = aggSQL.replaceFirst("(?i)\\bAVG\\b", "spark_avg");
-                }
-            }
-        } else {
-            aggSQL = aggExpr.toSQL();
-        }
-
-        aggSQL = wrapWithTypeCastIfNeeded(aggSQL, aggExpr, childSchema);
-
-        if (aggExpr.alias() != null && !aggExpr.alias().isEmpty()) {
-            aggSQL += " AS " + com.thunderduck.generator.SQLQuoting.quoteIdentifier(aggExpr.alias());
-        } else if (aggExpr.isUnaliasedCountStar()) {
-            aggSQL += " AS \"count(1)\"";
-        } else if (originalSQL != null) {
-            aggSQL += " AS " + com.thunderduck.generator.SQLQuoting.quoteIdentifier(originalSQL);
-        }
-        return aggSQL;
+        return generator.generate(this);
     }
 
     @Override
@@ -371,15 +257,6 @@ public final class Aggregate extends LogicalPlan {
         }
 
         return new StructType(fields);
-    }
-
-    /**
-     * Wraps an aggregate expression SQL with a CAST if DuckDB's return type would differ from
-     * Spark's expected type. Delegates to SQLGenerator's shared implementation.
-     */
-    private static String wrapWithTypeCastIfNeeded(String aggSQL, AggregateExpression aggExpr,
-                                                      StructType childSchema) {
-        return com.thunderduck.generator.SQLGenerator.wrapWithTypeCastIfNeeded(aggSQL, aggExpr, childSchema);
     }
 
     /**

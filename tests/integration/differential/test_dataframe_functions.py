@@ -22,8 +22,8 @@ from pyspark.sql.types import (
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent / "utils"))
-from dataframe_diff import assert_dataframes_equal
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.dataframe_diff import assert_dataframes_equal
 
 
 # ============================================================================

@@ -233,8 +233,7 @@ public class QueryExecutor {
     private void copyVectorRange(org.apache.arrow.vector.FieldVector src, int srcStart,
                                  org.apache.arrow.vector.FieldVector dst, int dstStart, int count) {
         // Type dispatch once per column - determine copier based on vector type
-        if (src instanceof org.apache.arrow.vector.IntVector) {
-            org.apache.arrow.vector.IntVector srcVec = (org.apache.arrow.vector.IntVector) src;
+        if (src instanceof org.apache.arrow.vector.IntVector srcVec) {
             org.apache.arrow.vector.IntVector dstVec = (org.apache.arrow.vector.IntVector) dst;
             for (int i = 0; i < count; i++) {
                 if (srcVec.isNull(srcStart + i)) {
@@ -243,8 +242,7 @@ public class QueryExecutor {
                     dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
                 }
             }
-        } else if (src instanceof org.apache.arrow.vector.BigIntVector) {
-            org.apache.arrow.vector.BigIntVector srcVec = (org.apache.arrow.vector.BigIntVector) src;
+        } else if (src instanceof org.apache.arrow.vector.BigIntVector srcVec) {
             org.apache.arrow.vector.BigIntVector dstVec = (org.apache.arrow.vector.BigIntVector) dst;
             for (int i = 0; i < count; i++) {
                 if (srcVec.isNull(srcStart + i)) {
@@ -253,8 +251,7 @@ public class QueryExecutor {
                     dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
                 }
             }
-        } else if (src instanceof org.apache.arrow.vector.Float8Vector) {
-            org.apache.arrow.vector.Float8Vector srcVec = (org.apache.arrow.vector.Float8Vector) src;
+        } else if (src instanceof org.apache.arrow.vector.Float8Vector srcVec) {
             org.apache.arrow.vector.Float8Vector dstVec = (org.apache.arrow.vector.Float8Vector) dst;
             for (int i = 0; i < count; i++) {
                 if (srcVec.isNull(srcStart + i)) {
@@ -263,8 +260,7 @@ public class QueryExecutor {
                     dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
                 }
             }
-        } else if (src instanceof org.apache.arrow.vector.Float4Vector) {
-            org.apache.arrow.vector.Float4Vector srcVec = (org.apache.arrow.vector.Float4Vector) src;
+        } else if (src instanceof org.apache.arrow.vector.Float4Vector srcVec) {
             org.apache.arrow.vector.Float4Vector dstVec = (org.apache.arrow.vector.Float4Vector) dst;
             for (int i = 0; i < count; i++) {
                 if (srcVec.isNull(srcStart + i)) {
@@ -273,8 +269,7 @@ public class QueryExecutor {
                     dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
                 }
             }
-        } else if (src instanceof org.apache.arrow.vector.VarCharVector) {
-            org.apache.arrow.vector.VarCharVector srcVec = (org.apache.arrow.vector.VarCharVector) src;
+        } else if (src instanceof org.apache.arrow.vector.VarCharVector srcVec) {
             org.apache.arrow.vector.VarCharVector dstVec = (org.apache.arrow.vector.VarCharVector) dst;
             for (int i = 0; i < count; i++) {
                 if (srcVec.isNull(srcStart + i)) {
@@ -283,8 +278,7 @@ public class QueryExecutor {
                     dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
                 }
             }
-        } else if (src instanceof org.apache.arrow.vector.BitVector) {
-            org.apache.arrow.vector.BitVector srcVec = (org.apache.arrow.vector.BitVector) src;
+        } else if (src instanceof org.apache.arrow.vector.BitVector srcVec) {
             org.apache.arrow.vector.BitVector dstVec = (org.apache.arrow.vector.BitVector) dst;
             for (int i = 0; i < count; i++) {
                 if (srcVec.isNull(srcStart + i)) {
@@ -293,8 +287,7 @@ public class QueryExecutor {
                     dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
                 }
             }
-        } else if (src instanceof org.apache.arrow.vector.DateDayVector) {
-            org.apache.arrow.vector.DateDayVector srcVec = (org.apache.arrow.vector.DateDayVector) src;
+        } else if (src instanceof org.apache.arrow.vector.DateDayVector srcVec) {
             org.apache.arrow.vector.DateDayVector dstVec = (org.apache.arrow.vector.DateDayVector) dst;
             for (int i = 0; i < count; i++) {
                 if (srcVec.isNull(srcStart + i)) {
@@ -303,8 +296,7 @@ public class QueryExecutor {
                     dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
                 }
             }
-        } else if (src instanceof org.apache.arrow.vector.DecimalVector) {
-            org.apache.arrow.vector.DecimalVector srcVec = (org.apache.arrow.vector.DecimalVector) src;
+        } else if (src instanceof org.apache.arrow.vector.DecimalVector srcVec) {
             org.apache.arrow.vector.DecimalVector dstVec = (org.apache.arrow.vector.DecimalVector) dst;
             for (int i = 0; i < count; i++) {
                 if (srcVec.isNull(srcStart + i)) {
@@ -313,8 +305,7 @@ public class QueryExecutor {
                     dstVec.setSafe(dstStart + i, srcVec.getObject(srcStart + i));
                 }
             }
-        } else if (src instanceof org.apache.arrow.vector.TimeStampMicroTZVector) {
-            org.apache.arrow.vector.TimeStampMicroTZVector srcVec = (org.apache.arrow.vector.TimeStampMicroTZVector) src;
+        } else if (src instanceof org.apache.arrow.vector.TimeStampMicroTZVector srcVec) {
             org.apache.arrow.vector.TimeStampMicroTZVector dstVec = (org.apache.arrow.vector.TimeStampMicroTZVector) dst;
             for (int i = 0; i < count; i++) {
                 if (srcVec.isNull(srcStart + i)) {
@@ -323,8 +314,7 @@ public class QueryExecutor {
                     dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
                 }
             }
-        } else if (src instanceof org.apache.arrow.vector.TimeStampMicroVector) {
-            org.apache.arrow.vector.TimeStampMicroVector srcVec = (org.apache.arrow.vector.TimeStampMicroVector) src;
+        } else if (src instanceof org.apache.arrow.vector.TimeStampMicroVector srcVec) {
             org.apache.arrow.vector.TimeStampMicroVector dstVec = (org.apache.arrow.vector.TimeStampMicroVector) dst;
             for (int i = 0; i < count; i++) {
                 if (srcVec.isNull(srcStart + i)) {
@@ -333,8 +323,7 @@ public class QueryExecutor {
                     dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
                 }
             }
-        } else if (src instanceof org.apache.arrow.vector.SmallIntVector) {
-            org.apache.arrow.vector.SmallIntVector srcVec = (org.apache.arrow.vector.SmallIntVector) src;
+        } else if (src instanceof org.apache.arrow.vector.SmallIntVector srcVec) {
             org.apache.arrow.vector.SmallIntVector dstVec = (org.apache.arrow.vector.SmallIntVector) dst;
             for (int i = 0; i < count; i++) {
                 if (srcVec.isNull(srcStart + i)) {
@@ -343,8 +332,7 @@ public class QueryExecutor {
                     dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
                 }
             }
-        } else if (src instanceof org.apache.arrow.vector.TinyIntVector) {
-            org.apache.arrow.vector.TinyIntVector srcVec = (org.apache.arrow.vector.TinyIntVector) src;
+        } else if (src instanceof org.apache.arrow.vector.TinyIntVector srcVec) {
             org.apache.arrow.vector.TinyIntVector dstVec = (org.apache.arrow.vector.TinyIntVector) dst;
             for (int i = 0; i < count; i++) {
                 if (srcVec.isNull(srcStart + i)) {
@@ -353,8 +341,7 @@ public class QueryExecutor {
                     dstVec.setSafe(dstStart + i, srcVec.get(srcStart + i));
                 }
             }
-        } else if (src instanceof org.apache.arrow.vector.VarBinaryVector) {
-            org.apache.arrow.vector.VarBinaryVector srcVec = (org.apache.arrow.vector.VarBinaryVector) src;
+        } else if (src instanceof org.apache.arrow.vector.VarBinaryVector srcVec) {
             org.apache.arrow.vector.VarBinaryVector dstVec = (org.apache.arrow.vector.VarBinaryVector) dst;
             for (int i = 0; i < count; i++) {
                 if (srcVec.isNull(srcStart + i)) {

@@ -36,7 +36,6 @@ import static com.thunderduck.generator.SQLQuoting.*;
 public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
     private final StringBuilder sql;
-    //private final Stack<GenerationContext> contextStack;
     private int aliasCounter;
     private int subqueryDepth;
 
@@ -45,7 +44,6 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      */
     public SQLGenerator() {
         this.sql = new StringBuilder();
-      //  this.contextStack = new Stack<>();
         this.aliasCounter = 0;
         this.subqueryDepth = 0;
     }
@@ -71,19 +69,13 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         // Check if this is a recursive call (buffer not empty or subquery depth > 0)
         boolean isRecursive = sql.length() > 0 || subqueryDepth > 0;
 
-        // State tracking for debugging (can be enabled if needed)
-        // System.err.println("DEBUG: generate() called - sql.length()=" + sql.length() +
-        //                   ", aliasCounter=" + aliasCounter +
-        //                   ", subqueryDepth=" + subqueryDepth +
-        //                   ", isRecursive=" + isRecursive);
-
         // Save state for recursive calls or rollback
         int savedLength = sql.length();
         
         if (!isRecursive) {
             // Top-level call: reset all state
             sql.setLength(0);
-            //contextStack.clear();
+
             aliasCounter = 0;
             subqueryDepth = 0;
         }
@@ -106,7 +98,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         } catch (UnsupportedOperationException e) {
             // Rollback state
             sql.setLength(savedLength);
-            //contextStack.clear();
+
 
             // Re-throw UnsupportedOperationException without wrapping
             // so callers can catch it directly if needed
@@ -115,7 +107,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         } catch (IllegalArgumentException e) {
             // Rollback state
             sql.setLength(savedLength);
-            //contextStack.clear();
+
 
             // Re-throw IllegalArgumentException without wrapping
             // This includes validation errors from quoting/escaping
@@ -124,7 +116,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         } catch (Exception e) {
             // Rollback state
             sql.setLength(savedLength);
-            //contextStack.clear();
+
 
             // Wrap in SQLGenerationException with context
             throw new SQLGenerationException(
@@ -227,12 +219,12 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         if (child instanceof Filter) {
             List<Filter> filters = new java.util.ArrayList<>();
             LogicalPlan current = child;
-            while (current instanceof Filter) {
-                filters.add((Filter) current);
-                current = ((Filter) current).child();
+            while (current instanceof Filter f) {
+                filters.add(f);
+                current = f.child();
             }
-            if (current instanceof Join) {
-                generateProjectOnFilterJoin(plan, filters, (Join) current);
+            if (current instanceof Join currentJoin) {
+                generateProjectOnFilterJoin(plan, filters, currentJoin);
                 return;
             }
         }
@@ -241,8 +233,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         // Generate flat SQL to preserve alias visibility and properly qualify columns
         // This handles cases like: df1.join(df2, cond, "right").select(df1["col"], df2["col"])
         // Without flat SQL, duplicate column names become ambiguous in the wrapped subquery
-        if (child instanceof Join) {
-            generateProjectOnJoin(plan, (Join) child);
+        if (child instanceof Join childJoin) {
+            generateProjectOnJoin(plan, childJoin);
             return;
         }
 
@@ -422,8 +414,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         Map<Long, String> planIdToAlias = new HashMap<>();
         int predictedCounter = aliasCounter;
         for (LogicalPlan source : sources) {
-            if (source instanceof AliasedRelation) {
-                AliasedRelation aliased = (AliasedRelation) source;
+            if (source instanceof AliasedRelation aliased) {
                 String alias = SQLQuoting.quoteIdentifier(aliased.alias());
                 if (aliased.planId().isPresent()) {
                     planIdToAlias.putIfAbsent(aliased.planId().getAsLong(), alias);
@@ -464,9 +455,9 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      */
     private LogicalPlan collectJoinParts(Join join, List<JoinPart> parts) {
         LogicalPlan left = join.left();
-        if (left instanceof Join) {
+        if (left instanceof Join leftJoin) {
             // Recursively collect from nested join
-            LogicalPlan leftmost = collectJoinParts((Join) left, parts);
+            LogicalPlan leftmost = collectJoinParts(leftJoin, parts);
             // Add this join's right side
             parts.add(new JoinPart(join.right(), join.joinType(), join.condition()));
             return leftmost;
@@ -482,8 +473,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * Generates SQL for a join source (table, aliased relation, or subquery).
      */
     private void generateJoinSource(LogicalPlan plan) {
-        if (plan instanceof AliasedRelation) {
-            AliasedRelation aliased = (AliasedRelation) plan;
+        if (plan instanceof AliasedRelation aliased) {
             String childSource = getDirectlyAliasableSource(aliased.child());
             if (childSource != null) {
                 sql.append(childSource);
@@ -551,12 +541,11 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             List<Filter> filters = new java.util.ArrayList<>();
             filters.add(plan);
             LogicalPlan current = child;
-            while (current instanceof Filter) {
-                filters.add((Filter) current);
-                current = ((Filter) current).child();
+            while (current instanceof Filter f) {
+                filters.add(f);
+                current = f.child();
             }
-            if (current instanceof Join && hasAliasedChildren((Join) current)) {
-                Join join = (Join) current;
+            if (current instanceof Join join && hasAliasedChildren(join)) {
                 Map<Long, String> planIdToAlias = new HashMap<>();
                 sql.append("SELECT * FROM ");
                 generateFlatJoinChainWithMapping(join, planIdToAlias);
@@ -637,9 +626,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         // Predict the aliases for each source, starting from current aliasCounter
         int predictedCounter = aliasCounter;
         for (LogicalPlan source : sources) {
-            if (source instanceof AliasedRelation) {
+            if (source instanceof AliasedRelation aliased) {
                 // User-provided alias
-                AliasedRelation aliased = (AliasedRelation) source;
                 String alias = SQLQuoting.quoteIdentifier(aliased.alias());
                 if (aliased.planId().isPresent()) {
                     mapping.putIfAbsent(aliased.planId().getAsLong(), alias);
@@ -666,8 +654,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * @param mapping the map to populate with plan_id → alias entries
      */
     private void collectJoinSidePlanIds(LogicalPlan plan, Map<Long, String> mapping) {
-        if (plan instanceof AliasedRelation) {
-            AliasedRelation aliased = (AliasedRelation) plan;
+        if (plan instanceof AliasedRelation aliased) {
             String alias = SQLQuoting.quoteIdentifier(aliased.alias());
             // Map the AliasedRelation's own plan_id
             if (aliased.planId().isPresent()) {
@@ -675,9 +662,9 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             }
             // Also map child plan_ids to this alias
             collectPlanIds(aliased.child(), alias, mapping);
-        } else if (plan instanceof Join) {
+        } else if (plan instanceof Join j) {
             // Recursively handle nested joins
-            collectJoinPlanIds((Join) plan, mapping);
+            collectJoinPlanIds(j, mapping);
         } else {
             // For non-aliased, non-join plans, generate an alias and map their plan_ids
             // Note: This alias should match what generateSubqueryAlias() will produce later
@@ -701,12 +688,11 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         if (plan instanceof AliasedRelation) {
             return true;
         }
-        if (plan instanceof Join) {
-            Join j = (Join) plan;
+        if (plan instanceof Join j) {
             return hasAliasedRelation(j.left()) || hasAliasedRelation(j.right());
         }
-        if (plan instanceof Filter) {
-            return hasAliasedRelation(((Filter) plan).child());
+        if (plan instanceof Filter f) {
+            return hasAliasedRelation(f.child());
         }
         return false;
     }
@@ -1147,8 +1133,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                 java.util.List<String> groupExprs = new java.util.ArrayList<>();
                 for (com.thunderduck.expression.Expression expr : plan.groupingExpressions()) {
                     // Unwrap AliasExpression for GROUP BY - aliases not allowed here
-                    if (expr instanceof com.thunderduck.expression.AliasExpression) {
-                        groupExprs.add(((com.thunderduck.expression.AliasExpression) expr).expression().toSQL());
+                    if (expr instanceof com.thunderduck.expression.AliasExpression aliasExpr) {
+                        groupExprs.add(aliasExpr.expression().toSQL());
                     } else {
                         groupExprs.add(expr.toSQL());
                     }
@@ -1338,13 +1324,13 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             com.thunderduck.types.StructType childSchema) {
         // Get underlying expression if aliased
         com.thunderduck.expression.Expression baseExpr = expr;
-        if (expr instanceof com.thunderduck.expression.AliasExpression) {
-            baseExpr = ((com.thunderduck.expression.AliasExpression) expr).expression();
+        if (expr instanceof com.thunderduck.expression.AliasExpression ae) {
+            baseExpr = ae.expression();
         }
 
         // Resolve column reference from child schema
-        if (baseExpr instanceof UnresolvedColumn && childSchema != null) {
-            String colName = ((UnresolvedColumn) baseExpr).columnName();
+        if (baseExpr instanceof UnresolvedColumn col && childSchema != null) {
+            String colName = col.columnName();
             com.thunderduck.types.StructField field = childSchema.fieldByName(colName);
             if (field != null) {
                 return field.dataType();
@@ -1373,8 +1359,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         semiAntiChain.add(plan);
 
         LogicalPlan current = plan.left();
-        while (current instanceof Join) {
-            Join j = (Join) current;
+        while (current instanceof Join j) {
             if (j.joinType() == Join.JoinType.LEFT_SEMI || j.joinType() == Join.JoinType.LEFT_ANTI) {
                 semiAntiChain.add(j);
                 current = j.left();
@@ -1390,17 +1375,17 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
         // Walk through stacked filters to collect filter conditions
         List<Expression> filterConditions = new java.util.ArrayList<>();
-        while (current instanceof Filter) {
-            filterConditions.add(((Filter) current).condition());
-            current = ((Filter) current).child();
+        while (current instanceof Filter f) {
+            filterConditions.add(f.condition());
+            current = f.child();
         }
 
         // The base must be a regular Join with aliased children (looking through filters)
-        if (!(current instanceof Join) || !hasAliasedChildren((Join) current)) {
+        if (!(current instanceof Join currentJoin) || !hasAliasedChildren(currentJoin)) {
             return false;
         }
 
-        Join baseJoin = (Join) current;
+        Join baseJoin = currentJoin;
 
         // Collect any additional filter conditions that are interleaved within the join chain.
         // The join chain may have Filters on the left side of joins (e.g., Join(Filter(...Join...), table)).
@@ -1420,8 +1405,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         for (Join semiAnti : semiAntiChain) {
             LogicalPlan rightPlan = semiAnti.right();
             String rightAlias;
-            if (rightPlan instanceof AliasedRelation) {
-                rightAlias = SQLQuoting.quoteIdentifier(((AliasedRelation) rightPlan).alias());
+            if (rightPlan instanceof AliasedRelation aliasedRight) {
+                rightAlias = SQLQuoting.quoteIdentifier(aliasedRight.alias());
             } else {
                 // Predict what alias will be generated (don't consume it yet)
                 rightAlias = "subquery_" + (aliasCounter + 1 + semiAntiChain.indexOf(semiAnti));
@@ -1471,8 +1456,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             LogicalPlan rightPlan = semiAnti.right();
             sql.append("EXISTS (SELECT 1 FROM ");
 
-            if (rightPlan instanceof AliasedRelation) {
-                AliasedRelation aliased = (AliasedRelation) rightPlan;
+            if (rightPlan instanceof AliasedRelation aliased) {
                 String childSource = getDirectlyAliasableSource(aliased.child());
                 if (childSource != null) {
                     sql.append(childSource).append(" AS ").append(SQLQuoting.quoteIdentifier(aliased.alias()));
@@ -1523,14 +1507,14 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         LogicalPlan left = join.left();
 
         // Peel off any Filters on the left side
-        while (left instanceof Filter) {
-            filterConditions.add(((Filter) left).condition());
-            left = ((Filter) left).child();
+        while (left instanceof Filter f) {
+            filterConditions.add(f.condition());
+            left = f.child();
         }
 
         // If the left is itself a join, recursively flatten it too
-        if (left instanceof Join) {
-            left = flattenJoinFilters((Join) left, filterConditions);
+        if (left instanceof Join leftJoin) {
+            left = flattenJoinFilters(leftJoin, filterConditions);
         }
 
         // If we peeled any filters, reconstruct the join with the new left
@@ -1571,14 +1555,14 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             String leftAlias;
             String rightAlias;
 
-            if (leftPlan instanceof AliasedRelation) {
-                leftAlias = SQLQuoting.quoteIdentifier(((AliasedRelation) leftPlan).alias());
+            if (leftPlan instanceof AliasedRelation leftAliased) {
+                leftAlias = SQLQuoting.quoteIdentifier(leftAliased.alias());
             } else {
                 leftAlias = generateSubqueryAlias();
             }
 
-            if (rightPlan instanceof AliasedRelation) {
-                rightAlias = SQLQuoting.quoteIdentifier(((AliasedRelation) rightPlan).alias());
+            if (rightPlan instanceof AliasedRelation rightAliased) {
+                rightAlias = SQLQuoting.quoteIdentifier(rightAliased.alias());
             } else {
                 rightAlias = generateSubqueryAlias();
             }
@@ -1589,8 +1573,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             collectPlanIds(plan.right(), rightAlias, planIdToAlias);
 
             // LEFT SIDE - handle AliasedRelation, use direct aliasing for TableScan, wrap others
-            if (leftPlan instanceof AliasedRelation) {
-                AliasedRelation aliased = (AliasedRelation) leftPlan;
+            if (leftPlan instanceof AliasedRelation aliased) {
                 String childSource = getDirectlyAliasableSource(aliased.child());
                 if (childSource != null) {
                     sql.append("SELECT * FROM ").append(childSource).append(" AS ").append(leftAlias);
@@ -1621,15 +1604,14 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             }
 
             // RIGHT SIDE - handle AliasedRelation, use direct aliasing for TableScan, wrap others
-            if (rightPlan instanceof AliasedRelation) {
-                AliasedRelation aliased = (AliasedRelation) rightPlan;
-                String childSource = getDirectlyAliasableSource(aliased.child());
+            if (rightPlan instanceof AliasedRelation aliased2) {
+                String childSource = getDirectlyAliasableSource(aliased2.child());
                 if (childSource != null) {
                     sql.append("EXISTS (SELECT 1 FROM ").append(childSource).append(" AS ").append(rightAlias);
                 } else {
                     sql.append("EXISTS (SELECT 1 FROM (");
                     subqueryDepth++;
-                    visit(aliased.child());
+                    visit(aliased2.child());
                     subqueryDepth--;
                     sql.append(") AS ").append(rightAlias);
                 }
@@ -1664,14 +1646,14 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             LogicalPlan leftPlan = plan.left();
             LogicalPlan rightPlan = plan.right();
 
-            if (leftPlan instanceof AliasedRelation) {
-                leftAlias = SQLQuoting.quoteIdentifier(((AliasedRelation) leftPlan).alias());
+            if (leftPlan instanceof AliasedRelation leftAliased) {
+                leftAlias = SQLQuoting.quoteIdentifier(leftAliased.alias());
             } else {
                 leftAlias = generateSubqueryAlias();
             }
 
-            if (rightPlan instanceof AliasedRelation) {
-                rightAlias = SQLQuoting.quoteIdentifier(((AliasedRelation) rightPlan).alias());
+            if (rightPlan instanceof AliasedRelation rightAliased) {
+                rightAlias = SQLQuoting.quoteIdentifier(rightAliased.alias());
             } else {
                 rightAlias = generateSubqueryAlias();
             }
@@ -1685,9 +1667,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             String selectClause = generateJoinSelectClause(plan, leftAlias, rightAlias);
 
             // LEFT SIDE - use direct aliasing for TableScan, handle AliasedRelation, wrap others
-            if (leftPlan instanceof AliasedRelation) {
+            if (leftPlan instanceof AliasedRelation aliased) {
                 // User provided an alias - generate SQL using that alias directly
-                AliasedRelation aliased = (AliasedRelation) leftPlan;
                 String childSource = getDirectlyAliasableSource(aliased.child());
                 if (childSource != null) {
                     sql.append(selectClause).append(" FROM ").append(childSource).append(" AS ").append(leftAlias);
@@ -1723,16 +1704,15 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             });
 
             // RIGHT SIDE - use direct aliasing for TableScan, handle AliasedRelation, wrap others
-            if (rightPlan instanceof AliasedRelation) {
+            if (rightPlan instanceof AliasedRelation aliased2) {
                 // User provided an alias - generate SQL using that alias directly
-                AliasedRelation aliased = (AliasedRelation) rightPlan;
-                String childSource = getDirectlyAliasableSource(aliased.child());
+                String childSource = getDirectlyAliasableSource(aliased2.child());
                 if (childSource != null) {
                     sql.append(childSource).append(" AS ").append(rightAlias);
                 } else {
                     sql.append("(");
                     subqueryDepth++;
-                    visit(aliased.child());
+                    visit(aliased2.child());
                     subqueryDepth--;
                     sql.append(") AS ").append(rightAlias);
                 }
@@ -2452,69 +2432,67 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             return null;
         }
 
-        if (vector instanceof org.apache.arrow.vector.BitVector) {
-            return ((org.apache.arrow.vector.BitVector) vector).get(index) != 0;
-        } else if (vector instanceof org.apache.arrow.vector.TinyIntVector) {
-            return ((org.apache.arrow.vector.TinyIntVector) vector).get(index);
-        } else if (vector instanceof org.apache.arrow.vector.SmallIntVector) {
-            return ((org.apache.arrow.vector.SmallIntVector) vector).get(index);
-        } else if (vector instanceof org.apache.arrow.vector.IntVector) {
-            return ((org.apache.arrow.vector.IntVector) vector).get(index);
-        } else if (vector instanceof org.apache.arrow.vector.BigIntVector) {
-            return ((org.apache.arrow.vector.BigIntVector) vector).get(index);
-        } else if (vector instanceof org.apache.arrow.vector.Float4Vector) {
-            return ((org.apache.arrow.vector.Float4Vector) vector).get(index);
-        } else if (vector instanceof org.apache.arrow.vector.Float8Vector) {
-            return ((org.apache.arrow.vector.Float8Vector) vector).get(index);
-        } else if (vector instanceof org.apache.arrow.vector.VarCharVector) {
-            byte[] bytes = ((org.apache.arrow.vector.VarCharVector) vector).get(index);
+        if (vector instanceof org.apache.arrow.vector.BitVector v) {
+            return v.get(index) != 0;
+        } else if (vector instanceof org.apache.arrow.vector.TinyIntVector v) {
+            return v.get(index);
+        } else if (vector instanceof org.apache.arrow.vector.SmallIntVector v) {
+            return v.get(index);
+        } else if (vector instanceof org.apache.arrow.vector.IntVector v) {
+            return v.get(index);
+        } else if (vector instanceof org.apache.arrow.vector.BigIntVector v) {
+            return v.get(index);
+        } else if (vector instanceof org.apache.arrow.vector.Float4Vector v) {
+            return v.get(index);
+        } else if (vector instanceof org.apache.arrow.vector.Float8Vector v) {
+            return v.get(index);
+        } else if (vector instanceof org.apache.arrow.vector.VarCharVector v) {
+            byte[] bytes = v.get(index);
             return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
-        } else if (vector instanceof org.apache.arrow.vector.DateDayVector) {
-            int days = ((org.apache.arrow.vector.DateDayVector) vector).get(index);
+        } else if (vector instanceof org.apache.arrow.vector.DateDayVector v) {
+            int days = v.get(index);
             return java.time.LocalDate.ofEpochDay(days);
-        } else if (vector instanceof org.apache.arrow.vector.DateMilliVector) {
+        } else if (vector instanceof org.apache.arrow.vector.DateMilliVector v) {
             // Date stored as milliseconds since epoch
-            long millis = ((org.apache.arrow.vector.DateMilliVector) vector).get(index);
+            long millis = v.get(index);
             return java.time.LocalDate.ofEpochDay(millis / (24 * 60 * 60 * 1000L));
-        } else if (vector instanceof org.apache.arrow.vector.TimeStampMicroTZVector) {
+        } else if (vector instanceof org.apache.arrow.vector.TimeStampMicroTZVector v) {
             // Timestamp with timezone in microseconds
-            long micros = ((org.apache.arrow.vector.TimeStampMicroTZVector) vector).get(index);
+            long micros = v.get(index);
             return java.time.Instant.ofEpochSecond(micros / 1_000_000, (micros % 1_000_000) * 1000);
-        } else if (vector instanceof org.apache.arrow.vector.TimeStampMicroVector) {
+        } else if (vector instanceof org.apache.arrow.vector.TimeStampMicroVector v) {
             // Timestamp without timezone in microseconds
-            long micros = ((org.apache.arrow.vector.TimeStampMicroVector) vector).get(index);
+            long micros = v.get(index);
             return java.time.Instant.ofEpochSecond(micros / 1_000_000, (micros % 1_000_000) * 1000);
-        } else if (vector instanceof org.apache.arrow.vector.TimeStampMilliTZVector) {
+        } else if (vector instanceof org.apache.arrow.vector.TimeStampMilliTZVector v) {
             // Timestamp with timezone in milliseconds
-            long millis = ((org.apache.arrow.vector.TimeStampMilliTZVector) vector).get(index);
+            long millis = v.get(index);
             return java.time.Instant.ofEpochMilli(millis);
-        } else if (vector instanceof org.apache.arrow.vector.TimeStampMilliVector) {
+        } else if (vector instanceof org.apache.arrow.vector.TimeStampMilliVector v) {
             // Timestamp without timezone in milliseconds
-            long millis = ((org.apache.arrow.vector.TimeStampMilliVector) vector).get(index);
+            long millis = v.get(index);
             return java.time.Instant.ofEpochMilli(millis);
-        } else if (vector instanceof org.apache.arrow.vector.TimeStampNanoTZVector) {
+        } else if (vector instanceof org.apache.arrow.vector.TimeStampNanoTZVector v) {
             // Timestamp with timezone in nanoseconds
-            long nanos = ((org.apache.arrow.vector.TimeStampNanoTZVector) vector).get(index);
+            long nanos = v.get(index);
             return java.time.Instant.ofEpochSecond(nanos / 1_000_000_000, nanos % 1_000_000_000);
-        } else if (vector instanceof org.apache.arrow.vector.TimeStampNanoVector) {
+        } else if (vector instanceof org.apache.arrow.vector.TimeStampNanoVector v) {
             // Timestamp without timezone in nanoseconds
-            long nanos = ((org.apache.arrow.vector.TimeStampNanoVector) vector).get(index);
+            long nanos = v.get(index);
             return java.time.Instant.ofEpochSecond(nanos / 1_000_000_000, nanos % 1_000_000_000);
-        } else if (vector instanceof org.apache.arrow.vector.TimeStampSecTZVector) {
+        } else if (vector instanceof org.apache.arrow.vector.TimeStampSecTZVector v) {
             // Timestamp with timezone in seconds
-            long secs = ((org.apache.arrow.vector.TimeStampSecTZVector) vector).get(index);
+            long secs = v.get(index);
             return java.time.Instant.ofEpochSecond(secs);
-        } else if (vector instanceof org.apache.arrow.vector.TimeStampSecVector) {
+        } else if (vector instanceof org.apache.arrow.vector.TimeStampSecVector v) {
             // Timestamp without timezone in seconds
-            long secs = ((org.apache.arrow.vector.TimeStampSecVector) vector).get(index);
+            long secs = v.get(index);
             return java.time.Instant.ofEpochSecond(secs);
-        } else if (vector instanceof org.apache.arrow.vector.complex.ListVector) {
+        } else if (vector instanceof org.apache.arrow.vector.complex.ListVector listVector) {
             // Handle array/list types - return as List to preserve structure
-            org.apache.arrow.vector.complex.ListVector listVector = (org.apache.arrow.vector.complex.ListVector) vector;
             return listVector.getObject(index);  // Returns java.util.List
-        } else if (vector instanceof org.apache.arrow.vector.complex.MapVector) {
+        } else if (vector instanceof org.apache.arrow.vector.complex.MapVector mapVector) {
             // Handle map types - return as List of Map.Entry-like structures
-            org.apache.arrow.vector.complex.MapVector mapVector = (org.apache.arrow.vector.complex.MapVector) vector;
             return mapVector.getObject(index);  // Returns List of structs (key, value)
         }
 
@@ -2533,9 +2511,9 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             return "NULL";
         }
 
-        if (value instanceof String) {
+        if (value instanceof String str) {
             // Escape single quotes by doubling them
-            String escaped = ((String) value).replace("'", "''");
+            String escaped = str.replace("'", "''");
             return "'" + escaped + "'";
         } else if (value instanceof Number num) {
             // Handle special float/double values (NaN, Infinity)
@@ -2547,25 +2525,23 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                 if (f.isInfinite()) return f > 0 ? "'Infinity'::FLOAT" : "'-Infinity'::FLOAT";
             }
             return num.toString();
-        } else if (value instanceof Boolean) {
-            return (Boolean) value ? "TRUE" : "FALSE";
+        } else if (value instanceof Boolean bool) {
+            return bool ? "TRUE" : "FALSE";
         } else if (value instanceof java.time.LocalDate) {
             return "DATE '" + value.toString() + "'";
         } else if (value instanceof java.sql.Date) {
             return "DATE '" + value.toString() + "'";
         } else if (value instanceof java.sql.Timestamp) {
             return "TIMESTAMP '" + value.toString() + "'";
-        } else if (value instanceof java.time.Instant) {
+        } else if (value instanceof java.time.Instant instant) {
             // Format Instant as TIMESTAMP literal
-            java.time.Instant instant = (java.time.Instant) value;
             java.time.LocalDateTime ldt = java.time.LocalDateTime.ofInstant(instant, java.time.ZoneOffset.UTC);
             return "TIMESTAMP '" + ldt.toString().replace("T", " ") + "'";
         } else if (value instanceof java.time.LocalDateTime) {
             // Format LocalDateTime as TIMESTAMP literal
             return "TIMESTAMP '" + value.toString().replace("T", " ") + "'";
-        } else if (value instanceof java.util.List) {
+        } else if (value instanceof java.util.List<?> list) {
             // Format as DuckDB array literal: [elem1, elem2, ...]
-            java.util.List<?> list = (java.util.List<?>) value;
             StringBuilder sb = new StringBuilder("[");
             for (int i = 0; i < list.size(); i++) {
                 if (i > 0) {
@@ -2575,9 +2551,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             }
             sb.append("]");
             return sb.toString();
-        } else if (value instanceof java.util.Map) {
+        } else if (value instanceof java.util.Map<?, ?> map) {
             // Format as DuckDB map literal: MAP([keys], [values])
-            java.util.Map<?, ?> map = (java.util.Map<?, ?>) value;
             StringBuilder keys = new StringBuilder("[");
             StringBuilder values = new StringBuilder("[");
             boolean first = true;
@@ -2593,12 +2568,9 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             keys.append("]");
             values.append("]");
             return "MAP(" + keys + ", " + values + ")";
-        } else if (value instanceof org.apache.arrow.vector.util.JsonStringHashMap) {
+        } else if (value instanceof org.apache.arrow.vector.util.JsonStringHashMap<?, ?> arrowMap) {
             // Arrow returns maps as JsonStringHashMap (key-value struct entries)
             // Format as DuckDB map literal
-            @SuppressWarnings("unchecked")
-            org.apache.arrow.vector.util.JsonStringHashMap<String, ?> arrowMap =
-                (org.apache.arrow.vector.util.JsonStringHashMap<String, ?>) value;
             Object key = arrowMap.get("key");
             Object val = arrowMap.get("value");
             // This is a single entry from a map - should be handled by the List case above
@@ -2637,19 +2609,6 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         }
     }
 
-    // Removed local quoteIdentifier() methods - using SQLQuoting.quoteIdentifier() everywhere
-    // which always quotes identifiers for consistency and security (see Week 13 Phase 1 fixes)
-
-    /**
-     * Escapes single quotes in a string literal.
-     *
-     * @param str the string to escape
-     * @return the escaped string
-     */
-    /*private String escapeSingleQuotes(String str) {
-        return str.replace("'", "''");
-    }*/
-
     /**
      * Generates a unique subquery alias.
      *
@@ -2657,31 +2616,6 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      */
     public String generateSubqueryAlias() {
         return "subquery_" + (++aliasCounter);
-    }
-
-    /**
-     * Context for SQL generation.
-     *
-     * <p>Tracks state during traversal, such as current aliases,
-     * available columns, and generation options.
-     */
-    //private static class GenerationContext {
-        //private final Map<String, String> aliases;
-        // private final Set<String> availableColumns;
-
-        /*public GenerationContext() {
-            //this.aliases = new HashMap<>();
-           // this.availableColumns = new HashSet<>();
-        }*/
-    //}
-
-    /**
-     * Returns the current subquery depth.
-     *
-     * @return the subquery depth
-     */
-    public int getSubqueryDepth() {
-        return subqueryDepth;
     }
 
     /**

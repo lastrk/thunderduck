@@ -228,19 +228,12 @@ public class GroupingSets {
      * @return the SQL representation
      */
     public String toSQL() {
-        switch (type) {
-            case ROLLUP:
-                return "ROLLUP(" + columnsToSQL(columns) + ")";
-
-            case CUBE:
-                return "CUBE(" + columnsToSQL(columns) + ")";
-
-            case GROUPING_SETS:
-                return "GROUPING SETS(" + setsToSQL() + ")";
-
-            default:
-                throw new IllegalStateException("Unknown grouping type: " + type);
-        }
+        return switch (type) {
+            case ROLLUP -> "ROLLUP(" + columnsToSQL(columns) + ")";
+            case CUBE -> "CUBE(" + columnsToSQL(columns) + ")";
+            case GROUPING_SETS -> "GROUPING SETS(" + setsToSQL() + ")";
+            default -> throw new IllegalStateException("Unknown grouping type: " + type);
+        };
     }
 
     /**
@@ -253,19 +246,12 @@ public class GroupingSets {
      * @return the number of grouping sets
      */
     public int getGroupingSetCount() {
-        switch (type) {
-            case ROLLUP:
-                return columns.size() + 1;
-
-            case CUBE:
-                return 1 << columns.size();  // 2^N
-
-            case GROUPING_SETS:
-                return sets.size();
-
-            default:
-                throw new IllegalStateException("Unknown grouping type: " + type);
-        }
+        return switch (type) {
+            case ROLLUP -> columns.size() + 1;
+            case CUBE -> 1 << columns.size();  // 2^N
+            case GROUPING_SETS -> sets.size();
+            default -> throw new IllegalStateException("Unknown grouping type: " + type);
+        };
     }
 
     /**
@@ -275,8 +261,7 @@ public class GroupingSets {
      */
     private void validate() {
         switch (type) {
-            case ROLLUP:
-            case CUBE:
+            case ROLLUP, CUBE -> {
                 if (columns.isEmpty()) {
                     throw new IllegalArgumentException(
                         type + " requires at least one column");
@@ -285,9 +270,8 @@ public class GroupingSets {
                     throw new IllegalArgumentException(
                         type + " columns must not contain null values");
                 }
-                break;
-
-            case GROUPING_SETS:
+            }
+            case GROUPING_SETS -> {
                 if (sets.isEmpty()) {
                     throw new IllegalArgumentException(
                         "GROUPING SETS requires at least one set");
@@ -303,10 +287,8 @@ public class GroupingSets {
                             String.format("GROUPING SETS set %d contains null expressions", i));
                     }
                 }
-                break;
-
-            default:
-                throw new IllegalStateException("Unknown grouping type: " + type);
+            }
+            default -> throw new IllegalStateException("Unknown grouping type: " + type);
         }
     }
 

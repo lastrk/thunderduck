@@ -12,6 +12,8 @@ import signal
 from pathlib import Path
 from typing import Optional
 
+from port_utils import is_port_listening, wait_for_port
+
 
 class ServerManager:
     """Manages Spark Connect server lifecycle for integration tests"""
@@ -41,19 +43,10 @@ class ServerManager:
 
     def is_server_ready(self, timeout: int = 30) -> bool:
         """Check if server is ready to accept connections"""
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            try:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.settimeout(1)
-                    result = s.connect_ex((self.host, self.port))
-                    if result == 0:
-                        # Port is open, give it a moment to fully initialize
-                        time.sleep(2)
-                        return True
-            except (socket.error, socket.timeout):
-                pass
-            time.sleep(1)
+        if wait_for_port(self.port, host=self.host, timeout=timeout):
+            # Port is open, give it a moment to fully initialize
+            time.sleep(2)
+            return True
         return False
 
     def start(self, timeout: int = 60) -> bool:

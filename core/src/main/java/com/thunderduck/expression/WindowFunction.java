@@ -3,15 +3,10 @@ package com.thunderduck.expression;
 import com.thunderduck.expression.window.WindowFrame;
 import com.thunderduck.logical.Sort;
 import com.thunderduck.runtime.SparkCompatMode;
-import com.thunderduck.types.ByteType;
 import com.thunderduck.types.DataType;
-import com.thunderduck.types.DecimalType;
 import com.thunderduck.types.DoubleType;
-import com.thunderduck.types.FloatType;
 import com.thunderduck.types.IntegerType;
 import com.thunderduck.types.LongType;
-import com.thunderduck.types.ShortType;
-import com.thunderduck.types.StringType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -184,16 +179,16 @@ public final class WindowFunction implements Expression {
 
     @Override
     public DataType dataType() {
-        // Type depends on function
         String funcUpper = function.toUpperCase();
+
+        // Non-aggregate window functions: keep dedicated logic since
+        // TypeInferenceEngine.resolveAggregateReturnType() doesn't handle these
         switch (funcUpper) {
             case "ROW_NUMBER":
             case "RANK":
             case "DENSE_RANK":
             case "NTILE":
                 return IntegerType.get();  // Spark returns INT for ranking functions
-            case "COUNT":
-                return LongType.get();
             case "LAG":
             case "LEAD":
             case "FIRST":
@@ -206,53 +201,18 @@ public final class WindowFunction implements Expression {
                     return arguments.get(0).dataType();
                 }
                 return LongType.get();
-            case "SUM":
-                // Apply Spark type promotion: SUM(int/long) -> BIGINT, SUM(decimal) -> decimal(p+10,s)
-                if (!arguments.isEmpty() && arguments.get(0).dataType() != null) {
-                    DataType argType = arguments.get(0).dataType();
-                    if (argType instanceof IntegerType || argType instanceof LongType ||
-                        argType instanceof ShortType || argType instanceof ByteType) {
-                        return LongType.get();
-                    }
-                    if (argType instanceof FloatType || argType instanceof DoubleType) {
-                        return DoubleType.get();
-                    }
-                    if (argType instanceof DecimalType) {
-                        DecimalType dt = (DecimalType) argType;
-                        int newPrecision = Math.min(dt.precision() + 10, 38);
-                        return new DecimalType(newPrecision, dt.scale());
-                    }
-                    // StringType means unresolved column - default to LongType (most common SUM case)
-                    if (argType instanceof StringType) {
-                        return LongType.get();
-                    }
-                    return argType;
-                }
-                return LongType.get();
-            case "AVG":
-                if (!arguments.isEmpty() && arguments.get(0).dataType() != null) {
-                    DataType argType = arguments.get(0).dataType();
-                    if (argType instanceof DecimalType) {
-                        DecimalType dt = (DecimalType) argType;
-                        int newPrecision = Math.min(dt.precision() + 4, 38);
-                        int newScale = Math.min(dt.scale() + 4, newPrecision);
-                        return new DecimalType(newPrecision, newScale);
-                    }
-                }
-                return DoubleType.get();
-            case "MIN":
-            case "MAX":
-                if (!arguments.isEmpty() && arguments.get(0).dataType() != null) {
-                    return arguments.get(0).dataType();
-                }
-                return LongType.get();
             case "PERCENT_RANK":
             case "CUME_DIST":
                 return DoubleType.get();
             default:
-                // Default to BIGINT for unknown window functions
-                return LongType.get();
+                break;
         }
+
+        // Aggregate functions used as window functions (SUM, AVG, MIN, MAX, COUNT, etc.):
+        // delegate to TypeInferenceEngine which is the canonical source of truth
+        // for aggregate return type resolution.
+        DataType argType = !arguments.isEmpty() ? arguments.get(0).dataType() : null;
+        return com.thunderduck.types.TypeInferenceEngine.resolveAggregateReturnType(funcUpper, argType);
     }
 
     @Override

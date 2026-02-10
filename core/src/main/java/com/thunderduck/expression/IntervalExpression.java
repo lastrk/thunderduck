@@ -166,16 +166,11 @@ public final class IntervalExpression implements Expression {
      */
     @Override
     public String toSQL() {
-        switch (intervalType) {
-            case YEAR_MONTH:
-                return buildYearMonthSQL();
-            case DAY_TIME:
-                return buildDayTimeSQL();
-            case CALENDAR:
-                return buildCalendarSQL();
-            default:
-                throw new IllegalStateException("Unknown interval type: " + intervalType);
-        }
+        return switch (intervalType) {
+            case YEAR_MONTH -> buildYearMonthSQL();
+            case DAY_TIME -> buildDayTimeSQL();
+            case CALENDAR -> buildCalendarSQL();
+        };
     }
 
     /**
@@ -249,8 +244,7 @@ public final class IntervalExpression implements Expression {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof IntervalExpression)) return false;
-        IntervalExpression that = (IntervalExpression) obj;
+        if (!(obj instanceof IntervalExpression that)) return false;
         return months == that.months &&
                days == that.days &&
                microseconds == that.microseconds &&
@@ -264,15 +258,10 @@ public final class IntervalExpression implements Expression {
 
     @Override
     public String toString() {
-        switch (intervalType) {
-            case YEAR_MONTH:
-                return "Interval(YEAR_MONTH: " + months + " months)";
-            case DAY_TIME:
-                return "Interval(DAY_TIME: " + microseconds + " microseconds)";
-            case CALENDAR:
-                return "Interval(CALENDAR: " + months + " months, " + days + " days, " + microseconds + " microseconds)";
-            default:
-                return "Interval(" + intervalType + ")";
-        }
+        return switch (intervalType) {
+            case YEAR_MONTH -> "Interval(YEAR_MONTH: " + months + " months)";
+            case DAY_TIME -> "Interval(DAY_TIME: " + microseconds + " microseconds)";
+            case CALENDAR -> "Interval(CALENDAR: " + months + " months, " + days + " days, " + microseconds + " microseconds)";
+        };
     }
 }

@@ -140,47 +140,6 @@ public class HardwareProfile {
     }
 
     /**
-     * Returns the total physical memory in bytes.
-     *
-     * @return the total memory
-     */
-    public long totalMemoryBytes() {
-        return totalMemoryBytes;
-    }
-
-    /**
-     * Returns whether AVX-512 instructions are likely supported.
-     *
-     * <p>This is a heuristic based on architecture detection.
-     * For accurate detection, native code would be required.
-     *
-     * @return true if AVX-512 is likely supported
-     */
-    public boolean supportsAVX512() {
-        return avx512Supported;
-    }
-
-    /**
-     * Returns whether ARM NEON instructions are likely supported.
-     *
-     * <p>This is a heuristic based on architecture detection.
-     *
-     * @return true if NEON is likely supported
-     */
-    public boolean supportsNEON() {
-        return neonSupported;
-    }
-
-    /**
-     * Returns the CPU architecture string.
-     *
-     * @return the architecture (e.g., "amd64", "aarch64")
-     */
-    public String architecture() {
-        return architecture;
-    }
-
-    /**
      * Returns a string representation of this hardware profile.
      *
      * @return a human-readable description

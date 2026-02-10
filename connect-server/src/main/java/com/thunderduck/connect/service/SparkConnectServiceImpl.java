@@ -465,19 +465,10 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
      * @return true if it's a statistics operation
      */
     private boolean isStatisticsRelation(Relation relation) {
-        switch (relation.getRelTypeCase()) {
-            case COV:
-            case CORR:
-            case APPROX_QUANTILE:
-            case DESCRIBE:
-            case SUMMARY:
-            case CROSSTAB:
-            case FREQ_ITEMS:
-            case SAMPLE_BY:
-                return true;
-            default:
-                return false;
-        }
+        return switch (relation.getRelTypeCase()) {
+            case COV, CORR, APPROX_QUANTILE, DESCRIBE, SUMMARY, CROSSTAB, FREQ_ITEMS, SAMPLE_BY -> true;
+            default -> false;
+        };
     }
 
     /**
@@ -1638,24 +1629,21 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             return org.apache.spark.connect.proto.DataType.newBuilder()
                 .setTimestamp(org.apache.spark.connect.proto.DataType.Timestamp.newBuilder().build())
                 .build();
-        } else if (dataType instanceof com.thunderduck.types.DecimalType) {
-            com.thunderduck.types.DecimalType decimalType = (com.thunderduck.types.DecimalType) dataType;
+        } else if (dataType instanceof com.thunderduck.types.DecimalType decimalType) {
             return org.apache.spark.connect.proto.DataType.newBuilder()
                 .setDecimal(org.apache.spark.connect.proto.DataType.Decimal.newBuilder()
                     .setPrecision(decimalType.precision())
                     .setScale(decimalType.scale())
                     .build())
                 .build();
-        } else if (dataType instanceof com.thunderduck.types.ArrayType) {
-            com.thunderduck.types.ArrayType arrayType = (com.thunderduck.types.ArrayType) dataType;
+        } else if (dataType instanceof com.thunderduck.types.ArrayType arrayType) {
             return org.apache.spark.connect.proto.DataType.newBuilder()
                 .setArray(org.apache.spark.connect.proto.DataType.Array.newBuilder()
                     .setElementType(convertDataTypeToProto(arrayType.elementType()))
                     .setContainsNull(arrayType.containsNull())  // Preserve actual containsNull flag
                     .build())
                 .build();
-        } else if (dataType instanceof com.thunderduck.types.MapType) {
-            com.thunderduck.types.MapType mapType = (com.thunderduck.types.MapType) dataType;
+        } else if (dataType instanceof com.thunderduck.types.MapType mapType) {
             return org.apache.spark.connect.proto.DataType.newBuilder()
                 .setMap(org.apache.spark.connect.proto.DataType.Map.newBuilder()
                     .setKeyType(convertDataTypeToProto(mapType.keyType()))
@@ -1663,8 +1651,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     .setValueContainsNull(mapType.valueContainsNull())  // Preserve actual valueContainsNull flag
                     .build())
                 .build();
-        } else if (dataType instanceof com.thunderduck.types.StructType) {
-            com.thunderduck.types.StructType structType = (com.thunderduck.types.StructType) dataType;
+        } else if (dataType instanceof com.thunderduck.types.StructType structType) {
             org.apache.spark.connect.proto.DataType.Struct.Builder structBuilder =
                 org.apache.spark.connect.proto.DataType.Struct.newBuilder();
             for (com.thunderduck.types.StructField field : structType.fields()) {
@@ -1791,9 +1778,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         }
 
         // Handle primitive types (no children needed)
-        if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Int) {
-            org.apache.arrow.vector.types.pojo.ArrowType.Int intType =
-                (org.apache.arrow.vector.types.pojo.ArrowType.Int) arrowType;
+        if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Int intType) {
             if (intType.getBitWidth() == 32) {
                 return com.thunderduck.types.IntegerType.get();
             } else if (intType.getBitWidth() == 64) {
@@ -1803,9 +1788,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             } else if (intType.getBitWidth() == 8) {
                 return com.thunderduck.types.ByteType.get();
             }
-        } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.FloatingPoint) {
-            org.apache.arrow.vector.types.pojo.ArrowType.FloatingPoint fpType =
-                (org.apache.arrow.vector.types.pojo.ArrowType.FloatingPoint) arrowType;
+        } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.FloatingPoint fpType) {
             if (fpType.getPrecision() == org.apache.arrow.vector.types.FloatingPointPrecision.DOUBLE) {
                 return com.thunderduck.types.DoubleType.get();
             } else if (fpType.getPrecision() == org.apache.arrow.vector.types.FloatingPointPrecision.SINGLE) {
@@ -1820,9 +1803,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             return com.thunderduck.types.DateType.get();
         } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Timestamp) {
             return com.thunderduck.types.TimestampType.get();
-        } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Decimal) {
-            org.apache.arrow.vector.types.pojo.ArrowType.Decimal decimalType =
-                (org.apache.arrow.vector.types.pojo.ArrowType.Decimal) arrowType;
+        } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Decimal decimalType) {
             return new com.thunderduck.types.DecimalType(decimalType.getPrecision(), decimalType.getScale());
         }
 

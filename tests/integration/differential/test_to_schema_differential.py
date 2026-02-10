@@ -18,9 +18,8 @@ from pyspark.sql.types import (
     DoubleType, FloatType, BooleanType, DateType, TimestampType
 )
 
-# Add utils to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
-from dataframe_diff import assert_dataframes_equal
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.dataframe_diff import assert_dataframes_equal
 
 
 @pytest.mark.differential

@@ -18,9 +18,8 @@ import pytest
 import sys
 from pathlib import Path
 
-# Add utils to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
-from dataframe_diff import assert_dataframes_equal
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.dataframe_diff import assert_dataframes_equal
 
 # Import query implementations
 sys.path.insert(0, str(Path(__file__).parent.parent / "tpcds_dataframe"))

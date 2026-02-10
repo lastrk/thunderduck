@@ -11,7 +11,6 @@ All operations have low timeouts to detect deadlocks/blocking/failures fast.
 
 import os
 import signal
-import socket
 import subprocess
 import sys
 import threading
@@ -30,6 +29,7 @@ from .exceptions import (
     ServerCrashError,
     ServerStartupError,
 )
+from .port_utils import is_port_listening
 
 
 # =============================================================================
@@ -256,14 +256,7 @@ class ServerSupervisor:
 
     def _is_port_listening(self) -> bool:
         """Check if the server port is accepting connections."""
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(1)
-            result = sock.connect_ex(('localhost', self.port))
-            sock.close()
-            return result == 0
-        except Exception:
-            return False
+        return is_port_listening(self.port)
 
     def is_alive(self) -> bool:
         """Check if server process is still running."""

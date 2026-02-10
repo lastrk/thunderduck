@@ -3,7 +3,6 @@ Pytest configuration for Thunderduck Spark Connect integration tests
 """
 
 import pytest
-from pyspark.sql import SparkSession
 from pathlib import Path
 import os
 import socket
@@ -12,7 +11,6 @@ import atexit
 import signal
 import subprocess
 import time
-import threading
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
@@ -110,67 +108,8 @@ def _release_session_without_shutdown(session):
         pass
 
 
-def stop_spark_with_timeout(spark, timeout=10):
-    """
-    Stop SparkSession with a timeout to prevent hanging.
-
-    PySpark's spark.stop() can block indefinitely waiting for a clean gRPC
-    disconnection. This wrapper ensures cleanup continues even if the
-    disconnection hangs.
-    """
-    def stop_func():
-        try:
-            spark.stop()
-        except Exception:
-            pass  # Ignore errors during cleanup
-
-    thread = threading.Thread(target=stop_func)
-    thread.daemon = True
-    thread.start()
-    thread.join(timeout=timeout)
-    if thread.is_alive():
-        print(f"  Warning: SparkSession.stop() did not complete within {timeout}s, continuing...")
-
-
-def _is_port_listening(port, host='localhost', timeout=2):
-    """Check if a port is accepting connections."""
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(timeout)
-        result = sock.connect_ex((host, port))
-        sock.close()
-        return result == 0
-    except Exception:
-        return False
-
-
-from server_manager import ServerManager
-from result_validator import ResultValidator
 from dual_server_manager import DualServerManager
-
-
-# Server fixtures
-
-@pytest.fixture(scope="session")
-def server_manager():
-    """
-    Session-scoped fixture that starts server once for all tests
-    """
-    manager = ServerManager(host="localhost", port=15002)
-
-    print("\n" + "="*80)
-    print("Starting Spark Connect server for integration tests...")
-    print("="*80)
-
-    if not manager.start(timeout=60):
-        pytest.exit("Failed to start Spark Connect server", returncode=1)
-
-    yield manager
-
-    print("\n" + "="*80)
-    print("Stopping Spark Connect server...")
-    print("="*80)
-    manager.stop()
+from port_utils import is_port_listening as _is_port_listening
 
 
 @pytest.fixture(scope="class")
@@ -192,16 +131,6 @@ def spark(spark_thunderduck):
     in the dual-server testing environment.
     """
     return spark_thunderduck
-
-
-# Validator fixtures
-
-@pytest.fixture
-def validator():
-    """
-    Result validator with default epsilon
-    """
-    return ResultValidator(epsilon=1e-6)
 
 
 # Data path fixtures
@@ -228,94 +157,6 @@ def tpch_queries_dir():
     if not queries_dir.exists():
         pytest.skip(f"TPC-H queries not found at {queries_dir}")
     return queries_dir
-
-
-@pytest.fixture
-def lineitem_df(spark, tpch_data_dir):
-    """Load lineitem table as DataFrame"""
-    path = str(tpch_data_dir / "lineitem.parquet")
-    return spark.read.parquet(path)
-
-
-@pytest.fixture
-def orders_df(spark, tpch_data_dir):
-    """Load orders table as DataFrame"""
-    path = str(tpch_data_dir / "orders.parquet")
-    return spark.read.parquet(path)
-
-
-@pytest.fixture
-def customer_df(spark, tpch_data_dir):
-    """Load customer table as DataFrame"""
-    path = str(tpch_data_dir / "customer.parquet")
-    return spark.read.parquet(path)
-
-
-@pytest.fixture
-def part_df(spark, tpch_data_dir):
-    """Load part table as DataFrame"""
-    path = str(tpch_data_dir / "part.parquet")
-    return spark.read.parquet(path)
-
-
-@pytest.fixture
-def supplier_df(spark, tpch_data_dir):
-    """Load supplier table as DataFrame"""
-    path = str(tpch_data_dir / "supplier.parquet")
-    return spark.read.parquet(path)
-
-
-@pytest.fixture
-def partsupp_df(spark, tpch_data_dir):
-    """Load partsupp table as DataFrame"""
-    path = str(tpch_data_dir / "partsupp.parquet")
-    return spark.read.parquet(path)
-
-
-@pytest.fixture
-def nation_df(spark, tpch_data_dir):
-    """Load nation table as DataFrame"""
-    path = str(tpch_data_dir / "nation.parquet")
-    return spark.read.parquet(path)
-
-
-@pytest.fixture
-def region_df(spark, tpch_data_dir):
-    """Load region table as DataFrame"""
-    path = str(tpch_data_dir / "region.parquet")
-    return spark.read.parquet(path)
-
-
-@pytest.fixture(scope="session")
-def tpch_tables(spark_session, tpch_data_dir):
-    """
-    Verify TPC-H tables are available
-
-    NOTE: Temporary view registration is not yet supported by the server
-    (createOrReplaceTempView sends a COMMAND type that's unimplemented).
-    For now, DataFrame API tests will load data directly, and SQL tests
-    will need to use read_parquet() in queries or be skipped.
-    """
-    tables = [
-        'lineitem', 'orders', 'customer', 'part',
-        'supplier', 'partsupp', 'nation', 'region'
-    ]
-
-    print("\nLoading TPC-H tables and creating temp views...")
-    for table in tables:
-        parquet_path = tpch_data_dir / f"{table}.parquet"
-        if not parquet_path.exists():
-            pytest.skip(f"TPC-H table not found: {parquet_path}")
-
-        # Load table and create temp view
-        df = spark_session.read.parquet(str(parquet_path))
-        df.createOrReplaceTempView(table)
-        row_count = df.count()
-        print(f"  ✓ {table}: {row_count:,} rows")
-
-    print(f"✓ All {len(tables)} TPC-H tables registered as temp views")
-
-    return tables
 
 
 # Utility functions
@@ -470,21 +311,6 @@ def tpcds_queries_dir():
     if not queries_dir.exists():
         pytest.skip(f"TPC-DS queries not found at {queries_dir}")
     return queries_dir
-
-
-@pytest.fixture(scope="session")
-def tpcds_tables(spark_session, tpcds_data_dir):
-    """Load all TPC-DS tables as temp views"""
-    tables = sorted([f.stem for f in tpcds_data_dir.glob("*.parquet")])
-
-    print(f"\nLoading {len(tables)} TPC-DS tables...")
-    for table in tables:
-        path = str(tpcds_data_dir / f"{table}.parquet")
-        df = spark_session.read.parquet(path)
-        df.createOrReplaceTempView(table)
-
-    print(f"✓ All {len(tables)} TPC-DS tables registered")
-    return tables
 
 
 @pytest.fixture

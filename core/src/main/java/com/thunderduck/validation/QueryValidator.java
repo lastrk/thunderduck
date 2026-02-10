@@ -102,12 +102,12 @@ public class QueryValidator {
         }
 
         // Validate this node based on its type
-        if (plan instanceof Join) {
-            validateJoin((Join) plan);
-        } else if (plan instanceof Union) {
-            validateUnion((Union) plan);
-        } else if (plan instanceof Aggregate) {
-            validateAggregate((Aggregate) plan);
+        if (plan instanceof Join join) {
+            validateJoin(join);
+        } else if (plan instanceof Union union) {
+            validateUnion(union);
+        } else if (plan instanceof Aggregate agg) {
+            validateAggregate(agg);
         }
 
         // Recursively validate children
@@ -234,9 +234,6 @@ public class QueryValidator {
             );
         }
 
-        // Validate all non-aggregate columns are in GROUP BY
-        //Set<String> groupingColumns = getColumnNamesFromExpressions(agg.groupingExpressions());
-
         // Check each aggregate expression
         for (AggregateExpression aggExpr : agg.aggregateExpressions()) {
             // For simple column references in the aggregate list (not in aggregate function),
@@ -322,24 +319,6 @@ public class QueryValidator {
     }
 
     /**
-     * Extracts column names from a list of expressions.
-     *
-     * <p>This handles expressions that are direct column references.
-     *
-     * @param expressions the expressions
-     * @return set of column names
-     */
-    /*private static Set<String> getColumnNamesFromExpressions(List<Expression> expressions) {
-        Set<String> columns = new HashSet<>();
-        for (Expression expr : expressions) {
-            if (expr instanceof ColumnReference) {
-                columns.add(((ColumnReference) expr).columnName());
-            }
-        }
-        return columns;
-    }*/
-
-    /**
      * Extracts all column references from an expression tree.
      *
      * <p>This recursively traverses the expression and collects all
@@ -365,27 +344,22 @@ public class QueryValidator {
             return;
         }
 
-        if (expr instanceof ColumnReference) {
-            columns.add(((ColumnReference) expr).columnName());
-        } else if (expr instanceof BinaryExpression) {
-            BinaryExpression binary = (BinaryExpression) expr;
+        if (expr instanceof ColumnReference colRef) {
+            columns.add(colRef.columnName());
+        } else if (expr instanceof BinaryExpression binary) {
             collectReferencedColumns(binary.left(), columns);
             collectReferencedColumns(binary.right(), columns);
-        } else if (expr instanceof UnaryExpression) {
-            UnaryExpression unary = (UnaryExpression) expr;
+        } else if (expr instanceof UnaryExpression unary) {
             collectReferencedColumns(unary.operand(), columns);
-        } else if (expr instanceof FunctionCall) {
-            FunctionCall func = (FunctionCall) expr;
+        } else if (expr instanceof FunctionCall func) {
             for (Expression arg : func.arguments()) {
                 collectReferencedColumns(arg, columns);
             }
-        } else if (expr instanceof AggregateExpression) {
-            AggregateExpression agg = (AggregateExpression) expr;
+        } else if (expr instanceof AggregateExpression agg) {
             if (agg.argument() != null) {
                 collectReferencedColumns(agg.argument(), columns);
             }
-        } else if (expr instanceof WindowFunction) {
-            WindowFunction window = (WindowFunction) expr;
+        } else if (expr instanceof WindowFunction window) {
             // Validate the window function itself
             validateWindow(window);
             // Collect columns from arguments
