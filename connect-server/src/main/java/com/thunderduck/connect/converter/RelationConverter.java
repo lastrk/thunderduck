@@ -374,6 +374,14 @@ public class RelationConverter {
                             }
                         };
                         logger.debug("Wrapped {} arguments in ROW() for countDistinct", args.size());
+                    } else if (funcLower.equals("grouping_id") || funcLower.equals("grouping")) {
+                        // grouping_id needs all arguments preserved — use composite expression.
+                        // The FunctionRegistry custom translator handles bit-order reversal
+                        // (Spark vs DuckDB use opposite bit ordering for grouping_id).
+                        aggExprs.add(new com.thunderduck.logical.Aggregate.AggregateExpression(
+                            new FunctionCall(functionName, args, func.dataType(), func.nullable(), func.distinct()),
+                            alias));
+                        continue;
                     } else {
                         // For other multi-arg functions, just use the first argument
                         // (may need to handle more cases in the future)
