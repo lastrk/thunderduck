@@ -775,16 +775,22 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * Builds SQL directly in buffer to avoid corruption.
      */
     private void visitSort(Sort plan) {
-        // Check for direct source optimization
-        String childSource = getDirectlyAliasableSource(plan.child());
-        if (childSource != null) {
-            sql.append("SELECT * FROM ").append(childSource);
+        // Check if child generates a single SELECT statement that can have ORDER BY appended.
+        // This avoids unnecessary subquery wrapping that breaks column/table alias scoping.
+        if (canAppendClause(plan.child())) {
+            visit(plan.child());
         } else {
-            sql.append("SELECT * FROM (");
-            subqueryDepth++;
-            visit(plan.child());  // Use visit(), not generate()
-            subqueryDepth--;
-            sql.append(") AS ").append(generateSubqueryAlias());
+            // Check for direct source optimization
+            String childSource = getDirectlyAliasableSource(plan.child());
+            if (childSource != null) {
+                sql.append("SELECT * FROM ").append(childSource);
+            } else {
+                sql.append("SELECT * FROM (");
+                subqueryDepth++;
+                visit(plan.child());  // Use visit(), not generate()
+                subqueryDepth--;
+                sql.append(") AS ").append(generateSubqueryAlias());
+            }
         }
         sql.append(" ORDER BY ");
 
@@ -848,16 +854,21 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * Visits a Limit node (LIMIT clause).
      */
     private void visitLimit(Limit plan) {
-        // Check for direct source optimization
-        String childSource = getDirectlyAliasableSource(plan.child());
-        if (childSource != null) {
-            sql.append("SELECT * FROM ").append(childSource);
-        } else {
-            sql.append("SELECT * FROM (");
-            subqueryDepth++;
+        // Check if child generates a single SELECT statement that can have LIMIT appended.
+        if (canAppendClause(plan.child())) {
             visit(plan.child());
-            subqueryDepth--;
-            sql.append(") AS ").append(generateSubqueryAlias());
+        } else {
+            // Check for direct source optimization
+            String childSource = getDirectlyAliasableSource(plan.child());
+            if (childSource != null) {
+                sql.append("SELECT * FROM ").append(childSource);
+            } else {
+                sql.append("SELECT * FROM (");
+                subqueryDepth++;
+                visit(plan.child());
+                subqueryDepth--;
+                sql.append(") AS ").append(generateSubqueryAlias());
+            }
         }
         sql.append(" LIMIT ");
         sql.append(plan.limit());
@@ -1069,6 +1080,28 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             throw new IllegalArgumentException("Cannot generate SQL for aggregation with no aggregate expressions");
         }
 
+        // Special case: Aggregate on Filter(s) on Join
+        // Generate flat SQL to preserve table alias visibility in GROUP BY/HAVING
+        LogicalPlan child = plan.child();
+        if (child instanceof Filter) {
+            List<Filter> filters = new java.util.ArrayList<>();
+            LogicalPlan current = child;
+            while (current instanceof Filter f) {
+                filters.add(f);
+                current = f.child();
+            }
+            if (current instanceof Join currentJoin) {
+                generateAggregateOnFilterJoin(plan, filters, currentJoin);
+                return;
+            }
+        }
+
+        // Special case: Aggregate directly on Join
+        if (child instanceof Join childJoin) {
+            generateAggregateOnJoin(plan, childJoin);
+            return;
+        }
+
         // Resolve child schema once for type-aware SQL generation
         com.thunderduck.types.StructType childSchema = null;
         try {
@@ -1113,6 +1146,28 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         String childSource = getDirectlyAliasableSource(plan.child());
         if (childSource != null) {
             sql.append(" FROM ").append(childSource);
+        } else if (plan.child() instanceof AliasedRelation aliased) {
+            // Preserve user-provided alias and column aliases
+            String aliasedChildSource = getDirectlyAliasableSource(aliased.child());
+            if (aliasedChildSource != null) {
+                sql.append(" FROM ").append(aliasedChildSource)
+                   .append(" AS ").append(SQLQuoting.quoteIdentifier(aliased.alias()));
+            } else {
+                sql.append(" FROM (");
+                subqueryDepth++;
+                visit(aliased.child());
+                subqueryDepth--;
+                sql.append(") AS ").append(SQLQuoting.quoteIdentifier(aliased.alias()));
+            }
+            // Append column aliases if present (e.g., AS alias (col1, col2))
+            if (!aliased.columnAliases().isEmpty()) {
+                sql.append(" (");
+                for (int i = 0; i < aliased.columnAliases().size(); i++) {
+                    if (i > 0) sql.append(", ");
+                    sql.append(SQLQuoting.quoteIdentifier(aliased.columnAliases().get(i)));
+                }
+                sql.append(")");
+            }
         } else {
             sql.append(" FROM (");
             subqueryDepth++;
@@ -1122,17 +1177,121 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         }
 
         // GROUP BY clause
-        // Note: GROUP BY cannot have aliases, so we unwrap AliasExpressions
+        appendGroupByClause(plan);
+
+        // HAVING clause
+        if (plan.havingCondition() != null) {
+            sql.append(" HAVING ");
+            sql.append(plan.havingCondition().toSQL());
+        }
+    }
+
+    /**
+     * Generates flat SQL for Aggregate on Filter(s) on Join.
+     * This preserves table alias visibility so GROUP BY/HAVING can reference them.
+     */
+    private void generateAggregateOnFilterJoin(Aggregate plan, List<Filter> filters, Join join) {
+        // Resolve child schema for type-aware SQL generation
+        com.thunderduck.types.StructType childSchema = null;
+        try {
+            childSchema = plan.child().schema();
+        } catch (Exception ignored) {}
+
+        sql.append("SELECT ");
+        sql.append(String.join(", ", buildAggregateSelectList(plan, childSchema)));
+
+        sql.append(" FROM ");
+        generateFlatJoinChainWithMapping(join, null);
+
+        // WHERE clause from filters
+        sql.append(" WHERE ");
+        for (int i = 0; i < filters.size(); i++) {
+            if (i > 0) {
+                sql.append(" AND ");
+            }
+            sql.append("(").append(filters.get(i).condition().toSQL()).append(")");
+        }
+
+        // GROUP BY clause
+        appendGroupByClause(plan);
+
+        // HAVING clause
+        if (plan.havingCondition() != null) {
+            sql.append(" HAVING ");
+            sql.append(plan.havingCondition().toSQL());
+        }
+    }
+
+    /**
+     * Generates flat SQL for Aggregate directly on Join.
+     * This preserves table alias visibility so GROUP BY/HAVING can reference them.
+     */
+    private void generateAggregateOnJoin(Aggregate plan, Join join) {
+        // Resolve child schema for type-aware SQL generation
+        com.thunderduck.types.StructType childSchema = null;
+        try {
+            childSchema = plan.child().schema();
+        } catch (Exception ignored) {}
+
+        sql.append("SELECT ");
+        sql.append(String.join(", ", buildAggregateSelectList(plan, childSchema)));
+
+        sql.append(" FROM ");
+        generateFlatJoinChainWithMapping(join, null);
+
+        // GROUP BY clause
+        appendGroupByClause(plan);
+
+        // HAVING clause
+        if (plan.havingCondition() != null) {
+            sql.append(" HAVING ");
+            sql.append(plan.havingCondition().toSQL());
+        }
+    }
+
+    /**
+     * Builds the SELECT list for an Aggregate node, handling expression ordering and aliases.
+     */
+    private java.util.List<String> buildAggregateSelectList(Aggregate plan,
+                                                             com.thunderduck.types.StructType childSchema) {
+        java.util.List<String> groupingRendered = new java.util.ArrayList<>();
+        for (com.thunderduck.expression.Expression expr : plan.groupingExpressions()) {
+            groupingRendered.add(expr.toSQL());
+        }
+
+        java.util.List<String> aggregateRendered = new java.util.ArrayList<>();
+        for (Aggregate.AggregateExpression aggExpr : plan.aggregateExpressions()) {
+            aggregateRendered.add(renderAggregateExpression(aggExpr, childSchema));
+        }
+
+        java.util.List<String> selectExprs = new java.util.ArrayList<>();
+        if (plan.selectOrder() != null) {
+            for (Aggregate.SelectEntry entry : plan.selectOrder()) {
+                if (entry.isAggregate()) {
+                    selectExprs.add(aggregateRendered.get(entry.index()));
+                } else {
+                    selectExprs.add(groupingRendered.get(entry.index()));
+                }
+            }
+        } else {
+            selectExprs.addAll(groupingRendered);
+            selectExprs.addAll(aggregateRendered);
+        }
+        return selectExprs;
+    }
+
+    /**
+     * Appends the GROUP BY clause for an Aggregate node.
+     */
+    private void appendGroupByClause(Aggregate plan) {
         if (!plan.groupingExpressions().isEmpty()) {
             sql.append(" GROUP BY ");
 
-            // Emit ROLLUP/CUBE/GROUPING SETS wrapper if present
             if (plan.groupingSets() != null) {
                 sql.append(plan.groupingSets().toSQL());
             } else {
                 java.util.List<String> groupExprs = new java.util.ArrayList<>();
                 for (com.thunderduck.expression.Expression expr : plan.groupingExpressions()) {
-                    // Unwrap AliasExpression for GROUP BY - aliases not allowed here
                     if (expr instanceof com.thunderduck.expression.AliasExpression aliasExpr) {
                         groupExprs.add(aliasExpr.expression().toSQL());
                     } else {
@@ -1141,12 +1300,6 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                 }
                 sql.append(String.join(", ", groupExprs));
             }
-        }
-
-        // HAVING clause
-        if (plan.havingCondition() != null) {
-            sql.append(" HAVING ");
-            sql.append(plan.havingCondition().toSQL());
         }
     }
 
@@ -1890,6 +2043,41 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             case DELTA   -> "delta_scan(" + quoteFilePath(source) + ")";
             case ICEBERG -> "iceberg_scan(" + quoteFilePath(source) + ")";
         };
+    }
+
+    /**
+     * Checks if a plan node generates a single SELECT statement that can have
+     * additional clauses (ORDER BY, LIMIT) appended without subquery wrapping.
+     *
+     * <p>This avoids generating unnecessary subqueries like
+     * {@code SELECT * FROM (SELECT ... GROUP BY ...) AS subquery_N ORDER BY ...}
+     * which break column/table alias scoping. Instead, we inline:
+     * {@code SELECT ... GROUP BY ... ORDER BY ...}
+     *
+     * <p>We must be conservative: only inline when we know the child generates a
+     * single SELECT statement AND inlining won't shift the aliasCounter (which would
+     * break join alias prediction for DataFrame paths).
+     */
+    private boolean canAppendClause(LogicalPlan plan) {
+        // Aggregate: always safe -- generates SELECT ... FROM ... GROUP BY ...
+        if (plan instanceof Aggregate) return true;
+
+        // Project on Filter/Join or direct Join: generates flat SQL with table aliases
+        // that need to stay visible for ORDER BY/LIMIT.
+        if (plan instanceof Project p) {
+            LogicalPlan child = p.child();
+            // Walk through stacked Filters to find a Join underneath
+            if (child instanceof Filter) {
+                LogicalPlan current = child;
+                while (current instanceof Filter f) {
+                    current = f.child();
+                }
+                if (current instanceof Join) return true;
+            }
+            if (child instanceof Join) return true;
+        }
+
+        return false;
     }
 
     /**
