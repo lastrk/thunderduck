@@ -692,7 +692,9 @@ public class FunctionRegistry {
             if (args.length < 1) {
                 throw new IllegalArgumentException("sum requires at least 1 argument");
             }
-            return "SUM(" + args[0] + ")";
+            // Use lowercase to match Spark's auto-generated column naming convention
+            // (e.g., sum(col) not SUM(col)). DuckDB is case-insensitive for function names.
+            return "sum(" + args[0] + ")";
         });
         DIRECT_MAPPINGS.put("avg", "avg");
         DIRECT_MAPPINGS.put("mean", "avg");
@@ -745,6 +747,9 @@ public class FunctionRegistry {
         // Grouping functions (used with ROLLUP/CUBE/GROUPING SETS)
         // DuckDB supports grouping() with identical semantics to Spark
         DIRECT_MAPPINGS.put("grouping", "grouping");
+        // grouping_id uses the same bit ordering in both Spark and DuckDB:
+        // bit (N-1-i) is set for the i-th argument when that column is NOT in the
+        // current grouping key. Direct mapping preserves this convention.
         DIRECT_MAPPINGS.put("grouping_id", "grouping_id");
 
         // DISTINCT aggregate functions - DISTINCT keyword goes inside parentheses

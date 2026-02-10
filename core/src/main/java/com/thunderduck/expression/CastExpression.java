@@ -81,15 +81,32 @@ public final class CastExpression implements Expression {
     public String toSQL() {
         String innerSQL = expression.toSQL();
         String targetName = targetType.typeName().toUpperCase();
+        // Use uppercase type name in SQL to match Spark's column naming convention.
+        // For parameterized types like DECIMAL(p,s), preserve the parameters.
+        // DuckDB is case-insensitive for type names.
+        String sqlTypeName = uppercaseTypeName(targetType);
 
         if (targetName.equals("INTEGER") || targetName.equals("INT")) {
             if (!needsTrunc(expression)) {
-                return String.format("CAST(%s AS %s)", innerSQL, targetType.typeName());
+                return String.format("CAST(%s AS %s)", innerSQL, sqlTypeName);
             }
-            return String.format("CAST(TRUNC(%s) AS %s)", innerSQL, targetType.typeName());
+            return String.format("CAST(TRUNC(%s) AS %s)", innerSQL, sqlTypeName);
         }
 
-        return String.format("CAST(%s AS %s)", innerSQL, targetType.typeName());
+        return String.format("CAST(%s AS %s)", innerSQL, sqlTypeName);
+    }
+
+    /**
+     * Returns the type name in uppercase, preserving parameterized suffixes.
+     * E.g., "decimal(15,4)" → "DECIMAL(15,4)", "varchar" → "VARCHAR".
+     */
+    public static String uppercaseTypeName(DataType type) {
+        String name = type.typeName();
+        int parenIdx = name.indexOf('(');
+        if (parenIdx >= 0) {
+            return name.substring(0, parenIdx).toUpperCase() + name.substring(parenIdx);
+        }
+        return name.toUpperCase();
     }
 
     /**
