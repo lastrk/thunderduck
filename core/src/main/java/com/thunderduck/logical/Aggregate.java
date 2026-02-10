@@ -268,10 +268,13 @@ public final class Aggregate extends LogicalPlan {
         List<StructField> fields = new ArrayList<>();
 
         // Add grouping fields with proper names and types
+        // When CUBE/ROLLUP/GROUPING_SETS is used, grouping columns must be nullable
+        // because subtotal and grand-total rows produce NULL for excluded dimensions.
+        boolean forceNullable = (groupingSets != null);
         for (Expression expr : groupingExpressions) {
             String name = extractExpressionName(expr);
             DataType type = resolveExpressionType(expr, childSchema);
-            boolean nullable = resolveExpressionNullable(expr, childSchema);
+            boolean nullable = forceNullable || resolveExpressionNullable(expr, childSchema);
             fields.add(new StructField(name, type, nullable));
         }
 

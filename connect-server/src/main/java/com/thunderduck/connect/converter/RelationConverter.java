@@ -406,7 +406,28 @@ public class RelationConverter {
             throw new PlanConversionException("Failed to convert aggregate expressions");
         }
 
-        return new com.thunderduck.logical.Aggregate(input, groupingExprs, aggExprs);
+        // Detect CUBE/ROLLUP/GROUPING_SETS group types
+        GroupingSets groupingSets = null;
+        org.apache.spark.connect.proto.Aggregate.GroupType groupType = aggregate.getGroupType();
+        if (groupType == org.apache.spark.connect.proto.Aggregate.GroupType.GROUP_TYPE_CUBE) {
+            groupingSets = GroupingSets.cube(groupingExprs);
+            logger.debug("Creating CUBE aggregate with {} grouping expressions", groupingExprs.size());
+        } else if (groupType == org.apache.spark.connect.proto.Aggregate.GroupType.GROUP_TYPE_ROLLUP) {
+            groupingSets = GroupingSets.rollup(groupingExprs);
+            logger.debug("Creating ROLLUP aggregate with {} grouping expressions", groupingExprs.size());
+        } else if (groupType == org.apache.spark.connect.proto.Aggregate.GroupType.GROUP_TYPE_GROUPING_SETS) {
+            List<List<Expression>> sets = new ArrayList<>();
+            for (org.apache.spark.connect.proto.Aggregate.GroupingSets gs : aggregate.getGroupingSetsList()) {
+                List<Expression> set = gs.getGroupingSetList().stream()
+                        .map(expressionConverter::convert)
+                        .toList();
+                sets.add(set);
+            }
+            groupingSets = GroupingSets.groupingSets(sets);
+            logger.debug("Creating GROUPING SETS aggregate with {} sets", sets.size());
+        }
+
+        return new com.thunderduck.logical.Aggregate(input, groupingExprs, aggExprs, null, groupingSets);
     }
 
     /**
