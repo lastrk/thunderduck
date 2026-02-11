@@ -1,8 +1,10 @@
 package com.thunderduck.logical;
 
 import com.thunderduck.expression.Expression;
+import com.thunderduck.expression.FunctionCall;
 import com.thunderduck.expression.StarExpression;
 import com.thunderduck.types.DataType;
+import com.thunderduck.types.MapType;
 import com.thunderduck.types.StructField;
 import com.thunderduck.types.StructType;
 import com.thunderduck.types.TypeInferenceEngine;
@@ -161,6 +163,19 @@ public final class Project extends LogicalPlan {
                     }
                 }
                 continue;
+            }
+
+            // explode(map_col) on MAP expands to two columns: key and value.
+            // Spark's explode on MAP produces columns named "key" and "value".
+            if (expr instanceof FunctionCall fc
+                    && fc.functionName().equalsIgnoreCase("explode")
+                    && fc.argumentCount() == 1) {
+                DataType argType = TypeInferenceEngine.resolveType(fc.arguments().get(0), childSchema);
+                if (argType instanceof MapType mapType) {
+                    fields.add(new StructField("key", mapType.keyType(), false));
+                    fields.add(new StructField("value", mapType.valueType(), mapType.valueContainsNull()));
+                    continue;
+                }
             }
 
             String alias = aliases.get(i);

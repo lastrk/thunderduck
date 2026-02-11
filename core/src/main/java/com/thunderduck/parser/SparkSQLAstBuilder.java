@@ -1220,7 +1220,15 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
             Expression left = visitValueExpr(bin.left);
             Expression right = visitValueExpr(bin.right);
             BinaryExpression.Operator op = resolveArithmeticOp(bin.operator);
-            return new BinaryExpression(left, op, right);
+            Expression result = new BinaryExpression(left, op, right);
+            // In Spark, DATE + INTERVAL preserves DATE type.
+            // In DuckDB, DATE + INTERVAL promotes to TIMESTAMP.
+            // Wrap with CAST(... AS DATE) when a DATE operand is combined with an interval.
+            if ((op == BinaryExpression.Operator.ADD || op == BinaryExpression.Operator.SUBTRACT)
+                    && isDateType(left) && isIntervalExpression(right)) {
+                result = new CastExpression(result, DateType.get());
+            }
+            return result;
         }
 
         if (ctx instanceof SqlBaseParser.ComparisonContext cmp) {
@@ -1251,6 +1259,28 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
             default -> throw new UnsupportedOperationException(
                 "Unsupported arithmetic operator: " + op.getText());
         };
+    }
+
+    /**
+     * Checks if an expression has DateType (e.g., DATE '2025-01-15' literal).
+     */
+    private boolean isDateType(Expression expr) {
+        return expr.dataType() instanceof DateType;
+    }
+
+    /**
+     * Checks if an expression represents an interval value.
+     * Handles both the parsed RawSQLExpression path (INTERVAL '2' YEAR)
+     * and the typed IntervalExpression path.
+     */
+    private boolean isIntervalExpression(Expression expr) {
+        if (expr instanceof IntervalExpression) {
+            return true;
+        }
+        if (expr instanceof RawSQLExpression raw) {
+            return raw.toSQL().trim().toUpperCase().startsWith("INTERVAL");
+        }
+        return false;
     }
 
     private BinaryExpression.Operator resolveComparisonOp(
@@ -1998,7 +2028,29 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
         }
 
         // Complex types: ARRAY<T>, MAP<K,V>, STRUCT<...>
-        // Pass through as unresolved for now
+        if (ctx instanceof SqlBaseParser.ComplexDataTypeContext complex) {
+            String typeName = complex.complex.getText().toUpperCase();
+            List<SqlBaseParser.DataTypeContext> typeArgs = complex.dataType();
+            switch (typeName) {
+                case "ARRAY":
+                    if (!typeArgs.isEmpty()) {
+                        DataType elementType = resolveDataType(typeArgs.get(0));
+                        return new ArrayType(elementType, true);
+                    }
+                    return new ArrayType(StringType.get(), true);
+                case "MAP":
+                    if (typeArgs.size() >= 2) {
+                        DataType keyType = resolveDataType(typeArgs.get(0));
+                        DataType valueType = resolveDataType(typeArgs.get(1));
+                        return new MapType(keyType, valueType, true);
+                    }
+                    return new MapType(StringType.get(), StringType.get(), true);
+                default:
+                    // STRUCT and others -- fall through to unresolved
+                    break;
+            }
+        }
+
         return UnresolvedType.expressionString();
     }
 

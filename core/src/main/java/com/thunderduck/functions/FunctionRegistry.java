@@ -996,8 +996,8 @@ public class FunctionRegistry {
         // Note: exists, forall require special handling in ExpressionConverter
         // as they need to wrap list_transform with list_any/list_all
 
-        // size() returns INT in Spark but DuckDB len() returns BIGINT - need CAST
-        // DuckDB's len() works on arrays/lists; cardinality() only works on MAPs.
+        // size() returns INT in Spark but DuckDB len() returns BIGINT - need CAST.
+        // DuckDB's len() works on arrays/lists. For MAPs, cardinality() is needed.
         // The polymorphic dispatch for MAP type is handled in SQLGenerator.resolvePolymorphicFunctions().
         CUSTOM_TRANSLATORS.put("size", args -> {
             if (args.length < 1) {

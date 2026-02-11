@@ -141,6 +141,26 @@ public final class FunctionCall implements Expression {
      * @return the SQL string
      */
     public String toSQL() {
+        // Handle struct() with named arguments (AliasExpression args).
+        // Spark: struct(lit(99).alias("id"), lit("Carol").alias("name"))
+        // DuckDB: struct_pack(id := 99, name := 'Carol')
+        // The standard row() function doesn't support AS aliases.
+        if (functionName.equalsIgnoreCase("struct") && !arguments.isEmpty()
+                && arguments.stream().anyMatch(a -> a instanceof AliasExpression)) {
+            StringBuilder sb = new StringBuilder("struct_pack(");
+            for (int i = 0; i < arguments.size(); i++) {
+                if (i > 0) sb.append(", ");
+                Expression arg = arguments.get(i);
+                if (arg instanceof AliasExpression alias) {
+                    sb.append(alias.alias()).append(" := ").append(alias.expression().toSQL());
+                } else {
+                    sb.append(arg.toSQL());
+                }
+            }
+            sb.append(")");
+            return sb.toString();
+        }
+
         // Convert arguments to SQL strings
         String[] argStrings = arguments.stream()
             .map(Expression::toSQL)
@@ -153,6 +173,16 @@ public final class FunctionCall implements Expression {
         if (functionName.equalsIgnoreCase("reverse") && !arguments.isEmpty()
                 && arguments.get(0).dataType() instanceof ArrayType) {
             effectiveName = "list_reverse";
+        }
+
+        // Spark's size() works on both arrays and maps.
+        // DuckDB: len() works on arrays, cardinality() works on maps.
+        // Default mapping uses len() (for arrays). For maps, type-aware dispatch
+        // would be needed but requires schema resolution (UnresolvedColumn returns StringType).
+        // Map size is handled here when type info is available (e.g., typed expressions).
+        if (functionName.equalsIgnoreCase("size") && !arguments.isEmpty()
+                && arguments.get(0).dataType() instanceof com.thunderduck.types.MapType) {
+            return "CAST(cardinality(" + argStrings[0] + ") AS INTEGER)";
         }
 
         // DISTINCT is handled by building the SQL directly rather than going through
