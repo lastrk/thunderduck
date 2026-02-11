@@ -2354,8 +2354,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
         if (expr instanceof CastExpression castExpr) {
             String innerSQL = qualifyCondition(castExpr.expression(), planIdToAlias);
-            // Delegate to CastExpression to get proper uppercase type names
-            return "CAST(" + innerSQL + " AS " + CastExpression.uppercaseTypeName(castExpr.targetType()) + ")";
+            return CastExpression.generateCastSQL(innerSQL, castExpr.expression(), castExpr.targetType());
         }
 
         if (expr instanceof FunctionCall funcExpr) {

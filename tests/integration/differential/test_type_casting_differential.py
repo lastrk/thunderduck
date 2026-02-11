@@ -68,7 +68,6 @@ class TestNumericCasts:
         td = run_test(spark_thunderduck)
         assert_dataframes_equal(ref, td, "string_to_int")
 
-    @pytest.mark.skip(reason="DuckDB rounds, Spark truncates toward zero: CAST(-3.7 AS INT) = -4 vs -3")
     @pytest.mark.timeout(30)
     def test_double_to_int(self, spark_reference, spark_thunderduck):
         """CAST double to integer (truncation behavior)"""
