@@ -1,11 +1,19 @@
 package com.thunderduck.expression;
 
 import com.thunderduck.types.ArrayType;
+import com.thunderduck.types.BinaryType;
+import com.thunderduck.types.BooleanType;
+import com.thunderduck.types.ByteType;
 import com.thunderduck.types.DataType;
+import com.thunderduck.types.DateType;
 import com.thunderduck.types.DecimalType;
 import com.thunderduck.types.DoubleType;
 import com.thunderduck.types.FloatType;
+import com.thunderduck.types.IntegerType;
+import com.thunderduck.types.LongType;
 import com.thunderduck.types.MapType;
+import com.thunderduck.types.ShortType;
+import com.thunderduck.types.TimestampType;
 import com.thunderduck.types.TypeMapper;
 import java.util.Objects;
 import java.util.Set;
@@ -83,20 +91,62 @@ public final class CastExpression implements Expression {
      */
     public String toSQL() {
         String innerSQL = expression.toSQL();
-        // Use DuckDB type syntax for complex types (ArrayType, MapType)
-        // e.g., ARRAY<INT> -> INTEGER[], MAP<STRING,INT> -> MAP(VARCHAR, INTEGER)
-        // For simple types, use uppercase to match Spark column naming convention.
+        return generateCastSQL(innerSQL, expression, targetType);
+    }
+
+    /** How TRUNC should be applied for an integral cast. */
+    private enum TruncMode {
+        /** No TRUNC needed (source is already integral, boolean, date, etc.) */
+        NONE,
+        /** Direct TRUNC: source is a known floating-point or decimal type. */
+        DIRECT,
+        /** TRUNC via DOUBLE cast: source type is unknown at compile time
+         *  (e.g., UnresolvedColumn returning StringType placeholder).
+         *  Uses TRUNC(CAST(x AS DOUBLE)) so DuckDB can handle any source type. */
+        VIA_DOUBLE
+    }
+
+    /**
+     * Generates CAST SQL with TRUNC wrapping when needed for Spark compatibility.
+     *
+     * <p>When casting to an integral type (INTEGER, BIGINT, SMALLINT, TINYINT) from
+     * a type that might have fractional values, wraps with TRUNC to match Spark's
+     * truncation-toward-zero semantics (DuckDB rounds by default).
+     *
+     * <p>Three modes:
+     * <ul>
+     *   <li>Known numeric (DOUBLE/FLOAT/DECIMAL): {@code CAST(TRUNC(x) AS INTEGER)}</li>
+     *   <li>Unknown type (UnresolvedColumn): {@code CAST(TRUNC(CAST(x AS DOUBLE)) AS INTEGER)}</li>
+     *   <li>Known non-fractional (INT/BOOLEAN/DATE/etc.): {@code CAST(x AS INTEGER)}</li>
+     * </ul>
+     *
+     * @param innerSQL the SQL string for the inner expression
+     * @param innerExpr the inner expression (used for type checking)
+     * @param targetType the target data type
+     * @return the CAST SQL string
+     */
+    public static String generateCastSQL(String innerSQL, Expression innerExpr, DataType targetType) {
         String sqlTypeName = resolveDuckDBTypeName(targetType);
-        String targetName = targetType.typeName().toUpperCase();
-
-        if (targetName.equals("INTEGER") || targetName.equals("INT")) {
-            if (!needsTrunc(expression)) {
-                return String.format("CAST(%s AS %s)", innerSQL, sqlTypeName);
+        if (isIntegralTargetType(targetType)) {
+            TruncMode mode = truncMode(innerExpr);
+            if (mode == TruncMode.DIRECT) {
+                return String.format("CAST(TRUNC(%s) AS %s)", innerSQL, sqlTypeName);
             }
-            return String.format("CAST(TRUNC(%s) AS %s)", innerSQL, sqlTypeName);
+            if (mode == TruncMode.VIA_DOUBLE) {
+                return String.format("CAST(TRUNC(CAST(%s AS DOUBLE)) AS %s)", innerSQL, sqlTypeName);
+            }
         }
-
         return String.format("CAST(%s AS %s)", innerSQL, sqlTypeName);
+    }
+
+    /**
+     * Checks whether the target type is an integral type (INTEGER, BIGINT, SMALLINT, TINYINT).
+     */
+    private static boolean isIntegralTargetType(DataType type) {
+        return type instanceof IntegerType
+            || type instanceof LongType
+            || type instanceof ShortType
+            || type instanceof ByteType;
     }
 
     /**
@@ -130,33 +180,65 @@ public final class CastExpression implements Expression {
     }
 
     /**
-     * Determines whether the inner expression needs a TRUNC wrapper for an
-     * INTEGER cast.
+     * Determines how TRUNC should be applied for an integral cast.
+     *
+     * <p>The logic considers both the declared data type and the expression kind:
+     * <ul>
+     *   <li>Known integer types: no TRUNC needed (already whole numbers).</li>
+     *   <li>Known non-numeric types (BOOLEAN, DATE, TIMESTAMP, BINARY): no TRUNC
+     *       (DuckDB's TRUNC doesn't accept these, and they don't have fractional parts).</li>
+     *   <li>Known floating-point/decimal types: direct TRUNC ({@code TRUNC(x)}).</li>
+     *   <li>Unknown types (StringType from UnresolvedColumn, or any other unresolved type):
+     *       TRUNC via DOUBLE cast ({@code TRUNC(CAST(x AS DOUBLE))}) because
+     *       DuckDB's TRUNC doesn't accept VARCHAR but the actual column might be
+     *       a DOUBLE at runtime. The extra CAST-to-DOUBLE is safe for strings
+     *       containing decimal numbers (e.g., "3.7") and a no-op for actual DOUBLEs.</li>
+     *   <li>Integer-returning function calls (date extraction, TRUNC itself): no TRUNC.</li>
+     * </ul>
      *
      * @param expr the inner expression
-     * @return true if TRUNC should be applied
+     * @return the TRUNC mode to use
      */
-    private static boolean needsTrunc(Expression expr) {
-        // Only apply TRUNC for floating-point numeric types where DuckDB
-        // might round instead of truncating toward zero (Spark semantics).
-        // TRUNC is NOT valid for VARCHAR, BOOLEAN, DATE, TIMESTAMP, etc.
-        DataType srcType = expr.dataType();
-        if (!(srcType instanceof DoubleType
-                || srcType instanceof FloatType
-                || srcType instanceof DecimalType)) {
-            return false;
-        }
-
+    private static TruncMode truncMode(Expression expr) {
         // If the source is a function call that already returns integers
         // (e.g., date extraction) or is already TRUNC, skip the wrapper
         if (expr instanceof FunctionCall fc) {
             String name = fc.functionName().toLowerCase();
             if (INTEGER_RETURNING_FUNCTIONS.contains(name) || name.equals("trunc")) {
-                return false;
+                return TruncMode.NONE;
             }
         }
 
-        return true;
+        DataType srcType = expr.dataType();
+
+        // Known integer types: no truncation needed
+        if (srcType instanceof IntegerType
+                || srcType instanceof LongType
+                || srcType instanceof ShortType
+                || srcType instanceof ByteType) {
+            return TruncMode.NONE;
+        }
+
+        // Known floating-point/decimal types: direct TRUNC
+        if (srcType instanceof DoubleType
+                || srcType instanceof FloatType
+                || srcType instanceof DecimalType) {
+            return TruncMode.DIRECT;
+        }
+
+        // Known non-numeric types: no TRUNC (DuckDB TRUNC doesn't accept these,
+        // and they don't have fractional parts)
+        if (srcType instanceof BooleanType
+                || srcType instanceof DateType
+                || srcType instanceof TimestampType
+                || srcType instanceof BinaryType) {
+            return TruncMode.NONE;
+        }
+
+        // Unknown type (StringType from UnresolvedColumn, or any other unresolved type):
+        // The actual runtime type might be DOUBLE, so apply TRUNC via DOUBLE cast.
+        // This is safe: TRUNC(CAST('123' AS DOUBLE)) = 123.0, TRUNC(CAST(3.7 AS DOUBLE)) = 3.0
+        return TruncMode.VIA_DOUBLE;
     }
 
     @Override
