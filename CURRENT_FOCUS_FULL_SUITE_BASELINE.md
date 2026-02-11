@@ -3,16 +3,16 @@
 **Date**: 2026-02-11
 **Mode**: `THUNDERDUCK_COMPAT_MODE=relaxed`
 **Command**: `cd /workspace/tests/integration && THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true COLLECT_TIMEOUT=30 python3 -m pytest differential/ -v --tb=short`
-**Result**: **733 passed, 1 failed, 5 skipped** (739 total, 232s)
+**Result**: **737 passed, 0 failed, 2 skipped** (739 total, 154s)
 
-**Previous baselines**: 646/88/5 (2026-02-09) → 708/26/5 (2026-02-10) → 718/16/5 (2026-02-11 AM) → 733/1/5 (2026-02-11 PM)
+**Previous baselines**: 646/88/5 (2026-02-09) → 708/26/5 (2026-02-10) → 718/16/5 (2026-02-11 AM) → 733/1/5 (2026-02-11 PM) → **737/0/2** (2026-02-11 evening)
 
 **TPC-H**: 51/51 (100%) — 29 SQL + 22 DataFrame
-**TPC-DS**: 98/99 (98.9%) — Q14b is the sole remaining failure
+**TPC-DS**: 99/99 (100%) — all SQL queries passing
 
 ## Progress Summary
 
-From the original 88 failures, 87 have been fixed across 6 worktrees plus direct main commits:
+From the original 88 failures + 5 skips, all failures are fixed and 3 of 5 skips are resolved:
 
 | Worktree | Scope | Fixed | Remaining |
 |----------|-------|-------|-----------|
@@ -20,39 +20,48 @@ From the original 88 failures, 87 have been fixed across 6 worktrees plus direct
 | **WT2**: Test infra cleanup | 17 | 17 | 0 |
 | **WT3**: Quick SQL generator wins | 16 | 16 | 0 |
 | **WT4**: Type system + complex types | 12 | 12 | 0 |
-| **WT5**: Decimal precision + Q77 | 6 | 5 | 1 (Q14b) |
+| **WT5**: Decimal precision + Q77 | 6 | 6 | 0 |
 | **WT6**: Semi/anti join chain | 1 | 1 | 0 |
 | Direct fixes (main) | 3 | 3 | 0 |
-| **Total** | **90** | **89** | **1** |
+| Q14b cross-join column dedup | 1 | 1 | 0 |
+| Skipped → passing | 3 | 3 | 0 |
+| **Total** | **94** | **94** | **0** |
 
 ---
 
-## Remaining 1 Failure
+## Remaining 2 Skipped Tests (Relaxed Mode Divergences)
 
-### TPC-DS Q14b: Cross-Join Column Ordering
+| Test | Reason | Resolution |
+|------|--------|------------|
+| test_array_negative_index_last | DuckDB supports `arr[-1]`; Spark throws ArrayIndexOutOfBoundsException | Strict mode via DuckDB extension |
+| test_array_negative_index_second_last | DuckDB supports `arr[-2]`; Spark throws ArrayIndexOutOfBoundsException | Strict mode via DuckDB extension |
 
-Originally classified as decimal precision — actually a Spark-vs-DuckDB semantics difference in how `SELECT *` from a cross join with identically-named subquery aliases orders columns.
-
-- TPC-DS: Q14b
-
-**Component**: SQL Generator (cross-join column deduplication/ordering)
-**Effort**: Medium (investigation needed to understand column ordering difference)
+These are marked `@pytest.mark.skip_relaxed` — they will run automatically in strict mode.
 
 ---
 
-## Skipped Tests (5)
+## Recent Fixes (2026-02-11 evening session)
 
-| Test | Reason |
-|------|--------|
-| test_array_negative_index_last | Spark throws on negative index; DuckDB supports it |
-| test_array_negative_index_second_last | Same as above |
-| test_months_between | Complex fractional month calculation — pending |
-| test_next_day | DuckDB lacks next_day function |
-| test_double_to_int | DuckDB rounds (-3.7 → -4), Spark truncates (-3.7 → -3) |
+### Q14b: Cross-Join Column Deduplication
+- DuckDB auto-renames duplicate column names with `:1` suffixes in `SELECT *`
+- Fix: Expand `SELECT *` to explicit qualified column list when join sources have overlapping names
+- Also extended `canAppendClause()` for Sort to prevent double `SELECT *` wrapping
+
+### months_between: Spark-Exact Algorithm
+- Replaced approximate `datediff/31.0` with exact CASE expression matching Spark's algorithm
+- Handles same-day, both-last-day-of-month, and fractional cases with 8-decimal rounding
+
+### next_day: Pure SQL Implementation
+- DuckDB has no native `next_day` — implemented via dayofweek arithmetic CASE expression
+- Handles all Spark abbreviations (SU/SUN/SUNDAY, MO/MON/MONDAY, etc.)
+
+### CAST Truncation: Three-Mode TruncMode
+- Fixed 3 bugs in dead TRUNC-wrapping code: exclusion-based type checking, all integral targets, unified code path
+- `TruncMode.VIA_DOUBLE` handles UnresolvedColumn safely via `TRUNC(CAST(x AS DOUBLE))`
 
 ---
 
-## What Was Fixed (87 of 88 failures)
+## What Was Fixed (all 88 original failures + 3 skips)
 
 ### WT1: Subquery Alias Scoping (35 fixed)
 - Two-pass FROM-first approach for join alias mapping (fixes alias prediction errors)
@@ -79,10 +88,11 @@ Originally classified as decimal precision — actually a Spark-vs-DuckDB semant
 - Overflow detection: CAST SUM to BIGINT to trigger overflow
 - Complex type literals: empty array syntax, struct literal without named fields
 
-### WT5: Decimal Precision + Q77 (5 fixed)
+### WT5: Decimal Precision + Q77 (6 fixed, including Q14b)
 - AVG DECIMAL precision: cast to DOUBLE in relaxed mode for full precision
 - TypeInferenceEngine: correct AVG return type DECIMAL(min(p+4,38), min(s+4,p+4))
 - Q77 deterministic sort: tiebreaker columns for ROLLUP ties
+- Q14b: cross-join SELECT * column deduplication
 
 ### WT6: Semi/Anti Join Chain Breaking (1 fixed)
 - `containsSemiOrAntiJoin()` guard on all flat-join-chain callers
@@ -96,3 +106,8 @@ Originally classified as decimal precision — actually a Spark-vs-DuckDB semant
 - VALUES/InlineTable support via `visitInlineTableDefault1/2`
 - Catalog `listFunctions` AIOOBE fix (`setSafe()`)
 - Pre-compiled regex patterns, SLF4J logger, code quality improvements
+
+### Skipped → Passing (3 unskipped)
+- months_between: Spark-exact fractional month CASE expression
+- next_day: Pure SQL dayofweek arithmetic implementation
+- CAST double-to-int: Three-mode TRUNC strategy (NONE/DIRECT/VIA_DOUBLE)
