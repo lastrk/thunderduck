@@ -236,7 +236,7 @@ public class StatisticsOperationHandler {
                     unionQuery.append(" UNION ALL ");
                 }
 
-                unionQuery.append("SELECT '").append(stats[s]).append("' AS summary");
+                unionQuery.append("SELECT ").append(SQLQuoting.quoteLiteral(stats[s])).append(" AS summary");
 
                 for (String col : cols) {
                     String quotedCol = quoteIdentifier(col);
@@ -324,7 +324,7 @@ public class StatisticsOperationHandler {
                     unionQuery.append(" UNION ALL ");
                 }
 
-                unionQuery.append("SELECT '").append(stat).append("' AS summary");
+                unionQuery.append("SELECT ").append(SQLQuoting.quoteLiteral(stat)).append(" AS summary");
 
                 for (String col : cols) {
                     String quotedCol = quoteIdentifier(col);
@@ -566,8 +566,10 @@ public class StatisticsOperationHandler {
     public String generateCovSql(StatCov cov, String inputSql) {
         String col1 = cov.getCol1();
         String col2 = cov.getCol2();
+        // Spark's stat.cov() replaces NULLs with 0.0 before computing covariance
+        // (see StatFunctions.calculateCovImpl in Spark source).
         return String.format(
-            "SELECT COVAR_SAMP(%s, %s) AS cov FROM (%s) AS _stat_input",
+            "SELECT COVAR_SAMP(COALESCE(%s, 0.0), COALESCE(%s, 0.0)) AS cov FROM (%s) AS _stat_input",
             quoteIdentifier(col1), quoteIdentifier(col2), inputSql
         );
     }
@@ -638,7 +640,7 @@ public class StatisticsOperationHandler {
 
         for (int s = 0; s < stats.length; s++) {
             if (s > 0) unionQuery.append(" UNION ALL ");
-            unionQuery.append("SELECT '").append(stats[s]).append("' AS summary");
+            unionQuery.append("SELECT ").append(SQLQuoting.quoteLiteral(stats[s])).append(" AS summary");
 
             for (String col : cols) {
                 String quotedCol = quoteIdentifier(col);
@@ -662,6 +664,34 @@ public class StatisticsOperationHandler {
                     default:
                         aggExpr = "NULL";
                 }
+                unionQuery.append(", ").append(aggExpr).append(" AS ").append(quotedCol);
+            }
+
+            unionQuery.append(" FROM (").append(inputSql).append(") AS _stat_input");
+        }
+
+        return unionQuery.toString();
+    }
+
+    /**
+     * Generate SQL for StatDescribe with pre-resolved column list.
+     * Used by RelationConverter which resolves columns from the plan schema.
+     */
+    public static String generateDescribeSql(List<String> cols, String inputSql) {
+        if (cols.isEmpty()) {
+            return "SELECT 'count' AS summary WHERE FALSE";
+        }
+
+        String[] stats = {"count", "mean", "stddev", "min", "max"};
+        StringBuilder unionQuery = new StringBuilder();
+
+        for (int s = 0; s < stats.length; s++) {
+            if (s > 0) unionQuery.append(" UNION ALL ");
+            unionQuery.append("SELECT ").append(SQLQuoting.quoteLiteral(stats[s])).append(" AS summary");
+
+            for (String col : cols) {
+                String quotedCol = quoteIdentifier(col);
+                String aggExpr = getStatisticExpression(stats[s], quotedCol);
                 unionQuery.append(", ").append(aggExpr).append(" AS ").append(quotedCol);
             }
 
@@ -696,7 +726,35 @@ public class StatisticsOperationHandler {
             String stat = statistics.get(s);
             if (s > 0) unionQuery.append(" UNION ALL ");
 
-            unionQuery.append("SELECT '").append(stat).append("' AS summary");
+            unionQuery.append("SELECT ").append(SQLQuoting.quoteLiteral(stat)).append(" AS summary");
+
+            for (String col : cols) {
+                String quotedCol = quoteIdentifier(col);
+                String aggExpr = getStatisticExpression(stat, quotedCol);
+                unionQuery.append(", ").append(aggExpr).append(" AS ").append(quotedCol);
+            }
+
+            unionQuery.append(" FROM (").append(inputSql).append(") AS _stat_input");
+        }
+
+        return unionQuery.toString();
+    }
+
+    /**
+     * Generate SQL for StatSummary with pre-resolved column list and statistics.
+     * Used by RelationConverter which resolves columns from the plan schema.
+     */
+    public static String generateSummarySql(List<String> statistics, List<String> cols, String inputSql) {
+        if (cols.isEmpty()) {
+            return "SELECT 'count' AS summary WHERE FALSE";
+        }
+
+        StringBuilder unionQuery = new StringBuilder();
+        for (int s = 0; s < statistics.size(); s++) {
+            String stat = statistics.get(s);
+            if (s > 0) unionQuery.append(" UNION ALL ");
+
+            unionQuery.append("SELECT ").append(SQLQuoting.quoteLiteral(stat)).append(" AS summary");
 
             for (String col : cols) {
                 String quotedCol = quoteIdentifier(col);
@@ -798,7 +856,7 @@ public class StatisticsOperationHandler {
     /**
      * Get the SQL expression for a statistic.
      */
-    private String getStatisticExpression(String stat, String quotedCol) {
+    static String getStatisticExpression(String stat, String quotedCol) {
         // Check for percentile format (e.g., "25%", "50%", "75%")
         // Spark's summary() uses nearest-rank method (PERCENTILE_DISC/QUANTILE_DISC)
         if (stat.endsWith("%")) {

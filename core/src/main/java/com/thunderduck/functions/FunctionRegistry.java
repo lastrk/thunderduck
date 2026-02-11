@@ -419,9 +419,15 @@ public class FunctionRegistry {
             if (args.length < 3) {
                 throw new IllegalArgumentException("regexp_replace requires at least 3 arguments");
             }
-            // If caller already provides a 4th arg (flags), append 'g' if not present
+            // If caller provides a 4th arg (flags), ensure 'g' is included for Spark semantics
             if (args.length >= 4) {
-                return "regexp_replace(" + args[0] + ", " + args[1] + ", " + args[2] + ", " + args[3] + ")";
+                String flags = args[3].trim();
+                // Check if 'g' is already in the flags string (inside quotes)
+                if (!flags.contains("g")) {
+                    // Insert 'g' before the closing quote: 'si' -> 'sig'
+                    flags = flags.substring(0, flags.length() - 1) + "g" + flags.charAt(flags.length() - 1);
+                }
+                return "regexp_replace(" + args[0] + ", " + args[1] + ", " + args[2] + ", " + flags + ")";
             }
             // Default: add 'g' flag for global replacement
             return "regexp_replace(" + args[0] + ", " + args[1] + ", " + args[2] + ", 'g')";
@@ -869,9 +875,8 @@ public class FunctionRegistry {
             // Preserve NULL for NULL arrays, return 0 for not-found
             return "CASE WHEN " + args[0] + " IS NULL THEN NULL ELSE COALESCE(list_position(" + args[0] + ", " + args[1] + "), 0) END";
         });
-        // element_at: DuckDB's element_at() only works on maps, not arrays.
-        // Use list_extract for arrays (the common case). Map element_at is handled
-        // by type-aware dispatch in FunctionCall.toSQL() when MapType is available.
+        // element_at: array → list_extract, MAP → keep as element_at (DuckDB native)
+        // Handled polymorphically in SQLGenerator.resolvePolymorphicFunctions()
         DIRECT_MAPPINGS.put("element_at", "list_extract");
         DIRECT_MAPPINGS.put("slice", "list_slice");
         DIRECT_MAPPINGS.put("arrays_overlap", "list_has_any");
@@ -969,8 +974,9 @@ public class FunctionRegistry {
         // Note: exists, forall require special handling in ExpressionConverter
         // as they need to wrap list_transform with list_any/list_all
 
-        // size() returns INT in Spark. DuckDB len() works on arrays,
-        // cardinality() works on maps. Type-based dispatch happens in FunctionCall.toSQL().
+        // size() returns INT in Spark but DuckDB len() returns BIGINT - need CAST
+        // DuckDB's len() works on arrays/lists; cardinality() only works on MAPs.
+        // The polymorphic dispatch for MAP type is handled in SQLGenerator.resolvePolymorphicFunctions().
         CUSTOM_TRANSLATORS.put("size", args -> {
             if (args.length < 1) {
                 throw new IllegalArgumentException("size requires at least 1 argument");

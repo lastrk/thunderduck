@@ -681,8 +681,9 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                                 logger.debug("LogicalPlan schema inference failed, falling back to DuckDB: {}", e.getMessage());
                             }
                         }
-                        // Fallback: infer from DuckDB if plan schema unavailable
-                        if (schema == null) {
+                        // Fallback: infer from DuckDB if plan schema unavailable or empty
+                        // (SQLRelation without schema returns an empty StructType, not null)
+                        if (schema == null || schema.size() == 0) {
                             schema = inferSchemaFromDuckDB(sql, sessionId);
                         }
 
@@ -712,8 +713,8 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                                 logger.debug("LogicalPlan schema inference failed, falling back to DuckDB: {}", e.getMessage());
                             }
                         }
-                        // Fallback: infer from DuckDB if plan schema unavailable
-                        if (schema == null) {
+                        // Fallback: infer from DuckDB if plan schema unavailable or empty
+                        if (schema == null || schema.size() == 0) {
                             schema = inferSchemaFromDuckDB(sql, sessionId);
                         }
 

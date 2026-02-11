@@ -658,14 +658,14 @@ public class CatalogOperationHandler {
                     String schemaName = new String(srcSchema.get(i), StandardCharsets.UTF_8);
                     String description = srcDesc.isNull(i) ? "" : new String(srcDesc.get(i), StandardCharsets.UTF_8);
 
-                    nameVec.set(i, funcName.getBytes(StandardCharsets.UTF_8));
-                    catalogVec.set(i, "spark_catalog".getBytes(StandardCharsets.UTF_8));
-                    namespaceVec.set(i, ("[\"" + schemaName + "\"]").getBytes(StandardCharsets.UTF_8));
-                    descVec.set(i, description.getBytes(StandardCharsets.UTF_8));
+                    nameVec.setSafe(i, funcName.getBytes(StandardCharsets.UTF_8));
+                    catalogVec.setSafe(i, "spark_catalog".getBytes(StandardCharsets.UTF_8));
+                    namespaceVec.setSafe(i, ("[\"" + schemaName + "\"]").getBytes(StandardCharsets.UTF_8));
+                    descVec.setSafe(i, description.getBytes(StandardCharsets.UTF_8));
                     // Use placeholder className since DuckDB functions don't have Java class names
-                    classNameVec.set(i, ("org.duckdb.builtin." + funcName).getBytes(StandardCharsets.UTF_8));
+                    classNameVec.setSafe(i, ("org.duckdb.builtin." + funcName).getBytes(StandardCharsets.UTF_8));
                     // All DuckDB built-in functions are not temporary
-                    tempVec.set(i, 0);
+                    tempVec.setSafe(i, 0);
                 }
 
                 nameVec.setValueCount(rowCount);

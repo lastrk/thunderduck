@@ -1,6 +1,7 @@
 package com.thunderduck.logical;
 
 import com.thunderduck.expression.Expression;
+import com.thunderduck.expression.StarExpression;
 import com.thunderduck.types.DataType;
 import com.thunderduck.types.StructField;
 import com.thunderduck.types.StructType;
@@ -9,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Logical plan node representing a projection (SELECT clause).
@@ -26,6 +29,18 @@ import java.util.Objects;
  * <pre>SELECT expr1, expr2, ... FROM (child)</pre>
  */
 public final class Project extends LogicalPlan {
+
+    // Pre-compiled regex patterns for extractTrailingAlias()
+    private static final Pattern TRAILING_ALIAS_SIMPLE =
+        Pattern.compile("\\s+[Aa][Ss]\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*$");
+    private static final Pattern TRAILING_ALIAS_BACKTICK =
+        Pattern.compile("\\s+[Aa][Ss]\\s+`([^`]+)`\\s*$");
+    private static final Pattern TRAILING_ALIAS_DQUOTE =
+        Pattern.compile("\\s+[Aa][Ss]\\s+\"([^\"]+)\"\\s*$");
+
+    // Pre-compiled regex pattern for normalizeTypeCaseInColumnName()
+    private static final Pattern CAST_TYPE_PATTERN = Pattern.compile(
+        "(?i)(CAST\\([^)]*\\bAS\\s+)(decimal|int|integer|bigint|double|float|string|boolean|date|timestamp|tinyint|smallint)((?:\\([^)]*\\))?\\))");
 
     private final List<Expression> projections;
     private final List<String> aliases;
@@ -137,6 +152,17 @@ public final class Project extends LogicalPlan {
         List<StructField> fields = new ArrayList<>();
         for (int i = 0; i < projections.size(); i++) {
             Expression expr = projections.get(i);
+
+            // Star expression (*) expands to all child schema columns
+            if (expr instanceof StarExpression) {
+                if (childSchema != null) {
+                    for (StructField childField : childSchema.fields()) {
+                        fields.add(childField);
+                    }
+                }
+                continue;
+            }
+
             String alias = aliases.get(i);
             String fieldName;
             if (alias != null) {
@@ -216,23 +242,17 @@ public final class Project extends LogicalPlan {
     static String extractTrailingAlias(String sql) {
         // Match " AS identifier" or " as identifier" at the end of the expression.
         // The alias can be a simple identifier or a backtick/double-quoted identifier.
-        java.util.regex.Matcher m = java.util.regex.Pattern
-            .compile("\\s+[Aa][Ss]\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*$")
-            .matcher(sql);
+        Matcher m = TRAILING_ALIAS_SIMPLE.matcher(sql);
         if (m.find()) {
             return m.group(1);
         }
         // Try backtick-quoted alias
-        m = java.util.regex.Pattern
-            .compile("\\s+[Aa][Ss]\\s+`([^`]+)`\\s*$")
-            .matcher(sql);
+        m = TRAILING_ALIAS_BACKTICK.matcher(sql);
         if (m.find()) {
             return m.group(1);
         }
         // Try double-quoted alias
-        m = java.util.regex.Pattern
-            .compile("\\s+[Aa][Ss]\\s+\"([^\"]+)\"\\s*$")
-            .matcher(sql);
+        m = TRAILING_ALIAS_DQUOTE.matcher(sql);
         if (m.find()) {
             return m.group(1);
         }
@@ -246,9 +266,7 @@ public final class Project extends LogicalPlan {
     static String normalizeTypeCaseInColumnName(String name) {
         // Replace lowercase type names after "AS " in CAST expressions with uppercase.
         // Pattern: CAST(... AS typename) — normalize typename to uppercase.
-        return java.util.regex.Pattern
-            .compile("(?i)(CAST\\([^)]*\\bAS\\s+)(decimal|int|integer|bigint|double|float|string|boolean|date|timestamp|tinyint|smallint)((?:\\([^)]*\\))?\\))")
-            .matcher(name)
+        return CAST_TYPE_PATTERN.matcher(name)
             .replaceAll(mr -> mr.group(1) + mr.group(2).toUpperCase() + mr.group(3));
     }
 

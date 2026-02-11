@@ -399,6 +399,47 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
         return visitQuery(ctx.query());
     }
 
+    // ==================== VALUES (InlineTable) ====================
+
+    /**
+     * Handles VALUES as a queryPrimary (e.g., VALUES (1, 'a'), (2, 'b')).
+     * DuckDB supports VALUES natively, so we pass through as SQLRelation.
+     */
+    @Override
+    public LogicalPlan visitInlineTableDefault1(SqlBaseParser.InlineTableDefault1Context ctx) {
+        return buildInlineTable(ctx.inlineTable());
+    }
+
+    /**
+     * Handles VALUES in FROM clause (e.g., FROM VALUES (1, 'a') AS t(id, name)).
+     * DuckDB supports VALUES natively, so we pass through as SQLRelation.
+     */
+    @Override
+    public LogicalPlan visitInlineTableDefault2(SqlBaseParser.InlineTableDefault2Context ctx) {
+        return buildInlineTable(ctx.inlineTable());
+    }
+
+    /**
+     * Builds a SQLRelation from an InlineTable (VALUES) context.
+     * Generates: SELECT * FROM (VALUES (expr1), (expr2), ...) with optional table alias.
+     */
+    private LogicalPlan buildInlineTable(SqlBaseParser.InlineTableContext ctx) {
+        // Build VALUES clause from expressions
+        StringBuilder valuesSql = new StringBuilder("VALUES ");
+        List<SqlBaseParser.ExpressionContext> exprs = ctx.expression();
+        for (int i = 0; i < exprs.size(); i++) {
+            if (i > 0) valuesSql.append(", ");
+            valuesSql.append(getOriginalText(exprs.get(i)));
+        }
+
+        LogicalPlan plan = new SQLRelation("SELECT * FROM (" + valuesSql + ")");
+
+        // Apply table alias if present
+        plan = applyTableAlias(plan, ctx.tableAlias());
+
+        return plan;
+    }
+
     // ==================== SELECT Statement ====================
 
     @Override
@@ -735,6 +776,26 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
                 // No aggregate function → grouping expression
                 selectOrder.add(new Aggregate.SelectEntry(false, groupingExprs.size()));
                 groupingExprs.add(expr);
+            }
+        }
+
+        // Ensure all actual GROUP BY expressions are included in groupingExprs.
+        // SELECT-derived groupingExprs may miss GROUP BY columns not in SELECT
+        // (e.g., SELECT i_item_id, SUM(x) FROM t GROUP BY i_item_id, d_qoy).
+        // Extra entries here only affect the GROUP BY clause, not SELECT
+        // (which is controlled by selectOrder).
+        for (Expression gbExpr : groupByExprs) {
+            String gbSql = gbExpr.toSQL();
+            boolean found = false;
+            for (Expression ge : groupingExprs) {
+                Expression geInner = (ge instanceof AliasExpression ae) ? ae.expression() : ge;
+                if (geInner.toSQL().equals(gbSql)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                groupingExprs.add(gbExpr);
             }
         }
 

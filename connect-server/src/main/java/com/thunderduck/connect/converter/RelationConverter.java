@@ -10,6 +10,7 @@ import com.thunderduck.logical.LocalDataRelation;
 import com.thunderduck.logical.RangeRelation;
 import com.thunderduck.generator.SQLQuoting;
 import com.thunderduck.generator.SQLGenerator;
+import com.thunderduck.connect.service.StatisticsOperationHandler;
 import com.thunderduck.schema.SchemaInferrer;
 import com.thunderduck.types.StructType;
 import com.thunderduck.types.StructField;
@@ -384,9 +385,9 @@ public class RelationConverter {
                         };
                         logger.debug("Wrapped {} arguments in ROW() for countDistinct", args.size());
                     } else if (funcLower.equals("grouping_id") || funcLower.equals("grouping")) {
-                        // grouping_id needs all arguments preserved — use composite expression.
-                        // The FunctionRegistry custom translator handles bit-order reversal
-                        // (Spark vs DuckDB use opposite bit ordering for grouping_id).
+                        // grouping_id needs all arguments preserved — use simple expression
+                        // with FunctionCall (not composite), so FunctionRegistry.translate()
+                        // handles bit-order reversal (Spark vs DuckDB use opposite bit ordering).
                         aggExprs.add(new com.thunderduck.logical.Aggregate.AggregateExpression(
                             new FunctionCall(functionName, args, func.dataType(), func.nullable(), func.distinct()),
                             alias));
@@ -2360,27 +2361,7 @@ public class RelationConverter {
             }
         }
 
-        if (cols.isEmpty()) {
-            return new SQLRelation("SELECT 'count' AS summary WHERE FALSE");
-        }
-
-        String[] stats = {"count", "mean", "stddev", "min", "max"};
-        StringBuilder unionQuery = new StringBuilder();
-
-        for (int s = 0; s < stats.length; s++) {
-            if (s > 0) unionQuery.append(" UNION ALL ");
-            unionQuery.append("SELECT '").append(stats[s]).append("' AS summary");
-
-            for (String col : cols) {
-                String quotedCol = SQLQuoting.quoteIdentifier(col);
-                String aggExpr = getDescribeStatExpression(stats[s], quotedCol);
-                unionQuery.append(", ").append(aggExpr).append(" AS ").append(quotedCol);
-            }
-
-            unionQuery.append(" FROM (").append(inputSql).append(") AS _stat_input");
-        }
-
-        return new SQLRelation(unionQuery.toString());
+        return new SQLRelation(StatisticsOperationHandler.generateDescribeSql(cols, inputSql));
     }
 
     /**
@@ -2416,27 +2397,7 @@ public class RelationConverter {
             }
         }
 
-        if (cols.isEmpty()) {
-            return new SQLRelation("SELECT 'count' AS summary WHERE FALSE");
-        }
-
-        StringBuilder unionQuery = new StringBuilder();
-
-        for (int s = 0; s < statistics.size(); s++) {
-            String stat = statistics.get(s);
-            if (s > 0) unionQuery.append(" UNION ALL ");
-            unionQuery.append("SELECT '").append(stat).append("' AS summary");
-
-            for (String col : cols) {
-                String quotedCol = SQLQuoting.quoteIdentifier(col);
-                String aggExpr = getSummaryStatExpression(stat, quotedCol);
-                unionQuery.append(", ").append(aggExpr).append(" AS ").append(quotedCol);
-            }
-
-            unionQuery.append(" FROM (").append(inputSql).append(") AS _stat_input");
-        }
-
-        return new SQLRelation(unionQuery.toString());
+        return new SQLRelation(StatisticsOperationHandler.generateSummarySql(statistics, cols, inputSql));
     }
 
     /**
@@ -2480,37 +2441,4 @@ public class RelationConverter {
         return new SQLRelation(sql);
     }
 
-    /**
-     * Get the SQL expression for a describe statistic.
-     */
-    private String getDescribeStatExpression(String stat, String quotedCol) {
-        return switch (stat) {
-            case "count" -> String.format("CAST(COUNT(%s) AS VARCHAR)", quotedCol);
-            case "mean" -> String.format("CAST(AVG(TRY_CAST(%s AS DOUBLE)) AS VARCHAR)", quotedCol);
-            case "stddev" -> String.format("CAST(STDDEV_SAMP(TRY_CAST(%s AS DOUBLE)) AS VARCHAR)", quotedCol);
-            case "min" -> String.format("CAST(MIN(%s) AS VARCHAR)", quotedCol);
-            case "max" -> String.format("CAST(MAX(%s) AS VARCHAR)", quotedCol);
-            default -> "NULL";
-        };
-    }
-
-    /**
-     * Get the SQL expression for a summary statistic.
-     */
-    private String getSummaryStatExpression(String stat, String quotedCol) {
-        // Check for percentile format (e.g., "25%", "50%", "75%")
-        // Spark's summary() uses nearest-rank method (PERCENTILE_DISC), not linear interpolation
-        if (stat.endsWith("%")) {
-            try {
-                double percentile = Double.parseDouble(stat.substring(0, stat.length() - 1)) / 100.0;
-                return String.format(
-                    "CAST(QUANTILE_DISC(TRY_CAST(%s AS DOUBLE), %f) AS VARCHAR)",
-                    quotedCol, percentile
-                );
-            } catch (NumberFormatException e) {
-                return "NULL";
-            }
-        }
-        return getDescribeStatExpression(stat, quotedCol);
-    }
 }
