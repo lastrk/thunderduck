@@ -348,6 +348,18 @@ public class RelationConverter {
                 FunctionCall func = (FunctionCall) expr;
                 functionName = func.functionName();
 
+                // Check if this is a scalar function wrapping an aggregate (e.g., size(collect_list(x))).
+                // If the top-level function is NOT an aggregate but contains aggregates in its args,
+                // treat as composite so the full expression tree is used for type resolution.
+                if (!com.thunderduck.expression.ExpressionUtils.AGGREGATE_FUNCTIONS.contains(
+                        functionName.toLowerCase()) &&
+                    func.arguments().stream().anyMatch(
+                        com.thunderduck.expression.ExpressionUtils::containsAggregateFunction)) {
+                    logger.debug("Scalar-wrapping-aggregate expression: {} -> treating as composite", functionName);
+                    aggExprs.add(new com.thunderduck.logical.Aggregate.AggregateExpression(expr, alias));
+                    continue;
+                }
+
                 // Handle multi-argument aggregate functions
                 List<Expression> args = func.arguments();
                 if (args.isEmpty()) {

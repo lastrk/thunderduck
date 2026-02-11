@@ -357,6 +357,23 @@ public final class TypeInferenceEngine {
         if (expr instanceof InExpression) {
             return BooleanType.get();
         }
+        if (expr instanceof com.thunderduck.expression.ExtractValueExpression extract) {
+            return resolveExtractValueType(extract, schema);
+        }
+        if (expr instanceof com.thunderduck.expression.FieldAccessExpression fieldAccess) {
+            return resolveFieldAccessType(fieldAccess, schema);
+        }
+        if (expr instanceof com.thunderduck.expression.CastExpression cast) {
+            return cast.targetType();
+        }
+        if (expr instanceof com.thunderduck.expression.RawSQLExpression raw) {
+            // For raw SQL with explicit type metadata, use it
+            DataType rawType = raw.dataType();
+            if (rawType != null && !UnresolvedType.isUnresolved(rawType) &&
+                !(rawType instanceof StringType)) {
+                return rawType;
+            }
+        }
 
         // Default: use the expression's declared type
         return expr.dataType();
@@ -669,6 +686,75 @@ public final class TypeInferenceEngine {
     }
 
     /**
+     * Resolves the type of an ExtractValueExpression by examining the child type.
+     *
+     * <p>For array subscript: returns the element type of the array.
+     * For map subscript: returns the value type of the map.
+     * For struct field: returns the field type from the struct.
+     */
+    private static DataType resolveExtractValueType(
+            com.thunderduck.expression.ExtractValueExpression extract, StructType schema) {
+        DataType childType = resolveType(extract.child(), schema);
+
+        return switch (extract.extractionType()) {
+            case ARRAY_INDEX -> {
+                // Could be array or map subscript (parser uses ARRAY_INDEX for both)
+                if (childType instanceof ArrayType arrType) {
+                    yield arrType.elementType();
+                }
+                if (childType instanceof MapType mapType) {
+                    yield mapType.valueType();
+                }
+                yield extract.dataType();
+            }
+            case MAP_KEY -> {
+                if (childType instanceof MapType mapType) {
+                    yield mapType.valueType();
+                }
+                yield extract.dataType();
+            }
+            case STRUCT_FIELD -> {
+                if (childType instanceof StructType structType) {
+                    com.thunderduck.expression.Expression extractionExpr = extract.extraction();
+                    if (extractionExpr instanceof com.thunderduck.expression.Literal lit
+                            && lit.value() instanceof String fieldName) {
+                        StructField field = findField(fieldName, structType);
+                        if (field != null) {
+                            yield field.dataType();
+                        }
+                    }
+                }
+                yield extract.dataType();
+            }
+        };
+    }
+
+    /**
+     * Resolves the type of a FieldAccessExpression (base.fieldName) by looking up
+     * the field in the base's struct type.
+     */
+    private static DataType resolveFieldAccessType(
+            com.thunderduck.expression.FieldAccessExpression fieldAccess, StructType schema) {
+        DataType baseType = resolveType(fieldAccess.base(), schema);
+
+        if (baseType instanceof StructType structType) {
+            StructField field = findField(fieldAccess.fieldName(), structType);
+            if (field != null) {
+                return field.dataType();
+            }
+        }
+
+        // Fallback: try to look up as a schema column
+        // e.g., table.column where table is an alias
+        DataType schemaType = lookupColumnType(fieldAccess.fieldName(), schema);
+        if (schemaType != null) {
+            return schemaType;
+        }
+
+        return fieldAccess.dataType();
+    }
+
+    /**
      * Unifies two types for CASE WHEN branches.
      *
      * <p>Returns the common supertype of two types:
@@ -746,6 +832,25 @@ public final class TypeInferenceEngine {
                         }
                     }
                 }
+                // Collection aggregates: resolve element type from argument
+                // Spark's collect_list/collect_set skip nulls, so containsNull=false
+                if (funcName.equals("collect_list") || funcName.equals("collect_set") ||
+                    funcName.equals("list") || funcName.equals("list_distinct") ||
+                    funcName.equals("array_agg")) {
+                    if (!func.arguments().isEmpty()) {
+                        DataType argType = resolveType(func.arguments().get(0), schema);
+                        return new ArrayType(argType, false);
+                    }
+                }
+                // Array constructor: resolve element type from arguments
+                if (funcName.equals("array")) {
+                    if (!func.arguments().isEmpty()) {
+                        DataType elemType = resolveType(func.arguments().get(0), schema);
+                        boolean containsNull = func.arguments().stream()
+                            .anyMatch(arg -> resolveNullable(arg, schema));
+                        return new ArrayType(elemType, containsNull);
+                    }
+                }
             }
             return resolveNestedType(declaredType, schema);
         }
@@ -760,9 +865,104 @@ public final class TypeInferenceEngine {
              declaredType instanceof StringType) &&
             !func.arguments().isEmpty()) {
 
+            // Array constructor: array(1, 2, 3) -> ArrayType(IntegerType, false)
+            if (funcName.equals("array")) {
+                DataType elemType = resolveType(func.arguments().get(0), schema);
+                boolean containsNull = func.arguments().stream()
+                    .anyMatch(arg -> resolveNullable(arg, schema));
+                return new ArrayType(elemType, containsNull);
+            }
+
+            // Map constructor: map(k1, v1, k2, v2) -> MapType(keyType, valueType, valueContainsNull)
+            if (funcName.equals("map") || funcName.equals("create_map")) {
+                if (func.arguments().size() >= 2) {
+                    DataType keyType = resolveType(func.arguments().get(0), schema);
+                    DataType valueType = resolveType(func.arguments().get(1), schema);
+                    boolean valueContainsNull = false;
+                    for (int i = 1; i < func.arguments().size(); i += 2) {
+                        if (resolveNullable(func.arguments().get(i), schema)) {
+                            valueContainsNull = true;
+                            break;
+                        }
+                    }
+                    return new MapType(keyType, valueType, valueContainsNull);
+                }
+            }
+
+            // map_from_arrays: map_from_arrays(keys_array, values_array) -> MapType
+            if (funcName.equals("map_from_arrays") && func.arguments().size() >= 2) {
+                DataType keysType = resolveType(func.arguments().get(0), schema);
+                DataType valuesType = resolveType(func.arguments().get(1), schema);
+                if (keysType instanceof ArrayType keyArr && valuesType instanceof ArrayType valArr) {
+                    return new MapType(keyArr.elementType(), valArr.elementType(), valArr.containsNull());
+                }
+            }
+
+            // Struct constructor: named_struct/struct(name1, val1, ...) -> StructType
+            if (funcName.equals("named_struct")) {
+                java.util.List<StructField> fields = new java.util.ArrayList<>();
+                for (int i = 0; i + 1 < func.arguments().size(); i += 2) {
+                    Expression nameExpr = func.arguments().get(i);
+                    Expression valExpr = func.arguments().get(i + 1);
+                    String fieldName = (nameExpr instanceof Literal lit) ? String.valueOf(lit.value()) : nameExpr.toSQL();
+                    DataType fieldType = resolveType(valExpr, schema);
+                    boolean fieldNullable = resolveNullable(valExpr, schema);
+                    fields.add(new StructField(fieldName, fieldType, fieldNullable));
+                }
+                return new StructType(fields);
+            }
+
+            // struct() with alias args: struct(lit(99).alias("id"), ...) -> StructType
+            if (funcName.equals("struct")) {
+                java.util.List<StructField> fields = new java.util.ArrayList<>();
+                for (Expression arg : func.arguments()) {
+                    String fieldName;
+                    Expression valExpr;
+                    if (arg instanceof AliasExpression alias) {
+                        fieldName = alias.alias();
+                        valExpr = alias.expression();
+                    } else {
+                        fieldName = arg.toSQL();
+                        valExpr = arg;
+                    }
+                    DataType fieldType = resolveType(valExpr, schema);
+                    boolean fieldNullable = resolveNullable(valExpr, schema);
+                    fields.add(new StructField(fieldName, fieldType, fieldNullable));
+                }
+                return new StructType(fields);
+            }
+
+            // Collection aggregates: collect_list/collect_set -> ArrayType(argType, false)
+            // Spark's collect_list/collect_set skip nulls, so containsNull=false
+            if (funcName.equals("collect_list") || funcName.equals("collect_set") ||
+                funcName.equals("list") || funcName.equals("list_distinct") ||
+                funcName.equals("array_agg")) {
+                DataType argType = resolveType(func.arguments().get(0), schema);
+                return new ArrayType(argType, false);
+            }
+
             // Array functions that preserve input type
             if (FunctionCategories.isArrayTypePreserving(funcName) ||
                 FunctionCategories.isArraySetOperation(funcName)) {
+                DataType argType = resolveType(func.arguments().get(0), schema);
+                if (argType instanceof ArrayType) {
+                    return argType;
+                }
+            }
+
+            // Lambda-based array functions that return arrays
+            // list_transform: transform(array, lambda) -> ArrayType with transformed element type
+            // list_filter/filter: returns same ArrayType as input
+            if (funcName.equals("list_transform") || funcName.equals("transform")) {
+                DataType argType = resolveType(func.arguments().get(0), schema);
+                if (argType instanceof ArrayType) {
+                    // Transform may change element type, but without evaluating the lambda
+                    // we return the input array type as best estimate
+                    return argType;
+                }
+            }
+            if (funcName.equals("list_filter") || funcName.equals("filter") ||
+                funcName.equals("array_filter")) {
                 DataType argType = resolveType(func.arguments().get(0), schema);
                 if (argType instanceof ArrayType) {
                     return argType;
@@ -807,9 +1007,25 @@ public final class TypeInferenceEngine {
                 }
             }
 
+            // Boolean-returning functions
+            if (FunctionCategories.isBooleanReturning(funcName) ||
+                funcName.equals("exists") || funcName.equals("forall") ||
+                funcName.equals("list_bool_or") || funcName.equals("list_bool_and")) {
+                return BooleanType.get();
+            }
+
             // Type-preserving functions
             if (FunctionCategories.isTypePreserving(funcName)) {
                 return resolveType(func.arguments().get(0), schema);
+            }
+
+            // list_reduce/aggregate: returns the accumulator type (same as initial value)
+            if (funcName.equals("list_reduce") || funcName.equals("aggregate") ||
+                funcName.equals("reduce")) {
+                // The second argument is the initial value; its type is the result type
+                if (func.arguments().size() >= 2) {
+                    return resolveType(func.arguments().get(1), schema);
+                }
             }
 
             // Aggregate functions: resolve return type based on argument type
@@ -826,6 +1042,62 @@ public final class TypeInferenceEngine {
                 if (aggResult != null) {
                     return aggResult;
                 }
+            }
+
+            // String functions
+            if (funcName.matches("concat|concat_ws|upper|lower|ucase|lcase|" +
+                    "trim|ltrim|rtrim|" +
+                    "lpad|rpad|repeat|" +
+                    "substring|substr|left|right|" +
+                    "replace|translate|regexp_replace|regexp_extract|" +
+                    "split_part|initcap|format_string|printf|" +
+                    "from_unixtime|base64|unbase64|hex|unhex|md5|sha1|sha2")) {
+                return StringType.get();
+            }
+
+            // Date/time functions
+            if (funcName.matches("to_date|last_day|next_day|date_add|date_sub|add_months")) {
+                return DateType.get();
+            }
+            if (funcName.matches("to_timestamp|date_trunc")) {
+                return TimestampType.get();
+            }
+
+            // Integer-returning functions
+            if (FunctionCategories.isIntegerReturning(funcName) ||
+                funcName.matches("year|month|day|dayofmonth|dayofweek|dayofyear|" +
+                    "hour|minute|second|quarter|weekofyear|week|datediff|size")) {
+                return IntegerType.get();
+            }
+
+            // Long-returning functions
+            if (funcName.matches("length|char_length|character_length|unix_timestamp")) {
+                return LongType.get();
+            }
+
+            // Double-returning functions
+            if (funcName.matches("sqrt|log|ln|log10|log2|exp|expm1|" +
+                    "sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh|" +
+                    "radians|degrees|cbrt|hypot|pow|power|" +
+                    "sign|signum|round|bround|truncate|months_between")) {
+                return DoubleType.get();
+            }
+
+            // Ceil/floor return Long in Spark
+            if (funcName.matches("ceil|ceiling|floor")) {
+                return LongType.get();
+            }
+        }
+
+        // Also handle functions with empty arguments but known return types
+        if (UnresolvedType.isUnresolved(declaredType) || declaredType instanceof StringType) {
+            // COUNT with no args (count(*))
+            if (funcName.equals("count") || funcName.equals("count_distinct")) {
+                return LongType.get();
+            }
+            // Boolean-returning functions
+            if (FunctionCategories.isBooleanReturning(funcName)) {
+                return BooleanType.get();
             }
         }
 
@@ -891,14 +1163,15 @@ public final class TypeInferenceEngine {
                 return LongType.get();
 
             // Collection aggregates return ArrayType of the argument type
+            // Spark's collect_list/collect_set skip nulls, so containsNull=false
             case "COLLECT_LIST":
             case "COLLECT_SET":
             case "LIST":           // DuckDB function name for collect_list
             case "LIST_DISTINCT":  // DuckDB function name for collect_set
                 if (argType != null) {
-                    return new ArrayType(argType, true);
+                    return new ArrayType(argType, false);
                 }
-                return new ArrayType(StringType.get(), true);
+                return new ArrayType(StringType.get(), false);
 
             default:
                 return argType != null ? argType : StringType.get();
@@ -1000,16 +1273,71 @@ public final class TypeInferenceEngine {
         if (expr instanceof FunctionCall func) {
             return resolveFunctionCallNullable(func, schema);
         }
+        if (expr instanceof com.thunderduck.expression.CastExpression cast) {
+            // CAST nullable follows the inner expression's nullable
+            return resolveNullable(cast.expression(), schema);
+        }
+        if (expr instanceof com.thunderduck.expression.ExtractValueExpression) {
+            // Value extraction from collections is always nullable
+            // (out of bounds, missing key, etc.)
+            return true;
+        }
+        if (expr instanceof com.thunderduck.expression.FieldAccessExpression fieldAccess) {
+            // Struct field access: look up nullability from the struct's schema
+            DataType baseType = resolveType(fieldAccess.base(), schema);
+            if (baseType instanceof StructType structType) {
+                StructField field = findField(fieldAccess.fieldName(), structType);
+                if (field != null) {
+                    return field.nullable();
+                }
+            }
+            return true;
+        }
+        if (expr instanceof com.thunderduck.expression.RawSQLExpression raw) {
+            // Use explicit nullable if available
+            return raw.nullable();
+        }
 
         // Default: use the expression's own nullable()
         return expr.nullable();
     }
 
     /**
-     * Resolves function call nullability.
+     * Resolves function call nullability per Spark semantics.
+     *
+     * <p>This is the centralized authority for function nullability. It must handle:
+     * <ul>
+     *   <li>Aggregate functions (COUNT always non-null, SUM/AVG depend on input)</li>
+     *   <li>Complex type constructors (array, map, struct: never null)</li>
+     *   <li>Boolean check functions (isnull, isnotnull: never null)</li>
+     *   <li>Null-coalescing functions (non-null if any arg is non-null)</li>
+     *   <li>General functions (nullable if any arg is nullable)</li>
+     * </ul>
      */
     private static boolean resolveFunctionCallNullable(FunctionCall func, StructType schema) {
         String funcName = func.functionName().toLowerCase();
+        String funcUpper = funcName.toUpperCase();
+
+        // Normalize _DISTINCT suffix
+        String normalizedUpper = funcUpper;
+        if (funcUpper.endsWith("_DISTINCT") && !funcUpper.equals("COUNT_DISTINCT")) {
+            normalizedUpper = funcUpper.substring(0, funcUpper.length() - "_DISTINCT".length());
+        }
+
+        // COUNT is always non-nullable (returns 0 for empty groups)
+        if (normalizedUpper.equals("COUNT") || funcUpper.equals("COUNT_DISTINCT")) {
+            return false;
+        }
+
+        // Complex type constructors are never null (the container itself is not null)
+        if (funcName.matches("array|map|create_map|named_struct|struct")) {
+            return false;
+        }
+
+        // Boolean check functions always return non-null boolean
+        if (funcName.matches("isnull|isnotnull|isnan")) {
+            return false;
+        }
 
         // Null-coalescing functions: non-null if ANY argument is non-null
         if (FunctionCategories.isNullCoalescing(funcName)) {
@@ -1021,6 +1349,49 @@ public final class TypeInferenceEngine {
             return true;
         }
 
+        // concat_ws is only nullable if separator (first arg) is nullable
+        if (funcName.equals("concat_ws") && !func.arguments().isEmpty()) {
+            return resolveNullable(func.arguments().get(0), schema);
+        }
+
+        // Aggregate functions: SUM, AVG, MIN, MAX, FIRST, LAST
+        // These are nullable only if their input argument is nullable
+        if (normalizedUpper.equals("SUM") || normalizedUpper.equals("AVG") ||
+            normalizedUpper.equals("MIN") || normalizedUpper.equals("MAX") ||
+            normalizedUpper.equals("FIRST") || normalizedUpper.equals("LAST") ||
+            normalizedUpper.equals("FIRST_VALUE") || normalizedUpper.equals("LAST_VALUE") ||
+            normalizedUpper.equals("ANY_VALUE")) {
+            if (!func.arguments().isEmpty()) {
+                return resolveNullable(func.arguments().get(0), schema);
+            }
+            return true;
+        }
+
+        // Collection aggregates are always nullable
+        if (normalizedUpper.equals("COLLECT_LIST") || normalizedUpper.equals("COLLECT_SET") ||
+            normalizedUpper.equals("ARRAY_AGG") || normalizedUpper.equals("LIST") ||
+            normalizedUpper.equals("LIST_DISTINCT")) {
+            return true;
+        }
+
+        // Statistical functions are always nullable
+        if (normalizedUpper.equals("STDDEV") || normalizedUpper.equals("STDDEV_POP") ||
+            normalizedUpper.equals("STDDEV_SAMP") || normalizedUpper.equals("VARIANCE") ||
+            normalizedUpper.equals("VAR_POP") || normalizedUpper.equals("VAR_SAMP") ||
+            normalizedUpper.equals("COVAR_POP") || normalizedUpper.equals("COVAR_SAMP") ||
+            normalizedUpper.equals("CORR") || normalizedUpper.equals("PERCENTILE") ||
+            normalizedUpper.equals("PERCENTILE_APPROX")) {
+            return true;
+        }
+
+        // General functions: nullable if any argument is nullable
+        // This matches Spark's default behavior
+        if (!func.arguments().isEmpty()) {
+            return func.arguments().stream().anyMatch(arg -> resolveNullable(arg, schema));
+        }
+
+        // No arguments (e.g., current_timestamp, current_date): non-nullable
+        // These are deterministic functions that never return null
         return func.nullable();
     }
 

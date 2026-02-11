@@ -10,10 +10,11 @@ public final class ExpressionUtils {
     private ExpressionUtils() {}
 
     /**
-     * Known aggregate function names (lowercase). Used to classify SELECT items
-     * as aggregate vs. grouping expressions during SQL parsing.
+     * Known aggregate function names (lowercase). Made package-accessible
+     * for use by RelationConverter to distinguish scalar-wrapping-aggregate
+     * expressions (e.g., size(collect_list(x))) from pure aggregates.
      */
-    private static final Set<String> AGGREGATE_FUNCTIONS = Set.of(
+    public static final Set<String> AGGREGATE_FUNCTIONS = Set.of(
         "count", "sum", "avg", "min", "max",
         "stddev", "stddev_samp", "stddev_pop",
         "variance", "var_samp", "var_pop",

@@ -40,15 +40,38 @@ import java.util.Objects;
 public final class RawSQLExpression implements Expression {
 
     private final String sqlText;
+    private final DataType explicitDataType;
+    private final boolean explicitNullable;
+    private final boolean hasExplicitMetadata;
 
     /**
-     * Creates a raw SQL expression.
+     * Creates a raw SQL expression with unknown type and nullable=true.
      *
      * @param sqlText the SQL expression text
      * @throws NullPointerException if sqlText is null
      */
     public RawSQLExpression(String sqlText) {
         this.sqlText = Objects.requireNonNull(sqlText, "sqlText must not be null");
+        this.explicitDataType = null;
+        this.explicitNullable = true;
+        this.hasExplicitMetadata = false;
+    }
+
+    /**
+     * Creates a raw SQL expression with explicit type and nullable metadata.
+     *
+     * <p>Used when the type and nullability of the raw SQL can be determined
+     * at parse time (e.g., INTERVAL literals are always non-null).
+     *
+     * @param sqlText the SQL expression text
+     * @param dataType the known data type
+     * @param nullable whether the expression can be null
+     */
+    public RawSQLExpression(String sqlText, DataType dataType, boolean nullable) {
+        this.sqlText = Objects.requireNonNull(sqlText, "sqlText must not be null");
+        this.explicitDataType = dataType;
+        this.explicitNullable = nullable;
+        this.hasExplicitMetadata = true;
     }
 
     /**
@@ -62,12 +85,18 @@ public final class RawSQLExpression implements Expression {
 
     @Override
     public DataType dataType() {
+        if (hasExplicitMetadata && explicitDataType != null) {
+            return explicitDataType;
+        }
         // Type is unknown until DuckDB evaluates the expression
         return UnresolvedType.expressionString();
     }
 
     @Override
     public boolean nullable() {
+        if (hasExplicitMetadata) {
+            return explicitNullable;
+        }
         // Conservatively assume the expression might return null
         return true;
     }

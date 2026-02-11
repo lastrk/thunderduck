@@ -1918,7 +1918,9 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
 
         if (ctx instanceof SqlBaseParser.IntervalLiteralContext interval) {
             // Pass interval through as raw SQL - DuckDB supports INTERVAL syntax
-            return new RawSQLExpression(getOriginalText(interval));
+            // Intervals are always non-nullable (literal values cannot be null)
+            return new RawSQLExpression(getOriginalText(interval),
+                com.thunderduck.types.UnresolvedType.expressionString(), false);
         }
 
         // Fallback
