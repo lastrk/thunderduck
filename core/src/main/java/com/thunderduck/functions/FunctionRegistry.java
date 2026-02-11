@@ -1,5 +1,6 @@
 package com.thunderduck.functions;
 
+import com.thunderduck.runtime.SparkCompatMode;
 import com.thunderduck.types.*;
 
 import java.util.HashMap;
@@ -741,8 +742,29 @@ public class FunctionRegistry {
             // (e.g., sum(col) not SUM(col)). DuckDB is case-insensitive for function names.
             return "sum(" + args[0] + ")";
         });
-        DIRECT_MAPPINGS.put("avg", "avg");
-        DIRECT_MAPPINGS.put("mean", "avg");
+        // AVG: DuckDB's AVG on DECIMAL types preserves the input scale, while
+        // Spark adds 4 to the scale (e.g., AVG(DECIMAL(7,2)) → DECIMAL(11,6)).
+        // In relaxed mode, cast the argument to DOUBLE to force full floating-point
+        // precision, which matches Spark's behavior within epsilon tolerance.
+        // In strict mode, the spark_avg extension function handles precision correctly.
+        CUSTOM_TRANSLATORS.put("avg", args -> {
+            if (args.length < 1) {
+                throw new IllegalArgumentException("avg requires at least 1 argument");
+            }
+            if (!SparkCompatMode.isStrictMode()) {
+                return "avg(CAST(" + args[0] + " AS DOUBLE))";
+            }
+            return "avg(" + args[0] + ")";
+        });
+        CUSTOM_TRANSLATORS.put("mean", args -> {
+            if (args.length < 1) {
+                throw new IllegalArgumentException("mean requires at least 1 argument");
+            }
+            if (!SparkCompatMode.isStrictMode()) {
+                return "avg(CAST(" + args[0] + " AS DOUBLE))";
+            }
+            return "avg(" + args[0] + ")";
+        });
         DIRECT_MAPPINGS.put("min", "min");
         DIRECT_MAPPINGS.put("max", "max");
         DIRECT_MAPPINGS.put("count", "count");

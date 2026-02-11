@@ -281,6 +281,13 @@ public final class WindowFunction implements Expression {
             argsToOutput = 2;  // Output first two arguments (expr, n)
         }
 
+        // In relaxed mode, AVG on DECIMAL types loses precision in DuckDB
+        // (DuckDB keeps the input scale, while Spark adds 4 to the scale).
+        // Casting the argument to DOUBLE forces DuckDB to use full floating-point
+        // precision, which matches Spark's behavior within epsilon tolerance.
+        // In strict mode, the spark_avg extension function handles this correctly.
+        boolean isAvgRelaxed = funcUpper.equals("AVG") && !SparkCompatMode.isStrictMode();
+
         // Add arguments
         // Special case: COUNT(*) - output * without quotes
         if (arguments.size() == 1 &&
@@ -294,7 +301,12 @@ public final class WindowFunction implements Expression {
                 if (i > 0) {
                     sql.append(", ");
                 }
-                sql.append(arguments.get(i).toSQL());
+                String argSql = arguments.get(i).toSQL();
+                if (isAvgRelaxed) {
+                    sql.append("CAST(").append(argSql).append(" AS DOUBLE)");
+                } else {
+                    sql.append(argSql);
+                }
             }
         }
 

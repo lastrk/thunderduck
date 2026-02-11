@@ -66,6 +66,6 @@
         on  ws.wp_web_page_sk = wr.wp_web_page_sk
  ) x
  group by rollup(channel, id)
- order by channel, id
+ order by channel, id, sales, returns, profit
  limit 100
             
