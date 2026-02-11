@@ -1,6 +1,5 @@
 package com.thunderduck.functions;
 
-import com.thunderduck.runtime.SparkCompatMode;
 import com.thunderduck.types.*;
 
 import java.util.HashMap;
@@ -747,21 +746,19 @@ public class FunctionRegistry {
         // In relaxed mode, cast the argument to DOUBLE to force full floating-point
         // precision, which matches Spark's behavior within epsilon tolerance.
         // In strict mode, the spark_avg extension function handles precision correctly.
+        // avg/mean: direct mapping to DuckDB's avg().
+        // For window functions, WindowFunction.toSQL() handles CAST to DOUBLE in relaxed mode
+        // to preserve decimal precision. Non-window AVG doesn't need the cast (and adding it
+        // would corrupt auto-generated column names like "avg(ss_quantity)").
         CUSTOM_TRANSLATORS.put("avg", args -> {
             if (args.length < 1) {
                 throw new IllegalArgumentException("avg requires at least 1 argument");
-            }
-            if (!SparkCompatMode.isStrictMode()) {
-                return "avg(CAST(" + args[0] + " AS DOUBLE))";
             }
             return "avg(" + args[0] + ")";
         });
         CUSTOM_TRANSLATORS.put("mean", args -> {
             if (args.length < 1) {
                 throw new IllegalArgumentException("mean requires at least 1 argument");
-            }
-            if (!SparkCompatMode.isStrictMode()) {
-                return "avg(CAST(" + args[0] + " AS DOUBLE))";
             }
             return "avg(" + args[0] + ")";
         });
