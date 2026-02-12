@@ -195,13 +195,27 @@ public final class FunctionCall implements Expression {
         }
 
         // Translate using function registry
+        String sql;
         try {
-            return FunctionRegistry.translate(effectiveName, argStrings);
+            sql = FunctionRegistry.translate(effectiveName, argStrings);
         } catch (UnsupportedOperationException e) {
             // Fallback to direct function call if not in registry
             String argsSQL = String.join(", ", argStrings);
-            return effectiveName + "(" + argsSQL + ")";
+            sql = effectiveName + "(" + argsSQL + ")";
         }
+
+        // DuckDB returns BIGINT for string length functions, but Spark returns INTEGER.
+        // Wrap with CAST to match Spark's return type.
+        if (isStringLengthFunction(functionName)) {
+            return "CAST(" + sql + " AS INTEGER)";
+        }
+
+        // DuckDB's list_position returns INTEGER, but Spark's array_position returns BIGINT.
+        if (functionName.equalsIgnoreCase("array_position")) {
+            return "CAST(" + sql + " AS BIGINT)";
+        }
+
+        return sql;
     }
 
     @Override
@@ -224,6 +238,15 @@ public final class FunctionCall implements Expression {
     @Override
     public int hashCode() {
         return Objects.hash(functionName, arguments, dataType, nullable, distinct);
+    }
+
+    /**
+     * Returns whether this function is a string length function that returns BIGINT in DuckDB
+     * but should return INTEGER to match Spark semantics.
+     */
+    private static boolean isStringLengthFunction(String funcName) {
+        String lower = funcName.toLowerCase();
+        return lower.equals("length") || lower.equals("char_length") || lower.equals("character_length");
     }
 
     // ==================== Factory Methods ====================

@@ -1014,9 +1014,46 @@ public final class TypeInferenceEngine {
                 return BooleanType.get();
             }
 
-            // Type-preserving functions
+            // Type-preserving functions: some return the first argument's type,
+            // others promote across all arguments (Spark's ANSI type coercion rules).
             if (FunctionCategories.isTypePreserving(funcName)) {
-                return resolveType(func.arguments().get(0), schema);
+                if (func.arguments().size() <= 1) {
+                    // Single-argument: just return the argument's type
+                    return resolveType(func.arguments().get(0), schema);
+                }
+                // Multi-argument type-promoting functions:
+                // coalesce, nvl, ifnull, greatest, least, mod, pmod, nvl2, if
+                // These promote types across all (or relevant) arguments.
+                // nullif is special: returns the first argument's type only.
+                if (funcName.equals("nullif")) {
+                    return resolveType(func.arguments().get(0), schema);
+                }
+                if (funcName.equals("if")) {
+                    // IF(cond, then, else): promote THEN and ELSE (args 1 and 2)
+                    if (func.arguments().size() >= 3) {
+                        DataType thenType = resolveType(func.arguments().get(1), schema);
+                        DataType elseType = resolveType(func.arguments().get(2), schema);
+                        return unifyTypes(thenType, elseType);
+                    }
+                    return resolveType(func.arguments().get(1), schema);
+                }
+                if (funcName.equals("nvl2")) {
+                    // nvl2(cond, valueIfNotNull, valueIfNull): promote args 1 and 2
+                    if (func.arguments().size() >= 3) {
+                        DataType notNullType = resolveType(func.arguments().get(1), schema);
+                        DataType nullType = resolveType(func.arguments().get(2), schema);
+                        return unifyTypes(notNullType, nullType);
+                    }
+                    return resolveType(func.arguments().get(1), schema);
+                }
+                // Default for multi-arg type-preserving: promote across all arguments
+                // Covers: coalesce, nvl, ifnull, greatest, least, mod, pmod
+                DataType resultType = null;
+                for (Expression arg : func.arguments()) {
+                    DataType argType = resolveType(arg, schema);
+                    resultType = unifyTypes(resultType, argType);
+                }
+                return resultType != null ? resultType : resolveType(func.arguments().get(0), schema);
             }
 
             // list_reduce/aggregate: returns the accumulator type (same as initial value)
@@ -1070,8 +1107,13 @@ public final class TypeInferenceEngine {
                 return IntegerType.get();
             }
 
+            // String length functions return IntegerType in Spark 4.x
+            if (funcName.matches("length|char_length|character_length")) {
+                return IntegerType.get();
+            }
+
             // Long-returning functions
-            if (funcName.matches("length|char_length|character_length|unix_timestamp")) {
+            if (funcName.matches("unix_timestamp|array_position")) {
                 return LongType.get();
             }
 

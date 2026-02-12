@@ -79,7 +79,7 @@ public final class FunctionCategories {
      * Position functions in Spark return Int, not Long.
      */
     public static final Set<String> INTEGER_RETURNING = Set.of(
-        "instr", "locate", "position", "array_position"
+        "instr", "locate", "position"
     );
 
     /**

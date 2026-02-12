@@ -348,8 +348,18 @@ public class ExpressionConverter {
             return IntegerType.get();
         }
 
-        // Functions that return Long for counts
-        if (lower.matches("count|count_distinct|length|char_length|character_length")) {
+        // Functions that return Long (BIGINT) for counts
+        if (lower.matches("count|count_distinct")) {
+            return LongType.get();
+        }
+
+        // String length functions return IntegerType in Spark 4.x
+        if (lower.matches("length|char_length|character_length")) {
+            return IntegerType.get();
+        }
+
+        // array_position returns LongType in Spark (not IntegerType)
+        if (lower.equals("array_position")) {
             return LongType.get();
         }
 
