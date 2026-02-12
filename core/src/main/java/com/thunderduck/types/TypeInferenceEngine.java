@@ -1353,16 +1353,21 @@ public final class TypeInferenceEngine {
             return resolveNullable(func.arguments().get(0), schema);
         }
 
+        // nvl2(a, b, c): returns b if a is non-null, else c.
+        // Result nullable = b.nullable AND c.nullable (nullable only if BOTH branches are nullable)
+        if (funcName.equals("nvl2") && func.arguments().size() >= 3) {
+            return resolveNullable(func.arguments().get(1), schema)
+                && resolveNullable(func.arguments().get(2), schema);
+        }
+
         // Aggregate functions: SUM, AVG, MIN, MAX, FIRST, LAST
-        // These are nullable only if their input argument is nullable
+        // Always nullable per Spark semantics (returns NULL for empty groups)
+        // This must be consistent with resolveAggregateNullable().
         if (normalizedUpper.equals("SUM") || normalizedUpper.equals("AVG") ||
             normalizedUpper.equals("MIN") || normalizedUpper.equals("MAX") ||
             normalizedUpper.equals("FIRST") || normalizedUpper.equals("LAST") ||
             normalizedUpper.equals("FIRST_VALUE") || normalizedUpper.equals("LAST_VALUE") ||
             normalizedUpper.equals("ANY_VALUE")) {
-            if (!func.arguments().isEmpty()) {
-                return resolveNullable(func.arguments().get(0), schema);
-            }
             return true;
         }
 
@@ -1380,6 +1385,20 @@ public final class TypeInferenceEngine {
             normalizedUpper.equals("COVAR_POP") || normalizedUpper.equals("COVAR_SAMP") ||
             normalizedUpper.equals("CORR") || normalizedUpper.equals("PERCENTILE") ||
             normalizedUpper.equals("PERCENTILE_APPROX")) {
+            return true;
+        }
+
+        // Math functions: always nullable per Spark semantics.
+        // Spark marks ceil/floor/round/log/exp/sqrt/pow etc. as nullable because
+        // the function implementations can return null for edge cases (e.g., log(0),
+        // division by zero). Even with non-nullable inputs, results are nullable.
+        if (funcName.matches("ceil|ceiling|floor|round|bround|" +
+                "log|ln|log10|log2|exp|expm1|sqrt|cbrt|" +
+                "pow|power|hypot|" +
+                "sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh|" +
+                "radians|degrees|sign|signum|" +
+                "abs|negative|positive|" +
+                "truncate|months_between")) {
             return true;
         }
 

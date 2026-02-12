@@ -2331,6 +2331,9 @@ public class RelationConverter {
             // Use read_parquet to get schema from parquet file
             String sql = "SELECT * FROM read_parquet('" + path.replace("'", "''") + "')";
             StructType schema = schemaInferrer.inferSchema(sql);
+            // Spark treats ALL source columns as nullable=true when reading from Parquet,
+            // regardless of the Parquet schema's NOT NULL constraints. Force all fields nullable.
+            schema = schema.withAllNullable();
             logger.debug("Inferred schema for parquet {}: {}", path, schema);
             return schema;
         } catch (Exception e) {

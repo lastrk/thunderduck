@@ -80,6 +80,27 @@ public final class StructType implements DataType {
     }
 
     /**
+     * Returns a copy of this StructType with all fields forced to nullable=true.
+     *
+     * <p>This matches Spark's behavior where all source columns from files
+     * (Parquet, CSV, etc.) are treated as nullable regardless of the underlying
+     * file schema's NOT NULL constraints.
+     *
+     * @return a new StructType with all fields nullable
+     */
+    public StructType withAllNullable() {
+        List<StructField> nullableFields = new ArrayList<>(fields.size());
+        for (StructField field : fields) {
+            if (field.nullable()) {
+                nullableFields.add(field);
+            } else {
+                nullableFields.add(new StructField(field.name(), field.dataType(), true));
+            }
+        }
+        return new StructType(nullableFields);
+    }
+
+    /**
      * Returns the index of the field with the given name, or -1 if not found.
      *
      * @param name the field name
