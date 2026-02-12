@@ -451,13 +451,13 @@ public final class TypeInferenceEngine {
         }
 
         // AVG returns Double for numeric, Decimal for Decimal
-        // Spark's AVG(DECIMAL(p,s)) returns DECIMAL(p+4, min(s+4, p+4))
+        // Spark's AVG(DECIMAL(p,s)) returns DECIMAL(min(p+4,38), min(min(s+4,18), min(p+4,38)))
         if (func.equals("AVG")) {
             if (!wf.arguments().isEmpty()) {
                 DataType argType = resolveType(wf.arguments().get(0), schema);
                 if (argType instanceof DecimalType decType) {
                     int newPrecision = Math.min(decType.precision() + 4, 38);
-                    int newScale = Math.min(decType.scale() + 4, newPrecision);
+                    int newScale = Math.min(Math.min(decType.scale() + 4, 18), newPrecision);
                     return new DecimalType(newPrecision, newScale);
                 }
             }
@@ -1147,7 +1147,7 @@ public final class TypeInferenceEngine {
             case "AVG":
                 if (argType instanceof DecimalType decType) {
                     int newPrecision = Math.min(decType.precision() + 4, 38);
-                    int newScale = Math.min(decType.scale() + 4, newPrecision);
+                    int newScale = Math.min(Math.min(decType.scale() + 4, 18), newPrecision);
                     return new DecimalType(newPrecision, newScale);
                 }
                 return DoubleType.get();
