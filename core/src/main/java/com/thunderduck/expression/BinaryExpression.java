@@ -175,12 +175,26 @@ public final class BinaryExpression implements Expression {
      * </ul>
      */
     private String generateStrictModeDivision() {
-        DataType leftType = left.dataType();
-        DataType rightType = right.dataType();
+        return generateStrictDivisionSQL(left.toSQL(), right.toSQL(),
+                left.dataType(), right.dataType());
+    }
 
+    /**
+     * Generates type-aware division SQL for strict Spark compatibility mode.
+     * Shared by both the expression tree path ({@link #generateStrictModeDivision()})
+     * and the {@code SQLGenerator.qualifyCondition()} path.
+     *
+     * @param leftSQL  the SQL text for the left operand
+     * @param rightSQL the SQL text for the right operand
+     * @param leftType the data type of the left operand (may be null)
+     * @param rightType the data type of the right operand (may be null)
+     * @return the division SQL using Spark semantics
+     */
+    public static String generateStrictDivisionSQL(String leftSQL, String rightSQL,
+                                                    DataType leftType, DataType rightType) {
         // If either type is unknown, fall back to native division
         if (leftType == null || rightType == null) {
-            return String.format("(%s / %s)", left.toSQL(), right.toSQL());
+            return String.format("(%s / %s)", leftSQL, rightSQL);
         }
 
         boolean leftDecimal = leftType instanceof DecimalType;
@@ -192,36 +206,36 @@ public final class BinaryExpression implements Expression {
 
         // Any FLOAT/DOUBLE involved -> native division (Spark returns DOUBLE)
         if (leftFloating || rightFloating) {
-            return String.format("(%s / %s)", left.toSQL(), right.toSQL());
+            return String.format("(%s / %s)", leftSQL, rightSQL);
         }
 
         // Both DECIMAL -> spark_decimal_div
         if (leftDecimal && rightDecimal) {
-            return String.format("spark_decimal_div(%s, %s)", left.toSQL(), right.toSQL());
+            return String.format("spark_decimal_div(%s, %s)", leftSQL, rightSQL);
         }
 
         // Both integral -> Spark returns DOUBLE for int/int division
         if (leftIntegral && rightIntegral) {
             return String.format("(CAST(%s AS DOUBLE) / CAST(%s AS DOUBLE))",
-                    left.toSQL(), right.toSQL());
+                    leftSQL, rightSQL);
         }
 
         // DECIMAL / integer -> cast integer to DECIMAL, then spark_decimal_div
         if (leftDecimal && rightIntegral) {
             int p = integralPrecision(rightType);
             return String.format("spark_decimal_div(%s, CAST(%s AS DECIMAL(%d,0)))",
-                    left.toSQL(), right.toSQL(), p);
+                    leftSQL, rightSQL, p);
         }
 
         // integer / DECIMAL -> cast integer to DECIMAL, then spark_decimal_div
         if (leftIntegral && rightDecimal) {
             int p = integralPrecision(leftType);
             return String.format("spark_decimal_div(CAST(%s AS DECIMAL(%d,0)), %s)",
-                    left.toSQL(), p, right.toSQL());
+                    leftSQL, p, rightSQL);
         }
 
         // Fallback for any other type combination (e.g., string, date, unknown)
-        return String.format("(%s / %s)", left.toSQL(), right.toSQL());
+        return String.format("(%s / %s)", leftSQL, rightSQL);
     }
 
     /**
