@@ -1,6 +1,6 @@
 # Full Differential Test Suite Baseline
 
-**Date**: 2026-02-11
+**Date**: 2026-02-12
 
 ## Relaxed Mode (Complete)
 
@@ -15,104 +15,73 @@
 
 ---
 
-## Strict Mode Analysis
+## Strict Mode Baseline
 
 **Command**: `cd /workspace/tests/integration && THUNDERDUCK_COMPAT_MODE=strict THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true COLLECT_TIMEOUT=30 python3 -m pytest differential/ -v --tb=short`
-**Result**: **541 passed, 198 failed** (739 total)
+**Result**: **623 passed, 116 failed** (739 total)
 
-### Root Cause Clustering
+**Previous baselines**: 541/198 → **623/116**
+
+### What Changed (541→623): `__int128` Accumulator + Prior Fixes
+
+Performance optimization in `spark_aggregates.hpp`: switched SUM/AVG decimal state accumulators from `hugeint_t` to native `__int128`. All per-row `+=` operations now compile to inline ADD/ADC instruction pairs instead of non-inline `hugeint_t::operator+=` library calls. No correctness changes — same arithmetic, faster execution.
+
+The 541→623 improvement reflects cumulative fixes since the previous baseline snapshot (strict mode type inference, extension function emission guards, schema correction improvements).
+
+### Root Cause Clustering (116 failures)
 
 | # | Root Cause | Tests | Fix Area |
 |---|-----------|-------|----------|
-| **C1** | Extension functions missing type overloads | **45** | DuckDB C++ extension |
-| **C2** | `*Type → StringType` — schema correction not applied | **~70** | `SchemaCorrectedBatchIterator` / schema inference |
-| **C3** | `DecimalType → DoubleType` — AVG/division using DOUBLE not DECIMAL | **~28** | SQL generation: strict mode should use extension functions |
-| **C4** | `DecimalType` precision off by 1 | **~8** | `TypeInferenceEngine` precision calculation |
-| **C5** | `ArrayType → StringType/ArrayType(StringType)` | **~5** | Complex type schema inference |
-| **C6** | Extension internal crash (`Failed to cast expression`) | **2** | DuckDB extension bug (Q11, Q74) |
-| **C7** | Minor type coercion (`LongType↔IntegerType`, `Double→Int`) | **~6** | Type inference edge cases |
-| **C8** | Nullable flag mismatches | **~34** | Nullable inference |
+| **C1** | Nullable flag mismatches | **~60** | Nullable inference across plan nodes |
+| **C2** | Unsupported features (lambda, complex types, unpivot, cube/rollup) | **~45** | Feature implementation |
+| **C3** | Extension function missing type overloads | **~8** | DuckDB C++ extension or SQL gen guards |
+| **C4** | Type mismatches (precision off by 1, DECIMAL vs DOUBLE) | **~3** | TypeInferenceEngine / SQL generation |
 
 ---
 
-### C1: Extension Function Missing Overloads (45 tests)
+### C1: Nullable Flag Mismatches (~60 tests)
 
-The DuckDB extension only implements **DECIMAL** overloads. When input is DOUBLE, INTEGER, or BIGINT, functions fail:
+The dominant failure mode. Thunderduck returns `nullable=False` where Spark returns `nullable=True` (or vice versa). Affects TPC-H (Q12, Q13, Q15, Q17), TPC-DS (~30 queries), and several feature tests.
 
-| Function | Error | Tests |
-|----------|-------|-------|
-| `spark_avg(DECIMAL)` only | "requires DECIMAL argument" when called with non-DECIMAL | 27 |
-| `spark_avg(DOUBLE)` | "No function matches" — no DOUBLE overload exists | 4 |
-| `spark_sum(DOUBLE)` | "No function matches" — no DOUBLE overload exists | 4 |
-| `spark_decimal_div` | "requires DECIMAL arguments" when inputs are non-DECIMAL | 8 |
-| Extension crash | "Failed to cast expression to type" (DuckDB internal) | 2 |
+These are cross-cutting: they appear in tests that otherwise produce correct values, types, and column names. The nullable inference in `inferSchema()` doesn't match Spark's nullable propagation rules for aggregations, joins, and subqueries.
 
-**Fix**: Add DOUBLE, INTEGER, BIGINT overloads to the C++ extension functions, or guard the SQL generator to only emit `spark_avg`/`spark_sum`/`spark_decimal_div` when inputs are confirmed DECIMAL.
+### C2: Unsupported Features (~45 tests)
 
-### C2: Everything Returns as StringType (~70 tests)
+| Feature | Test File | Failures |
+|---------|-----------|----------|
+| Lambda functions | `test_lambda_differential.py` | 18 |
+| Complex types (struct/map) | `test_complex_types_differential.py` | 13 |
+| Multidim aggregations (cube/rollup/unpivot) | `test_multidim_aggregations.py` | 12 |
+| DataFrame functions (array, map, null, string, math) | `test_dataframe_functions.py` | ~12 |
 
-The dominant single issue. Thunderduck returns `StringType` for columns that should be typed:
+These are unimplemented or partially implemented features — not regressions.
 
-| Expected Type | Occurrences |
-|--------------|-------------|
-| `LongType → StringType` | 22 |
-| `IntegerType → StringType` | 21 |
-| `DecimalType(various) → StringType` | 14 |
-| `ByteType → StringType` | 6 |
-| `DoubleType → StringType` | 3 |
-| `DateType → StringType` | 1 |
+### C3: Extension Function Overloads (~8 tests)
 
-This suggests `SchemaCorrectedBatchIterator` or schema inference isn't properly mapping DuckDB result types to Spark types in strict mode.
+`spark_decimal_div` receives non-DECIMAL inputs (DOUBLE or INTEGER) when it expects DECIMAL. Affects TPC-DS Q4, Q11, Q23a/b, Q74, and a few others. Fix: either add non-DECIMAL overloads to the C++ extension, or guard the SQL generator to only emit extension functions for confirmed DECIMAL inputs.
 
-### C3: DECIMAL → DOUBLE (~28 tests)
+### C4: Type Precision Mismatches (~3 tests)
 
-Relaxed mode casts `AVG()` results to `DOUBLE` for simplicity. In strict mode, these should use the extension's `spark_avg`/`spark_decimal_div` to preserve DECIMAL precision. The SQL generator isn't switching to extension functions when strict mode is active.
-
-| Pattern | Occurrences |
-|---------|-------------|
-| `DecimalType(37,20) → DoubleType` | 11 |
-| `DecimalType(27,2) → DoubleType` | 10 |
-| `DecimalType(28,2) → DoubleType` | 2 |
-| `DecimalType(33,2) → DoubleType` | 1 |
-| `DecimalType(32,2) → DoubleType` | 1 |
-| `DecimalType(30,6) → DoubleType` | 1 |
-
-### C4: DecimalType Precision Off by 1 (~8 tests)
-
-| Pattern | Occurrences |
-|---------|-------------|
-| `DecimalType(38,2) → DecimalType(37,2)` | 4 |
-| `DecimalType(23,2) → DecimalType(22,2)` | 2 |
-| `DecimalType(38,19) → DecimalType(38,20)` | 1 |
-
-### C5–C8: Smaller Issues (~47 tests combined)
-
-- **C5**: Array types returned as `StringType` or `ArrayType(StringType)` instead of correct element types (5 tests)
-- **C6**: DuckDB extension internal crashes on Q11 and Q74 — "Failed to cast expression to type" (2 tests)
-- **C7**: Minor type coercion issues: `LongType↔IntegerType`, `DoubleType→IntegerType` (6 tests)
-- **C8**: Nullable flag mismatches — `nullable=False` expected but `nullable=True` returned (34 tests, cross-cutting)
+- `DecimalType(38,2)` vs `DecimalType(37,2)` — precision off by 1
+- `DecimalType(27,2)` vs `DoubleType()` — AVG/division returning DOUBLE instead of DECIMAL
 
 ---
 
 ### Failures by Test File
 
-| File | Failures |
-|------|----------|
-| `test_tpcds_differential.py` | 60 |
-| `test_type_literals_differential.py` | 29 |
-| `test_lambda_differential.py` | 18 |
-| `test_multidim_aggregations.py` | 13 |
-| `test_complex_types_differential.py` | 12 |
-| `test_dataframe_functions.py` | 10 |
-| `test_window_functions.py` | 10 |
-| `test_aggregation_functions_differential.py` | 8 |
-| `test_differential_v2.py` (TPC-H SQL) | 8 |
-| `test_tpcds_dataframe_differential.py` | 5 |
-| `test_array_functions_differential.py` | 4 |
-| `test_overflow_differential.py` | 4 |
-| `test_sql_expressions_differential.py` | 4 |
-| `test_temp_views.py` | 4 |
-| Others (6 files) | 9 |
+| File | Failures | Primary Root Cause |
+|------|----------|--------------------|
+| `test_tpcds_differential.py` | 40 | C1 (nullable) + C3 (overloads) |
+| `test_lambda_differential.py` | 18 | C2 (unsupported) |
+| `test_complex_types_differential.py` | 13 | C2 (unsupported) |
+| `test_multidim_aggregations.py` | 12 | C2 (unsupported) |
+| `test_dataframe_functions.py` | 12 | C2 (unsupported) |
+| `test_differential_v2.py` (TPC-H SQL) | 4 | C1 (nullable) |
+| `test_array_functions_differential.py` | 3 | C2 (unsupported) |
+| `test_sql_expressions_differential.py` | 3 | C2 (unsupported) |
+| `test_overflow_differential.py` | 2 | C3 (overloads) |
+| `test_range_operations_differential.py` | 2 | C2 (unsupported) |
+| Others (5 files) | 7 | Mixed |
 
 ---
 
@@ -136,22 +105,25 @@ Apache Spark 4.1 types (authoritative truth)
 
 **No performance compromise.** All type correctness is achieved at query planning / SQL generation time. Zero Arrow vector copying. Zero runtime type conversion. The extension functions run inside DuckDB's execution engine at native speed.
 
-### Key Finding: Relaxed Mode Hid Pre-Existing Type Issues
-
-The test framework (`dataframe_diff.py:202-212`) **skips type and nullable comparison entirely in relaxed mode**:
-
-```python
-# In relaxed mode, skip type checking entirely
-if not self.relaxed and ref_type != test_type:
-    mismatches.append(...)
-```
-
-`_is_relaxed_mode()` returns `True` for both `auto` and `relaxed` modes. This means the ~70 "StringType" failures are NOT caused by strict mode introducing wrong types — they are pre-existing `inferSchema()` gaps that relaxed mode never checked. The types have always been wrong for these expressions; strict mode merely reveals it.
-
 ### Priority Fix Order
 
-1. **C2 (StringType)** — ~70 tests. Pre-existing `inferSchema()` gaps: `UnresolvedColumn.dataType()` returns StringType placeholder, complex expressions (lambda, struct, collect_list/set) don't resolve output types. Fix: complete type inference for all expression/plan node types.
-2. **C1 (Extension overloads)** — 45 tests. Extension only has DECIMAL overloads for `spark_avg`/`spark_sum`/`spark_decimal_div`. Fix: add DOUBLE/INTEGER/BIGINT overloads in C++ extension, OR guard SQL gen to only emit extension functions for confirmed DECIMAL inputs.
-3. **C3 (DECIMAL→DOUBLE)** — ~28 tests. SQL generator emits `CAST(AVG(...) AS DOUBLE)` in relaxed mode but doesn't switch to extension functions in strict mode. Fix: mode-conditional SQL generation for AVG/division.
-4. **C4 (Precision)** — ~8 tests. `TypeInferenceEngine` precision calculation off by 1. Fix: match Spark 4.1 precision rules exactly.
-5. **C5–C8** — smaller batches, incremental fixes.
+1. **C1 (Nullable)** — ~60 tests. Nullable inference doesn't match Spark's propagation rules for aggregations, joins, and subqueries. Fix: audit and correct nullable propagation in `inferSchema()` across plan nodes.
+2. **C2 (Unsupported features)** — ~45 tests. Lambda functions, complex types, cube/rollup/unpivot. Fix: implement missing features incrementally.
+3. **C3 (Extension overloads)** — ~8 tests. Extension only has DECIMAL overloads. Fix: add guards in SQL gen to only emit extension functions for confirmed DECIMAL inputs, or add overloads.
+4. **C4 (Type precision)** — ~3 tests. Precision calculations off by 1. Fix: match Spark 4.1 precision rules exactly.
+
+---
+
+## Performance Optimization: `__int128` Accumulators (2026-02-12)
+
+Changed `SparkSumDecimalState` and `SparkAvgDecimalState` accumulators from `hugeint_t` to `__int128` in `spark_aggregates.hpp`.
+
+| Operation | Before | After |
+|-----------|--------|-------|
+| SUM/AVG per-row accumulation | `hugeint_t::operator+=` (non-inline library call) | `__int128 +=` (inline ADD/ADC, 2 instructions) |
+| SUM/AVG ConstantOperation | `Hugeint::Convert` + `hugeint_t::operator*` (2 non-inline calls) | `__int128 *` (inline MUL, 1 instruction) |
+| SUM/AVG Combine | `hugeint_t::operator+=` (non-inline) | `__int128 +=` (inline) |
+| SUM Finalize | `HugeintToInt128` conversion + write | Direct write from `__int128` state |
+| AVG Finalize | `HugeintToInt128` conversion + division + write | Division + write (skip conversion) |
+
+Input arrives as `hugeint_t` (DuckDB's type), converted once per row via `HugeintToInt128()` (already inline in `wide_integer.hpp`). All arithmetic stays in `__int128` until finalize, where `WriteAggResult` converts back to the target physical type.
