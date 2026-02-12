@@ -969,7 +969,36 @@ public class FunctionRegistry {
             // Translated to list_filter(array, lambda) in DuckDB
             return "list_filter(" + String.join(", ", args) + ")";
         });
-        DIRECT_MAPPINGS.put("aggregate", "list_reduce");
+
+        // exists(arr, pred) -> list_bool_or(list_transform(arr, pred))
+        // DuckDB has no native exists HOF; emulate via list_transform + list_bool_or
+        CUSTOM_TRANSLATORS.put("exists", args -> {
+            if (args.length != 2) {
+                throw new IllegalArgumentException("exists requires exactly 2 arguments");
+            }
+            return "list_bool_or(list_transform(" + args[0] + ", " + args[1] + "))";
+        });
+
+        // forall(arr, pred) -> list_bool_and(list_transform(arr, pred))
+        // DuckDB has no native forall HOF; emulate via list_transform + list_bool_and
+        CUSTOM_TRANSLATORS.put("forall", args -> {
+            if (args.length != 2) {
+                throw new IllegalArgumentException("forall requires exactly 2 arguments");
+            }
+            return "list_bool_and(list_transform(" + args[0] + ", " + args[1] + "))";
+        });
+
+        // aggregate(arr, init, merge[, finish]) -> list_reduce(list_prepend(init, arr), merge)
+        // Spark's aggregate has an initial value; DuckDB's list_reduce does not.
+        // Emulate by prepending the init value to the array before reducing.
+        // The DataFrame path already converts to list_reduce in ExpressionConverter,
+        // so this translator only fires for the SQL path.
+        CUSTOM_TRANSLATORS.put("aggregate", args -> {
+            if (args.length >= 3) {
+                return "list_reduce(list_prepend(" + args[1] + ", " + args[0] + "), " + args[2] + ")";
+            }
+            return "list_reduce(" + String.join(", ", args) + ")";
+        });
 
         // array_join: Spark's array_join(arr, delimiter) -> DuckDB's array_to_string(arr, delimiter)
         CUSTOM_TRANSLATORS.put("array_join", args -> {

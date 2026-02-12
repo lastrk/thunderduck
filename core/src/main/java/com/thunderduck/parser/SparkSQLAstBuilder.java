@@ -18,7 +18,10 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.Stack;
 
 /**
  * ANTLR Visitor that builds Thunderduck LogicalPlan and Expression AST nodes
@@ -54,6 +57,14 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
      * via PRAGMA table_info, enabling inferSchema() for all plan shapes.
      */
     private final Connection connection;
+
+    /**
+     * Stack of lambda variable scopes for resolving lambda parameter references.
+     * Each scope contains the parameter names for a lambda currently being parsed.
+     * When resolving identifiers, names found in lambda scope become
+     * LambdaVariableExpression instead of UnresolvedColumn.
+     */
+    private final Stack<Set<String>> lambdaScopes = new Stack<>();
 
     /**
      * Creates an AST builder without schema resolution (backward compatible).
@@ -1317,9 +1328,12 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
             return visitConstant(constCtx.constant());
         }
 
-        // Column reference
+        // Column reference (or lambda variable)
         if (ctx instanceof SqlBaseParser.ColumnReferenceContext colRef) {
             String name = getIdentifierText(colRef.identifier());
+            if (isLambdaVariable(name)) {
+                return new LambdaVariableExpression(name);
+            }
             return new UnresolvedColumn(name);
         }
 
@@ -1492,9 +1506,8 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
         }
 
         // Lambda expressions
-        if (ctx instanceof SqlBaseParser.LambdaContext) {
-            // Pass through as raw SQL for now
-            return new RawSQLExpression(getOriginalText(ctx));
+        if (ctx instanceof SqlBaseParser.LambdaContext lambdaCtx) {
+            return buildLambdaExpression(lambdaCtx);
         }
 
         // FIRST/LAST/ANY_VALUE
@@ -2246,6 +2259,43 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
             logger.debug("Error mapping DuckDB type '{}': {}", typeName, e.getMessage());
             return StringType.get();
         }
+    }
+
+    // ==================== Lambda Expression Support ====================
+
+    /**
+     * Visits a lambda expression context and produces a LambdaExpression AST node.
+     *
+     * <p>Handles both single-parameter ({@code x -> x + 1}) and multi-parameter
+     * ({@code (acc, x) -> acc + x}) lambda forms. Lambda parameter names are pushed
+     * onto the scope stack so that references within the body resolve to
+     * LambdaVariableExpression instead of UnresolvedColumn.
+     */
+    private Expression buildLambdaExpression(SqlBaseParser.LambdaContext ctx) {
+        List<String> params = new ArrayList<>();
+        for (SqlBaseParser.IdentifierContext id : ctx.identifier()) {
+            params.add(getIdentifierText(id));
+        }
+
+        lambdaScopes.push(new HashSet<>(params));
+        try {
+            Expression body = visitExpr(ctx.expression());
+            return new LambdaExpression(params, body);
+        } finally {
+            lambdaScopes.pop();
+        }
+    }
+
+    /**
+     * Checks whether a name is a lambda variable in the current scope stack.
+     */
+    private boolean isLambdaVariable(String name) {
+        for (int i = lambdaScopes.size() - 1; i >= 0; i--) {
+            if (lambdaScopes.get(i).contains(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ==================== Utility Methods ====================

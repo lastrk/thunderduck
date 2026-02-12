@@ -290,3 +290,114 @@ class TestCombinedOperations_Differential:
         ref_result = run_test(spark_reference)
         test_result = run_test(spark_thunderduck)
         assert_dataframes_equal(ref_result, test_result, "filter_in_where")
+
+
+# ==================== Raw SQL Lambda Tests ====================
+
+
+@pytest.mark.differential
+class TestSQLLambda_Differential:
+    """Tests for lambda expressions in raw SparkSQL queries"""
+
+    @pytest.mark.timeout(30)
+    def test_sql_transform(self, spark_reference, spark_thunderduck):
+        """Test transform with lambda in raw SQL"""
+        def run_test(spark):
+            return spark.sql("SELECT transform(array(1, 2, 3), x -> x + 1) AS result")
+
+        ref_result = run_test(spark_reference)
+        test_result = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref_result, test_result, "sql_transform")
+
+    @pytest.mark.timeout(30)
+    def test_sql_filter(self, spark_reference, spark_thunderduck):
+        """Test filter with lambda in raw SQL"""
+        def run_test(spark):
+            return spark.sql("SELECT filter(array(1, 2, 3, 4, 5), x -> x > 2) AS result")
+
+        ref_result = run_test(spark_reference)
+        test_result = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref_result, test_result, "sql_filter")
+
+    @pytest.mark.timeout(30)
+    def test_sql_exists(self, spark_reference, spark_thunderduck):
+        """Test exists with lambda in raw SQL"""
+        def run_test(spark):
+            return spark.sql("SELECT exists(array(1, 2, 3), x -> x > 2) AS result")
+
+        ref_result = run_test(spark_reference)
+        test_result = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref_result, test_result, "sql_exists")
+
+    @pytest.mark.timeout(30)
+    def test_sql_forall(self, spark_reference, spark_thunderduck):
+        """Test forall with lambda in raw SQL"""
+        def run_test(spark):
+            return spark.sql("SELECT forall(array(10, 20, 30), x -> x > 5) AS result")
+
+        ref_result = run_test(spark_reference)
+        test_result = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref_result, test_result, "sql_forall")
+
+    @pytest.mark.timeout(30)
+    def test_sql_aggregate(self, spark_reference, spark_thunderduck):
+        """Test aggregate with lambda in raw SQL"""
+        def run_test(spark):
+            return spark.sql(
+                "SELECT aggregate(array(1, 2, 3, 4), 0, (acc, x) -> acc + x) AS result"
+            )
+
+        ref_result = run_test(spark_reference)
+        test_result = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref_result, test_result, "sql_aggregate")
+
+    @pytest.mark.timeout(30)
+    def test_sql_transform_multiply(self, spark_reference, spark_thunderduck):
+        """Test transform with multiplication lambda in raw SQL"""
+        def run_test(spark):
+            return spark.sql("SELECT transform(array(1, 2, 3), x -> x * 10) AS result")
+
+        ref_result = run_test(spark_reference)
+        test_result = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref_result, test_result, "sql_transform_multiply")
+
+    @pytest.mark.timeout(30)
+    def test_sql_filter_even(self, spark_reference, spark_thunderduck):
+        """Test filter for even numbers in raw SQL"""
+        def run_test(spark):
+            return spark.sql("SELECT filter(array(1, 2, 3, 4, 5, 6), x -> x % 2 = 0) AS result")
+
+        ref_result = run_test(spark_reference)
+        test_result = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref_result, test_result, "sql_filter_even")
+
+    @pytest.mark.timeout(30)
+    def test_sql_aggregate_product(self, spark_reference, spark_thunderduck):
+        """Test aggregate product in raw SQL"""
+        def run_test(spark):
+            return spark.sql(
+                "SELECT aggregate(array(1, 2, 3, 4), 1, (acc, x) -> acc * x) AS result"
+            )
+
+        ref_result = run_test(spark_reference)
+        test_result = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref_result, test_result, "sql_aggregate_product")
+
+    @pytest.mark.timeout(30)
+    def test_sql_transform_with_table(self, spark_reference, spark_thunderduck):
+        """Test transform on table data in raw SQL"""
+        def run_test(spark):
+            spark.sql("""
+                CREATE OR REPLACE TEMP VIEW sql_arr_view AS
+                SELECT 1 AS id, ARRAY(1, 2, 3) AS numbers
+                UNION ALL
+                SELECT 2 AS id, ARRAY(4, 5, 6) AS numbers
+            """)
+            return spark.sql(
+                "SELECT id, transform(numbers, x -> x + 100) AS result "
+                "FROM sql_arr_view ORDER BY id"
+            )
+
+        ref_result = run_test(spark_reference)
+        test_result = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref_result, test_result, "sql_transform_with_table")
