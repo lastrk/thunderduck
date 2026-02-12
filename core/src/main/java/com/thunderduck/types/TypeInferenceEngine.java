@@ -1309,7 +1309,25 @@ public final class TypeInferenceEngine {
             return expr.nullable();
         }
         if (expr instanceof BinaryExpression bin) {
+            // Comparison and logical operators follow the same rule:
+            // nullable if any operand is nullable
             return resolveNullable(bin.left(), schema) || resolveNullable(bin.right(), schema);
+        }
+        if (expr instanceof com.thunderduck.expression.UnaryExpression unary) {
+            // IS NULL/IS NOT NULL and IS TRUE/FALSE/UNKNOWN always return non-null boolean
+            com.thunderduck.expression.UnaryExpression.Operator op = unary.operator();
+            if (op == com.thunderduck.expression.UnaryExpression.Operator.IS_NULL ||
+                op == com.thunderduck.expression.UnaryExpression.Operator.IS_NOT_NULL ||
+                op == com.thunderduck.expression.UnaryExpression.Operator.IS_TRUE ||
+                op == com.thunderduck.expression.UnaryExpression.Operator.IS_NOT_TRUE ||
+                op == com.thunderduck.expression.UnaryExpression.Operator.IS_FALSE ||
+                op == com.thunderduck.expression.UnaryExpression.Operator.IS_NOT_FALSE ||
+                op == com.thunderduck.expression.UnaryExpression.Operator.IS_UNKNOWN ||
+                op == com.thunderduck.expression.UnaryExpression.Operator.IS_NOT_UNKNOWN) {
+                return false;
+            }
+            // Other operators (NEGATE, NOT): nullable follows operand
+            return resolveNullable(unary.operand(), schema);
         }
         if (expr instanceof FunctionCall func) {
             return resolveFunctionCallNullable(func, schema);
@@ -1324,14 +1342,46 @@ public final class TypeInferenceEngine {
             return true;
         }
         if (expr instanceof com.thunderduck.expression.FieldAccessExpression fieldAccess) {
-            // Struct field access: look up nullability from the struct's schema
+            // Spark rule: struct_expr.nullable || field.nullable
+            // If the struct itself can be null, the field access can also be null.
+            boolean baseNullable = resolveNullable(fieldAccess.base(), schema);
             DataType baseType = resolveType(fieldAccess.base(), schema);
             if (baseType instanceof StructType structType) {
                 StructField field = findField(fieldAccess.fieldName(), structType);
                 if (field != null) {
-                    return field.nullable();
+                    return baseNullable || field.nullable();
                 }
             }
+            // Fallback: also try schema lookup (for table.column patterns)
+            StructField schemaField = findField(fieldAccess.fieldName(), schema);
+            if (schemaField != null) {
+                return baseNullable || schemaField.nullable();
+            }
+            return true;
+        }
+        if (expr instanceof ArrayLiteralExpression || expr instanceof MapLiteralExpression ||
+            expr instanceof StructLiteralExpression) {
+            // Complex type constructors: the container itself is never null
+            return false;
+        }
+        if (expr instanceof CaseWhenExpression caseWhen) {
+            // CASE WHEN is nullable if:
+            // - No ELSE branch (implicit NULL)
+            // - Any THEN or ELSE branch is nullable (resolved with schema)
+            return resolveCaseWhenNullable(caseWhen, schema);
+        }
+        if (expr instanceof com.thunderduck.expression.LambdaExpression lambda) {
+            // Lambda itself is not directly nullable in a meaningful sense;
+            // the nullable semantics come from the HOF using it (transform, filter, etc.)
+            return resolveNullable(lambda.body(), schema);
+        }
+        if (expr instanceof com.thunderduck.expression.LambdaVariableExpression) {
+            // Lambda variables inherit nullability from the array element's containsNull.
+            // Without context, default to true (safe fallback).
+            return true;
+        }
+        if (expr instanceof InExpression) {
+            // IN expressions return boolean, can be null if any operand is null
             return true;
         }
         if (expr instanceof com.thunderduck.expression.RawSQLExpression raw) {
@@ -1444,6 +1494,121 @@ public final class TypeInferenceEngine {
             return true;
         }
 
+        // ---- Higher-Order Functions (Lambda) ----
+        // transform(array, lambda): result nullable = array argument's nullable
+        // The output array itself can only be null if the input array can be null.
+        if (funcName.equals("transform") || funcName.equals("list_transform")) {
+            if (!func.arguments().isEmpty()) {
+                return resolveNullable(func.arguments().get(0), schema);
+            }
+            return true;
+        }
+        // filter(array, lambda): result nullable = array argument's nullable
+        if (funcName.equals("filter") || funcName.equals("list_filter") ||
+            funcName.equals("array_filter")) {
+            if (!func.arguments().isEmpty()) {
+                return resolveNullable(func.arguments().get(0), schema);
+            }
+            return true;
+        }
+        // exists(array, lambda): always returns a definite boolean
+        // forall(array, lambda): always returns a definite boolean
+        if (funcName.equals("exists") || funcName.equals("forall") ||
+            funcName.equals("list_bool_or") || funcName.equals("list_bool_and")) {
+            return false;
+        }
+        // aggregate/reduce(array, init, merge, finish):
+        // nullable depends on the accumulator/init
+        if (funcName.equals("aggregate") || funcName.equals("reduce") ||
+            funcName.equals("list_reduce")) {
+            if (func.arguments().size() >= 2) {
+                return resolveNullable(func.arguments().get(1), schema);
+            }
+            return true;
+        }
+
+        // ---- Array type-preserving functions ----
+        // sort_array, array_sort, array_distinct, reverse, slice, shuffle
+        // nullable = input array's nullable
+        if (FunctionCategories.isArrayTypePreserving(funcName)) {
+            if (!func.arguments().isEmpty()) {
+                return resolveNullable(func.arguments().get(0), schema);
+            }
+            return true;
+        }
+
+        // ---- Array set operations ----
+        // array_union, array_intersect, array_except: nullable if any input is nullable
+        if (FunctionCategories.isArraySetOperation(funcName)) {
+            for (Expression arg : func.arguments()) {
+                if (resolveNullable(arg, schema)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // ---- Size/length functions ----
+        // size(array/map): nullable = input nullable (Spark returns null if input is null)
+        if (funcName.equals("size") || funcName.equals("array_size") ||
+            funcName.equals("cardinality") || funcName.equals("map_size")) {
+            if (!func.arguments().isEmpty()) {
+                return resolveNullable(func.arguments().get(0), schema);
+            }
+            return true;
+        }
+
+        // ---- Map extraction functions ----
+        // map_keys, map_values: nullable = input map's nullable
+        if (FunctionCategories.isMapExtraction(funcName)) {
+            if (!func.arguments().isEmpty()) {
+                return resolveNullable(func.arguments().get(0), schema);
+            }
+            return true;
+        }
+
+        // ---- Element extraction ----
+        // element_at: always nullable (key may not exist, index out of bounds)
+        if (FunctionCategories.isElementExtraction(funcName)) {
+            return true;
+        }
+
+        // ---- Explode functions ----
+        // explode, explode_outer: nullable depends on array containsNull
+        if (FunctionCategories.isExplodeFunction(funcName)) {
+            if (!func.arguments().isEmpty()) {
+                DataType argType = resolveType(func.arguments().get(0), schema);
+                if (argType instanceof ArrayType arrType) {
+                    return arrType.containsNull();
+                }
+            }
+            return true;
+        }
+
+        // ---- Flatten ----
+        // flatten: nullable = input array's nullable
+        if (funcName.equals("flatten")) {
+            if (!func.arguments().isEmpty()) {
+                return resolveNullable(func.arguments().get(0), schema);
+            }
+            return true;
+        }
+
+        // ---- map_from_arrays ----
+        // map_from_arrays: nullable if either input array is nullable
+        if (funcName.equals("map_from_arrays")) {
+            for (Expression arg : func.arguments()) {
+                if (resolveNullable(arg, schema)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // ---- String functions: nullable if input is nullable ----
+        // Most string functions follow "nullable if any arg nullable" which is
+        // handled by the general rule below.
+
         // General functions: nullable if any argument is nullable
         // This matches Spark's default behavior
         if (!func.arguments().isEmpty()) {
@@ -1453,6 +1618,37 @@ public final class TypeInferenceEngine {
         // No arguments (e.g., current_timestamp, current_date): non-nullable
         // These are deterministic functions that never return null
         return func.nullable();
+    }
+
+    /**
+     * Resolves CASE WHEN expression nullability with schema awareness.
+     *
+     * <p>A CASE WHEN expression is nullable if:
+     * <ul>
+     *   <li>No ELSE branch is specified (implicit NULL when no condition matches)</li>
+     *   <li>The ELSE branch is nullable (resolved with schema)</li>
+     *   <li>Any THEN branch is nullable (resolved with schema)</li>
+     * </ul>
+     */
+    private static boolean resolveCaseWhenNullable(CaseWhenExpression caseWhen, StructType schema) {
+        // Nullable if no ELSE (implicit NULL when no condition matches)
+        if (caseWhen.elseBranch() == null) {
+            return true;
+        }
+
+        // Nullable if ELSE is nullable
+        if (resolveNullable(caseWhen.elseBranch(), schema)) {
+            return true;
+        }
+
+        // Nullable if any THEN branch is nullable
+        for (Expression branch : caseWhen.thenBranches()) {
+            if (resolveNullable(branch, schema)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // ========================================================================

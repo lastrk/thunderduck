@@ -87,3 +87,4 @@ tests/integration/tpcds_sf001/
 
 # Bundled extension binaries (platform-specific, built via -Pbuild-extension)
 core/src/main/resources/extensions/
+/.worktrees/

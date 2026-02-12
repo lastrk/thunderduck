@@ -2072,9 +2072,19 @@ public class RelationConverter {
 
         // Build output schema for unpivot
         // Output columns are: ID columns + variable column + value column
+        // Prefer logical plan's schema (preserves correct nullable from createDataFrame)
+        // over DuckDB-inferred schema (which makes everything nullable).
         StructType outputSchema = null;
-        if (schemaInferrer != null) {
-            StructType inputSchema = schemaInferrer.inferSchema(inputSql);
+        StructType inputSchema = null;
+        try {
+            inputSchema = input.schema();
+        } catch (Exception e) {
+            logger.debug("Could not get logical schema for unpivot input, falling back to DuckDB inference");
+        }
+        if (inputSchema == null && schemaInferrer != null) {
+            inputSchema = schemaInferrer.inferSchema(inputSql);
+        }
+        if (inputSchema != null) {
             List<StructField> outputFields = new ArrayList<>();
 
             // 1. ID columns keep their original type/nullable from input
