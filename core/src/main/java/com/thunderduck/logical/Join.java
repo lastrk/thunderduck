@@ -299,6 +299,10 @@ public final class Join extends LogicalPlan {
             return null;
         }
 
+        // For outer joins, columns from the non-preserved side become nullable
+        boolean makeLeftNullable = (joinType == JoinType.RIGHT || joinType == JoinType.FULL);
+        boolean makeRightNullable = (joinType == JoinType.LEFT || joinType == JoinType.FULL);
+
         List<StructField> fields = new ArrayList<>();
         Set<String> usingSet = new HashSet<>(usingColumns);
 
@@ -315,27 +319,31 @@ public final class Join extends LogicalPlan {
             for (String usingCol : usingColumns) {
                 StructField field = leftFieldMap.get(usingCol);
                 if (field != null) {
-                    fields.add(field);
+                    fields.add(makeLeftNullable ? new StructField(field.name(), field.dataType(), true) : field);
                 }
             }
 
             // 2. Add non-USING columns from left side
             for (StructField field : leftSchema.fields()) {
                 if (!usingSet.contains(field.name())) {
-                    fields.add(field);
+                    fields.add(makeLeftNullable ? new StructField(field.name(), field.dataType(), true) : field);
                 }
             }
 
             // 3. Add non-USING columns from right side
             for (StructField field : rightSchema.fields()) {
                 if (!usingSet.contains(field.name())) {
-                    fields.add(field);
+                    fields.add(makeRightNullable ? new StructField(field.name(), field.dataType(), true) : field);
                 }
             }
         } else {
             // Non-USING join: all left columns + all right columns
-            fields.addAll(leftSchema.fields());
-            fields.addAll(rightSchema.fields());
+            for (StructField field : leftSchema.fields()) {
+                fields.add(makeLeftNullable ? new StructField(field.name(), field.dataType(), true) : field);
+            }
+            for (StructField field : rightSchema.fields()) {
+                fields.add(makeRightNullable ? new StructField(field.name(), field.dataType(), true) : field);
+            }
         }
 
         return new StructType(fields);

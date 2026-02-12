@@ -1184,7 +1184,7 @@ public final class TypeInferenceEngine {
      * <p>Spark rules:
      * <ul>
      *   <li>COUNT(*), COUNT(col): always non-nullable (returns 0 for empty groups)</li>
-     *   <li>SUM/AVG/MIN/MAX/FIRST/LAST: non-nullable if input is non-nullable</li>
+     *   <li>SUM/AVG/MIN/MAX/FIRST/LAST: always nullable (returns NULL for empty groups)</li>
      *   <li>COLLECT_LIST/COLLECT_SET: always nullable (array itself can be null)</li>
      *   <li>Statistical functions (STDDEV, VAR): nullable</li>
      * </ul>
@@ -1223,15 +1223,14 @@ public final class TypeInferenceEngine {
             return true;
         }
 
-        // For SUM/AVG/MIN/MAX/FIRST/LAST: check argument nullability
+        // For SUM/AVG/MIN/MAX/FIRST/LAST: always nullable per Spark semantics
+        // (returns NULL for empty groups or when all inputs are NULL)
         if (funcUpper.equals("SUM") || funcUpper.equals("AVG") ||
             funcUpper.equals("MIN") || funcUpper.equals("MAX") ||
             funcUpper.equals("FIRST") || funcUpper.equals("LAST") ||
             funcUpper.equals("FIRST_VALUE") || funcUpper.equals("LAST_VALUE") ||
             funcUpper.equals("ANY_VALUE")) {
-            if (argument != null) {
-                return resolveNullable(argument, schema);
-            }
+            return true;
         }
 
         // Default: nullable
