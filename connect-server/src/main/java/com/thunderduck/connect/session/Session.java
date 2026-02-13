@@ -333,6 +333,21 @@ public class Session implements AutoCloseable {
     }
 
     /**
+     * Cache a view's schema directly (for SQL-created temp views).
+     *
+     * <p>Unlike {@link #registerTempView(String, LogicalPlan)} which stores the full plan,
+     * this method only caches the schema. Used when a CREATE TEMP VIEW is executed via
+     * SQL (not the DataFrame API), where the view already exists in DuckDB.
+     *
+     * @param name view name
+     * @param schema the inferred schema
+     */
+    public void cacheViewSchema(String name, StructType schema) {
+        viewSchemas.put(name, schema);
+        logger.debug("Cached view schema for '{}': {}", name, schema);
+    }
+
+    /**
      * Get the view schema cache (live reference).
      *
      * @return unmodifiable view of the view schema cache

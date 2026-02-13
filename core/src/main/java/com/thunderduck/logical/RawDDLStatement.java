@@ -20,6 +20,8 @@ import java.util.Objects;
 public final class RawDDLStatement extends LogicalPlan {
 
     private final String sql;
+    private final String viewName;
+    private final LogicalPlan viewQueryPlan;
 
     /**
      * Creates a new RawDDLStatement with the given DuckDB SQL.
@@ -27,8 +29,25 @@ public final class RawDDLStatement extends LogicalPlan {
      * @param sql the DuckDB-compatible DDL/DML SQL string
      */
     public RawDDLStatement(String sql) {
+        this(sql, null, null);
+    }
+
+    /**
+     * Creates a new RawDDLStatement with view creation metadata.
+     *
+     * <p>When a CREATE TEMP VIEW statement is parsed, the view name and inner query plan
+     * are captured so the execution layer can cache the query's inferred schema. This
+     * avoids DuckDB DESCRIBE's nullable over-broadening when the view is later referenced.
+     *
+     * @param sql the DuckDB-compatible DDL SQL string
+     * @param viewName the temp view name (null if not a CREATE VIEW)
+     * @param viewQueryPlan the inner query's LogicalPlan (null if not a CREATE VIEW)
+     */
+    public RawDDLStatement(String sql, String viewName, LogicalPlan viewQueryPlan) {
         super(); // No children
         this.sql = Objects.requireNonNull(sql, "sql must not be null");
+        this.viewName = viewName;
+        this.viewQueryPlan = viewQueryPlan;
     }
 
     /**
@@ -38,6 +57,20 @@ public final class RawDDLStatement extends LogicalPlan {
      */
     public String sql() {
         return sql;
+    }
+
+    /**
+     * Returns the temp view name if this is a CREATE TEMP VIEW, null otherwise.
+     */
+    public String viewName() {
+        return viewName;
+    }
+
+    /**
+     * Returns the inner query plan if this is a CREATE TEMP VIEW, null otherwise.
+     */
+    public LogicalPlan viewQueryPlan() {
+        return viewQueryPlan;
     }
 
     @Override

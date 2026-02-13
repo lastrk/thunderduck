@@ -7,6 +7,7 @@ import com.thunderduck.connect.session.SessionManager;
 import com.thunderduck.connect.sql.SQLParameterSubstitution;
 import com.thunderduck.generator.SQLGenerator;
 import com.thunderduck.logical.LogicalPlan;
+import com.thunderduck.logical.RawDDLStatement;
 import com.thunderduck.parser.SparkSQLParser;
 import com.thunderduck.runtime.ArrowBatchIterator;
 import com.thunderduck.runtime.ArrowStreamingExecutor;
@@ -1212,6 +1213,18 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         // DDL statements don't return results - handle separately
         if (isDDLStatement(sql)) {
             executeDDL(sql, session, responseObserver);
+            // Cache view schema for SQL-created temp views so that later references
+            // use correct nullable flags instead of DuckDB DESCRIBE (all nullable).
+            if (plan instanceof RawDDLStatement ddl && ddl.viewName() != null && ddl.viewQueryPlan() != null) {
+                try {
+                    StructType schema = ddl.viewQueryPlan().inferSchema();
+                    if (schema != null && schema.size() > 0) {
+                        session.cacheViewSchema(ddl.viewName(), schema);
+                    }
+                } catch (Exception e) {
+                    logger.debug("Could not cache view schema for '{}': {}", ddl.viewName(), e.getMessage());
+                }
+            }
             return;
         }
 

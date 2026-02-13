@@ -174,12 +174,19 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
         }
 
         // The inner query -- use full AST parsing
+        LogicalPlan queryPlan = null;
         if (ctx.query() != null) {
-            LogicalPlan queryPlan = visitQuery(ctx.query());
+            queryPlan = visitQuery(ctx.query());
             String querySql = generateNodeSql(queryPlan);
             sql.append(" AS ").append(querySql);
         }
 
+        // For temp views, carry the view name and query plan so the execution layer
+        // can cache the inferred schema (avoids DuckDB DESCRIBE nullable over-broadening)
+        boolean isTemp = ctx.TEMPORARY() != null;
+        if (isTemp && queryPlan != null) {
+            return new RawDDLStatement(sql.toString(), viewName, queryPlan);
+        }
         return new RawDDLStatement(sql.toString());
     }
 
