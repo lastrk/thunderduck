@@ -2,95 +2,75 @@
 
 **Date**: 2026-02-13 (updated)
 
-## Relaxed Mode (Complete)
+## Relaxed Mode
 
 **Command**: `cd /workspace/tests/integration && THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true COLLECT_TIMEOUT=30 python3 -m pytest differential/ -v --tb=short`
-**Result**: **746 passed, 0 failed, 2 skipped** (748 total)
+**Result**: **739 passed, 7 failed, 2 skipped** (748 total)
 
 - **TPC-H**: 51/51 (100%) — 29 SQL + 22 DataFrame
-- **TPC-DS**: 99/99 (100%) — all SQL queries passing
+- **TPC-DS**: 94/99 — Q4, Q11, Q61, Q66, Q74 failing (spark_sum/spark_decimal_div issues)
 - **Lambda HOFs**: 27/27 (100%) — transform, filter, exists, forall, aggregate
 - **2 skipped**: negative array index tests (`skip_relaxed` — DuckDB supports `arr[-1]`, Spark throws)
+- **5 relaxed regressions**: From decimal precision merge — extension functions emitted in relaxed mode for some TPC-DS queries
 
-**Previous baselines**: 646/88/5 → 708/26/5 → 718/16/5 → 733/1/5 → 737/0/2 → **746/0/2**
+**Previous baselines**: 646/88/5 → 708/26/5 → 718/16/5 → 733/1/5 → 737/0/2 → 746/0/2 → **739/7/2**
 
 ---
 
 ## Strict Mode Baseline
 
 **Command**: `cd /workspace/tests/integration && THUNDERDUCK_COMPAT_MODE=strict THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true COLLECT_TIMEOUT=30 python3 -m pytest differential/ -v --tb=short`
-**Result**: **684 passed, 64 failed, 0 skipped** (748 total)
+**Result**: **685 passed, 63 failed, 0 skipped** (748 total)
 
-**Previous baselines**: 541/198 → 623/116 → 636/103 → 638/88 → 658/81 → 665/83 → **684/64**
+**Previous baselines**: 541/198 → 623/116 → 636/103 → 638/88 → 658/81 → 665/83 → 684/64 → **685/63**
 
-### What Changed (665/83 → 684/64)
+### What Changed (684/64 → 685/63)
 
-Two fixes combined to eliminate 19 failures:
-
-#### 1. SQL-path view schema caching (N2 fix)
-
-The previous view schema caching (from `Session.registerTempView()`) only covered the DataFrame API path (`df.createOrReplaceTempView()`). The SQL path (`spark.sql("CREATE OR REPLACE TEMP VIEW ...")`) went through `SparkSQLAstBuilder.visitCreateView()` → `RawDDLStatement` → direct DuckDB DDL execution, bypassing `session.registerTempView()` entirely.
-
-Fix: Thread view name and inner query `LogicalPlan` through `RawDDLStatement`, then cache `inferSchema()` result in `SparkConnectServiceImpl.executeSQLWithPlan()` after DDL execution.
+#### S1 fix: ToSchema schema preservation + SQL-path array type resolution
 
 | Component | Change |
 |-----------|--------|
-| `RawDDLStatement.java` | Added optional `viewName` and `viewQueryPlan` fields |
-| `SparkSQLAstBuilder.java` | `visitCreateView()` attaches query plan metadata for temp views |
-| `Session.java` | Added `cacheViewSchema()` for SQL-created views |
-| `SparkConnectServiceImpl.java` | After DDL execution, cache view schema from query plan |
+| `RelationConverter.java` | `convertToSchema()` builds target StructType and passes to `SQLRelation(sql, targetSchema)` |
+| `ExpressionConverter.java` | Made `convertDataType()` package-private for RelationConverter access |
+| `SparkSQLAstBuilder.java` | `mapDuckDBTypeToThunderduck()` handles ARRAY/LIST types via `SchemaInferrer.mapDuckDBType()` |
+| `TypeInferenceEngine.java` | Added `LambdaVariableExpression` handling in `resolveType()`; transform handler resolves lambda body types |
 
-**Impact**: -14 failures (lambda 12→1, complex_types 10→0, update_fields tests fixed)
+**Impact**: -1 failure (`test_to_schema_then_select` fixed). `test_sql_transform_with_table` type corrected from StringType to ArrayType (reclassified from S1 to N2 — nullable mismatch only).
 
-#### 2. Decimal precision/scale formulas (T2 fix)
-
-Matched Spark's `DecimalPrecision` rules for arithmetic operators.
-
-| Change | Detail |
-|--------|--------|
-| `adjustPrecisionScale()` | Shared utility for precision overflow handling |
-| Multiplication | Use `adjustPrecisionScale` instead of naive `min()` cap |
-| Addition/Subtraction | `promoteDecimalAddition()` with +1 carry digit |
-| Modulo | `promoteDecimalModulo()` using `min(intDigits)` (Spark's remainder formula) |
-| Division | Refactored to use shared `adjustPrecisionScale` |
-| Integer promotion | DIVIDE promotes integer operands to DECIMAL when other is DECIMAL |
-| LongType precision | Fixed from DECIMAL(19,0) to DECIMAL(20,0) |
-
-**Impact**: -5 failures (TPC-H Q14/Q19 fixed, TPC-DS decimal queries improved)
+**Baseline correction**: Previous 684/64 count was optimistic — complex_types (7) and dataframe_functions (4) failures were masked by test ordering effects. These are pre-existing N2/S1 issues confirmed to exist at the baseline commit without S1 changes.
 
 ---
 
-### Root Cause Clustering (64 failures)
+### Root Cause Clustering (63 failures)
 
 | # | Root Cause | Count | Fix Strategy |
 |---|-----------|-------|-------------|
 | **T2** | Decimal precision/scale mismatch | **~20** | Remaining precision edge cases in complex expressions |
 | **T3** | DOUBLE ↔ DECIMAL confusion | **~10** | AVG/division return type mapping |
+| **N2** | Nullable over-broadening (residual) | **~12** | createDataFrame, VALUES, struct/map field access, view schema gaps |
 | **D1** | spark_decimal_div / gRPC errors | **~8** | Q4, Q11, Q66, Q74 gRPC errors; Q39a/Q39b decimal-div |
-| **N2** | Nullable over-broadening (residual) | **~6** | Patterns not covered by view caching (createDataFrame, VALUES, inline) |
-| **S1** | StringType fallback | **~3** | sql_transform_with_table, toSchema |
+| **S1** | StringType fallback (residual) | **~7** | map value access, flatten element type, chained extraction |
 | **X2** | Overflow behavior mismatch | **2** | DuckDB silently promotes; Spark throws |
 
 ### Failures by Test File
 
-| File | Failures | Delta (from 83) | Primary Root Cause |
-|------|----------|------------------|--------------------|
-| `test_tpcds_differential.py` (SQL) | ~44 | +14 | T2 + T3 + D1 (some gRPC errors new) |
-| `test_tpcds_differential.py` (DataFrame) | 3 | 0 | T3 (Q12, Q20, Q98) |
-| `test_multidim_aggregations.py` | 4 | 0 | N2 (grouping nullable) |
-| `test_tpcds_dataframe_differential.py` | 3 | 0 | T3 (Q12, Q20, Q98) |
-| `test_differential_v2.py` (TPC-H SQL) | 3 | -1 | T2 + T3 (Q14, Q15, Q17) |
-| `test_overflow_differential.py` | 2 | 0 | X2 |
-| `test_type_casting_differential.py` | 2 | +1 | N2 + T2 |
-| `test_lambda_differential.py` | 1 | -11 | S1 (sql_transform_with_table) |
-| `test_simple_sql.py` | 1 | 0 | N2 (VALUES clause) |
-| `test_to_schema_differential.py` | 1 | 0 | S1 |
-| `test_complex_types_differential.py` | **0** | **-10** | All fixed by SQL-path view schema caching |
-| `test_dataframe_functions.py` | **0** | **-4** | All fixed |
-| **TOTAL** | **64** | **-19** | |
+| File | Failures | Primary Root Cause |
+|------|----------|-------------------|
+| `test_tpcds_differential.py` (SQL) | 33 | T2 + T3 + D1 |
+| `test_complex_types_differential.py` | 7 | N2 (nullable) + S1 (map/struct type) |
+| `test_tpcds_differential.py` (DataFrame) | 3 | T3 (Q12, Q20, Q98) |
+| `test_tpcds_dataframe_differential.py` | 3 | T3 (Q12, Q20, Q98) |
+| `test_differential_v2.py` (TPC-H SQL) | 4 | T2 + T3 (Q13, Q14, Q15, Q17) |
+| `test_dataframe_functions.py` | 4 | S1 (flatten, map_keys, map_values, map_from_arrays) |
+| `test_multidim_aggregations.py` | 4 | N2 (grouping nullable) |
+| `test_overflow_differential.py` | 2 | X2 |
+| `test_lambda_differential.py` | 1 | N2 (sql_transform_with_table nullable) |
+| `test_simple_sql.py` | 1 | N2 (VALUES clause) |
+| `test_type_casting_differential.py` | 1 | T2 |
+| **TOTAL** | **63** | |
 
 Zero-failure test files (all passing):
-`test_tpch_differential.py`, `test_complex_types_differential.py`, `test_dataframe_functions.py`, `test_window_functions.py`, `test_joins_differential.py`, `test_datetime_functions_differential.py`, `test_array_functions_differential.py`, `test_sql_expressions_differential.py`, `test_string_functions_differential.py`, `test_math_functions_differential.py`, `test_column_operations_differential.py`, `test_null_handling_differential.py`, `test_subquery_differential.py`, `test_ddl_parser_differential.py`, `test_dataframe_ops_differential.py`, `test_conditional_differential.py`, `test_type_literals_differential.py`, `test_using_joins_differential.py`
+`test_tpch_differential.py`, `test_to_schema_differential.py`, `test_window_functions.py`, `test_joins_differential.py`, `test_datetime_functions_differential.py`, `test_array_functions_differential.py`, `test_sql_expressions_differential.py`, `test_string_functions_differential.py`, `test_math_functions_differential.py`, `test_column_operations_differential.py`, `test_null_handling_differential.py`, `test_subquery_differential.py`, `test_ddl_parser_differential.py`, `test_dataframe_ops_differential.py`, `test_conditional_differential.py`, `test_type_literals_differential.py`, `test_using_joins_differential.py`
 
 ---
 
@@ -100,9 +80,9 @@ Zero-failure test files (all passing):
 |----------|---------|-------|--------|----------|
 | **P1** | T2: Decimal precision | ~20 | Medium | Remaining precision edge cases in complex multi-operator expressions |
 | **P2** | T3: DOUBLE ↔ DECIMAL | ~10 | Medium | AVG-over-DECIMAL → DOUBLE, division widening rules |
-| **P3** | D1: gRPC / decimal-div | ~8 | Medium | Debug Q4/Q11/Q66/Q74 gRPC errors; Q39a/Q39b decimal-div fix |
-| **P4** | N2: Nullable residual | ~6 | Hard | createDataFrame, VALUES, inline subquery nullable patterns |
-| **P5** | S1: StringType fallback | ~3 | Low | sql_transform_with_table, toSchema |
+| **P3** | N2: Nullable residual | ~12 | Hard | struct/map field access, createDataFrame, VALUES, inline subquery |
+| **P4** | D1: gRPC / decimal-div | ~8 | Medium | Debug Q4/Q11/Q66/Q74 gRPC errors; Q39a/Q39b decimal-div fix |
+| **P5** | S1: StringType residual | ~7 | Medium | MAP/STRUCT type parsing in mapDuckDBTypeToThunderduck, function return types |
 | **P6** | X2: Overflow | 2 | Low | Add overflow detection to spark_sum extension |
 
 ---
