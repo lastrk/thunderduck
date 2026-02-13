@@ -985,12 +985,74 @@ public final class TypeInferenceEngine {
                         return new ArrayType(elemType, containsNull);
                     }
                 }
+                // Map extraction functions: resolve from input map type
+                if (FunctionCategories.isMapExtraction(funcName)) {
+                    if (!func.arguments().isEmpty()) {
+                        DataType argType = resolveType(func.arguments().get(0), schema);
+                        if (argType instanceof MapType mapType) {
+                            return funcName.equals("map_keys")
+                                ? new ArrayType(mapType.keyType(), false)
+                                : new ArrayType(mapType.valueType(), mapType.valueContainsNull());
+                        }
+                    }
+                }
+                // Flatten: ArrayType(ArrayType(T)) -> ArrayType(T)
+                if (funcName.equals("flatten")) {
+                    if (!func.arguments().isEmpty()) {
+                        DataType argType = resolveType(func.arguments().get(0), schema);
+                        if (argType instanceof ArrayType a) {
+                            DataType elemType = a.elementType();
+                            return (elemType instanceof ArrayType) ? elemType : argType;
+                        }
+                    }
+                }
+                // split returns ArrayType(StringType, false)
+                if (funcName.equals("split")) {
+                    return new ArrayType(StringType.get(), false);
+                }
+                // map_entries(map) -> ArrayType(StructType([key, value]), false)
+                if (funcName.equals("map_entries")) {
+                    if (!func.arguments().isEmpty()) {
+                        DataType argType = resolveType(func.arguments().get(0), schema);
+                        if (argType instanceof MapType mapType) {
+                            java.util.List<StructField> entryFields = java.util.List.of(
+                                new StructField("key", mapType.keyType(), false),
+                                new StructField("value", mapType.valueType(), mapType.valueContainsNull()));
+                            return new ArrayType(new StructType(entryFields), false);
+                        }
+                    }
+                }
             }
             return resolveNestedType(declaredType, schema);
         }
 
-        // Handle MapType
-        if (declaredType instanceof MapType) {
+        // Handle MapType with unresolved key/value types
+        if (declaredType instanceof MapType mapDeclared) {
+            boolean hasUnresolved = UnresolvedType.containsUnresolved(mapDeclared.keyType()) ||
+                                   UnresolvedType.containsUnresolved(mapDeclared.valueType());
+            if (hasUnresolved && !func.arguments().isEmpty()) {
+                // map_from_arrays(keys_array, values_array) -> MapType(keyElem, valueElem, valueContainsNull)
+                if (funcName.equals("map_from_arrays") && func.arguments().size() >= 2) {
+                    DataType keysType = resolveType(func.arguments().get(0), schema);
+                    DataType valuesType = resolveType(func.arguments().get(1), schema);
+                    if (keysType instanceof ArrayType keyArr && valuesType instanceof ArrayType valArr) {
+                        return new MapType(keyArr.elementType(), valArr.elementType(), valArr.containsNull());
+                    }
+                }
+                // map/create_map(k1, v1, k2, v2, ...) -> MapType(keyType, valueType, valueContainsNull)
+                if ((funcName.equals("map") || funcName.equals("create_map")) && func.arguments().size() >= 2) {
+                    DataType keyType = resolveType(func.arguments().get(0), schema);
+                    DataType valueType = resolveType(func.arguments().get(1), schema);
+                    boolean valueContainsNull = false;
+                    for (int i = 1; i < func.arguments().size(); i += 2) {
+                        if (resolveNullable(func.arguments().get(i), schema)) {
+                            valueContainsNull = true;
+                            break;
+                        }
+                    }
+                    return new MapType(keyType, valueType, valueContainsNull);
+                }
+            }
             return resolveNestedType(declaredType, schema);
         }
 
