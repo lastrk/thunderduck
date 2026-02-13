@@ -1,141 +1,129 @@
 # Full Differential Test Suite Baseline
 
-**Date**: 2026-02-12 (updated)
+**Date**: 2026-02-13 (updated)
 
 ## Relaxed Mode (Complete)
 
 **Command**: `cd /workspace/tests/integration && THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true COLLECT_TIMEOUT=30 python3 -m pytest differential/ -v --tb=short`
-**Result**: **737 passed, 0 failed, 2 skipped** (739 total)
+**Result**: **746 passed, 0 failed, 2 skipped** (748 total)
 
 - **TPC-H**: 51/51 (100%) — 29 SQL + 22 DataFrame
 - **TPC-DS**: 99/99 (100%) — all SQL queries passing
+- **Lambda HOFs**: 27/27 (100%) — transform, filter, exists, forall, aggregate
 - **2 skipped**: negative array index tests (`skip_relaxed` — DuckDB supports `arr[-1]`, Spark throws)
 
-**Previous baselines**: 646/88/5 → 708/26/5 → 718/16/5 → 733/1/5 → **737/0/2** (unchanged)
+**Previous baselines**: 646/88/5 → 708/26/5 → 718/16/5 → 733/1/5 → 737/0/2 → **746/0/2** (+9 from merged lambda tests)
 
 ---
 
 ## Strict Mode Baseline
 
 **Command**: `cd /workspace/tests/integration && THUNDERDUCK_COMPAT_MODE=strict THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true COLLECT_TIMEOUT=30 python3 -m pytest differential/ -v --tb=short`
-**Result**: **658 passed, 81 failed, 0 skipped** (839 collected, 1 deselected, 838 ran)
+**Result**: **665 passed, 83 failed, 0 skipped** (748 total)
 
-**Previous baselines**: 541/198 → 623/116 → 636/103 → 638/88 → **658/81**
+**Previous baselines**: 541/198 → 623/116 → 636/103 → 638/88 → 658/81 → **665/83**
 
-### What Changed (638/88 → 658/81): Remove SchemaCorrectedBatchIterator
+### What Changed (658/81 → 665/83)
 
-| Change | What it fixed | Tests fixed | Regressions |
-|--------|--------------|-------------|-------------|
-| Remove `SchemaCorrectedBatchIterator` + unused `SparkCompatMode` import | Eliminated nullable over-broadening from incorrect schema patching; DuckDB Arrow batches now flow through as-is | **7** (4 lambda, 3 multidim) | 0 |
-| DDL parser tests no longer excluded | DDL parser gRPC timeout resolved; 13 tests now run and pass | **13** (all pass) | 0 |
+Two categories of change in this update:
 
-**Net movement**: 88 → 81 failures (-7), 638 → 658 passed (+20, includes 13 formerly-excluded DDL tests now passing)
+#### 1. Merged `feat-lambda-expressions` branch (+9 new tests, 12 new failures)
 
-### Delta: What flipped (88 → 81)
+| Test File | New Tests | Pass | Fail | Root Cause |
+|-----------|-----------|------|------|------------|
+| `test_lambda_differential.py` | +13 new | +2 | +11 | N2: DuckDB DESCRIBE marks temp view columns as nullable |
+| `test_tpcds_dataframe_differential.py` | (new file, -4 moved) | -4 | 0 | Tests moved from test_tpcds_differential.py |
 
-**7 tests fixed** (FAIL → PASS):
+Note: `test_lambda_differential.py` grew from 14 to 27 tests. The 13 new tests include transform, filter, aggregate, and SQL lambda tests. The +2 SQL aggregate tests pass because they go through the SQL parser path.
 
-| Test File | Old | New | Fix |
-|-----------|-----|-----|-----|
-| `test_lambda_differential.py` | 18 | 14 | -4: nullable patching removal |
-| `test_multidim_aggregations.py` | 7 | 4 | -3: nullable patching removal |
+#### 2. Type inference improvements (15 existing tests fixed)
 
-**13 tests newly running** (excluded → PASS):
+| Change | What it fixed | Tests fixed |
+|--------|--------------|-------------|
+| SchemaInferrer: parse MAP types | MAP(k,v) no longer falls back to StringType | ~2 |
+| SchemaInferrer: parse STRUCT types | STRUCT(...) no longer falls back to StringType | ~3 |
+| SchemaInferrer: LIST containsNull=false | Arrays from SQL match Spark's containsNull=false default | ~5 |
+| TypeInferenceEngine: grouping/grouping_id | ByteType/LongType instead of missing, non-nullable | ~3 |
+| TypeInferenceEngine: split, map_entries | Correct return types instead of fallback | ~2 |
+| TypeInferenceEngine: UpdateFieldsExpression | Correct struct type resolution for ADD/DROP | ~1 |
+| ExpressionConverter: aggregate/reduce type | Fixed hardcoded StringType → initArg.dataType() | 3 |
+| TypeInferenceEngine: aggregate nullable | Fixed to always-nullable (Spark semantics) | 2 |
 
-| Test File | Old | New | Reason |
-|-----------|-----|-----|--------|
-| `test_ddl_parser_differential.py` | excluded (gRPC timeout) | 0 failures | DDL parser timeout resolved |
-
-**0 regressions** (no PASS → FAIL).
+**Net movement**: 81 → 83 failures (+2), 658 → 665 passed (+7). Adjusted for 9 new tests: existing test failures dropped from 81 → 71 (-10).
 
 ---
 
-### Root Cause Clustering (81 failures)
+### Root Cause Clustering (83 failures)
 
 | # | Root Cause | Count | Fix Strategy |
 |---|-----------|-------|-------------|
-| **N2** | Nullable over-broadening | **~23** | Refine: don't blanket-nullable all sources; propagate per-column |
-| **S1** | StringType fallback (missing type inference) | **~15** | Implement type inference for unhandled expression types |
+| **N2** | Nullable over-broadening (DuckDB DESCRIBE) | **~22** | DuckDB DESCRIBE marks all computed columns nullable; needs per-expression nullable narrowing |
 | **T2** | Decimal precision/scale mismatch | **~15** | SUM precision formula, scale propagation |
 | **T3** | DOUBLE ↔ DECIMAL confusion | **~10** | AVG/division return type mapping |
+| **S1** | StringType fallback (reduced from ~15) | **~5** | Remaining: struct field access, sql_transform_with_table |
 | **D1** | spark_decimal_div BinaryExpression path | **4** | Re-land integer-to-DECIMAL promotion fix |
 | **X2** | Overflow behavior mismatch | **2** | DuckDB silently promotes; Spark throws |
-| **R1** | Misc (toSchema, stddev, VALUES types) | **~3** | Individual fixes |
+| **R1** | Misc (toSchema, VALUES types) | **~2** | Individual fixes |
 
----
+### N2: Nullable Over-broadening (~22 tests)
 
-### N2: Nullable Over-broadening (~23 tests) — reduced from ~30
-
-The `withAllNullable()` change forces ALL parquet source columns to `nullable=true`. Removing `SchemaCorrectedBatchIterator` helped (DuckDB's native all-nullable-true is now the baseline), but `inferSchema()` still reports incorrect nullable flags for AnalyzePlan responses.
+DuckDB DESCRIBE returns `null=YES` for all computed expression columns (e.g., `SELECT ARRAY(1,2,3) AS arr` → arr is nullable). Spark correctly infers these as non-nullable. This propagates through HOFs (transform, filter) and complex type access.
 
 | Sub-group | Tests | Pattern |
 |-----------|-------|---------|
-| **Lambda functions** | 14 | Lambda results become nullable because source arrays are nullable |
-| **Complex types** | ~5 | Struct field access, map access — nullable propagates through extraction |
+| **Lambda functions** | 11 | Lambda results nullable because source arrays are nullable from DESCRIBE |
+| **Complex types** | ~5 | Struct/map access — nullable propagates through extraction |
 | **TPC-DS SQL** | ~4 | Nullable mismatches stacking with existing decimal issues |
+| **Other** | ~2 | VALUES clause, decimal_scale_change |
 
-### S1: StringType Fallback (~15 tests) — persistent
+### S1: StringType Fallback (~5 tests) — reduced from ~15
 
-Type inference returns `StringType` instead of the correct type for several expression patterns.
+Most S1 issues fixed by SchemaInferrer MAP/STRUCT parsing and TypeInferenceEngine additions. Remaining:
 
 | Function/Pattern | Expected Type | Tests |
 |-----------------|--------------|-------|
-| `split()` | `ArrayType(StringType)` | 1 |
-| `flatten()` | `ArrayType(IntegerType)` | 1 |
-| `map_keys/values/entries` | Correct map element types | 3 |
-| `map_from_arrays` | `MapType(...)` | 1 |
-| Struct field access (strict) | Struct field type | 3 |
-| Map key access (strict) | Value type | 2 |
-| `UpdateFields` (`with_field`) | `StructType(...)` | 2 |
-| `grouping()` | `ByteType` | 3 |
+| Struct field access (strict mode) | Struct field type | ~3 |
+| `sql_transform_with_table` | ArrayType from SQL path | 1 |
 | `toSchema` coercion | Target schema type | 1 |
 
 ### T2: Decimal Precision/Scale (~15 tests) — persistent
 
-`DecimalType(37,2)` vs `DecimalType(38,2)` — SUM precision off by 1. Also wrong scale in division results (e.g., `DecimalType(38,12)` vs `DecimalType(38,6)`).
-
-Affected TPC-DS: Q22, Q93, Q14b, Q67, Q86, and others with aggregate DECIMAL columns.
+`DecimalType(37,2)` vs `DecimalType(38,2)` — SUM precision off by 1. Also wrong scale in division results.
 
 ### T3: DOUBLE ↔ DECIMAL Confusion (~10 tests) — persistent
 
-| Direction | Example | Affected Tests |
-|-----------|---------|---------------|
-| Returns DOUBLE, Spark expects DECIMAL | Q64, Q66, Q80 (`sales`/`returns`/`profit` columns) | ~6 |
-| Returns DECIMAL, Spark expects DOUBLE | Q17 (`avg_yearly`), Q24a/Q24b | ~4 |
-
-Root cause: AVG over DECIMAL returns DECIMAL in DuckDB but DOUBLE in Spark. Division type inference doesn't match Spark's widening rules.
+AVG over DECIMAL returns DECIMAL in DuckDB but DOUBLE in Spark. Division type inference doesn't match Spark's widening rules.
 
 ### D1: spark_decimal_div BinaryExpression Path (4 tests) — persistent, fix reverted
 
-Q23a/Q23b fail through `BinaryExpression.generateStrictModeDivision()` — a second code path that emits `spark_decimal_div`. The fix for integer-to-DECIMAL promotion was merged then reverted (`64f1826`).
-
-Additionally Q39a/Q39b fail with raw SQL StringType issues in strict mode.
+Q23a/Q23b fail through `BinaryExpression.generateStrictModeDivision()`. Q39a/Q39b fail with raw SQL StringType issues.
 
 ### X2: Overflow Behavior (2 tests) — persistent
 
-DuckDB's `spark_sum` extension doesn't throw on integer overflow (promotes to HUGEINT internally). Spark throws `ArithmeticException`. Tests: `test_sum_overflow_both_throw_exception`, `test_sum_negative_overflow_both_throw_exception`.
+DuckDB's `spark_sum` extension doesn't throw on integer overflow. Spark throws `ArithmeticException`.
 
 ---
 
 ### Failures by Test File
 
-| File | Failures | Delta (from 88) | Primary Root Cause |
+| File | Failures | Delta (from 81) | Primary Root Cause |
 |------|----------|------------------|--------------------|
-| `test_tpcds_differential.py` (SQL) | 39 | 0 | T2 + T3 + D1 |
-| `test_lambda_differential.py` | 14 | -4 | N2 |
+| `test_tpcds_differential.py` (SQL) | 30 | -9 | T2 + T3 + D1 |
+| `test_lambda_differential.py` | 12 | -2 (was 14, +11 new, -3 fixed) | N2 |
 | `test_complex_types_differential.py` | 10 | 0 | N2 + S1 |
-| `test_dataframe_functions.py` | 6 | 0 | S1 (split, flatten, map functions) |
-| `test_multidim_aggregations.py` | 4 | -3 | N2 + S1 (grouping) |
-| `test_differential_v2.py` (TPC-H SQL) | 3 | 0 | T2 + T3 |
+| `test_tpcds_dataframe_differential.py` | 3 | +3 (moved from tpcds_differential) | T3 |
+| `test_dataframe_functions.py` | 4 | -2 | S1 (map functions fixed, some remain) |
+| `test_differential_v2.py` (TPC-H SQL) | 4 | +1 | T2 + T3 |
+| `test_multidim_aggregations.py` | 4 | 0 | N2 + S1 (grouping type fixed, nullable remains) |
 | `test_overflow_differential.py` | 2 | 0 | X2 |
 | `test_simple_sql.py` | 1 | 0 | N2 |
-| `test_type_casting_differential.py` | 1 | 0 | T2 |
+| `test_type_casting_differential.py` | 1 | 0 | N2 |
 | `test_to_schema_differential.py` | 1 | 0 | S1 |
-| `test_ddl_parser_differential.py` | 0 | — | Was excluded, now passing |
-| **TOTAL** | **81** | **-7** | |
+| `test_tpcds_differential.py` (DataFrame) | 3 | +3 (moved) | T3 |
+| **TOTAL** | **83** | **+2** | |
 
 Zero-failure test files (all passing):
-`test_tpcds_dataframe_differential.py`, `test_tpch_differential.py`, `test_window_functions_differential.py`, `test_joins_differential.py`, `test_datetime_functions_differential.py`, `test_array_functions_differential.py`, `test_sql_expressions_differential.py`, `test_string_functions_differential.py`, `test_math_functions_differential.py`, `test_column_operations_differential.py`, `test_null_handling_differential.py`, `test_subquery_differential.py`, `test_ddl_parser_differential.py`, `test_dataframe_ops_differential.py`
+`test_tpch_differential.py`, `test_window_functions.py`, `test_joins_differential.py`, `test_datetime_functions_differential.py`, `test_array_functions_differential.py`, `test_sql_expressions_differential.py`, `test_string_functions_differential.py`, `test_math_functions_differential.py`, `test_column_operations_differential.py`, `test_null_handling_differential.py`, `test_subquery_differential.py`, `test_ddl_parser_differential.py`, `test_dataframe_ops_differential.py`, `test_conditional_differential.py`, `test_type_literals_differential.py`, `test_using_joins_differential.py`
 
 ---
 
@@ -143,14 +131,14 @@ Zero-failure test files (all passing):
 
 | Priority | Cluster | Tests | Effort | Strategy |
 |----------|---------|-------|--------|----------|
-| **P1** | N2: Nullable over-broadening | ~23 | Medium | Refine per-expression nullable narrowing in `inferSchema()` |
-| **P2** | S1: StringType fallback | ~15 | Medium | Add type inference for split, flatten, map ops, struct access, grouping |
-| **P3** | T2: Decimal precision | ~15 | Low | Fix SUM precision formula (38 not 37), scale propagation |
-| **P4** | T3: DOUBLE ↔ DECIMAL | ~10 | Medium | AVG-over-DECIMAL → DOUBLE, division widening rules |
+| **P1** | N2: Nullable over-broadening | ~22 | Hard | DuckDB DESCRIBE limitation; needs per-expression nullable narrowing or DESCRIBE bypass |
+| **P2** | T2: Decimal precision | ~15 | Low | Fix SUM precision formula (38 not 37), scale propagation |
+| **P3** | T3: DOUBLE ↔ DECIMAL | ~10 | Medium | AVG-over-DECIMAL → DOUBLE, division widening rules |
+| **P4** | S1: StringType fallback | ~5 | Low | Struct field access, sql_transform type resolution |
 | **P5** | D1: decimal-div BinaryExpr | 4 | Low | Re-land reverted fix (with extension rebuild) |
 | **P6** | X2: Overflow | 2 | Low | Add overflow detection to spark_sum extension |
 
-**Note on N2**: With `SchemaCorrectedBatchIterator` removed, nullable mismatches now only surface through `AnalyzePlan` schema responses (not Arrow data). The N2 cluster shrank from ~30 to ~23 because DuckDB's native all-nullable-true is accepted by clients. Remaining failures are where `inferSchema()` reports wrong nullable for schema introspection.
+**Note on N2**: The remaining nullable over-broadening issues are fundamentally caused by DuckDB DESCRIBE returning `null=YES` for all computed expression columns. This affects temp views created with array/struct/map constructors. Fix options: (a) bypass DESCRIBE for views where we know the defining SQL, (b) infer nullable from the view's defining expression, or (c) accept as a known limitation.
 
 ---
 
@@ -160,15 +148,15 @@ Zero-failure test files (all passing):
 
 ```
 Apache Spark 4.1 types (authoritative truth)
-  ← must match → DuckDB output (shaped by SQL generation + extension functions)
-  ← must match → inferSchema() (type inference in logical plan)
+  <- must match -> DuckDB output (shaped by SQL generation + extension functions)
+  <- must match -> inferSchema() (type inference in logical plan)
 ```
 
-1. **Spark is the authority.** The target types, precision, scale, and nullability are defined by what Apache Spark 4.1 returns. We don't approximate — we match exactly.
+1. **Spark is the authority.** The target types, precision, scale, and nullability are defined by what Apache Spark 4.1 returns. We don't approximate -- we match exactly.
 
-2. **DuckDB output must match Spark at the engine level.** This is achieved through SQL generation (CASTs, `AS` aliases, function rewrites) and DuckDB extension functions (`spark_avg`, `spark_sum`, `spark_decimal_div`). No post-hoc Arrow rewriting — types must be correct in the Arrow data DuckDB produces.
+2. **DuckDB output must match Spark at the engine level.** This is achieved through SQL generation (CASTs, `AS` aliases, function rewrites) and DuckDB extension functions (`spark_avg`, `spark_sum`, `spark_decimal_div`). No post-hoc Arrow rewriting.
 
-3. **`inferSchema()` must match DuckDB output.** The logical plan's type inference must return exactly the same types that the generated SQL will produce when executed by DuckDB. If these disagree, `AnalyzePlan` responses (used by PySpark for `df.schema`) will report different types than the actual Arrow data.
+3. **`inferSchema()` must match DuckDB output.** The logical plan's type inference must return exactly the same types that the generated SQL will produce when executed by DuckDB.
 
 **`SchemaCorrectedBatchIterator` has been removed.** DuckDB Arrow batches flow through with no schema patching. All type correctness is achieved at SQL generation time. Zero Arrow vector copying. Zero runtime type conversion.
 

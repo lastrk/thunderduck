@@ -366,6 +366,9 @@ public final class TypeInferenceEngine {
         if (expr instanceof com.thunderduck.expression.CastExpression cast) {
             return cast.targetType();
         }
+        if (expr instanceof com.thunderduck.expression.UpdateFieldsExpression update) {
+            return resolveUpdateFieldsType(update, schema);
+        }
         if (expr instanceof com.thunderduck.expression.RawSQLExpression raw) {
             // For raw SQL with explicit type metadata, use it
             DataType rawType = raw.dataType();
@@ -680,6 +683,50 @@ public final class TypeInferenceEngine {
             DataType type = resolveType(fieldValues.get(i), schema);
             boolean nullable = resolveNullable(fieldValues.get(i), schema);
             fields.add(new StructField(name, type, nullable));
+        }
+
+        return new StructType(fields);
+    }
+
+    /**
+     * Resolves the type of an UpdateFieldsExpression.
+     *
+     * <p>For ADD_OR_REPLACE: returns the struct type with the field added/replaced.
+     * For DROP: returns the struct type with the field removed.
+     */
+    private static DataType resolveUpdateFieldsType(
+            com.thunderduck.expression.UpdateFieldsExpression update, StructType schema) {
+        DataType baseType = resolveType(update.structExpr(), schema);
+        if (!(baseType instanceof StructType structType)) {
+            return baseType;
+        }
+
+        String fieldName = update.fieldName();
+        java.util.List<StructField> fields = new java.util.ArrayList<>(structType.fields());
+
+        if (update.operationType() == com.thunderduck.expression.UpdateFieldsExpression.OperationType.ADD_OR_REPLACE) {
+            DataType valueType = update.valueExpr()
+                .map(v -> resolveType(v, schema))
+                .orElse(StringType.get());
+            boolean valueNullable = update.valueExpr()
+                .map(v -> resolveNullable(v, schema))
+                .orElse(true);
+
+            // Replace existing field or add new one
+            boolean replaced = false;
+            for (int i = 0; i < fields.size(); i++) {
+                if (fields.get(i).name().equalsIgnoreCase(fieldName)) {
+                    fields.set(i, new StructField(fieldName, valueType, valueNullable));
+                    replaced = true;
+                    break;
+                }
+            }
+            if (!replaced) {
+                fields.add(new StructField(fieldName, valueType, valueNullable));
+            }
+        } else {
+            // DROP: remove the named field
+            fields.removeIf(f -> f.name().equalsIgnoreCase(fieldName));
         }
 
         return new StructType(fields);
@@ -1129,6 +1176,33 @@ public final class TypeInferenceEngine {
             if (funcName.matches("ceil|ceiling|floor")) {
                 return LongType.get();
             }
+
+            // split returns ArrayType(StringType, false)
+            if (funcName.equals("split")) {
+                return new ArrayType(StringType.get(), false);
+            }
+
+            // map_entries(map) -> ArrayType(StructType([key, value]), false)
+            if (funcName.equals("map_entries")) {
+                DataType argType = resolveType(func.arguments().get(0), schema);
+                if (argType instanceof MapType mapType) {
+                    java.util.List<StructField> entryFields = java.util.List.of(
+                        new StructField("key", mapType.keyType(), false),
+                        new StructField("value", mapType.valueType(), mapType.valueContainsNull()));
+                    return new ArrayType(new StructType(entryFields), false);
+                }
+                return new ArrayType(StringType.get(), false);
+            }
+
+            // grouping() returns ByteType
+            if (funcName.equals("grouping")) {
+                return ByteType.get();
+            }
+
+            // grouping_id() returns LongType
+            if (funcName.equals("grouping_id")) {
+                return LongType.get();
+            }
         }
 
         // Also handle functions with empty arguments but known return types
@@ -1336,6 +1410,9 @@ public final class TypeInferenceEngine {
             // CAST nullable follows the inner expression's nullable
             return resolveNullable(cast.expression(), schema);
         }
+        if (expr instanceof com.thunderduck.expression.UpdateFieldsExpression update) {
+            return resolveNullable(update.structExpr(), schema);
+        }
         if (expr instanceof com.thunderduck.expression.ExtractValueExpression) {
             // Value extraction from collections is always nullable
             // (out of bounds, missing key, etc.)
@@ -1430,6 +1507,11 @@ public final class TypeInferenceEngine {
             return false;
         }
 
+        // grouping/grouping_id are always non-nullable
+        if (funcName.equals("grouping") || funcName.equals("grouping_id")) {
+            return false;
+        }
+
         // Null-coalescing functions: non-null if ANY argument is non-null
         if (FunctionCategories.isNullCoalescing(funcName)) {
             for (Expression arg : func.arguments()) {
@@ -1518,12 +1600,9 @@ public final class TypeInferenceEngine {
             return false;
         }
         // aggregate/reduce(array, init, merge, finish):
-        // nullable depends on the accumulator/init
+        // Always nullable per Spark semantics (null if input array is null)
         if (funcName.equals("aggregate") || funcName.equals("reduce") ||
             funcName.equals("list_reduce")) {
-            if (func.arguments().size() >= 2) {
-                return resolveNullable(func.arguments().get(1), schema);
-            }
             return true;
         }
 
@@ -1581,6 +1660,24 @@ public final class TypeInferenceEngine {
                 if (argType instanceof ArrayType arrType) {
                     return arrType.containsNull();
                 }
+            }
+            return true;
+        }
+
+        // ---- split ----
+        // split: nullable = input string's nullable
+        if (funcName.equals("split")) {
+            if (!func.arguments().isEmpty()) {
+                return resolveNullable(func.arguments().get(0), schema);
+            }
+            return true;
+        }
+
+        // ---- map_entries ----
+        // map_entries: nullable = input map's nullable
+        if (funcName.equals("map_entries")) {
+            if (!func.arguments().isEmpty()) {
+                return resolveNullable(func.arguments().get(0), schema);
             }
             return true;
         }

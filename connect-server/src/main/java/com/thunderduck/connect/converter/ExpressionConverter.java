@@ -1317,20 +1317,23 @@ public class ExpressionConverter {
                 com.thunderduck.expression.Expression initArg = arguments.get(1);
                 com.thunderduck.expression.Expression mergeArg = arguments.get(2);
 
+                // Result type = init value type (accumulator type)
+                DataType resultType = initArg.dataType();
+
                 // Create list_prepend(init, arr) to include initial value
                 // DuckDB list_prepend signature is: list_prepend(element, list)
                 List<com.thunderduck.expression.Expression> prependArgs = new ArrayList<>();
                 prependArgs.add(initArg);  // element first
                 prependArgs.add(arrayArg); // list second
                 com.thunderduck.expression.Expression prependedList =
-                    new FunctionCall("list_prepend", prependArgs, StringType.get());
+                    new FunctionCall("list_prepend", prependArgs, new ArrayType(resultType, false));
 
                 // Create list_reduce(prepended_list, merge_lambda)
                 List<com.thunderduck.expression.Expression> reduceArgs = new ArrayList<>();
                 reduceArgs.add(prependedList);
                 reduceArgs.add(mergeArg);
                 com.thunderduck.expression.Expression reduceResult =
-                    new FunctionCall("list_reduce", reduceArgs, StringType.get());
+                    new FunctionCall("list_reduce", reduceArgs, resultType);
 
                 // If there's a finish function (4th argument), apply it
                 if (arguments.size() >= 4) {

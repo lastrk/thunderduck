@@ -94,6 +94,16 @@ public class SchemaInferrer {
             return parseListType(upper);
         }
 
+        // Handle MAP types: MAP(VARCHAR, INTEGER)
+        if (upper.startsWith("MAP(")) {
+            return parseMapType(upper);
+        }
+
+        // Handle STRUCT types: STRUCT(name VARCHAR, age INTEGER)
+        if (upper.startsWith("STRUCT(")) {
+            return parseStructType(upper);
+        }
+
         // Normalize: uppercase and remove size specifiers like VARCHAR(255)
         String normalized = upper.replaceAll("\\(.*\\)", "").trim();
 
@@ -137,12 +147,129 @@ public class SchemaInferrer {
             elementTypeStr = typeStr.substring(5, typeStr.length() - 1).trim();
         } else {
             // Fallback - shouldn't happen but return default ArrayType
-            return new ArrayType(StringType.get(), true);
+            return new ArrayType(StringType.get(), false);
         }
 
         // Recursively resolve element type (handles nested arrays)
         DataType elementType = mapDuckDBType(elementTypeStr);
-        return new ArrayType(elementType, true);
+        return new ArrayType(elementType, false);
+    }
+
+    /**
+     * Parses a MAP type string to a MapType.
+     *
+     * <p>Handles nested types: MAP(VARCHAR, LIST(INTEGER)).
+     * Uses parenthesis-aware splitting to find the comma separating key and value types.
+     *
+     * @param typeStr the type string like "MAP(VARCHAR, INTEGER)"
+     * @return the MapType with correct key and value types
+     */
+    private static DataType parseMapType(String typeStr) {
+        // Extract content between outer MAP( and )
+        if (!typeStr.startsWith("MAP(") || !typeStr.endsWith(")")) {
+            return new MapType(StringType.get(), StringType.get(), true);
+        }
+        String inner = typeStr.substring(4, typeStr.length() - 1).trim();
+
+        // Split on the top-level comma (respecting nested parentheses)
+        int splitPos = findTopLevelComma(inner);
+        if (splitPos < 0) {
+            return new MapType(StringType.get(), StringType.get(), true);
+        }
+
+        String keyStr = inner.substring(0, splitPos).trim();
+        String valueStr = inner.substring(splitPos + 1).trim();
+
+        DataType keyType = mapDuckDBType(keyStr);
+        DataType valueType = mapDuckDBType(valueStr);
+        return new MapType(keyType, valueType, true);
+    }
+
+    /**
+     * Parses a STRUCT type string to a StructType.
+     *
+     * <p>Handles nested types: STRUCT(arr LIST(INTEGER), name VARCHAR).
+     * Each field is "name type" separated by top-level commas.
+     *
+     * @param typeStr the type string like "STRUCT(name VARCHAR, age INTEGER)"
+     * @return the StructType with resolved field types
+     */
+    private static DataType parseStructType(String typeStr) {
+        if (!typeStr.startsWith("STRUCT(") || !typeStr.endsWith(")")) {
+            return StringType.get();
+        }
+        String inner = typeStr.substring(7, typeStr.length() - 1).trim();
+        if (inner.isEmpty()) {
+            return new StructType(new ArrayList<>());
+        }
+
+        // Split into fields on top-level commas
+        List<String> fieldStrs = splitTopLevel(inner);
+        List<StructField> fields = new ArrayList<>();
+        for (String fieldStr : fieldStrs) {
+            String trimmed = fieldStr.trim();
+            // Each field is "name type" — find the first space that's not inside parens
+            int spacePos = findFirstTopLevelSpace(trimmed);
+            if (spacePos > 0) {
+                String fieldName = trimmed.substring(0, spacePos).trim();
+                // Strip surrounding quotes if present (DuckDB may quote field names)
+                if (fieldName.startsWith("\"") && fieldName.endsWith("\"")) {
+                    fieldName = fieldName.substring(1, fieldName.length() - 1);
+                }
+                String fieldTypeStr = trimmed.substring(spacePos + 1).trim();
+                DataType fieldType = mapDuckDBType(fieldTypeStr);
+                fields.add(new StructField(fieldName, fieldType, true));
+            }
+        }
+        return new StructType(fields);
+    }
+
+    /**
+     * Finds the position of the first top-level comma (not inside parentheses).
+     */
+    private static int findTopLevelComma(String str) {
+        int depth = 0;
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c == '(') depth++;
+            else if (c == ')') depth--;
+            else if (c == ',' && depth == 0) return i;
+        }
+        return -1;
+    }
+
+    /**
+     * Splits a string on top-level commas (not inside parentheses).
+     */
+    private static List<String> splitTopLevel(String str) {
+        List<String> parts = new ArrayList<>();
+        int depth = 0;
+        int start = 0;
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c == '(') depth++;
+            else if (c == ')') depth--;
+            else if (c == ',' && depth == 0) {
+                parts.add(str.substring(start, i));
+                start = i + 1;
+            }
+        }
+        parts.add(str.substring(start));
+        return parts;
+    }
+
+    /**
+     * Finds the first space not inside parentheses. Used to split "fieldname TYPE" in struct fields.
+     */
+    private static int findFirstTopLevelSpace(String str) {
+        int depth = 0;
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c == '(') depth++;
+            else if (c == ')') depth--;
+            else if (c == ' ' && depth == 0) return i;
+        }
+        return -1;
     }
 
     /**
