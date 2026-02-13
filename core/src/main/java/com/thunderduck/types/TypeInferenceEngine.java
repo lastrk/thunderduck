@@ -144,6 +144,27 @@ public final class TypeInferenceEngine {
     }
 
     /**
+     * Adjusts precision and scale when raw precision exceeds 38, per Spark's DecimalPrecision rules.
+     *
+     * <p>When precision fits within 38, returns as-is. Otherwise caps precision at 38 and
+     * adjusts scale to preserve integer digits while retaining at least min(rawScale, 6)
+     * fractional digits.
+     *
+     * @param rawPrecision the calculated raw precision
+     * @param rawScale the calculated raw scale
+     * @return DecimalType with adjusted precision and scale
+     */
+    static DecimalType adjustPrecisionScale(int rawPrecision, int rawScale) {
+        if (rawPrecision <= 38) {
+            return new DecimalType(rawPrecision, rawScale);
+        }
+        int intDigits = rawPrecision - rawScale;
+        int minScale = Math.min(rawScale, 6);
+        int adjustedScale = Math.max(38 - intDigits, minScale);
+        return new DecimalType(38, adjustedScale);
+    }
+
+    /**
      * Converts a type to DecimalType for type unification in CASE/COALESCE expressions.
      *
      * <p>Spark promotes integral types to Decimal with fixed precision:
@@ -225,19 +246,8 @@ public final class TypeInferenceEngine {
         int scale = Math.max(6, s1 + p2 + 1);
         int precision = p1 - s1 + s2 + scale;
 
-        // Step 2: Apply precision loss adjustment if precision exceeds maximum
-        if (precision > 38) {
-            int intDigits = precision - scale;
-            int minScale = Math.min(scale, 6);  // retain at least 6 fractional digits
-            scale = Math.max(38 - intDigits, minScale);
-            precision = 38;
-        }
-
-        // Final safety cap (shouldn't be needed after adjustment)
-        scale = Math.min(scale, 38);
-        precision = Math.min(precision, 38);
-
-        return new DecimalType(precision, scale);
+        // Step 2: Apply precision loss adjustment via shared method
+        return adjustPrecisionScale(precision, scale);
     }
 
     /**
@@ -259,11 +269,50 @@ public final class TypeInferenceEngine {
         int p2 = right.precision();
         int s2 = right.scale();
 
-        // Spark's multiplication formula
-        int precision = Math.min(p1 + p2 + 1, 38);
-        int scale = Math.min(s1 + s2, precision);
+        // Spark's multiplication formula with adjustPrecisionScale for overflow
+        return adjustPrecisionScale(p1 + p2 + 1, s1 + s2);
+    }
 
-        return new DecimalType(precision, scale);
+    /**
+     * Calculates the result type for Decimal addition/subtraction per Spark semantics.
+     *
+     * <p>Spark's formula (from DecimalPrecision.scala):
+     * <ul>
+     *   <li>scale = max(s1, s2)</li>
+     *   <li>precision = max(p1 - s1, p2 - s2) + scale + 1 (+1 for carry digit)</li>
+     * </ul>
+     *
+     * @param left the left operand type
+     * @param right the right operand type
+     * @return the result DecimalType
+     */
+    public static DecimalType promoteDecimalAddition(DecimalType left, DecimalType right) {
+        int s1 = left.scale(), s2 = right.scale();
+        int p1 = left.precision(), p2 = right.precision();
+        int rawScale = Math.max(s1, s2);
+        int rawPrecision = Math.max(p1 - s1, p2 - s2) + rawScale + 1;
+        return adjustPrecisionScale(rawPrecision, rawScale);
+    }
+
+    /**
+     * Calculates the result type for Decimal modulo (remainder) per Spark semantics.
+     *
+     * <p>Spark's formula (from DecimalPrecision.scala):
+     * <ul>
+     *   <li>scale = max(s1, s2)</li>
+     *   <li>precision = min(p1 - s1, p2 - s2) + scale (min, not max)</li>
+     * </ul>
+     *
+     * @param left the left operand type
+     * @param right the right operand type
+     * @return the result DecimalType
+     */
+    public static DecimalType promoteDecimalModulo(DecimalType left, DecimalType right) {
+        int s1 = left.scale(), s2 = right.scale();
+        int p1 = left.precision(), p2 = right.precision();
+        int rawScale = Math.max(s1, s2);
+        int rawPrecision = Math.min(p1 - s1, p2 - s2) + rawScale;
+        return adjustPrecisionScale(rawPrecision, rawScale);
     }
 
     /**
@@ -301,7 +350,7 @@ public final class TypeInferenceEngine {
                 case ByteType b    -> new DecimalType(3, 0);
                 case ShortType s   -> new DecimalType(5, 0);
                 case IntegerType i -> new DecimalType(10, 0);
-                case LongType l    -> new DecimalType(19, 0);
+                case LongType l    -> new DecimalType(20, 0);
                 default            -> new DecimalType(10, 0);
             };
         }
@@ -496,10 +545,16 @@ public final class TypeInferenceEngine {
         DataType leftType = resolveType(binExpr.left(), schema);
         DataType rightType = resolveType(binExpr.right(), schema);
 
-        // Division: Decimal/Decimal returns Decimal, otherwise Double
+        // Division: promote non-DECIMAL operands to DECIMAL when other is DECIMAL
         if (op == BinaryExpression.Operator.DIVIDE) {
-            if (leftType instanceof DecimalType leftDec && rightType instanceof DecimalType rightDec) {
-                return promoteDecimalDivision(leftDec, rightDec);
+            boolean leftIsDecimal = leftType instanceof DecimalType;
+            boolean rightIsDecimal = rightType instanceof DecimalType;
+            if (leftIsDecimal || rightIsDecimal) {
+                DecimalType leftDec = toDecimalType(leftType, binExpr.left());
+                DecimalType rightDec = toDecimalType(rightType, binExpr.right());
+                if (leftDec != null && rightDec != null) {
+                    return promoteDecimalDivision(leftDec, rightDec);
+                }
             }
             return DoubleType.get();
         }
@@ -510,8 +565,6 @@ public final class TypeInferenceEngine {
         if (op == BinaryExpression.Operator.MULTIPLY) {
             boolean leftIsDecimal = leftType instanceof DecimalType;
             boolean rightIsDecimal = rightType instanceof DecimalType;
-
-            // Only apply decimal rules if at least one operand is already decimal
             if (leftIsDecimal || rightIsDecimal) {
                 DecimalType leftDec = toDecimalType(leftType, binExpr.left());
                 DecimalType rightDec = toDecimalType(rightType, binExpr.right());
@@ -520,6 +573,32 @@ public final class TypeInferenceEngine {
                 }
             }
             // Otherwise fall through to numeric type promotion
+        }
+
+        // Addition / Subtraction: use Spark's decimal addition formula with carry digit
+        if (op == BinaryExpression.Operator.ADD || op == BinaryExpression.Operator.SUBTRACT) {
+            boolean leftIsDecimal = leftType instanceof DecimalType;
+            boolean rightIsDecimal = rightType instanceof DecimalType;
+            if (leftIsDecimal || rightIsDecimal) {
+                DecimalType leftDec = toDecimalType(leftType, binExpr.left());
+                DecimalType rightDec = toDecimalType(rightType, binExpr.right());
+                if (leftDec != null && rightDec != null) {
+                    return promoteDecimalAddition(leftDec, rightDec);
+                }
+            }
+        }
+
+        // Modulo: use Spark's decimal remainder formula (min integer digits, not max)
+        if (op == BinaryExpression.Operator.MODULO) {
+            boolean leftIsDecimal = leftType instanceof DecimalType;
+            boolean rightIsDecimal = rightType instanceof DecimalType;
+            if (leftIsDecimal || rightIsDecimal) {
+                DecimalType leftDec = toDecimalType(leftType, binExpr.left());
+                DecimalType rightDec = toDecimalType(rightType, binExpr.right());
+                if (leftDec != null && rightDec != null) {
+                    return promoteDecimalModulo(leftDec, rightDec);
+                }
+            }
         }
 
         // For other arithmetic operators, use numeric type promotion
