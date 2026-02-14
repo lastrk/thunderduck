@@ -1,16 +1,16 @@
 # Differential Testing Architecture
 
-**Last Updated:** 2026-02-08
+**Last Updated:** 2026-02-14
 **Status:** Production Ready
-**Spark Version:** 4.0.1
+**Spark Version:** 4.1.1
 
 ## Overview
 
-The differential testing framework compares Thunderduck against Apache Spark 4.0.1 to ensure exact compatibility. Both systems run via Spark Connect protocol for fair comparison.
+The differential testing framework compares Thunderduck against Apache Spark 4.1.1 to ensure exact compatibility. Both systems run via Spark Connect protocol for fair comparison.
 
 **Key Achievement: 22/22 TPC-H DataFrame Parity** -- All TPC-H queries pass differential testing.
 
-**Test Coverage (35+ test files across multiple categories):**
+**Test Coverage (37 test files, 746 tests across multiple categories):**
 
 | Test Category | Tests | Status |
 |--------------|-------|--------|
@@ -61,7 +61,7 @@ Tests support two comparison modes:
                     │                │
         ┌───────────▼──────┐  ┌──────▼──────────┐
         │  Spark Connect   │  │  Thunderduck    │
-        │  4.0.1 Server    │  │  Connect Server │
+        │  4.1.1 Server    │  │  Connect Server │
         │  (Native)        │  │  (Java)         │
         │  :15003          │  │  :15002         │
         └──────────────────┘  └──────────────────┘
@@ -80,7 +80,7 @@ Orchestrates both servers with automatic lifecycle management:
 
 ```python
 class DualServerManager:
-    def __init__(self, thunderduck_port=15002, spark_reference_port=15003):
+    def __init__(self, thunderduck_port=15002, spark_reference_port=15003):  # ports auto-allocated by default
         ...
 
     def start_both(self, timeout=120) -> Tuple[bool, bool]:
@@ -103,20 +103,20 @@ Detailed row-by-row comparison with:
 
 ### 3. Test Fixtures (`conftest.py`)
 
-Session-scoped fixtures for performance:
+Session-scoped server fixtures, module-scoped session fixtures:
 
 ```python
 @pytest.fixture(scope="session")
 def dual_server_manager():
-    """Starts both servers, kills on teardown"""
+    """Starts both servers once, kills on teardown"""
 
-@pytest.fixture(scope="session")
-def spark_reference(dual_server_manager):
-    """PySpark session connected to Spark 4.0.1"""
+@pytest.fixture(scope="module")
+def spark_reference(orchestrator, dual_server_manager):
+    """PySpark session connected to Spark 4.1.1 (module-scoped)"""
 
-@pytest.fixture(scope="session")
-def spark_thunderduck(dual_server_manager):
-    """PySpark session connected to Thunderduck"""
+@pytest.fixture(scope="module")
+def spark_thunderduck(orchestrator, dual_server_manager):
+    """PySpark session connected to Thunderduck (module-scoped)"""
 ```
 
 Includes signal handlers for proper cleanup on Ctrl+C.
@@ -125,7 +125,7 @@ Includes signal handlers for proper cleanup on Ctrl+C.
 
 One-time setup that:
 1. Checks Java/Python prerequisites
-2. Downloads and installs Apache Spark 4.0.1
+2. Downloads and installs Apache Spark 4.1.1
 3. Creates Python virtual environment
 4. Installs all dependencies
 5. Builds Thunderduck
@@ -162,11 +162,11 @@ Test runner that:
 
 **Rationale:** Starting servers for each test would add 10+ seconds of overhead per test. Session-scoped fixtures make the full TPC-H suite run in ~20 seconds.
 
-### 4. Port Separation
+### 4. Auto-Allocated Ports
 
-**Decision:** Thunderduck on 15002, Spark on 15003.
+**Decision:** Ports are auto-allocated from the OS by default (15002/15003 are fallback defaults).
 
-**Rationale:** Allows both servers to run simultaneously without conflicts. Tests can connect to both and compare results.
+**Rationale:** Auto-allocation enables parallel test runs without port conflicts. Each pytest session gets its own ports. Override with `THUNDERDUCK_PORT` / `SPARK_PORT` env vars if needed.
 
 ### 5. Isolated Python Environment
 
@@ -175,7 +175,7 @@ Test runner that:
 **Rationale:**
 - Avoids conflicts with system Python packages
 - Ensures reproducible dependency versions
-- Isolates PySpark 4.0.1 from other projects
+- Isolates PySpark 4.1.1 from other projects
 
 ## File Structure
 
@@ -190,9 +190,9 @@ tests/
 ├── integration/
 │   ├── .venv/                            # Python virtual environment
 │   ├── .env                              # Environment config
-│   ├── conftest.py                       # Pytest fixtures (session + class scoped)
+│   ├── conftest.py                       # Pytest fixtures (session + module scoped)
 │   │
-│   ├── differential/                     # Differential Test Suites (35+ files)
+│   ├── differential/                     # Differential Test Suites (37 files)
 │   │   ├── test_tpch_differential.py     # TPC-H DataFrame Q1-Q22 (22 tests)
 │   │   ├── test_differential_v2.py       # TPC-H SQL + basic operations
 │   │   ├── test_tpcds_dataframe_differential.py  # TPC-DS DataFrame tests
@@ -337,7 +337,7 @@ Differences:
 
 ### Required Software
 - Python 3.8+ with venv module
-- Java 17+
+- Java 21+
 - Maven (for building Thunderduck)
 - curl (for downloading Spark)
 

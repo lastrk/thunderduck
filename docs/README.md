@@ -23,23 +23,13 @@ This directory contains documentation for the Thunderduck project.
 - **[SPARK_CONNECT_PROTOCOL_COMPLIANCE.md](architect/SPARK_CONNECT_PROTOCOL_COMPLIANCE.md)** - Protocol compliance
 - **[CATALOG_OPERATIONS.md](architect/CATALOG_OPERATIONS.md)** - Catalog operations implementation
 - **[TYPE_MAPPING.md](architect/TYPE_MAPPING.md)** - DuckDB to Spark type mapping
-- **[LAMBDA_AND_CALL_FUNCTION_SPEC.md](architect/LAMBDA_AND_CALL_FUNCTION_SPEC.md)** - Lambda functions and higher-order functions
-- **[STATISTICS_OPERATIONS_SPEC.md](architect/STATISTICS_OPERATIONS_SPEC.md)** - Statistics operations
-- **[UDF_SUPPORT_RESEARCH.md](architect/UDF_SUPPORT_RESEARCH.md)** - UDF support research
+- **[SPARKSQL_PARSER_DESIGN.md](architect/SPARKSQL_PARSER_DESIGN.md)** - SparkSQL ANTLR4 parser design (implemented)
 
-### Research & Analysis (research/)
-Deep technical investigations conducted during development:
-
-- **[DUCKDB_TPCDS_DISCOVERY.md](research/DUCKDB_TPCDS_DISCOVERY.md)** - Discovery of DuckDB's TPC-DS implementation patterns
-- **[TPCDS_ROOT_CAUSE_ANALYSIS.md](research/TPCDS_ROOT_CAUSE_ANALYSIS.md)** - Root cause analysis of Q36 & Q86 failures
-- **[GROUPING_FUNCTION_ANALYSIS.md](research/GROUPING_FUNCTION_ANALYSIS.md)** - Analysis of GROUPING() function behavior
+### Research (research/)
+Historical technical investigations: TPC-DS discovery, GROUPING() function analysis, Q36 DuckDB limitation.
 
 ### Pending Design (pending_design/)
-Future feature specifications:
-
-- **[DELTA_LAKE_INTEGRATION_SPEC.md](pending_design/DELTA_LAKE_INTEGRATION_SPEC.md)** - Delta Lake integration
-- **[AWS_CREDENTIAL_CHAIN_SPEC.md](pending_design/AWS_CREDENTIAL_CHAIN_SPEC.md)** - AWS credential chain support
-- **[S3_THROUGHPUT_OPTIMIZATION_RESEARCH.md](pending_design/S3_THROUGHPUT_OPTIMIZATION_RESEARCH.md)** - S3 throughput optimization
+Future feature specifications: Delta Lake integration, AWS credential chain, S3 throughput optimization.
 
 ### Development Journal (dev_journal/)
 Milestone completion reports documenting the project's development progress.
@@ -52,6 +42,8 @@ Key milestones:
 - **M45-M49**: Statistics, lambda functions, complex types, type literals
 - **M50-M64**: Direct alias optimization, type inference, joins, sorting
 - **M68-M71**: Decimal precision, datetime fixes, performance instrumentation
+- **M72-M79**: SparkSQL parser, schema-aware dispatch, extension functions
+- **M80-M83**: Strict mode convergence (744/2), test suite optimization
 
 ---
 
@@ -73,4 +65,4 @@ Key milestones:
 
 ---
 
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-14

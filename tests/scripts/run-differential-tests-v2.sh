@@ -223,7 +223,7 @@ trap cleanup EXIT INT TERM
 # Main Script
 # ------------------------------------------------------------------------------
 echo -e "${BLUE}================================================================${NC}"
-echo -e "${BLUE}Differential Tests V2: Apache Spark 4.0.1 vs Thunderduck${NC}"
+echo -e "${BLUE}Differential Tests V2: Apache Spark 4.1.1 vs Thunderduck${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
 

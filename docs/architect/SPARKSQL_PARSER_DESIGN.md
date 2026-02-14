@@ -2,14 +2,16 @@
 
 **Date:** 2026-02-09
 **Author:** Architecture Team
-**Status:** Design Proposal
-**Tracking:** Replaces regex-based `preprocessSQL()` in `SparkConnectServiceImpl`
+**Status:** Implemented (2026-02)
+**Tracking:** Replaced regex-based `preprocessSQL()` in `SparkConnectServiceImpl`
+
+> **Implementation Note:** This design was fully implemented using **Option 5 (Custom ANTLR4 Parser)** from [SQL_PARSER_RESEARCH.md](../SQL_PARSER_RESEARCH.md), not Option 1 (Catalyst). Key classes: `SparkSQLParser`, `SparkSQLAstBuilder` in `com.thunderduck.parser`. Both SQL and DataFrame paths now converge at the LogicalPlan AST. The `preprocessSQL()` regex pipeline has been removed. All TPC-H (29/29) and TPC-DS (122/124) SQL queries pass through the parser path.
 
 ---
 
 ## 1. Problem Statement
 
-Thunderduck currently passes `spark.sql()` queries directly to DuckDB with minimal regex-based rewriting (`preprocessSQL()`). This approach has three fundamental problems:
+Thunderduck previously passed `spark.sql()` queries directly to DuckDB with minimal regex-based rewriting (`preprocessSQL()`). This approach had three fundamental problems:
 
 1. **SparkSQL-specific syntax is unsupported.** Four differential tests are skipped because `spark.sql()` queries with SparkSQL syntax (e.g., `DATE '2025-01-15'`, `CAST(NULL AS INT)`) fail when sent to DuckDB verbatim. The test file `tests/integration/differential/test_type_casting_differential.py` documents these at lines 131, 225, 241, and 304.
 

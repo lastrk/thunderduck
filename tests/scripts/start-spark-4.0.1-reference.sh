@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Start Apache Spark 4.0.1 Connect server on port 15003 for differential testing
+# Start Apache Spark 4.1.1 Connect server on port 15003 for differential testing
 #
 # Compatible with both bash and zsh
 
 set -e
 
 SPARK_HOME="${SPARK_HOME:-/home/vscode/spark/current}"
-SPARK_VERSION="4.0.1"
+SPARK_VERSION="4.1.1"
 SPARK_PORT="${SPARK_PORT:-15003}"
 SPARK_WAREHOUSE_DIR="${SPARK_WAREHOUSE_DIR:-}"
 
@@ -46,7 +46,7 @@ mkdir -p "$SPARK_LOG_DIR"
 
 echo -e "${BLUE}Starting Spark Connect server on port ${SPARK_PORT}...${NC}"
 
-# Set required JVM options for Apache Arrow (Spark 4.0.x requirement)
+# Set required JVM options for Apache Arrow (Spark 4.1.x requirement)
 export SPARK_SUBMIT_OPTS="--add-opens=java.base/java.nio=ALL-UNNAMED"
 
 # Build warehouse dir argument if provided

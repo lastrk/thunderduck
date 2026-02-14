@@ -1,19 +1,26 @@
-# Spark Connect 4.0.x Gap Analysis for Thunderduck
+# Spark Connect 4.1.x Gap Analysis for Thunderduck
 
-**Version:** 4.16
-**Date:** 2026-02-08
+**Version:** 4.19
+**Date:** 2026-02-14
 **Purpose:** Comprehensive analysis of Spark Connect operator support in Thunderduck
-**Validation:** Differential tests across 35+ test files -- see [Differential Testing Architecture](architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
+**Validation:** Differential tests across 37 test files (746 tests) -- see [Differential Testing Architecture](architect/DIFFERENTIAL_TESTING_ARCHITECTURE.md)
 
 ---
 
 ## Executive Summary
 
-This document provides a detailed gap analysis between Spark Connect 4.0.x's protocol specification and Thunderduck's current implementation. The analysis covers:
+This document provides a detailed gap analysis between Spark Connect 4.1.x's protocol specification and Thunderduck's current implementation. The analysis covers:
 - **Relations** (logical plan operators)
 - **Expressions** (value computation)
 - **Commands** (side-effecting operations)
 - **Catalog operations**
+
+### Current Differential Test Baseline (746 tests)
+
+| Mode | Pass | Fail | Skip | Notes |
+|------|------|------|------|-------|
+| **Strict** | 744 | 2 | 2 | Terminal baseline — remaining 2 failures are DuckDB limitations |
+| **Relaxed** | 746 | 0 | 2 | Full pass (type equivalence not required) |
 
 ### Overall Coverage
 
@@ -295,7 +302,7 @@ Fully supported:
 
 ### 5.5 Validated Functions (57 Differential Tests)
 
-The following functions are validated by differential tests comparing Thunderduck against Spark 4.0.1:
+The following functions are validated by differential tests comparing Thunderduck against Spark 4.1.1:
 
 | Category | Functions Validated |
 |----------|---------------------|
@@ -454,7 +461,7 @@ These are all implemented. However, production workloads often include:
 
 2. **Graceful Degradation**: Consider implementing stub handlers that return helpful error messages rather than generic exceptions.
 
-3. **Version Compatibility**: This analysis is based on Spark Connect 4.0.x. Spark 4.0 introduced protocol changes including deprecated `sql` field in SQL commands (replaced with `input` relation).
+3. **Version Compatibility**: This analysis is based on Spark Connect 4.1.x. Spark 4.0 introduced protocol changes including deprecated `sql` field in SQL commands (replaced with `input` relation).
 
 ---
 
@@ -534,7 +541,7 @@ df.filter(F.col("l_shipdate") <= F.date_sub(F.to_date(F.lit("1998-12-01")), 90))
 
 This section documents operations that are implemented but NOT covered by differential tests.
 
-### 11.1 Current Test Summary (35+ test files)
+### 11.1 Current Test Summary (37 test files, 746 tests)
 
 | Category | Test File | Tests | Status |
 |----------|-----------|-------|--------|
@@ -782,14 +789,17 @@ spark.udf.register(...)                       # User-defined functions not suppo
 
 ---
 
-**Document Version:** 4.16
-**Last Updated:** 2026-02-08
-**Author:** Analysis generated from Spark Connect 4.0.x protobuf definitions
+**Document Version:** 4.19
+**Last Updated:** 2026-02-14
+**Author:** Analysis generated from Spark Connect 4.1.x protobuf definitions
 
 ### Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v4.19 | 2026-02-14 | Test suite optimization: module-scoped fixtures, removed sleeps, lowered timeouts (-25% wall time). CLAUDE.md audit and corrections. |
+| v4.18 | 2026-02-14 | Fix N2 nullable, T1 stddev/variance, G1 grouping type inference, D1 map_keys containsNull. **Strict baseline: 727/21 → 744/2 (terminal baseline).** |
+| v4.17 | 2026-02-14 | Schema-aware SQL-path decimal dispatch; complex type return type inference for map/array functions (S1). Fix decimal precision (T2), DOUBLE/DECIMAL confusion (T3). **Strict: 712/36 → 727/21, Relaxed: 746/0/2.** |
 | v4.16 | 2026-02-08 | **22/22 TPC-H DataFrame parity achieved.** Added strict/relaxed/auto compatibility modes with DuckDB extension aggregate functions (spark_sum, spark_avg). Eliminated schema correction layer. Fixed semi/anti join syntax, composite aggregates, like() SQL syntax, nested alias scoping. |
 | v4.15 | 2025-12-23 | **Added Section 9: Known Compatibility Gaps.** Documented date_sub with string literal issue - Spark auto-casts ISO date strings but Thunderduck/DuckDB requires explicit DATE cast. This is a bug to fix, not an intentional incompatibility. |
 | v4.14 | 2025-12-22 | **M69: Fixed datetime extraction function type inference.** Extended mergeSchemas() to prefer logical IntegerType over DuckDB's BigIntType for date extraction functions. Fixed datediff argument order (DuckDB returns B-A, not A-B). Cast unix_timestamp to BIGINT. All 444 tests passing. |

@@ -2,7 +2,9 @@
 
 ## Executive Summary
 
-Based on my research of SQL parser options for translating SparkSQL queries into Thunderduck's query AST, I've analyzed 5 main approaches. The **recommended solution is to reuse Apache Spark's existing SQL parser** (Option 1), as it provides the highest compatibility with minimal integration effort.
+Based on my research of SQL parser options for translating SparkSQL queries into Thunderduck's query AST, I've analyzed 5 main approaches. The original recommendation was to reuse Apache Spark's existing SQL parser (Option 1).
+
+> **Implementation Outcome (2026-02):** **Option 5 (Custom ANTLR4 Parser)** was chosen instead, to avoid the Scala runtime dependency and gain full control over AST building. The grammar files (`SqlBaseParser.g4`, `SqlBaseLexer.g4`) were imported from Spark v4.0.0 and a custom `SparkSQLAstBuilder` visitor converts ANTLR parse trees directly to Thunderduck's LogicalPlan/Expression AST. See [SPARKSQL_PARSER_DESIGN.md](architect/SPARKSQL_PARSER_DESIGN.md) for the full design.
 
 ---
 

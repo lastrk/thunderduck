@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Setup script for Differential Testing V2
 # Creates a reproducible environment for running differential tests
-# between Apache Spark 4.0.1 and Thunderduck
+# between Apache Spark 4.1.1 and Thunderduck
 #
 # Compatible with both bash and zsh
 
@@ -17,7 +17,7 @@ else
     SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 fi
 WORKSPACE_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-SPARK_VERSION="4.0.1"
+SPARK_VERSION="4.1.1"
 SPARK_INSTALL_DIR="${SPARK_INSTALL_DIR:-$HOME/spark}"
 SPARK_HOME="$SPARK_INSTALL_DIR/spark-$SPARK_VERSION"
 
@@ -89,7 +89,7 @@ echo -e "${GREEN}  pip version: $PIP_VERSION${NC}"
 # ------------------------------------------------------------------------------
 echo -e "${BLUE}[3/5] Installing Python dependencies...${NC}"
 
-PYSPARK_VERSION="4.0.1"
+PYSPARK_VERSION="4.1.1"
 
 echo "  Installing pytest, pyspark, pandas, pyarrow, grpcio..."
 python3 -m pip install --quiet --upgrade pip

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stop Apache Spark 4.0.1 Connect reference server
+# Stop Apache Spark 4.1.1 Connect reference server
 #
 # Compatible with both bash and zsh
 # Reads SPARK_PORT from env (default: 15003) and only kills the process on that port.
