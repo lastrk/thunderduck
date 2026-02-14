@@ -274,11 +274,17 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             Expression expr = projections.get(i);
             // Resolve polymorphic functions (e.g., reverse -> list_reverse for arrays)
             expr = resolvePolymorphicFunctions(expr, childSchema);
-            String exprSQL = expr.toSQL();
+            // In strict mode, transform division and aggregates for correct type dispatch
+            Expression transformedExpr = expr;
+            if (SparkCompatMode.isStrictMode() && childSchema != null) {
+                transformedExpr = transformExpressionForStrictMode(expr, childSchema);
+            }
+            String exprSQL = transformedExpr.toSQL();
             sql.append(exprSQL);
 
             // Add alias if provided and expression doesn't already have one
             // (AliasExpression.toSQL() already includes AS alias)
+            // Note: use original expr for auto-alias to preserve Spark column naming
             String alias = aliases.get(i);
             maybeAppendAutoAlias(expr, exprSQL, alias);
         }
@@ -322,6 +328,13 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         String fromClause = sql.substring(insertPos);
         sql.setLength(insertPos);
 
+        // Resolve child schema for strict mode type-aware rendering
+        StructType childSchema = null;
+        if (SparkCompatMode.isStrictMode()) {
+            try { childSchema = project.child().schema(); }
+            catch (Exception e) { LOG.trace("Schema resolution failed for Project child", e); }
+        }
+
         // Now generate SELECT with the correct mapping
         sql.append("SELECT ");
 
@@ -335,7 +348,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
             Expression expr = projections.get(i);
             // Use qualifyCondition to properly resolve column references
-            String qualifiedExpr = qualifyCondition(expr, planIdToAlias);
+            // Pass schema for strict mode type-aware division/aggregate dispatch
+            String qualifiedExpr = qualifyCondition(expr, planIdToAlias, childSchema);
             sql.append(qualifiedExpr);
 
             String alias = aliases.get(i);
@@ -361,6 +375,18 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         String fromClause = sql.substring(insertPos);
         sql.setLength(insertPos);
 
+        // Resolve child schema for strict mode type-aware rendering
+        StructType childSchema = null;
+        if (SparkCompatMode.isStrictMode()) {
+            try {
+                childSchema = project.child().schema();
+                if (childSchema != null) {
+                    LOG.debug("Strict mode: resolved child schema for Project-on-Filter-Join: {}", childSchema);
+                }
+            }
+            catch (Exception e) { LOG.debug("Schema resolution failed for Project child: {}", e.getMessage()); }
+        }
+
         // Now generate SELECT with the correct mapping
         sql.append("SELECT ");
 
@@ -374,7 +400,8 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
             Expression expr = projections.get(i);
             // Use qualifyCondition to properly resolve column references
-            String qualifiedExpr = qualifyCondition(expr, planIdToAlias);
+            // Pass schema for strict mode type-aware division/aggregate dispatch
+            String qualifiedExpr = qualifyCondition(expr, planIdToAlias, childSchema);
             sql.append(qualifiedExpr);
 
             String alias = aliases.get(i);
@@ -416,7 +443,12 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
             Expression expr = projections.get(i);
             expr = resolvePolymorphicFunctions(expr, childSchema);
-            String exprSQL = expr.toSQL();
+            // In strict mode, transform division and aggregates for correct type dispatch
+            Expression transformedExpr = expr;
+            if (SparkCompatMode.isStrictMode() && childSchema != null) {
+                transformedExpr = transformExpressionForStrictMode(expr, childSchema);
+            }
+            String exprSQL = transformedExpr.toSQL();
             sql.append(exprSQL);
 
             String alias = aliases.get(i);
@@ -614,6 +646,10 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
 
         if (childSchema != null) {
             Expression resolvedCondition = resolvePolymorphicFunctions(plan.condition(), childSchema);
+            // In strict mode, transform division and aggregates for correct type dispatch
+            if (SparkCompatMode.isStrictMode()) {
+                resolvedCondition = transformExpressionForStrictMode(resolvedCondition, childSchema);
+            }
             return resolvedCondition.toSQL();
         }
         return plan.condition().toSQL();
@@ -645,12 +681,24 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                 }
                 sql.append(selectPrefix).append(" FROM ");
                 generateFlatJoinChainWithMapping(join, planIdToAlias);
+
+                // In strict mode, resolve the join's child schema for proper
+                // DECIMAL division/aggregate dispatch in WHERE conditions
+                StructType joinSchema = null;
+                if (SparkCompatMode.isStrictMode()) {
+                    try {
+                        joinSchema = join.schema();
+                    } catch (Exception e) {
+                        LOG.debug("Schema resolution failed for Filter-on-Join: {}", e.getMessage());
+                    }
+                }
+
                 sql.append(" WHERE ");
                 for (int i = 0; i < filters.size(); i++) {
                     if (i > 0) {
                         sql.append(" AND ");
                     }
-                    String qualifiedCond = qualifyCondition(filters.get(i).condition(), planIdToAlias);
+                    String qualifiedCond = qualifyCondition(filters.get(i).condition(), planIdToAlias, joinSchema);
                     sql.append("(").append(qualifiedCond).append(")");
                 }
                 return;
@@ -1374,7 +1422,11 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         // HAVING clause
         if (plan.havingCondition() != null) {
             sql.append(" HAVING ");
-            sql.append(plan.havingCondition().toSQL());
+            Expression havingExpr = plan.havingCondition();
+            if (SparkCompatMode.isStrictMode() && childSchema != null) {
+                havingExpr = transformExpressionForStrictMode(havingExpr, childSchema);
+            }
+            sql.append(havingExpr.toSQL());
         }
     }
 
@@ -1579,21 +1631,58 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             com.thunderduck.expression.Expression transformed = transformAggregateExpression(aggExpr.rawExpression(), childSchema);
             aggSQL = transformed.toSQL();
         } else if (com.thunderduck.runtime.SparkCompatMode.isStrictMode() && !aggExpr.isComposite()) {
-            aggSQL = aggExpr.toSQL();
+            // First, transform argument expressions for strict mode (e.g., divisions inside
+            // SUM/AVG arguments need spark_decimal_div to produce DECIMAL instead of DOUBLE).
+            Expression transformedArg = aggExpr.argument() != null
+                    ? transformExpressionForStrictMode(aggExpr.argument(), childSchema)
+                    : null;
+
+            // If the argument was transformed, rebuild the aggregate SQL manually
+            if (transformedArg != null && transformedArg != aggExpr.argument()) {
+                String argSQL = transformedArg.toSQL();
+                boolean isDistinct = aggExpr.isDistinct()
+                        || aggExpr.function().toUpperCase().endsWith("_DISTINCT");
+                String funcName = aggExpr.function().toLowerCase();
+                if (funcName.endsWith("_distinct")) {
+                    funcName = funcName.substring(0, funcName.length() - "_distinct".length());
+                }
+                if (isDistinct) {
+                    aggSQL = funcName + "(DISTINCT " + argSQL + ")";
+                } else {
+                    aggSQL = funcName + "(" + argSQL + ")";
+                }
+            } else {
+                aggSQL = aggExpr.toSQL();
+            }
+
             String baseFuncName = aggExpr.function().toUpperCase();
             if (baseFuncName.endsWith("_DISTINCT")) {
                 baseFuncName = baseFuncName.substring(0, baseFuncName.length() - "_DISTINCT".length());
             }
-            // Only emit spark_sum/spark_avg when the argument is DECIMAL.
-            // Extension functions only have DECIMAL overloads; for other types
-            // (DOUBLE, INTEGER, BIGINT), use vanilla DuckDB functions.
+            // For DECIMAL SUM/AVG, wrap with CAST to match Spark's return type.
+            // We use CAST(sum(...) AS DECIMAL(p,s)) instead of spark_sum because
+            // spark_sum triggers a DuckDB optimizer crash in UNION ALL CTEs
+            // (CompressedMaterialization::CompressAggregate fails with extension aggregates).
+            // Native sum() preserves DECIMAL precision, and the CAST ensures the exact
+            // return type matches Spark's formula: SUM -> DECIMAL(min(38, p+10), s),
+            // AVG -> DECIMAL(min(38, p+4), min(38, s+4)).
             if ((baseFuncName.equals("SUM") || baseFuncName.equals("AVG"))
                     && isDecimalAggregateArg(aggExpr, childSchema)) {
-                originalSQL = aggSQL;
-                if (baseFuncName.equals("SUM")) {
-                    aggSQL = aggSQL.replaceFirst("(?i)\\bSUM\\b", "spark_sum");
-                } else {
-                    aggSQL = aggSQL.replaceFirst("(?i)\\bAVG\\b", "spark_avg");
+                originalSQL = aggExpr.toSQL(); // Use original (untransformed) SQL for alias
+                com.thunderduck.types.DataType argType =
+                    TypeInferenceEngine.resolveType(aggExpr.argument(), childSchema);
+                if (argType instanceof com.thunderduck.types.DecimalType argDec) {
+                    int p = argDec.precision();
+                    int s = argDec.scale();
+                    int resultP, resultS;
+                    if (baseFuncName.equals("SUM")) {
+                        resultP = Math.min(38, p + 10);
+                        resultS = s;
+                    } else { // AVG
+                        resultP = Math.min(38, p + 4);
+                        resultS = Math.min(38, s + 4);
+                    }
+                    aggSQL = "CAST(" + aggSQL + " AS DECIMAL(" + resultP + ", " + resultS + "))";
                 }
             }
         } else {
@@ -1640,20 +1729,53 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             com.thunderduck.expression.Expression transformed = transformAggregateExpression(aggExpr.rawExpression(), childSchema);
             aggSQL = qualifyCondition(transformed, planIdToAlias);
         } else if (com.thunderduck.runtime.SparkCompatMode.isStrictMode() && !aggExpr.isComposite()) {
-            aggSQL = qualifyAggregateExprSQL(aggExpr, planIdToAlias);
+            // First, transform argument expressions for strict mode (e.g., divisions inside
+            // SUM/AVG arguments need spark_decimal_div to produce DECIMAL instead of DOUBLE).
+            Expression transformedArg = aggExpr.argument() != null
+                    ? transformExpressionForStrictMode(aggExpr.argument(), childSchema)
+                    : null;
+
+            // If the argument was transformed, qualify and rebuild manually
+            if (transformedArg != null && transformedArg != aggExpr.argument()) {
+                String qualifiedArg = qualifyCondition(transformedArg, planIdToAlias);
+                boolean isDistinct = aggExpr.isDistinct()
+                        || aggExpr.function().toUpperCase().endsWith("_DISTINCT");
+                String funcName = aggExpr.function().toLowerCase();
+                if (funcName.endsWith("_distinct")) {
+                    funcName = funcName.substring(0, funcName.length() - "_distinct".length());
+                }
+                if (isDistinct) {
+                    aggSQL = funcName + "(DISTINCT " + qualifiedArg + ")";
+                } else {
+                    aggSQL = funcName + "(" + qualifiedArg + ")";
+                }
+            } else {
+                aggSQL = qualifyAggregateExprSQL(aggExpr, planIdToAlias);
+            }
+
             String baseFuncName = aggExpr.function().toUpperCase();
             if (baseFuncName.endsWith("_DISTINCT")) {
                 baseFuncName = baseFuncName.substring(0, baseFuncName.length() - "_DISTINCT".length());
             }
-            // Only emit spark_sum/spark_avg when the argument is DECIMAL.
-            // Extension functions only have DECIMAL overloads.
+            // For DECIMAL SUM/AVG, wrap with CAST to match Spark's return type.
+            // See renderAggregateExpression for rationale (DuckDB UNION ALL + extension agg bug).
             if ((baseFuncName.equals("SUM") || baseFuncName.equals("AVG"))
                     && isDecimalAggregateArg(aggExpr, childSchema)) {
                 originalSQL = aggExpr.toSQL(); // Use unqualified for the alias name
-                if (baseFuncName.equals("SUM")) {
-                    aggSQL = aggSQL.replaceFirst("(?i)\\bSUM\\b", "spark_sum");
-                } else {
-                    aggSQL = aggSQL.replaceFirst("(?i)\\bAVG\\b", "spark_avg");
+                com.thunderduck.types.DataType argType =
+                    TypeInferenceEngine.resolveType(aggExpr.argument(), childSchema);
+                if (argType instanceof com.thunderduck.types.DecimalType argDec) {
+                    int p = argDec.precision();
+                    int s = argDec.scale();
+                    int resultP, resultS;
+                    if (baseFuncName.equals("SUM")) {
+                        resultP = Math.min(38, p + 10);
+                        resultS = s;
+                    } else { // AVG
+                        resultP = Math.min(38, p + 4);
+                        resultS = Math.min(38, s + 4);
+                    }
+                    aggSQL = "CAST(" + aggSQL + " AS DECIMAL(" + resultP + ", " + resultS + "))";
                 }
             }
         } else if (aggExpr.isComposite()) {
@@ -1747,11 +1869,12 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
     }
 
     /**
-     * Transforms aggregate function names in an expression tree for strict mode.
-     * Recursively walks the AST and replaces SUM/AVG with spark_sum/spark_avg,
-     * but ONLY when the function's first argument resolves to DECIMAL type.
-     * Extension functions only have DECIMAL overloads; for other types
-     * (DOUBLE, INTEGER, BIGINT), the vanilla DuckDB functions are used.
+     * Transforms aggregate expressions in a composite expression tree for strict mode.
+     * Recursively walks the AST and transforms arguments of SUM/AVG on DECIMAL
+     * (e.g., divisions inside SUM need spark_decimal_div). Does NOT rename functions
+     * to spark_sum/spark_avg because that triggers a DuckDB optimizer crash in
+     * UNION ALL CTEs (CompressedMaterialization::CompressAggregate).
+     * Instead, type correction is handled via CAST wrapping at render time.
      *
      * @param expr the expression to transform
      * @param childSchema the child schema for resolving argument types (may be null)
@@ -1763,7 +1886,7 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             String name = func.functionName().toLowerCase();
             if (name.equals("sum") || name.equals("sum_distinct") ||
                 name.equals("avg") || name.equals("avg_distinct")) {
-                // Only replace with extension function if first argument is DECIMAL
+                // Only transform arguments if first argument is DECIMAL
                 boolean isDecimalArg = false;
                 if (!func.arguments().isEmpty() && childSchema != null) {
                     com.thunderduck.types.DataType argType =
@@ -1772,10 +1895,19 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
                     isDecimalArg = argType instanceof com.thunderduck.types.DecimalType;
                 }
                 if (isDecimalArg) {
-                    if (name.equals("sum") || name.equals("sum_distinct")) {
-                        return new FunctionCall("spark_sum", func.arguments(), func.dataType(), func.nullable());
-                    } else {
-                        return new FunctionCall("spark_avg", func.arguments(), func.dataType(), func.nullable());
+                    // Transform arguments (e.g., divisions inside SUM/AVG need
+                    // spark_decimal_div to produce DECIMAL instead of DOUBLE).
+                    // Keep the native function name; CAST wrapping for type parity
+                    // is done at render time.
+                    List<Expression> transformedArgs = new java.util.ArrayList<>();
+                    boolean changed = false;
+                    for (Expression arg : func.arguments()) {
+                        Expression transformed = transformExpressionForStrictMode(arg, childSchema);
+                        transformedArgs.add(transformed);
+                        if (transformed != arg) changed = true;
+                    }
+                    if (changed) {
+                        return new FunctionCall(func.functionName(), transformedArgs, func.dataType(), func.nullable());
                     }
                 }
             }
@@ -1812,6 +1944,210 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         }
         // Literals, columns, etc. -- no transformation needed
         return expr;
+    }
+
+    /**
+     * Transforms an expression tree for strict mode SQL generation by resolving
+     * unresolved types from the child schema. Handles two key cases:
+     *
+     * <ol>
+     *   <li><b>DECIMAL division</b>: {@code BinaryExpression(DIVIDE)} where operands
+     *       resolve to DECIMAL via schema lookup are rewritten to use
+     *       {@code spark_decimal_div()} (or CAST to DOUBLE for integer/integer).</li>
+     *   <li><b>DECIMAL aggregates</b>: {@code FunctionCall("sum"/"avg")} where the
+     *       argument resolves to DECIMAL are rewritten to {@code spark_sum/spark_avg}.</li>
+     * </ol>
+     *
+     * <p>This method is recursive: it walks the entire expression tree so that
+     * nested cases like {@code round(a / b, 2)} or {@code SUM(x) / SUM(y)} are
+     * handled correctly.
+     *
+     * <p>Returns the original expression unchanged if no rewriting is needed,
+     * or a new expression tree with affected nodes replaced.
+     *
+     * @param expr the expression to transform
+     * @param schema the schema for resolving column types (may be null)
+     * @return the transformed expression (or original if no changes needed)
+     */
+    public static Expression transformExpressionForStrictMode(Expression expr, StructType schema) {
+        if (expr == null || schema == null) {
+            return expr;
+        }
+
+        // --- BinaryExpression: handle DIVIDE with schema-resolved types ---
+        if (expr instanceof BinaryExpression bin) {
+            // Recursively transform children first
+            Expression newLeft = transformExpressionForStrictMode(bin.left(), schema);
+            Expression newRight = transformExpressionForStrictMode(bin.right(), schema);
+
+            if (bin.operator() == BinaryExpression.Operator.DIVIDE) {
+                // Resolve operand types from schema
+                DataType leftType = TypeInferenceEngine.resolveType(bin.left(), schema);
+                DataType rightType = TypeInferenceEngine.resolveType(bin.right(), schema);
+
+                // Only rewrite if at least one operand resolves to DECIMAL or integral
+                // (i.e., not the StringType default from UnresolvedColumn)
+                boolean needsRewrite = (leftType instanceof com.thunderduck.types.DecimalType
+                        || rightType instanceof com.thunderduck.types.DecimalType
+                        || isIntegralForDivision(leftType) || isIntegralForDivision(rightType))
+                        && !(leftType instanceof com.thunderduck.types.StringType
+                             && rightType instanceof com.thunderduck.types.StringType);
+
+                if (needsRewrite) {
+                    String leftSQL = newLeft.toSQL();
+                    String rightSQL = newRight.toSQL();
+                    String divSQL = BinaryExpression.generateStrictDivisionSQL(
+                            leftSQL, rightSQL, leftType, rightType);
+                    return new RawSQLExpression(divSQL);
+                }
+            }
+
+            // For non-DIVIDE operators or no rewrite needed, propagate child changes
+            if (newLeft != bin.left() || newRight != bin.right()) {
+                return new BinaryExpression(newLeft, bin.operator(), newRight);
+            }
+            return expr;
+        }
+
+        // --- FunctionCall: transform arguments (e.g., divisions inside SUM/AVG) ---
+        if (expr instanceof FunctionCall func) {
+            // Recursively transform arguments
+            List<Expression> newArgs = new java.util.ArrayList<>();
+            boolean argsChanged = false;
+            for (Expression arg : func.arguments()) {
+                Expression newArg = transformExpressionForStrictMode(arg, schema);
+                newArgs.add(newArg);
+                if (newArg != arg) argsChanged = true;
+            }
+
+            Expression result;
+            // Return with transformed arguments if any changed
+            if (argsChanged) {
+                result = new FunctionCall(func.functionName(), newArgs,
+                        func.dataType(), func.nullable(), func.distinct());
+            } else {
+                result = expr;
+            }
+
+            // For SUM/AVG on DECIMAL arguments, wrap with CAST to match Spark's return type.
+            // DuckDB's native avg() returns DOUBLE for DECIMAL input; Spark returns DECIMAL.
+            // This handles implicit aggregation (SELECT avg(col) FROM t -- no GROUP BY),
+            // where the FunctionCall appears inside a Project, not an Aggregate node.
+            String baseFuncName = func.functionName().toUpperCase();
+            if (baseFuncName.endsWith("_DISTINCT")) {
+                baseFuncName = baseFuncName.substring(0, baseFuncName.length() - "_DISTINCT".length());
+            }
+            if ((baseFuncName.equals("SUM") || baseFuncName.equals("AVG"))
+                    && func.argumentCount() == 1) {
+                DataType argType = TypeInferenceEngine.resolveType(func.arguments().get(0), schema);
+                if (argType instanceof com.thunderduck.types.DecimalType argDec) {
+                    int p = argDec.precision();
+                    int s = argDec.scale();
+                    int resultP, resultS;
+                    if (baseFuncName.equals("SUM")) {
+                        resultP = Math.min(38, p + 10);
+                        resultS = s;
+                    } else { // AVG
+                        resultP = Math.min(38, p + 4);
+                        resultS = Math.min(38, s + 4);
+                    }
+                    return new RawSQLExpression(
+                            "CAST(" + result.toSQL() + " AS DECIMAL(" + resultP + ", " + resultS + "))",
+                            new com.thunderduck.types.DecimalType(resultP, resultS),
+                            true);
+                }
+            }
+
+            return result;
+        }
+
+        // --- AliasExpression: recurse into inner expression ---
+        if (expr instanceof AliasExpression alias) {
+            Expression newInner = transformExpressionForStrictMode(alias.expression(), schema);
+            if (newInner != alias.expression()) {
+                return new AliasExpression(newInner, alias.alias());
+            }
+            return expr;
+        }
+
+        // --- CastExpression: recurse into inner expression ---
+        if (expr instanceof CastExpression cast) {
+            Expression newInner = transformExpressionForStrictMode(cast.expression(), schema);
+            if (newInner != cast.expression()) {
+                return new CastExpression(newInner, cast.targetType());
+            }
+            return expr;
+        }
+
+        // --- UnaryExpression: recurse into operand ---
+        if (expr instanceof UnaryExpression unary) {
+            Expression newOperand = transformExpressionForStrictMode(unary.operand(), schema);
+            if (newOperand != unary.operand()) {
+                return new UnaryExpression(unary.operator(), newOperand);
+            }
+            return expr;
+        }
+
+        // --- CaseWhenExpression: recurse into all branches ---
+        if (expr instanceof CaseWhenExpression caseExpr) {
+            List<Expression> newConditions = new java.util.ArrayList<>();
+            List<Expression> newThenBranches = new java.util.ArrayList<>();
+            boolean changed = false;
+            for (int i = 0; i < caseExpr.conditions().size(); i++) {
+                Expression newCond = transformExpressionForStrictMode(
+                        caseExpr.conditions().get(i), schema);
+                Expression newThen = transformExpressionForStrictMode(
+                        caseExpr.thenBranches().get(i), schema);
+                newConditions.add(newCond);
+                newThenBranches.add(newThen);
+                if (newCond != caseExpr.conditions().get(i)
+                        || newThen != caseExpr.thenBranches().get(i)) {
+                    changed = true;
+                }
+            }
+            Expression newElse = caseExpr.elseBranch() != null
+                    ? transformExpressionForStrictMode(caseExpr.elseBranch(), schema)
+                    : null;
+            if (newElse != caseExpr.elseBranch()) changed = true;
+
+            if (changed) {
+                return new CaseWhenExpression(newConditions, newThenBranches, newElse);
+            }
+            return expr;
+        }
+
+        // --- WindowFunction: skip for now (complex constructor, rare case) ---
+        // Window function SUM/AVG on DECIMAL handled separately if needed.
+
+        // --- InExpression: recurse into test expression and values ---
+        if (expr instanceof InExpression inExpr) {
+            Expression newTest = transformExpressionForStrictMode(inExpr.testExpr(), schema);
+            List<Expression> newValues = new java.util.ArrayList<>();
+            boolean changed = newTest != inExpr.testExpr();
+            for (Expression val : inExpr.values()) {
+                Expression newVal = transformExpressionForStrictMode(val, schema);
+                newValues.add(newVal);
+                if (newVal != val) changed = true;
+            }
+            if (changed) {
+                return new InExpression(newTest, newValues, inExpr.isNegated());
+            }
+            return expr;
+        }
+
+        // Leaf expressions (Literal, UnresolvedColumn, StarExpression, RawSQLExpression, etc.)
+        // and complex expressions we don't need to recurse into
+        return expr;
+    }
+
+    /**
+     * Helper for strict mode division: checks if a type is integral (for division rewriting).
+     */
+    private static boolean isIntegralForDivision(DataType type) {
+        return type instanceof com.thunderduck.types.ByteType
+                || type instanceof com.thunderduck.types.ShortType
+                || type instanceof com.thunderduck.types.IntegerType
+                || type instanceof com.thunderduck.types.LongType;
     }
 
     /**
@@ -2371,6 +2707,19 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * @return the SQL string with qualified column references
      */
     public String qualifyCondition(Expression expr, Map<Long, String> planIdToAlias) {
+        return qualifyCondition(expr, planIdToAlias, null);
+    }
+
+    /**
+     * Qualifies column references in an expression tree using plan_id to alias mapping,
+     * with optional schema-aware type resolution for strict mode.
+     *
+     * @param expr the expression to qualify
+     * @param planIdToAlias mapping from plan_id to table alias
+     * @param schema optional schema for resolving column types (for strict mode division/aggregates)
+     * @return the qualified SQL string
+     */
+    public String qualifyCondition(Expression expr, Map<Long, String> planIdToAlias, StructType schema) {
         if (expr instanceof UnresolvedColumn col) {
             // Already qualified - return as-is
             if (col.isQualified()) {
@@ -2388,19 +2737,28 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         }
 
         if (expr instanceof BinaryExpression binExpr) {
-            String leftSQL = qualifyCondition(binExpr.left(), planIdToAlias);
-            String rightSQL = qualifyCondition(binExpr.right(), planIdToAlias);
+            String leftSQL = qualifyCondition(binExpr.left(), planIdToAlias, schema);
+            String rightSQL = qualifyCondition(binExpr.right(), planIdToAlias, schema);
             if (binExpr.operator() == BinaryExpression.Operator.DIVIDE
                     && SparkCompatMode.isStrictMode()) {
+                // Resolve operand types from schema if available, fall back to declared types
+                DataType leftType = schema != null
+                        ? TypeInferenceEngine.resolveType(binExpr.left(), schema)
+                        : binExpr.left().dataType();
+                DataType rightType = schema != null
+                        ? TypeInferenceEngine.resolveType(binExpr.right(), schema)
+                        : binExpr.right().dataType();
+                LOG.debug("qualifyCondition DIVIDE: schema={}, leftType={}, rightType={}, left={}, right={}",
+                        schema != null ? "present" : "null", leftType, rightType,
+                        binExpr.left().toSQL(), binExpr.right().toSQL());
                 return BinaryExpression.generateStrictDivisionSQL(
-                        leftSQL, rightSQL,
-                        binExpr.left().dataType(), binExpr.right().dataType());
+                        leftSQL, rightSQL, leftType, rightType);
             }
             return "(" + leftSQL + " " + binExpr.operator().symbol() + " " + rightSQL + ")";
         }
 
         if (expr instanceof UnaryExpression unaryExpr) {
-            String operandSQL = qualifyCondition(unaryExpr.operand(), planIdToAlias);
+            String operandSQL = qualifyCondition(unaryExpr.operand(), planIdToAlias, schema);
             if (unaryExpr.operator().isPrefix()) {
                 if (unaryExpr.operator() == UnaryExpression.Operator.NEGATE) {
                     return "(" + unaryExpr.operator().symbol() + operandSQL + ")";
@@ -2412,20 +2770,21 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         }
 
         if (expr instanceof AliasExpression aliasExpr) {
-            String innerSQL = qualifyCondition(aliasExpr.expression(), planIdToAlias);
+            String innerSQL = qualifyCondition(aliasExpr.expression(), planIdToAlias, schema);
             return innerSQL + " AS " + SQLQuoting.quoteIdentifierIfNeeded(aliasExpr.alias());
         }
 
         if (expr instanceof CastExpression castExpr) {
-            String innerSQL = qualifyCondition(castExpr.expression(), planIdToAlias);
+            String innerSQL = qualifyCondition(castExpr.expression(), planIdToAlias, schema);
             return CastExpression.generateCastSQL(innerSQL, castExpr.expression(), castExpr.targetType());
         }
 
         if (expr instanceof FunctionCall funcExpr) {
             List<String> qualifiedArgs = new ArrayList<>();
             for (Expression arg : funcExpr.arguments()) {
-                qualifiedArgs.add(qualifyCondition(arg, planIdToAlias));
+                qualifiedArgs.add(qualifyCondition(arg, planIdToAlias, schema));
             }
+
             String[] argArray = qualifiedArgs.toArray(new String[0]);
             try {
                 return com.thunderduck.functions.FunctionRegistry.translate(
@@ -2436,13 +2795,29 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         }
 
         if (expr instanceof InExpression inExpr) {
-            String testSQL = qualifyCondition(inExpr.testExpr(), planIdToAlias);
+            String testSQL = qualifyCondition(inExpr.testExpr(), planIdToAlias, schema);
             List<String> valuesSQLs = new ArrayList<>();
             for (Expression val : inExpr.values()) {
-                valuesSQLs.add(qualifyCondition(val, planIdToAlias));
+                valuesSQLs.add(qualifyCondition(val, planIdToAlias, schema));
             }
             String op = inExpr.isNegated() ? " NOT IN (" : " IN (";
             return testSQL + op + String.join(", ", valuesSQLs) + ")";
+        }
+
+        if (expr instanceof CaseWhenExpression caseExpr) {
+            StringBuilder caseSql = new StringBuilder("CASE");
+            for (int i = 0; i < caseExpr.conditions().size(); i++) {
+                caseSql.append(" WHEN ")
+                       .append(qualifyCondition(caseExpr.conditions().get(i), planIdToAlias, schema))
+                       .append(" THEN ")
+                       .append(qualifyCondition(caseExpr.thenBranches().get(i), planIdToAlias, schema));
+            }
+            if (caseExpr.elseBranch() != null) {
+                caseSql.append(" ELSE ")
+                       .append(qualifyCondition(caseExpr.elseBranch(), planIdToAlias, schema));
+            }
+            caseSql.append(" END");
+            return caseSql.toString();
         }
 
         // For other expression types (Literal, etc.), use their default SQL representation

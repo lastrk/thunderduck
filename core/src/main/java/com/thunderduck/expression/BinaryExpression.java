@@ -162,6 +162,21 @@ public final class BinaryExpression implements Expression {
     }
 
     /**
+     * Returns the Spark-style SQL representation without DuckDB-specific rewrites.
+     * Used for building column names that match Spark's naming convention.
+     * Unlike {@link #toSQL()}, this always uses native operators (e.g., {@code /}
+     * instead of {@code spark_decimal_div}).
+     *
+     * @return the native SQL string matching Spark's representation
+     */
+    public String toSparkSQL() {
+        String leftStr = (left instanceof BinaryExpression binLeft) ? binLeft.toSparkSQL() : left.toSQL();
+        String rightStr = (right instanceof BinaryExpression binRight) ? binRight.toSparkSQL() : right.toSQL();
+        // Spark uses + for string concatenation too (it's PySpark that maps to ||)
+        return String.format("(%s %s %s)", leftStr, operator.symbol(), rightStr);
+    }
+
+    /**
      * Generates type-aware division SQL for strict mode.
      *
      * <p>Spark's division behavior by type:

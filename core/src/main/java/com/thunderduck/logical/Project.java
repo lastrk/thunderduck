@@ -243,6 +243,14 @@ public final class Project extends LogicalPlan {
             return sql;
         }
 
+        // For BinaryExpression, use toSparkSQL() to avoid DuckDB-specific rewrites
+        // (e.g., spark_decimal_div) leaking into the column name. Spark names columns
+        // using native operator syntax.
+        if (expr instanceof com.thunderduck.expression.BinaryExpression binExpr) {
+            String sql = binExpr.toSparkSQL();
+            return normalizeTypeCaseInColumnName(sql);
+        }
+
         // For other expressions, generate SQL and normalize CAST type names to uppercase
         // to match Spark's convention (e.g., DECIMAL not decimal).
         String sql = expr.toSQL();

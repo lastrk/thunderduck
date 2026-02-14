@@ -858,6 +858,11 @@ public final class TypeInferenceEngine {
                         }
                     }
                 }
+                // String key on a map: the converter tags this as STRUCT_FIELD
+                // because it doesn't know the child type at conversion time.
+                if (childType instanceof MapType mapType) {
+                    yield mapType.valueType();
+                }
                 yield extract.dataType();
             }
         };
@@ -1320,11 +1325,42 @@ public final class TypeInferenceEngine {
                 return LongType.get();
             }
 
+            // round/bround: Spark preserves DECIMAL type when the argument is DECIMAL.
+            // The result type depends on whether the new scale is smaller or larger than
+            // the original scale:
+            //   - If newScale >= originalScale: result = original type (no precision loss)
+            //   - If newScale < originalScale: result = DECIMAL(p - s + newScale + 1, newScale)
+            // For non-DECIMAL arguments, round returns DOUBLE.
+            if (funcName.equals("round") || funcName.equals("bround")) {
+                DataType argType = resolveType(func.arguments().get(0), schema);
+                if (argType instanceof DecimalType decType) {
+                    // Determine the target scale from the second argument (default is 0)
+                    int newScale = 0;
+                    if (func.arguments().size() >= 2) {
+                        Expression scaleArg = func.arguments().get(1);
+                        if (scaleArg instanceof com.thunderduck.expression.Literal lit) {
+                            Object val = lit.value();
+                            if (val instanceof Number) {
+                                newScale = Math.max(((Number) val).intValue(), 0);
+                            }
+                        }
+                    }
+                    if (newScale >= decType.scale()) {
+                        return decType;
+                    }
+                    // Scale reduced: precision adjusts for fewer decimal digits + 1 for carry
+                    int resultPrecision = Math.min(38,
+                            decType.precision() - decType.scale() + newScale + 1);
+                    return new DecimalType(resultPrecision, newScale);
+                }
+                return DoubleType.get();
+            }
+
             // Double-returning functions
             if (funcName.matches("sqrt|log|ln|log10|log2|exp|expm1|" +
                     "sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh|" +
                     "radians|degrees|cbrt|hypot|pow|power|" +
-                    "sign|signum|round|bround|truncate|months_between")) {
+                    "sign|signum|truncate|months_between")) {
                 return DoubleType.get();
             }
 
