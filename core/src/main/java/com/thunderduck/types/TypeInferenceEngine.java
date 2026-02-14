@@ -1021,7 +1021,7 @@ public final class TypeInferenceEngine {
                         DataType argType = resolveType(func.arguments().get(0), schema);
                         if (argType instanceof MapType mapType) {
                             return funcName.equals("map_keys")
-                                ? new ArrayType(mapType.keyType(), false)
+                                ? new ArrayType(mapType.keyType(), true)
                                 : new ArrayType(mapType.valueType(), mapType.valueContainsNull());
                         }
                     }
@@ -1210,7 +1210,7 @@ public final class TypeInferenceEngine {
                 DataType argType = resolveType(func.arguments().get(0), schema);
                 if (argType instanceof MapType mapType) {
                     return funcName.equals("map_keys")
-                        ? new ArrayType(mapType.keyType(), false)
+                        ? new ArrayType(mapType.keyType(), true)
                         : new ArrayType(mapType.valueType(), mapType.valueContainsNull());
                 }
             }
