@@ -5,7 +5,7 @@
 **Status:** Implemented (2026-02)
 **Tracking:** Replaced regex-based `preprocessSQL()` in `SparkConnectServiceImpl`
 
-> **Implementation Note:** This design was fully implemented using **Option 5 (Custom ANTLR4 Parser)** from [SQL_PARSER_RESEARCH.md](../SQL_PARSER_RESEARCH.md), not Option 1 (Catalyst). Key classes: `SparkSQLParser`, `SparkSQLAstBuilder` in `com.thunderduck.parser`. Both SQL and DataFrame paths now converge at the LogicalPlan AST. The `preprocessSQL()` regex pipeline has been removed. All TPC-H (29/29) and TPC-DS (122/124) SQL queries pass through the parser path.
+> **Implementation Note:** This design was fully implemented using **Option 5 (Custom ANTLR4 Parser)** from [SQL_PARSER_RESEARCH.md](../research/SQL_PARSER_RESEARCH.md), not Option 1 (Catalyst). Key classes: `SparkSQLParser`, `SparkSQLAstBuilder` in `com.thunderduck.parser`. Both SQL and DataFrame paths now converge at the LogicalPlan AST. The `preprocessSQL()` regex pipeline has been removed. All TPC-H (29/29) and TPC-DS (122/124) SQL queries pass through the parser path.
 
 ---
 

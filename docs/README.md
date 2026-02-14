@@ -11,7 +11,7 @@ This directory contains documentation for the Thunderduck project.
 - **[OPTIMIZATION_STRATEGY.md](OPTIMIZATION_STRATEGY.md)** - Why we use DuckDB's optimizer
 - **[SUPPORTED_OPERATIONS.md](SUPPORTED_OPERATIONS.md)** - Quick reference of supported Spark operations
 - **[SPARK_CONNECT_GAP_ANALYSIS.md](SPARK_CONNECT_GAP_ANALYSIS.md)** - Comprehensive Spark Connect protocol coverage analysis
-- **[SQL_PARSER_RESEARCH.md](SQL_PARSER_RESEARCH.md)** - Research on SQL parser options for SparkSQL support
+- **[SQL_PARSER_RESEARCH.md](research/SQL_PARSER_RESEARCH.md)** - Research on SQL parser options for SparkSQL support
 - **[TPC_H_BENCHMARK.md](TPC_H_BENCHMARK.md)** - TPC-H data generation and benchmark guide
 
 ### Architecture Documents (architect/)
