@@ -112,20 +112,20 @@ from dual_server_manager import DualServerManager
 from port_utils import is_port_listening as _is_port_listening
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def spark_session(spark_thunderduck):
     """
-    Class-scoped alias for spark_thunderduck.
+    Module-scoped alias for spark_thunderduck.
 
     For backward compatibility with tests expecting spark_session.
     """
     return spark_thunderduck
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def spark(spark_thunderduck):
     """
-    Class-scoped alias for spark_thunderduck.
+    Module-scoped alias for spark_thunderduck.
 
     This allows tests written for single-server mode to work
     in the dual-server testing environment.
@@ -405,7 +405,6 @@ def dual_server_manager():
     # Kill only processes on our specific ports (not all Java processes)
     _kill_process_on_port(td_port)
     _kill_process_on_port(spark_port)
-    time.sleep(1)
 
     manager = DualServerManager(
         thunderduck_port=td_port,
@@ -459,14 +458,14 @@ def orchestrator(dual_server_manager):
     print(orch.timings.get_summary())
 
 
-# Primary session fixtures (class-scoped for isolation)
-@pytest.fixture(scope="class")
+# Primary session fixtures (module-scoped to reduce session churn)
+@pytest.fixture(scope="module")
 def spark_reference(orchestrator, dual_server_manager):
     """
-    Class-scoped Spark session connected to Apache Spark Connect (reference).
+    Module-scoped Spark session connected to Apache Spark Connect (reference).
 
     This is the reference implementation (official Apache Spark 4.0.1).
-    Fresh session per test class provides isolation while being efficient.
+    One session per test module reduces session creation overhead (143 -> ~36 pairs).
     Includes health check with auto-restart before session creation.
     """
     # Health check: verify Spark Reference server is responsive
@@ -484,13 +483,13 @@ def spark_reference(orchestrator, dual_server_manager):
     orchestrator._active_sessions.discard(session)
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def spark_thunderduck(orchestrator, dual_server_manager):
     """
-    Class-scoped Spark session connected to Thunderduck Connect (test).
+    Module-scoped Spark session connected to Thunderduck Connect (test).
 
     This is the system under test (Thunderduck implementation).
-    Fresh session per test class provides isolation while being efficient.
+    One session per test module reduces session creation overhead.
     Includes health check with auto-restart before session creation.
     """
     # Health check: verify Thunderduck server is responsive
@@ -570,10 +569,10 @@ def fresh_thunderduck_server(orchestrator):
 # TPC-H Differential Testing Fixtures
 # ============================================================================
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def tpch_tables_reference(spark_reference, tpch_data_dir):
     """
-    Load TPC-H tables into Spark Reference session (class-scoped).
+    Load TPC-H tables into Spark Reference session (module-scoped).
     """
     tables = [
         'lineitem', 'orders', 'customer', 'part',
@@ -593,10 +592,10 @@ def tpch_tables_reference(spark_reference, tpch_data_dir):
     return tables
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def tpch_tables_thunderduck(spark_thunderduck, tpch_data_dir):
     """
-    Load TPC-H tables into Thunderduck session (class-scoped).
+    Load TPC-H tables into Thunderduck session (module-scoped).
     """
     tables = [
         'lineitem', 'orders', 'customer', 'part',
@@ -630,10 +629,10 @@ TPCDS_TABLES = [
 ]
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def tpcds_tables_reference(spark_reference, tpcds_data_dir):
     """
-    Load TPC-DS tables into Spark Reference session (class-scoped).
+    Load TPC-DS tables into Spark Reference session (module-scoped).
     """
     print(f"\nLoading {len(TPCDS_TABLES)} TPC-DS tables into Spark Reference...")
     for table in TPCDS_TABLES:
@@ -648,10 +647,10 @@ def tpcds_tables_reference(spark_reference, tpcds_data_dir):
     return TPCDS_TABLES
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def tpcds_tables_thunderduck(spark_thunderduck, tpcds_data_dir):
     """
-    Load TPC-DS tables into Thunderduck session (class-scoped).
+    Load TPC-DS tables into Thunderduck session (module-scoped).
     """
     print(f"\nLoading {len(TPCDS_TABLES)} TPC-DS tables into Thunderduck...")
     for table in TPCDS_TABLES:

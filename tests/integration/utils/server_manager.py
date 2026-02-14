@@ -43,11 +43,7 @@ class ServerManager:
 
     def is_server_ready(self, timeout: int = 30) -> bool:
         """Check if server is ready to accept connections"""
-        if wait_for_port(self.port, host=self.host, timeout=timeout):
-            # Port is open, give it a moment to fully initialize
-            time.sleep(2)
-            return True
-        return False
+        return wait_for_port(self.port, host=self.host, timeout=timeout)
 
     def start(self, timeout: int = 60) -> bool:
         """

@@ -77,10 +77,7 @@ class DualServerManager:
 
     def wait_for_port(self, port: int, timeout: int = 60) -> bool:
         """Wait for a port to be accepting connections"""
-        if _wait_for_port(port, host='localhost', timeout=timeout):
-            time.sleep(1)  # Give it a moment to fully initialize
-            return True
-        return False
+        return _wait_for_port(port, host='localhost', timeout=timeout)
 
     def start_spark_reference(self, timeout: int = 60) -> bool:
         """

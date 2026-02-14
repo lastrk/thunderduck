@@ -74,7 +74,7 @@ class DataFrameDiff:
         test_df: DataFrame,
         query_name: str = "Query",
         max_diff_rows: int = 10,
-        timeout: int = 30,
+        timeout: int = 10,
         ignore_nullable: bool = False
     ) -> Tuple[bool, str, dict]:
         """
@@ -391,7 +391,7 @@ def assert_dataframes_equal(
     query_name: str = "Query",
     epsilon: float = 1e-6,
     max_diff_rows: int = 10,
-    timeout: int = 30,
+    timeout: int = 10,
     orchestrator=None,
     ignore_nullable: bool = False
 ):
