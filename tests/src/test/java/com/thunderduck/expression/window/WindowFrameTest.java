@@ -150,8 +150,8 @@ public class WindowFrameTest extends TestBase {
             // When: Generate SQL
             String sql = avgFunc.toSQL();
 
-            // Then: Should generate moving average window
-            assertThat(sql).contains("AVG(price)");
+            // Then: Should generate moving average window (AVG casts arg to DOUBLE in relaxed mode)
+            assertThat(sql).containsIgnoringCase("AVG(CAST(price AS DOUBLE))");
             assertThat(sql).contains("ROWS BETWEEN 2 PRECEDING AND CURRENT ROW");
 
             logData("Moving average SQL", sql);
@@ -183,8 +183,8 @@ public class WindowFrameTest extends TestBase {
             // When: Generate SQL
             String sql = avgFunc.toSQL();
 
-            // Then: Should generate centered moving average
-            assertThat(sql).contains("AVG(value)");
+            // Then: Should generate centered moving average (AVG casts arg to DOUBLE in relaxed mode)
+            assertThat(sql).containsIgnoringCase("AVG(CAST(value AS DOUBLE))");
             assertThat(sql).contains("ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING");
         }
 
@@ -296,8 +296,8 @@ public class WindowFrameTest extends TestBase {
             // When: Generate SQL
             String sql = avgFunc.toSQL();
 
-            // Then: Should have both PARTITION BY and frame
-            assertThat(sql).contains("AVG(price)");
+            // Then: Should have both PARTITION BY and frame (AVG casts arg to DOUBLE in relaxed mode)
+            assertThat(sql).containsIgnoringCase("AVG(CAST(price AS DOUBLE))");
             assertThat(sql).contains("PARTITION BY category");
             assertThat(sql).contains("ORDER BY date ASC");
             assertThat(sql).contains("ROWS BETWEEN 6 PRECEDING AND CURRENT ROW");
@@ -489,7 +489,7 @@ public class WindowFrameTest extends TestBase {
             assertThat(sumSQL).contains("SUM(quantity)");
             assertThat(sumSQL).contains("ROWS BETWEEN 3 PRECEDING AND CURRENT ROW");
 
-            assertThat(avgSQL).contains("AVG(quantity)");
+            assertThat(avgSQL).containsIgnoringCase("AVG(CAST(quantity AS DOUBLE))");
             assertThat(avgSQL).contains("ROWS BETWEEN 3 PRECEDING AND CURRENT ROW");
 
             assertThat(countSQL).contains("COUNT(quantity)");
@@ -616,8 +616,8 @@ public class WindowFrameTest extends TestBase {
             // When: Generate SQL
             String sql = avgFunc.toSQL();
 
-            // Then: Should generate valid SQL even for large frame
-            assertThat(sql).contains("AVG(amount)");
+            // Then: Should generate valid SQL even for large frame (AVG casts arg to DOUBLE in relaxed mode)
+            assertThat(sql).containsIgnoringCase("AVG(CAST(amount AS DOUBLE))");
             assertThat(sql).contains("PARTITION BY user_id");
             assertThat(sql).contains("ROWS BETWEEN 10 PRECEDING AND 10 FOLLOWING");
 

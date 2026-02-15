@@ -188,8 +188,8 @@ public class SubqueryTest extends TestBase {
             // When: Generate SQL and check data type
             String sql = scalarSub.toSQL();
 
-            // Then: Should generate aggregation SQL (SUM is wrapped with CAST to BIGINT)
-            assertThat(sql).containsIgnoringCase("SELECT SUM(quantity)");
+            // Then: Should generate aggregation SQL (SUM may be wrapped with CAST)
+            assertThat(sql).containsIgnoringCase("sum(quantity)");
             assertThat(sql).containsIgnoringCase("FROM");
             assertThat(sql).startsWith("(");
             assertThat(sql).endsWith(")");

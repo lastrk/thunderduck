@@ -307,7 +307,7 @@ public class Phase2IntegrationTest extends TestBase {
             logData("Generated SQL", sql);
             assertTrue(sql.contains("INNER JOIN"), "Should contain JOIN");
             assertTrue(sql.contains("GROUP BY"), "Should contain GROUP BY");
-            assertTrue(sql.contains("SUM"), "Should contain aggregate");
+            assertTrue(sql.toLowerCase().contains("sum"), "Should contain aggregate");
         }
 
         @Test

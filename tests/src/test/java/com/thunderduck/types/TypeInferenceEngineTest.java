@@ -141,7 +141,7 @@ public class TypeInferenceEngineTest extends TestBase {
         }
 
         @Test
-        @DisplayName("Division of Decimal by Integer returns Double type")
+        @DisplayName("Division of Decimal by Integer returns Decimal type (Spark promotes to Decimal)")
         void testMixedDecimalIntegerDivision() {
             Literal left = new Literal("100.00", new DecimalType(10, 2));
             Literal right = Literal.of(10);
@@ -149,12 +149,12 @@ public class TypeInferenceEngineTest extends TestBase {
 
             DataType result = TypeInferenceEngine.resolveBinaryExpressionType(division, null);
 
-            // Mixed types fall back to Double
-            assertThat(result).isInstanceOf(DoubleType.class);
+            // Spark promotes mixed Decimal/Integer to Decimal with computed precision
+            assertThat(result).isInstanceOf(DecimalType.class);
         }
 
         @Test
-        @DisplayName("Division of Integer by Decimal returns Double type")
+        @DisplayName("Division of Integer by Decimal returns Decimal type (Spark promotes to Decimal)")
         void testMixedIntegerDecimalDivision() {
             Literal left = Literal.of(100);
             Literal right = new Literal("10.00", new DecimalType(10, 2));
@@ -162,8 +162,8 @@ public class TypeInferenceEngineTest extends TestBase {
 
             DataType result = TypeInferenceEngine.resolveBinaryExpressionType(division, null);
 
-            // Mixed types fall back to Double
-            assertThat(result).isInstanceOf(DoubleType.class);
+            // Spark promotes mixed Integer/Decimal to Decimal with computed precision
+            assertThat(result).isInstanceOf(DecimalType.class);
         }
     }
 

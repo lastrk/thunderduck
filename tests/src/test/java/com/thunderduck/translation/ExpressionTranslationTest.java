@@ -717,7 +717,8 @@ public class ExpressionTranslationTest extends TestBase {
             Expression func = FunctionCall.of("concat", StringType.get(), arg1, arg2, arg3);
 
             String sql = func.toSQL();
-            assertThat(sql).isEqualTo("concat(first_name, ' ', last_name)");
+            // concat is translated to || operator with CAST for correct NULL propagation
+            assertThat(sql).isEqualTo("(CAST(first_name AS VARCHAR) || CAST(' ' AS VARCHAR) || CAST(last_name AS VARCHAR))");
         }
 
         @Test
@@ -739,7 +740,8 @@ public class ExpressionTranslationTest extends TestBase {
             Expression func = FunctionCall.of("length", arg, IntegerType.get());
 
             String sql = func.toSQL();
-            assertThat(sql).isEqualTo("length(description)");
+            // length wraps with CAST to INTEGER (DuckDB returns BIGINT, Spark expects INTEGER)
+            assertThat(sql).isEqualTo("CAST(length(description) AS INTEGER)");
             assertThat(func.dataType()).isInstanceOf(IntegerType.class);
         }
 

@@ -491,7 +491,8 @@ public class EndToEndQueryTest extends TestBase {
                 upperFirst, Literal.of(" "), upperLast);
 
             String sql = fullName.toSQL();
-            assertThat(sql).contains("concat").contains("upper").contains("first_name").contains("last_name");
+            // concat is translated to || operator; verify key components present
+            assertThat(sql).contains("upper").contains("first_name").contains("last_name").contains("||");
         }
     }
 }

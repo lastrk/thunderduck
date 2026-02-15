@@ -667,7 +667,8 @@ public class ExpressionTest extends TestBase {
                 Literal.of("World")
             );
 
-            assertThat(func.toSQL()).isEqualTo("concat('Hello', ' ', 'World')");
+            // concat is translated to || operator with CAST for correct NULL propagation
+            assertThat(func.toSQL()).isEqualTo("(CAST('Hello' AS VARCHAR) || CAST(' ' AS VARCHAR) || CAST('World' AS VARCHAR))");
         }
 
         @Test
