@@ -992,6 +992,10 @@ public final class TypeInferenceEngine {
         if (a == null) return b;
         if (b == null) return a;
 
+        // Prefer concrete types over unresolved
+        if (a instanceof UnresolvedType) return b;
+        if (b instanceof UnresolvedType) return a;
+
         // If both are numeric, use promotion
         if (isNumericType(a) && isNumericType(b)) {
             return promoteNumericTypes(a, b);
@@ -2194,11 +2198,14 @@ public final class TypeInferenceEngine {
      * @return true if this is an untyped NULL literal, false otherwise
      */
     private static boolean isUntypedNull(Expression expr) {
-        // Check if this is a NULL value with StringType (our marker for untyped NULLs)
-        // Typed NULLs (e.g., Literal(null, DecimalType(7,2))) should participate in unification
+        // Check if this is a NULL value without a concrete type (untyped NULL).
+        // Untyped NULLs should not affect the result type per Spark semantics.
+        // Typed NULLs (e.g., Literal(null, DecimalType(7,2))) should participate in unification.
+        // SparkSQLParser creates NULLs with UnresolvedType.expressionString();
+        // ExpressionConverter (DataFrame path) may create NULLs with StringType.
         return expr instanceof Literal lit
             && lit.isNull()
-            && lit.dataType() instanceof StringType;
+            && (lit.dataType() instanceof StringType || lit.dataType() instanceof UnresolvedType);
     }
 
     /**
