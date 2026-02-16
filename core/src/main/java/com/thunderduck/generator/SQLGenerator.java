@@ -10,6 +10,7 @@ import com.thunderduck.types.DataType;
 import com.thunderduck.types.StructField;
 import com.thunderduck.types.StructType;
 import com.thunderduck.types.TypeInferenceEngine;
+import com.thunderduck.types.TypeMapper;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -2992,6 +2993,10 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * Visits a Union node.
      * Builds SQL directly in buffer.
      * Wraps children in parentheses for correct precedence in chained operations.
+     *
+     * <p>When left and right sides have different but compatible column types
+     * (e.g., INT vs BIGINT), wraps each side in a SELECT with CASTs to the
+     * widened type. This matches Spark's UNION type coercion behavior.
      */
     private void visitUnion(Union plan) {
         if (plan.byName()) {
@@ -2999,10 +3004,35 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             return;
         }
 
-        // Left side (wrapped for precedence)
-        sql.append("(");
-        visit(plan.left());
-        sql.append(")");
+        StructType leftSchema = plan.left().schema();
+        StructType rightSchema = plan.right().schema();
+        StructType widenedSchema = plan.schema();
+
+        // Check if type widening is needed
+        boolean needsCasts = false;
+        if (leftSchema != null && rightSchema != null && widenedSchema != null
+                && leftSchema.size() == rightSchema.size()) {
+            for (int i = 0; i < leftSchema.size(); i++) {
+                DataType leftType = leftSchema.fieldAt(i).dataType();
+                DataType rightType = rightSchema.fieldAt(i).dataType();
+                if (!leftType.equals(rightType)) {
+                    needsCasts = true;
+                    break;
+                }
+            }
+        }
+
+        if (needsCasts) {
+            // Left side with CAST wrapping
+            sql.append("(");
+            appendUnionSideWithCasts(plan.left(), leftSchema, widenedSchema);
+            sql.append(")");
+        } else {
+            // Left side (no casts needed)
+            sql.append("(");
+            visit(plan.left());
+            sql.append(")");
+        }
 
         // UNION operator
         if (plan.all()) {
@@ -3011,9 +3041,51 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             sql.append(" UNION ");
         }
 
-        // Right side (wrapped for precedence)
-        sql.append("(");
-        visit(plan.right());
+        if (needsCasts) {
+            // Right side with CAST wrapping
+            sql.append("(");
+            appendUnionSideWithCasts(plan.right(), rightSchema, widenedSchema);
+            sql.append(")");
+        } else {
+            // Right side (no casts needed)
+            sql.append("(");
+            visit(plan.right());
+            sql.append(")");
+        }
+    }
+
+    /**
+     * Appends a UNION side wrapped in a SELECT with CASTs to widened types.
+     *
+     * <p>Generates: {@code SELECT CAST(col1 AS BIGINT) AS col1, col2, ... FROM (child)}
+     * Only adds CAST for columns whose type differs from the widened type.
+     *
+     * @param child the child plan to wrap
+     * @param childSchema the child's original schema
+     * @param widenedSchema the target widened schema
+     */
+    private void appendUnionSideWithCasts(LogicalPlan child, StructType childSchema,
+                                           StructType widenedSchema) {
+        sql.append("SELECT ");
+        for (int i = 0; i < childSchema.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+            StructField childField = childSchema.fieldAt(i);
+            StructField widenedField = widenedSchema.fieldAt(i);
+            String quotedName = quoteIdentifier(childField.name());
+
+            if (!childField.dataType().equals(widenedField.dataType())) {
+                // Cast to widened type
+                String duckDBType = TypeMapper.toDuckDBType(widenedField.dataType());
+                sql.append("CAST(").append(quotedName).append(" AS ").append(duckDBType)
+                   .append(") AS ").append(quotedName);
+            } else {
+                sql.append(quotedName);
+            }
+        }
+        sql.append(" FROM (");
+        visit(child);
         sql.append(")");
     }
 

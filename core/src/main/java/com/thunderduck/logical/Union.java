@@ -1,7 +1,12 @@
 package com.thunderduck.logical;
 
+import com.thunderduck.types.DataType;
+import com.thunderduck.types.StructField;
 import com.thunderduck.types.StructType;
+import com.thunderduck.types.TypeInferenceEngine;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -68,7 +73,9 @@ public final class Union extends LogicalPlan {
                     String.format("Union requires same number of columns: left has %d, right has %d",
                                 leftSchema.size(), rightSchema.size()));
             }
-            // TODO: Add stricter type compatibility checking
+            // Type compatibility is validated by QueryValidator.validateUnion().
+            // Type widening (e.g., INT + BIGINT -> BIGINT) is handled in inferSchema()
+            // and SQL generation adds CASTs when needed.
         }
     }
 
@@ -127,34 +134,54 @@ public final class Union extends LogicalPlan {
         return allowMissingColumns;
     }
 
+    /**
+     * Generates SQL for this union node.
+     *
+     * <p>Note: This is dead code — {@code SQLGenerator.visit()} dispatches Union
+     * directly to {@code visitUnion()}, which handles type-widening CASTs.
+     * Kept in sync for completeness.
+     */
     @Override
     public String toSQL(SQLGenerator generator) {
-        StringBuilder sql = new StringBuilder();
-
-        // Generate left subquery
-        sql.append("(");
-        sql.append(generator.generate(left));
-        sql.append(")");
-
-        // Generate UNION or UNION ALL
-        if (all) {
-            sql.append(" UNION ALL ");
-        } else {
-            sql.append(" UNION ");
-        }
-
-        // Generate right subquery
-        sql.append("(");
-        sql.append(generator.generate(right));
-        sql.append(")");
-
-        return sql.toString();
+        // Delegate to generator which handles type-widening CASTs
+        return generator.generate(this);
     }
 
     @Override
     public StructType inferSchema() {
-        // Union returns the schema of the left relation
-        return left.schema();
+        StructType leftSchema = left.schema();
+        StructType rightSchema = right.schema();
+
+        // If either schema is unavailable, fall back to left schema
+        if (leftSchema == null || rightSchema == null) {
+            return leftSchema;
+        }
+
+        // For byName unions or mismatched sizes, fall back to left schema
+        // (byName reordering is handled at SQL generation time)
+        if (byName || leftSchema.size() != rightSchema.size()) {
+            return leftSchema;
+        }
+
+        // Compute widened types: for each column position, unify left and right types.
+        // Column names always come from the left side (Spark convention).
+        List<StructField> widenedFields = new ArrayList<>(leftSchema.size());
+        boolean anyWidened = false;
+
+        for (int i = 0; i < leftSchema.size(); i++) {
+            StructField leftField = leftSchema.fieldAt(i);
+            StructField rightField = rightSchema.fieldAt(i);
+            DataType widenedType = TypeInferenceEngine.unifyTypes(
+                leftField.dataType(), rightField.dataType());
+            boolean widenedNullable = leftField.nullable() || rightField.nullable();
+
+            if (!widenedType.equals(leftField.dataType()) || widenedNullable != leftField.nullable()) {
+                anyWidened = true;
+            }
+            widenedFields.add(new StructField(leftField.name(), widenedType, widenedNullable));
+        }
+
+        return anyWidened ? new StructType(widenedFields) : leftSchema;
     }
 
     @Override

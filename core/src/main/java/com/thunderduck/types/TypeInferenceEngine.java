@@ -992,6 +992,9 @@ public final class TypeInferenceEngine {
         if (a == null) return b;
         if (b == null) return a;
 
+        // Exact match: no promotion needed
+        if (a.equals(b)) return a;
+
         // Prefer concrete types over unresolved
         if (a instanceof UnresolvedType) return b;
         if (b instanceof UnresolvedType) return a;
@@ -999,6 +1002,12 @@ public final class TypeInferenceEngine {
         // If both are numeric, use promotion
         if (isNumericType(a) && isNumericType(b)) {
             return promoteNumericTypes(a, b);
+        }
+
+        // Temporal promotion: Date + Timestamp -> Timestamp
+        if ((a instanceof DateType && b instanceof TimestampType)
+                || (a instanceof TimestampType && b instanceof DateType)) {
+            return TimestampType.get();
         }
 
         // Default to first type

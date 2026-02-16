@@ -12,7 +12,9 @@ import pytest
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
     DoubleType,
+    FloatType,
     IntegerType,
+    LongType,
     StringType,
     StructField,
     StructType,
@@ -341,3 +343,125 @@ class TestSetOperationEdgeCases:
         ref = run_test(spark_reference)
         td = run_test(spark_thunderduck)
         assert_dataframes_equal(ref, td, "except_all_rows_removed")
+
+
+# =============================================================================
+# Union Type Coercion
+# =============================================================================
+
+
+@pytest.mark.differential
+class TestUnionTypeCoercion:
+    """Tests for UNION type widening/coercion between different column types."""
+
+    @pytest.mark.timeout(30)
+    def test_union_int_and_long(self, spark_reference, spark_thunderduck):
+        """Union of INT and BIGINT columns should widen to BIGINT"""
+        def run_test(spark):
+            data1 = [(1, "a"), (2, "b")]
+            schema1 = StructType([
+                StructField("id", IntegerType(), True),
+                StructField("value", StringType(), True)
+            ])
+            data2 = [(3, "c"), (4, "d")]
+            schema2 = StructType([
+                StructField("id", LongType(), True),
+                StructField("value", StringType(), True)
+            ])
+            df1 = spark.createDataFrame(data1, schema1)
+            df2 = spark.createDataFrame(data2, schema2)
+            return df1.union(df2).orderBy("id")
+
+        ref = run_test(spark_reference)
+        td = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref, td, "union_int_and_long")
+
+    @pytest.mark.timeout(30)
+    def test_union_int_and_double(self, spark_reference, spark_thunderduck):
+        """Union of INT and DOUBLE columns should widen to DOUBLE"""
+        def run_test(spark):
+            data1 = [(1, "a"), (2, "b")]
+            schema1 = StructType([
+                StructField("id", IntegerType(), True),
+                StructField("value", StringType(), True)
+            ])
+            data2 = [(3.5, "c"), (4.5, "d")]
+            schema2 = StructType([
+                StructField("id", DoubleType(), True),
+                StructField("value", StringType(), True)
+            ])
+            df1 = spark.createDataFrame(data1, schema1)
+            df2 = spark.createDataFrame(data2, schema2)
+            return df1.union(df2).orderBy("id")
+
+        ref = run_test(spark_reference)
+        td = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref, td, "union_int_and_double")
+
+    @pytest.mark.timeout(30)
+    def test_union_float_and_double(self, spark_reference, spark_thunderduck):
+        """Union of FLOAT and DOUBLE columns should widen to DOUBLE"""
+        def run_test(spark):
+            data1 = [(1.0, "a"), (2.0, "b")]
+            schema1 = StructType([
+                StructField("val", FloatType(), True),
+                StructField("label", StringType(), True)
+            ])
+            data2 = [(3.0, "c"), (4.0, "d")]
+            schema2 = StructType([
+                StructField("val", DoubleType(), True),
+                StructField("label", StringType(), True)
+            ])
+            df1 = spark.createDataFrame(data1, schema1)
+            df2 = spark.createDataFrame(data2, schema2)
+            return df1.union(df2).orderBy("val")
+
+        ref = run_test(spark_reference)
+        td = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref, td, "union_float_and_double")
+
+    @pytest.mark.timeout(30)
+    def test_union_long_and_double(self, spark_reference, spark_thunderduck):
+        """Union of BIGINT and DOUBLE columns should widen to DOUBLE"""
+        def run_test(spark):
+            data1 = [(100, "a"), (200, "b")]
+            schema1 = StructType([
+                StructField("amount", LongType(), True),
+                StructField("label", StringType(), True)
+            ])
+            data2 = [(3.14, "c"), (2.72, "d")]
+            schema2 = StructType([
+                StructField("amount", DoubleType(), True),
+                StructField("label", StringType(), True)
+            ])
+            df1 = spark.createDataFrame(data1, schema1)
+            df2 = spark.createDataFrame(data2, schema2)
+            return df1.union(df2).orderBy("amount")
+
+        ref = run_test(spark_reference)
+        td = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref, td, "union_long_and_double")
+
+    @pytest.mark.timeout(30)
+    def test_union_multiple_type_mismatches(self, spark_reference, spark_thunderduck):
+        """Union where multiple columns need type widening"""
+        def run_test(spark):
+            data1 = [(1, 10.0, "x")]
+            schema1 = StructType([
+                StructField("id", IntegerType(), True),
+                StructField("score", FloatType(), True),
+                StructField("tag", StringType(), True)
+            ])
+            data2 = [(2, 20.0, "y")]
+            schema2 = StructType([
+                StructField("id", LongType(), True),
+                StructField("score", DoubleType(), True),
+                StructField("tag", StringType(), True)
+            ])
+            df1 = spark.createDataFrame(data1, schema1)
+            df2 = spark.createDataFrame(data2, schema2)
+            return df1.union(df2).orderBy("id")
+
+        ref = run_test(spark_reference)
+        td = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref, td, "union_multiple_type_mismatches")
