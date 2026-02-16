@@ -162,7 +162,6 @@ class TestStringFunctions_Differential:
     left, right, split_part, translate, btrim, char_length, octet_length,
     bit_length, format_number, substring_index, to_char, encode, decode."""
 
-    @pytest.mark.skip(reason="DuckDB does not have soundex as a built-in function")
     @pytest.mark.timeout(30)
     def test_soundex(self, spark_reference, spark_thunderduck):
         """Test soundex() phonetic encoding of strings."""

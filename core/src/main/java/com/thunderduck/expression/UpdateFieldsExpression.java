@@ -2,6 +2,9 @@ package com.thunderduck.expression;
 
 import com.thunderduck.types.DataType;
 import com.thunderduck.types.StringType;
+import com.thunderduck.types.StructField;
+import com.thunderduck.types.StructType;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -49,6 +52,7 @@ public final class UpdateFieldsExpression implements Expression {
     private final String fieldName;
     private final Optional<Expression> valueExpr;
     private final OperationType operationType;
+    private StructType resolvedStructType;
 
     /**
      * Creates an UpdateFieldsExpression for adding/replacing a field.
@@ -113,9 +117,56 @@ public final class UpdateFieldsExpression implements Expression {
         return operationType;
     }
 
+    /**
+     * Resolves the struct type from a parent schema context.
+     * Must be called before toSQL() for DROP operations to work correctly.
+     *
+     * @param schema the parent schema containing the struct column
+     */
+    public void resolveStructType(StructType schema) {
+        if (operationType == OperationType.DROP && schema != null) {
+            // Try to resolve the struct expression's type from the schema
+            if (structExpr instanceof UnresolvedColumn col) {
+                StructField field = schema.fieldByName(col.columnName());
+                if (field != null && field.dataType() instanceof StructType st) {
+                    this.resolvedStructType = st;
+                }
+            } else if (structExpr instanceof ColumnReference col) {
+                StructField field = schema.fieldByName(col.columnName());
+                if (field != null && field.dataType() instanceof StructType st) {
+                    this.resolvedStructType = st;
+                }
+            } else if (structExpr.dataType() instanceof StructType st) {
+                this.resolvedStructType = st;
+            }
+        }
+    }
+
+    /**
+     * Returns the resolved struct type for this expression, if available.
+     */
+    private StructType getResolvedStructType() {
+        if (resolvedStructType != null) {
+            return resolvedStructType;
+        }
+        DataType type = structExpr.dataType();
+        if (type instanceof StructType st) {
+            return st;
+        }
+        return null;
+    }
+
     @Override
     public DataType dataType() {
-        // Returns a struct (same or modified)
+        if (operationType == OperationType.DROP) {
+            StructType st = getResolvedStructType();
+            if (st != null) {
+                List<StructField> remaining = st.fields().stream()
+                    .filter(f -> !f.name().equalsIgnoreCase(fieldName))
+                    .toList();
+                return new StructType(remaining);
+            }
+        }
         return structExpr.dataType();
     }
 
@@ -147,17 +198,26 @@ public final class UpdateFieldsExpression implements Expression {
             return String.format("struct_insert(%s, %s := %s)",
                 structSql, escapeFieldName(fieldName), valueSql);
         } else {
-            // DROP operation - this is complex because we need to know all fields
-            // DuckDB doesn't have a direct "drop field from struct" function
-            // Options:
-            // 1. Use a subquery with explicit field selection
-            // 2. Error/warn and let the user handle it
-            // 3. Generate a placeholder that could be resolved later
-            //
-            // For now, generate an unsupported operation marker
-            // A full implementation would need schema introspection
-            return String.format("/* UNSUPPORTED: drop field '%s' from struct */ %s",
-                fieldName, structSql);
+            // DROP operation: rebuild the struct without the dropped field using struct_pack()
+            StructType structType = getResolvedStructType();
+            if (structType != null) {
+                StringBuilder sb = new StringBuilder("struct_pack(");
+                boolean first = true;
+                for (StructField field : structType.fields()) {
+                    if (field.name().equalsIgnoreCase(fieldName)) continue;
+                    if (!first) sb.append(", ");
+                    first = false;
+                    sb.append(escapeFieldName(field.name()))
+                      .append(" := ")
+                      .append(structSql)
+                      .append("['").append(field.name().replace("'", "''")).append("']");
+                }
+                sb.append(")");
+                return sb.toString();
+            } else {
+                throw new UnsupportedOperationException(
+                    "dropFields requires a resolved struct type, got: " + structExpr.dataType());
+            }
         }
     }
 

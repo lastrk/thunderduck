@@ -5,15 +5,15 @@
 ## Relaxed Mode
 
 **Command**: `cd /workspace/tests/integration && THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR=true COLLECT_TIMEOUT=30 python3 -m pytest differential/ -v --tb=short`
-**Result**: **746 passed, 0 failed, 2 skipped** (748 total)
+**Result**: **825 passed, 0 failed, 3 skipped** (828 total)
 
 - **TPC-H**: 51/51 (100%) — 29 SQL + 22 DataFrame
 - **TPC-DS**: 99/99 (100%) — all SQL + DataFrame passing
 - **Lambda HOFs**: 27/27 (100%) — transform, filter, exists, forall, aggregate
-- **2 skipped**: negative array index tests (`skip_relaxed` — DuckDB supports `arr[-1]`, Spark throws)
-- **0 regressions**: No new failures from N2/T1/G1/D1 fixes
+- **3 skipped**: `percentile_approx` (algorithm difference), `percentile_p50/p25/p75` (nearest-rank vs interpolation) — note: some skips are `skip_relaxed` only
+- **0 regressions**: No new failures
 
-**Previous baselines**: 646/88/5 → 708/26/5 → 718/16/5 → 733/1/5 → 737/0/2 → 746/0/2 → 739/7/2 → 746/0/2 → **746/0/2**
+**Previous baselines**: 646/88/5 → 708/26/5 → 718/16/5 → 733/1/5 → 737/0/2 → 746/0/2 → 739/7/2 → 746/0/2 → 746/0/2 → **825/0/3**
 
 ---
 

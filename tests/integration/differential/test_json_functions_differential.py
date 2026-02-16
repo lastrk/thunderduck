@@ -102,7 +102,6 @@ class TestJsonExtraction_Differential:
         td = run_test(spark_thunderduck)
         assert_dataframes_equal(ref, td, "get_json_object_age", ignore_nullable=True)
 
-    @pytest.mark.skip(reason="json_tuple generator function returns wrong column count in Thunderduck")
     @pytest.mark.timeout(30)
     def test_json_tuple(self, spark_reference, spark_thunderduck):
         """Test json_tuple extracting multiple fields via SQL.
@@ -184,7 +183,7 @@ class TestJsonConversion_Differential:
         td = run_test(spark_thunderduck)
         assert_dataframes_equal(ref, td, "to_json", ignore_nullable=True)
 
-    @pytest.mark.skip(reason="DuckDB json_structure returns JSON format, Spark returns DDL format")
+    @pytest.mark.skip_relaxed(reason="schema_of_json format differs in relaxed mode; strict mode uses spark_schema_of_json extension")
     @pytest.mark.timeout(30)
     def test_schema_of_json(self, spark_reference, spark_thunderduck):
         """Test schema_of_json inferring schema from a JSON string literal."""

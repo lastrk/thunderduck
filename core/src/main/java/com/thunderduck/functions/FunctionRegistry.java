@@ -428,6 +428,17 @@ public class FunctionRegistry {
         return Optional.ofNullable(DIRECT_MAPPINGS.get(sparkFunction.toLowerCase()));
     }
 
+    /**
+     * Helper for soundex: deduplicates consecutive identical digits in a SQL expression.
+     * E.g., "1123" → "123". Two passes handle any run length.
+     * Includes '00' since deduplication runs before zero removal.
+     */
+    private static String soundexDedup(String expr) {
+        return "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE("
+            + expr
+            + ", '00', '0'), '11', '1'), '22', '2'), '33', '3'), '44', '4'), '55', '5'), '66', '6')";
+    }
+
     private static String buildFunctionCall(String functionName, String... args) {
         if (args.length == 0) {
             return functionName + "()";
@@ -551,8 +562,49 @@ public class FunctionRegistry {
         CUSTOM_TRANSLATORS.put("like", args -> "(" + args[0] + " LIKE " + args[1] + ")");
 
         // Phonetic and distance functions
-        DIRECT_MAPPINGS.put("soundex", "soundex");
         DIRECT_MAPPINGS.put("levenshtein", "levenshtein");
+
+        // soundex: DuckDB does not have soundex as a built-in function.
+        // Implement Spark's Soundex algorithm (American/US Census Soundex).
+        //
+        // Key rule: H and W are transparent — they do NOT separate same-code
+        // consonants. Vowels (A,E,I,O,U,Y) DO separate them.
+        // E.g., "ASHCRAFT": S(2) and C(2) separated by H → treated as same → A261
+        //        "TYMCZAK":  Z(2) and K(2) separated by A → treated as different → T522
+        //
+        // Algorithm:
+        // 1. Keep first letter as-is, compute its Soundex code
+        // 2. Remove H and W from remaining characters (transparent)
+        // 3. Map remaining to Soundex codes, prepend first code
+        // 4. Dedup consecutive identical codes
+        // 5. Drop first code, remove zeros (vowels/Y), take 3, pad
+        CUSTOM_TRANSLATORS.put("soundex", args -> {
+            if (args.length != 1) {
+                throw new IllegalArgumentException("soundex requires exactly 1 argument");
+            }
+            String s = args[0];
+            String upper = "UPPER(" + s + ")";
+            String mapping = "'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '01230120022455012623010202'";
+            // First letter and its Soundex code
+            String firstLetter = "SUBSTR(" + upper + ", 1, 1)";
+            String firstCode = "TRANSLATE(" + firstLetter + ", " + mapping + ")";
+            // Rest of string: remove H and W (they're transparent in Soundex)
+            String restStr = "REPLACE(REPLACE(SUBSTR(" + upper + ", 2), 'H', ''), 'W', '')";
+            // Map remaining characters to codes
+            String restCodes = "TRANSLATE(" + restStr + ", " + mapping + ")";
+            // Combine first code + rest codes, dedup consecutive identical
+            String combined = firstCode + " || " + restCodes;
+            String dedup1 = soundexDedup(combined);
+            String dedup2 = soundexDedup(dedup1);
+            // Drop first code, remove zeros (vowels/Y), take 3, pad
+            String rest = "SUBSTR(" + dedup2 + ", 2)";
+            String noZeros = "REPLACE(" + rest + ", '0', '')";
+            String digits = "SUBSTR(" + noZeros + ", 1, 3)";
+            String padded = "LPAD(" + digits + ", 3, '0')";
+            String result = firstLetter + " || " + padded;
+            return "CASE WHEN " + s + " IS NULL OR LENGTH(TRIM(" + s + ")) = 0 THEN " + s
+                + " ELSE " + result + " END";
+        });
 
         // String manipulation
         // overlay: handled by CUSTOM_TRANSLATORS (DuckDB has no OVERLAY PLACING syntax)
@@ -1621,7 +1673,18 @@ public class FunctionRegistry {
         DIRECT_MAPPINGS.put("to_json", "to_json");
         DIRECT_MAPPINGS.put("json_array_length", "json_array_length");
         DIRECT_MAPPINGS.put("json_object_keys", "json_keys");
-        DIRECT_MAPPINGS.put("schema_of_json", "json_structure");
+        // schema_of_json: Spark returns DDL format (STRUCT<a: BIGINT, b: STRING>),
+        // DuckDB json_structure returns JSON format ({"a":"UBIGINT","b":"VARCHAR"}).
+        // Strict mode uses spark_schema_of_json extension function for exact match.
+        CUSTOM_TRANSLATORS.put("schema_of_json", args -> {
+            if (args.length < 1) {
+                throw new IllegalArgumentException("schema_of_json requires at least 1 argument");
+            }
+            if (SparkCompatMode.isStrictMode()) {
+                return "spark_schema_of_json(" + args[0] + ")";
+            }
+            return "json_structure(" + args[0] + ")";
+        });
 
         // get_json_object: Spark uses JSONPath syntax, DuckDB json_extract_string also uses JSONPath
         // Spark: get_json_object(json_str, '$.key')

@@ -2,7 +2,7 @@
 
 **Created**: 2026-02-15
 **Updated**: 2026-02-16
-**Status**: Completed (all 4 priorities implemented, differential tests added, spark_skewness extension function added)
+**Status**: Completed (all 4 priorities + 5 follow-up fixes: soundex, dropFields, schema_of_json, json_tuple, split limit)
 
 ## Coverage Summary
 
@@ -52,7 +52,7 @@ Planned but not yet implemented:
 ### String Functions (14 entries)
 | Spark Function | DuckDB Equivalent | Status |
 |---|---|---|
-| `soundex` | `soundex` | Done |
+| `soundex` | Custom SQL (TRANSLATE + REPLACE) | Done |
 | `levenshtein` | `levenshtein` | Done |
 | `overlay` | `overlay` | Done |
 | `left` | `left` | Done |
@@ -112,7 +112,7 @@ Planned but not yet implemented:
 | `to_json` | `to_json` | Done |
 | `json_array_length` | `json_array_length` | Done |
 | `json_object_keys` | `json_keys` | Done |
-| `schema_of_json` | `json_structure` | Done |
+| `schema_of_json` | `spark_schema_of_json` (strict) / `json_structure` (relaxed) | Done |
 | `get_json_object` | `json_extract_string` | Done (custom) |
 | `from_json` | `json()` | Done (basic; full struct schema TBD) |
 | `json_tuple` | Multiple `json_extract_string` | Done (custom) |
@@ -155,35 +155,21 @@ Planned but not yet implemented:
 
 ## Differential Test Results
 
-Full suite in strict mode (after `spark_skewness` extension, commit `441aa3c`):
+Current relaxed mode baseline:
 
 | | Passed | Failed | Skipped |
 |---|---|---|---|
-| Full differential suite (strict) | 788 | 26 | 8 |
-
-The 26 failures are pre-existing type inference issues (UnresolvedType defaulting to StringType) for implicit aggregation and scalar functions in the SQL path. These are tracked separately.
-
-Previous results (relaxed mode, commit `1c7b958`):
-
-| | Passed | Failed | Skipped |
-|---|---|---|---|
-| Full differential suite (relaxed) | 802 | 0 | 20 |
+| Full differential suite (relaxed) | 825 | 0 | 3 |
 
 76 new tests added across 4 files:
 
 | Test File | Tests | Passed | Skipped |
 |---|---|---|---|
 | `test_math_bitwise_date_differential.py` | 16 | 16 | 0 |
-| `test_string_collection_differential.py` | 22 | 20 | 2 |
+| `test_string_collection_differential.py` | 22 | 21 | 1 |
 | `test_new_aggregates_differential.py` | 27 | 17 | 10 |
-| `test_json_functions_differential.py` | 9 | 6 | 3 |
-| **Total new tests** | **76** | **61** | **12** |
-
-### Skipped Tests — DuckDB Missing Functions (1)
-
-| Test | Function | Skip Reason |
-|---|---|---|
-| `test_soundex` | `soundex` | DuckDB does not have `soundex` as a built-in function (only in fts extension) |
+| `test_json_functions_differential.py` | 9 | 7 | 2 |
+| **Total new tests** | **76** | **63** | **10** |
 
 ### Skipped Tests — Behavioral/Formula Differences (4)
 
@@ -192,7 +178,7 @@ Previous results (relaxed mode, commit `1c7b958`):
 | `test_percentile_p50` | `percentile` | DuckDB `quantile` uses nearest-rank method, Spark uses linear interpolation |
 | `test_percentile_p25` | `percentile` | Same nearest-rank vs interpolation difference |
 | `test_percentile_p75` | `percentile` | Same nearest-rank vs interpolation difference |
-| `test_percentile_approx` | `percentile_approx` | DuckDB `approx_quantile` uses different approximation algorithm than Spark |
+| `test_percentile_approx` | `percentile_approx` | DuckDB `approx_quantile` returns 55.0, Spark returns 50.0 — different algorithms |
 
 ### Previously Skipped, Now Passing (11)
 
@@ -210,12 +196,11 @@ Previous results (relaxed mode, commit `1c7b958`):
 | `test_dayname` | `dayname` | Custom translator: `LEFT(dayname(...), 3)` truncates to abbreviation |
 | `test_monthname` | `monthname` | Custom translator: `LEFT(monthname(...), 3)` truncates to abbreviation |
 
-### Skipped Tests — Output Format Differences (2)
+### Skipped Tests — Output Format Differences (1)
 
 | Test | Function | Skip Reason |
 |---|---|---|
-| `test_schema_of_json` | `schema_of_json` | DuckDB `json_structure` returns JSON format (`{"a":"UBIGINT"}`), Spark returns DDL format (`STRUCT<a: BIGINT>`) |
-| `test_json_tuple` | `json_tuple` | Thunderduck returns wrong column count (2 instead of 3); generator function handling bug |
+| `test_schema_of_json` | `schema_of_json` | Skipped in relaxed mode (format differs); passes in strict mode with `spark_schema_of_json` extension |
 
 ## Known Behavioral Divergences
 
@@ -223,18 +208,20 @@ Previous results (relaxed mode, commit `1c7b958`):
 
 | Function | Gap | Status |
 |---|---|---|
-| Negative array index | DuckDB returns element; Spark errors | Planned fix |
-| `dropFields()` on structs | Generates placeholder comment | Unsupported |
 | `from_json` | Basic JSON parse only; full struct schema not supported | Partial |
-| `soundex` | Not a DuckDB built-in (only in fts extension) | Needs extension or custom impl |
 | `percentile` / `percentile_approx` | DuckDB uses nearest-rank, Spark uses linear interpolation | Needs custom extension function |
-| `schema_of_json` | Format difference (JSON vs DDL) | Needs custom translator |
-| `json_tuple` | Generator function returns wrong column count | Bug in Thunderduck |
+
+### Intentionally Not Addressed
+
+| Function | Gap | Reason |
+|---|---|---|
+| Negative array index | DuckDB returns element; Spark errors | Only detectable for literal indices, not expressions; partial fix would be misleading |
 
 ### Fixed
 
 | Function | Gap | Fix |
 |---|---|---|
+| `json_tuple` | Generator function returned wrong column count (2 instead of 3) | Fixed: parser expands `json_tuple(json_str, k1, k2) AS (a1, a2)` into N separate `json_tuple(json_str, k_i) AS a_i` projections |
 | `split(str, pattern, limit)` | 3rd arg (limit) was dropped | Fixed: custom translator emulates Spark limit semantics with CASE + list slicing; `rewriteSplit()` handles RawSQLExpression path |
 | `UNION` type checking | Only checked column count, not types | Fixed: `Union.inferSchema()` computes widened types via `TypeInferenceEngine.unifyTypes()`; `SQLGenerator.visitUnion()` wraps sides with CASTs when types differ |
 | `width_bucket` | DuckDB does not have this function | Fixed: custom translator emulates with CASE expression |
@@ -245,6 +232,9 @@ Previous results (relaxed mode, commit `1c7b958`):
 | `array_prepend` | `list_prepend` reversed argument order | Fixed: custom translator swaps args |
 | `kurtosis` | DuckDB `kurtosis` uses sample formula | Fixed: mapped to `kurtosis_pop` (population formula) |
 | `skewness` | DuckDB `skewness` uses sample bias correction | Fixed: `spark_skewness()` extension function in strict mode; relaxed mode accepts ~0.2% difference |
+| `soundex` | DuckDB has no built-in soundex | Fixed: custom translator using TRANSLATE + REPLACE chain implementing American Soundex (H/W transparent, vowels separate) |
+| `dropFields()` | Struct field drop generated placeholder comment | Fixed: generates `struct_pack()` excluding dropped field; resolves struct type from schema context |
+| `schema_of_json` | DuckDB `json_structure` returns JSON format, Spark returns DDL | Fixed: `spark_schema_of_json()` extension function in strict mode; relaxed mode uses `json_structure` |
 
 ## Intentionally Out of Scope
 

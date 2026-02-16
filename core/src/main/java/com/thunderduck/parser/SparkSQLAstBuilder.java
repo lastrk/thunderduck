@@ -836,9 +836,32 @@ public class SparkSQLAstBuilder extends SqlBaseParserBaseVisitor<Object> {
             if (named.name != null) {
                 alias = getErrorCapturingIdentifierText(named.name);
             } else if (named.identifierList() != null) {
-                // Multiple aliases - take first
-                alias = getErrorCapturingIdentifierText(
-                    named.identifierList().identifierSeq().ident.get(0));
+                // Multi-alias: json_tuple(json_str, 'k1', 'k2') AS (a1, a2)
+                // Expand into N separate json_tuple(json_str, key_i) AS alias_i projections
+                List<SqlBaseParser.ErrorCapturingIdentifierContext> idents =
+                    named.identifierList().identifierSeq().ident;
+                if (expr instanceof FunctionCall fc
+                        && fc.functionName().equalsIgnoreCase("json_tuple")) {
+                    List<Expression> fcArgs = fc.arguments();
+                    int keyCount = fcArgs.size() - 1; // first arg is json_str
+                    if (idents.size() != keyCount) {
+                        throw new IllegalArgumentException(
+                            "json_tuple has " + keyCount + " keys but " + idents.size() + " aliases");
+                    }
+                    Expression jsonExpr = fcArgs.get(0);
+                    for (int i = 0; i < keyCount; i++) {
+                        String a = getErrorCapturingIdentifierText(idents.get(i));
+                        FunctionCall singleCall = new FunctionCall(
+                            "json_tuple",
+                            List.of(jsonExpr, fcArgs.get(i + 1)),
+                            fc.dataType(), fc.nullable());
+                        projections.add(new AliasExpression(singleCall, a));
+                        aliases.add(a);
+                    }
+                    continue;
+                }
+                // Non-json_tuple with multi-alias: take first alias
+                alias = getErrorCapturingIdentifierText(idents.get(0));
             }
 
             // Handle AliasExpression wrapping

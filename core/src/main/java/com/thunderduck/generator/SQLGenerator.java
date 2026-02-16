@@ -273,6 +273,10 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
             }
 
             Expression expr = projections.get(i);
+            // Resolve struct types for dropFields operations (needs schema context)
+            if (childSchema != null) {
+                resolveDropFieldsStructType(expr, childSchema);
+            }
             // Resolve polymorphic functions (e.g., reverse -> list_reverse for arrays)
             expr = resolvePolymorphicFunctions(expr, childSchema);
             // In strict mode, transform division and aggregates for correct type dispatch
@@ -3933,6 +3937,18 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
      * @param childSchema the child schema for type resolution (may be null)
      * @return the expression with resolved function names, or the original if no resolution needed
      */
+    /**
+     * Resolves struct types for UpdateFieldsExpression(DROP) operations.
+     * The expression may be directly an UpdateFieldsExpression or wrapped in AliasExpression.
+     */
+    private void resolveDropFieldsStructType(Expression expr, StructType schema) {
+        if (expr instanceof UpdateFieldsExpression update) {
+            update.resolveStructType(schema);
+        } else if (expr instanceof AliasExpression alias) {
+            resolveDropFieldsStructType(alias.expression(), schema);
+        }
+    }
+
     private Expression resolvePolymorphicFunctions(Expression expr, StructType childSchema) {
         if (childSchema == null) {
             return expr;

@@ -104,28 +104,6 @@ class TestArrayIndexing_Differential:
         test_result = run_test(spark_thunderduck)
         assert_dataframes_equal(ref_result, test_result, "array_middle_element")
 
-    @pytest.mark.skip_relaxed(reason="Negative array index divergence: DuckDB returns element, Spark throws. Fix planned for strict mode.")
-    @pytest.mark.timeout(30)
-    def test_array_negative_index_last(self, spark_reference, spark_thunderduck):
-        """Test accessing last element with negative index.
-
-        NOTE: This is a known behavior difference in relaxed mode:
-        - DuckDB: arr[-1] returns the last element
-        - Spark: arr[-1] throws ArrayIndexOutOfBoundsException
-        """
-        pass
-
-    @pytest.mark.skip_relaxed(reason="Negative array index divergence: DuckDB returns element, Spark throws. Fix planned for strict mode.")
-    @pytest.mark.timeout(30)
-    def test_array_negative_index_second_last(self, spark_reference, spark_thunderduck):
-        """Test accessing second-to-last element.
-
-        NOTE: This is a known behavior difference in relaxed mode:
-        - DuckDB: arr[-2] returns the second-to-last element
-        - Spark: arr[-2] throws ArrayIndexOutOfBoundsException
-        """
-        pass
-
 
 @pytest.mark.differential
 class TestMapKeyAccess_Differential:
@@ -199,6 +177,28 @@ class TestUpdateFields_Differential:
         ref_result = run_test(spark_reference)
         test_result = run_test(spark_thunderduck)
         assert_dataframes_equal(ref_result, test_result, "with_field_add_multiple")
+
+
+@pytest.mark.differential
+class TestDropFields_Differential:
+    """Tests for struct field drop operations using dropFields"""
+
+    @pytest.mark.timeout(30)
+    def test_drop_single_field(self, spark_reference, spark_thunderduck):
+        """Test dropping a single field from a struct"""
+        def run_test(spark):
+            spark.sql("""
+                CREATE OR REPLACE TEMP VIEW drop_struct_view AS
+                SELECT NAMED_STRUCT('name', 'Alice', 'age', 30, 'city', 'NYC') AS person
+            """)
+            df = spark.table("drop_struct_view")
+            return df.select(
+                col("person").dropFields("age").alias("person_no_age")
+            )
+
+        ref_result = run_test(spark_reference)
+        test_result = run_test(spark_thunderduck)
+        assert_dataframes_equal(ref_result, test_result, "drop_single_field")
 
 
 @pytest.mark.differential
