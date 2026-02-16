@@ -173,31 +173,28 @@ Previous results (relaxed mode, commit `1c7b958`):
 
 | Test File | Tests | Passed | Skipped |
 |---|---|---|---|
-| `test_math_bitwise_date_differential.py` | 16 | 13 | 3 |
+| `test_math_bitwise_date_differential.py` | 16 | 16 | 0 |
 | `test_string_collection_differential.py` | 22 | 20 | 2 |
 | `test_new_aggregates_differential.py` | 27 | 17 | 10 |
 | `test_json_functions_differential.py` | 9 | 6 | 3 |
-| **Total new tests** | **76** | **58** | **15** |
+| **Total new tests** | **76** | **61** | **12** |
 
-### Skipped Tests — DuckDB Missing Functions (2)
+### Skipped Tests — DuckDB Missing Functions (1)
 
 | Test | Function | Skip Reason |
 |---|---|---|
-| `test_width_bucket` | `width_bucket` | DuckDB does not have `width_bucket` as a built-in function |
 | `test_soundex` | `soundex` | DuckDB does not have `soundex` as a built-in function (only in fts extension) |
 
-### Skipped Tests — Behavioral/Formula Differences (6)
+### Skipped Tests — Behavioral/Formula Differences (4)
 
 | Test | Function | Skip Reason |
 |---|---|---|
-| `test_dayname` | `dayname` | DuckDB returns full name ("Monday"), Spark returns abbreviation ("Mon") |
-| `test_monthname` | `monthname` | DuckDB returns full name ("January"), Spark returns abbreviation ("Jan") |
 | `test_percentile_p50` | `percentile` | DuckDB `quantile` uses nearest-rank method, Spark uses linear interpolation |
 | `test_percentile_p25` | `percentile` | Same nearest-rank vs interpolation difference |
 | `test_percentile_p75` | `percentile` | Same nearest-rank vs interpolation difference |
 | `test_percentile_approx` | `percentile_approx` | DuckDB `approx_quantile` uses different approximation algorithm than Spark |
 
-### Previously Skipped, Now Passing (8)
+### Previously Skipped, Now Passing (11)
 
 | Test | Function | Fix |
 |---|---|---|
@@ -209,6 +206,9 @@ Previous results (relaxed mode, commit `1c7b958`):
 | `test_octet_length` | `octet_length` | Custom translator: `strlen()` (byte length for VARCHAR) |
 | `test_bit_get` | `bit_get` | Custom translator: `(value >> pos) & 1` (bitwise math) |
 | `test_array_prepend` | `array_prepend` | Custom translator: `list_prepend()` with swapped args |
+| `test_width_bucket` | `width_bucket` | Custom translator: CASE expression emulating histogram bucket assignment |
+| `test_dayname` | `dayname` | Custom translator: `LEFT(dayname(...), 3)` truncates to abbreviation |
+| `test_monthname` | `monthname` | Custom translator: `LEFT(monthname(...), 3)` truncates to abbreviation |
 
 ### Skipped Tests — Output Format Differences (2)
 
@@ -219,25 +219,32 @@ Previous results (relaxed mode, commit `1c7b958`):
 
 ## Known Behavioral Divergences
 
+### Open Issues
+
 | Function | Gap | Status |
 |---|---|---|
-| `split(str, pattern, limit)` | 3rd arg (limit) dropped | Open |
 | Negative array index | DuckDB returns element; Spark errors | Planned fix |
-| `UNION` type checking | Only checks column count, not types | TODO in code |
 | `dropFields()` on structs | Generates placeholder comment | Unsupported |
 | `from_json` | Basic JSON parse only; full struct schema not supported | Partial |
-| `width_bucket` | DuckDB does not have this function | Needs custom translator |
 | `soundex` | Not a DuckDB built-in (only in fts extension) | Needs extension or custom impl |
+| `percentile` / `percentile_approx` | DuckDB uses nearest-rank, Spark uses linear interpolation | Needs custom extension function |
+| `schema_of_json` | Format difference (JSON vs DDL) | Needs custom translator |
+| `json_tuple` | Generator function returns wrong column count | Bug in Thunderduck |
+
+### Fixed
+
+| Function | Gap | Fix |
+|---|---|---|
+| `split(str, pattern, limit)` | 3rd arg (limit) was dropped | Fixed: custom translator emulates Spark limit semantics with CASE + list slicing; `rewriteSplit()` handles RawSQLExpression path |
+| `UNION` type checking | Only checked column count, not types | Fixed: `Union.inferSchema()` computes widened types via `TypeInferenceEngine.unifyTypes()`; `SQLGenerator.visitUnion()` wraps sides with CASTs when types differ |
+| `width_bucket` | DuckDB does not have this function | Fixed: custom translator emulates with CASE expression |
+| `dayname` / `monthname` | DuckDB returns full name, Spark returns abbreviation | Fixed: custom translator with `LEFT(dayname(...), 3)` |
 | `overlay` | DuckDB does not support OVERLAY PLACING syntax | Fixed: custom translator with `LEFT() \|\| replacement \|\| SUBSTR()` |
 | `octet_length(VARCHAR)` | DuckDB only accepts BLOB/BIT, not VARCHAR | Fixed: custom translator using `strlen()` |
 | `bit_get(INTEGER)` | DuckDB `get_bit` expects BIT type, not INTEGER | Fixed: custom translator using `(value >> pos) & 1` |
 | `array_prepend` | `list_prepend` reversed argument order | Fixed: custom translator swaps args |
-| `dayname` / `monthname` | DuckDB returns full name, Spark returns abbreviation | Needs custom translator with `LEFT(dayname(...), 3)` |
 | `kurtosis` | DuckDB `kurtosis` uses sample formula | Fixed: mapped to `kurtosis_pop` (population formula) |
 | `skewness` | DuckDB `skewness` uses sample bias correction | Fixed: `spark_skewness()` extension function in strict mode; relaxed mode accepts ~0.2% difference |
-| `percentile` / `percentile_approx` | DuckDB uses nearest-rank, Spark uses linear interpolation | Needs custom extension function |
-| `schema_of_json` | Format difference (JSON vs DDL) | Needs custom translator |
-| `json_tuple` | Generator function returns wrong column count | Bug in Thunderduck |
 
 ## Intentionally Out of Scope
 
