@@ -38,6 +38,75 @@ class TestArrayFunctionsDifferential:
             ignore_nullable=True
         )
 
+    def test_split_with_limit(self, spark_reference, spark_thunderduck):
+        """Test split() function with limit (3rd argument) - exact parity check.
+
+        Spark split(str, pattern, limit) semantics:
+          limit > 0: split into at most `limit` pieces; last piece contains the remainder
+          limit < 0: same as no limit (split into all pieces, preserving trailing empty strings)
+          limit = 0: same as no limit but removes trailing empty strings (default)
+        """
+        data = [
+            (1, "a-b-c-d-e"),
+            (2, "one-two-three"),
+            (3, "x"),
+            (4, "hello-world-foo-bar"),
+        ]
+
+        spark_df = spark_reference.createDataFrame(data, ["id", "val"])
+        td_df = spark_thunderduck.createDataFrame(data, ["id", "val"])
+
+        # Test limit > 0: split into at most 2 pieces
+        spark_result = spark_df.selectExpr("id", "split(val, '-', 2) as parts").orderBy("id")
+        td_result = td_df.selectExpr("id", "split(val, '-', 2) as parts").orderBy("id")
+
+        assert_dataframes_equal(
+            spark_result, td_result,
+            query_name="split_with_limit_2",
+            ignore_nullable=True
+        )
+
+        # Test limit > 0: split into at most 3 pieces
+        spark_result = spark_df.selectExpr("id", "split(val, '-', 3) as parts").orderBy("id")
+        td_result = td_df.selectExpr("id", "split(val, '-', 3) as parts").orderBy("id")
+
+        assert_dataframes_equal(
+            spark_result, td_result,
+            query_name="split_with_limit_3",
+            ignore_nullable=True
+        )
+
+        # Test limit = -1: same as no limit
+        spark_result = spark_df.selectExpr("id", "split(val, '-', -1) as parts").orderBy("id")
+        td_result = td_df.selectExpr("id", "split(val, '-', -1) as parts").orderBy("id")
+
+        assert_dataframes_equal(
+            spark_result, td_result,
+            query_name="split_with_limit_neg1",
+            ignore_nullable=True
+        )
+
+    def test_split_with_limit_dataframe_api(self, spark_reference, spark_thunderduck):
+        """Test split() with limit via DataFrame API - exact parity check."""
+        data = [
+            (1, "a,b,c,d"),
+            (2, "x,y"),
+            (3, "hello,world,foo,bar,baz"),
+        ]
+
+        spark_df = spark_reference.createDataFrame(data, ["id", "val"])
+        td_df = spark_thunderduck.createDataFrame(data, ["id", "val"])
+
+        # DataFrame API: F.split(col, pattern, limit)
+        spark_result = spark_df.select("id", F.split("val", ",", 2).alias("parts")).orderBy("id")
+        td_result = td_df.select("id", F.split("val", ",", 2).alias("parts")).orderBy("id")
+
+        assert_dataframes_equal(
+            spark_result, td_result,
+            query_name="split_with_limit_df_api",
+            ignore_nullable=True
+        )
+
     def test_startswith_function(self, spark_reference, spark_thunderduck):
         """Test startswith() function in filter - exact parity check."""
         data = [

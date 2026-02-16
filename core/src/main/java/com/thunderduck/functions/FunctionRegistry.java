@@ -150,6 +150,7 @@ public class FunctionRegistry {
         result = rewriteCollectList(result);
         result = rewriteCollectSet(result);
         result = rewriteSize(result);
+        result = rewriteSplit(result);
 
         return result;
     }
@@ -185,6 +186,89 @@ public class FunctionRegistry {
         return rewriteFunctionWithPattern(sql, "size", (arg) ->
             "CAST(len(" + arg + ") AS INTEGER)"
         );
+    }
+
+    /**
+     * Rewrites split() function calls in SQL strings.
+     * Spark: split(str, pattern) -> DuckDB: string_split(str, pattern)
+     * Spark: split(str, pattern, limit) -> DuckDB: CASE expression with list_concat for limit > 0
+     *
+     * For the 3-arg case, Spark semantics are:
+     *   limit > 0: split into at most limit pieces; last piece contains the remainder
+     *   limit <= 0: same as no limit (split into all pieces)
+     */
+    private static String rewriteSplit(String sql) {
+        return rewriteFunctionWithPattern(sql, "split", (fullArgs) -> {
+            // Split the arguments at top-level commas (respecting nesting)
+            java.util.List<String> args = splitTopLevelArgs(fullArgs);
+            if (args.size() < 2) {
+                // Not enough args, return as-is (will error in DuckDB)
+                return "split(" + fullArgs + ")";
+            }
+            String str = args.get(0).trim();
+            String pattern = args.get(1).trim();
+            String baseSplit = "string_split(" + str + ", " + pattern + ")";
+            if (args.size() < 3) {
+                // 2-arg form
+                return baseSplit;
+            }
+            String limit = args.get(2).trim();
+            // Emulate Spark's split-with-limit using CASE expression
+            return "CASE WHEN " + limit + " > 0 THEN "
+                    + "list_concat("
+                    +   baseSplit + "[1:GREATEST((" + limit + ") - 1, 0)], "
+                    +   "CASE WHEN len(" + baseSplit + ") >= " + limit + " THEN "
+                    +     "list_value(array_to_string(" + baseSplit + "[(" + limit + "):], " + pattern + ")) "
+                    +   "ELSE list_value() END"
+                    + ") "
+                    + "ELSE " + baseSplit + " END";
+        });
+    }
+
+    /**
+     * Splits a comma-separated argument string at top-level commas only.
+     * Respects nested parentheses, quotes, and brackets.
+     *
+     * @param args the argument string (e.g., "val, '-', 2")
+     * @return list of individual argument strings
+     */
+    private static java.util.List<String> splitTopLevelArgs(String args) {
+        java.util.List<String> result = new java.util.ArrayList<>();
+        int depth = 0;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        int start = 0;
+
+        for (int i = 0; i < args.length(); i++) {
+            char c = args.charAt(i);
+
+            if (inSingleQuote) {
+                if (c == '\'' && (i + 1 >= args.length() || args.charAt(i + 1) != '\'')) {
+                    inSingleQuote = false;
+                } else if (c == '\'' && i + 1 < args.length() && args.charAt(i + 1) == '\'') {
+                    i++; // skip escaped quote
+                }
+            } else if (inDoubleQuote) {
+                if (c == '"') {
+                    inDoubleQuote = false;
+                }
+            } else {
+                if (c == '\'') {
+                    inSingleQuote = true;
+                } else if (c == '"') {
+                    inDoubleQuote = true;
+                } else if (c == '(' || c == '[') {
+                    depth++;
+                } else if (c == ')' || c == ']') {
+                    depth--;
+                } else if (c == ',' && depth == 0) {
+                    result.add(args.substring(start, i));
+                    start = i + 1;
+                }
+            }
+        }
+        result.add(args.substring(start));
+        return result;
     }
 
     /**
@@ -402,14 +486,37 @@ public class FunctionRegistry {
 
         // Splitting and joining
         // split: Spark split(str, pattern, limit) has optional 3rd arg.
-        // DuckDB string_split(str, delim) only takes 2 args.
-        // When limit=-1 (default from PySpark), just drop the 3rd arg.
+        // DuckDB string_split(str, delim) only takes 2 args and has no limit support.
+        // Spark semantics for limit:
+        //   limit > 0: split into at most `limit` pieces; last piece contains the remainder
+        //   limit <= 0: split into all pieces (same as no limit)
+        // For limit > 0, we emulate by splitting fully, then taking the first limit-1 elements
+        // and concatenating the remainder (joined back with the delimiter) as the last element.
         CUSTOM_TRANSLATORS.put("split", args -> {
             if (args.length < 2) {
                 throw new IllegalArgumentException("split requires at least 2 arguments");
             }
-            // DuckDB's string_split only takes 2 args - ignore limit parameter
-            return "string_split(" + args[0] + ", " + args[1] + ")";
+            String str = args[0];
+            String pattern = args[1];
+            String baseSplit = "string_split(" + str + ", " + pattern + ")";
+
+            if (args.length < 3) {
+                // 2-arg form: no limit, just split
+                return baseSplit;
+            }
+
+            String limit = args[2];
+            // Use a CASE expression to handle limit > 0 vs limit <= 0 at runtime.
+            // For limit > 0: take first (limit-1) elements, then rejoin the rest as the last element.
+            // For limit <= 0: return the full split (same as no limit).
+            return "CASE WHEN " + limit + " > 0 THEN "
+                    + "list_concat("
+                    +   baseSplit + "[1:GREATEST((" + limit + ") - 1, 0)], "
+                    +   "CASE WHEN len(" + baseSplit + ") >= " + limit + " THEN "
+                    +     "list_value(array_to_string(" + baseSplit + "[(" + limit + "):], " + pattern + ")) "
+                    +   "ELSE list_value() END"
+                    + ") "
+                    + "ELSE " + baseSplit + " END";
         });
         DIRECT_MAPPINGS.put("concat_ws", "concat_ws");
 

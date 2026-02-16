@@ -644,9 +644,8 @@ public class FunctionRegistryTest extends TestBase {
             String sql = "SELECT split(name, ' ') FROM users";
             String result = FunctionRegistry.rewriteSQL(sql);
 
-            // split is in CUSTOM_TRANSLATORS (not DIRECT_MAPPINGS), so rewriteSQL
-            // does not transform it. DuckDB accepts split() natively.
-            assertThat(result).isEqualTo("SELECT split(name, ' ') FROM users");
+            // split is now rewritten by rewriteSplit() to string_split()
+            assertThat(result).isEqualTo("SELECT string_split(name, ' ') FROM users");
         }
 
         @Test
@@ -690,8 +689,8 @@ public class FunctionRegistryTest extends TestBase {
             String sql = "SELECT upper(split(name, ' ')) FROM users";
             String result = FunctionRegistry.rewriteSQL(sql);
 
-            // split stays as split (CUSTOM_TRANSLATOR, not DIRECT_MAPPING)
-            assertThat(result).isEqualTo("SELECT upper(split(name, ' ')) FROM users");
+            // split is now rewritten by rewriteSplit() to string_split()
+            assertThat(result).isEqualTo("SELECT upper(string_split(name, ' ')) FROM users");
         }
 
         @Test
@@ -720,8 +719,8 @@ public class FunctionRegistryTest extends TestBase {
             String sql = "SELECT split(name, ' '), explode(items) FROM users WHERE array_contains(roles, 'admin') AND startswith(name, 'A')";
             String result = FunctionRegistry.rewriteSQL(sql);
 
-            // split stays as split (CUSTOM_TRANSLATOR, not DIRECT_MAPPING)
-            assertThat(result).contains("split(name, ' ')");
+            // split is now rewritten by rewriteSplit() to string_split()
+            assertThat(result).contains("string_split(name, ' ')");
             assertThat(result).contains("unnest(items)");
             assertThat(result).contains("list_contains(roles, 'admin')");
             assertThat(result).contains("starts_with(name, 'A')");
@@ -749,8 +748,8 @@ public class FunctionRegistryTest extends TestBase {
 
             assertThat(result).contains("\n");
             assertThat(result).contains("unnest(items)");
-            // split stays as split (CUSTOM_TRANSLATOR, not DIRECT_MAPPING)
-            assertThat(result).contains("split(name, ' ')");
+            // split is now rewritten by rewriteSplit() to string_split()
+            assertThat(result).contains("string_split(name, ' ')");
             assertThat(result).contains("as item");
             assertThat(result).contains("as parts");
             assertThat(result).contains("FROM users");
@@ -765,8 +764,8 @@ public class FunctionRegistryTest extends TestBase {
             String sql = "SELECT concat(upper(split(name, ' ')), lower(split(dept, '-')))";
             String result = FunctionRegistry.rewriteSQL(sql);
 
-            // split stays as split (CUSTOM_TRANSLATOR, not DIRECT_MAPPING)
-            assertThat(result).contains("concat(upper(split(name, ' ')), lower(split(dept, '-')))");
+            // split is now rewritten by rewriteSplit() to string_split()
+            assertThat(result).contains("concat(upper(string_split(name, ' ')), lower(string_split(dept, '-')))");
         }
 
         @Test
@@ -852,8 +851,10 @@ public class FunctionRegistryTest extends TestBase {
             String sql = "WHERE size(split(name, ' ')) > 1";
             String result = FunctionRegistry.rewriteSQL(sql);
 
-            // split stays as split (CUSTOM_TRANSLATOR, not DIRECT_MAPPING)
-            assertThat(result).contains("CAST(len(split(name, ' ')) AS INTEGER) > 1");
+            // size is rewritten first, then split is rewritten inside the result
+            // Since size extracts its arg as "split(name, ' ')" and wraps it in len(),
+            // rewriteSplit then processes the inner split call
+            assertThat(result).contains("CAST(len(string_split(name, ' ')) AS INTEGER) > 1");
         }
 
         @Test
