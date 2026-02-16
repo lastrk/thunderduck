@@ -831,23 +831,16 @@ public class FunctionRegistry {
 
         // Bitwise functions
         DIRECT_MAPPINGS.put("bit_count", "bit_count");
-        // bit_get/getbit: handled by CUSTOM_TRANSLATORS (DuckDB get_bit expects BIT type, not INTEGER)
-
-        // bit_get: Spark bit_get(value, pos) extracts the bit at position pos from an integer.
-        // DuckDB get_bit expects BIT type, not INTEGER. Use bitwise math instead.
-        CUSTOM_TRANSLATORS.put("bit_get", args -> {
+        // bit_get/getbit: DuckDB get_bit expects BIT type, not INTEGER. Use bitwise math.
+        // (value >> pos) & 1 extracts the bit at position pos (0 = LSB)
+        FunctionTranslator bitGetImpl = args -> {
             if (args.length != 2) {
                 throw new IllegalArgumentException("bit_get requires exactly 2 arguments");
             }
-            // (value >> pos) & 1 extracts the bit at position pos (0 = LSB)
             return "((" + args[0] + " >> " + args[1] + ") & 1)";
-        });
-        CUSTOM_TRANSLATORS.put("getbit", args -> {
-            if (args.length != 2) {
-                throw new IllegalArgumentException("getbit requires exactly 2 arguments");
-            }
-            return "((" + args[0] + " >> " + args[1] + ") & 1)";
-        });
+        };
+        CUSTOM_TRANSLATORS.put("bit_get", bitGetImpl);
+        CUSTOM_TRANSLATORS.put("getbit", bitGetImpl);
 
         // Bitwise shift functions
         CUSTOM_TRANSLATORS.put("shiftleft", args -> {

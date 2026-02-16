@@ -1,7 +1,6 @@
 package com.thunderduck.expression;
 
 import com.thunderduck.types.DataType;
-import com.thunderduck.types.StringType;
 import com.thunderduck.types.StructField;
 import com.thunderduck.types.StructType;
 import java.util.List;

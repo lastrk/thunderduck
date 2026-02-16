@@ -129,7 +129,6 @@
                 <version>3.3.0</version>
             </plugin>
 
-
             <!-- Surefire Plugin (Test Execution) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -3926,18 +3926,6 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
     }
 
     /**
-     * Resolves polymorphic function names based on argument types from the child schema.
-     *
-     * <p>Some Spark functions (like {@code reverse}) work on both strings and arrays,
-     * but DuckDB requires different function names: {@code reverse()} for strings
-     * and {@code list_reverse()} for arrays. This method resolves the correct function
-     * name by checking the argument type against the child schema.
-     *
-     * @param expr the expression to resolve
-     * @param childSchema the child schema for type resolution (may be null)
-     * @return the expression with resolved function names, or the original if no resolution needed
-     */
-    /**
      * Resolves struct types for UpdateFieldsExpression(DROP) operations.
      * The expression may be directly an UpdateFieldsExpression or wrapped in AliasExpression.
      */
@@ -3949,6 +3937,18 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         }
     }
 
+    /**
+     * Resolves polymorphic function names based on argument types from the child schema.
+     *
+     * <p>Some Spark functions (like {@code reverse}) work on both strings and arrays,
+     * but DuckDB requires different function names: {@code reverse()} for strings
+     * and {@code list_reverse()} for arrays. This method resolves the correct function
+     * name by checking the argument type against the child schema.
+     *
+     * @param expr the expression to resolve
+     * @param childSchema the child schema for type resolution (may be null)
+     * @return the expression with resolved function names, or the original if no resolution needed
+     */
     private Expression resolvePolymorphicFunctions(Expression expr, StructType childSchema) {
         if (childSchema == null) {
             return expr;
