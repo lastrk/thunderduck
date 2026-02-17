@@ -184,8 +184,8 @@ tests/
 ├── scripts/
 │   ├── setup-differential-testing.sh     # One-time setup
 │   ├── run-differential-tests-v2.sh      # Run tests with named groups
-│   ├── start-spark-4.0.1-reference.sh    # Start Spark
-│   └── stop-spark-4.0.1-reference.sh     # Stop Spark
+│   ├── start-spark-4.1.1-reference.sh    # Start Spark
+│   └── stop-spark-4.1.1-reference.sh     # Stop Spark
 │
 ├── integration/
 │   ├── .venv/                            # Python virtual environment

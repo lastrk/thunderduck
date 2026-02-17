@@ -7,7 +7,7 @@ Comparative benchmarking infrastructure for Thunderduck vs Apache Spark on AWS E
 This benchmark suite runs TPC-H and TPC-DS queries using the DataFrame API, comparing:
 - **Thunderduck** - DuckDB-powered Spark Connect server
 - **Apache Spark 3.5.3** - Latest stable Spark 3.x
-- **Apache Spark 4.0.1** - Latest Spark 4.x
+- **Apache Spark 4.1.1** - Latest Spark 4.x
 
 Each engine runs on its own EC2 instance in parallel for fair comparison.
 
@@ -81,11 +81,11 @@ export BENCHMARK_S3_PREFIX=thunderduck-benchmarks  # Optional
 ```bash
 cd benchmarks/cdk
 
-# Deploy with default settings (m6i.xlarge, thunderduck + spark-3.5.3 + spark-4.0.1)
+# Deploy with default settings (m6i.xlarge, thunderduck + spark-3.5.3 + spark-4.1.1)
 npx aws-cdk deploy
 
 # Deploy with custom instance type and engines
-npx aws-cdk deploy -c instance_type=m8g.16xlarge -c engines=thunderduck,spark-3.5.3,spark-4.0.1
+npx aws-cdk deploy -c instance_type=m8g.16xlarge -c engines=thunderduck,spark-3.5.3,spark-4.1.1
 
 # Deploy with custom stack name
 npx aws-cdk deploy -c stack_name=MyBenchmark -c instance_type=c6i.2xlarge

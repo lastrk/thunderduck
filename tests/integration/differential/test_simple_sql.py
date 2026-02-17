@@ -1,7 +1,7 @@
 """
 Simple SQL Differential Tests
 
-Tests basic SQL connectivity comparing Thunderduck against Apache Spark 4.0.1.
+Tests basic SQL connectivity comparing Thunderduck against Apache Spark 4.1.1.
 """
 
 import pytest

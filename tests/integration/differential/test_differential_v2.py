@@ -2,7 +2,7 @@
 TPC-H Differential Testing V2: Apache Spark Connect vs Thunderduck
 
 This test suite runs TPC-H queries on both:
-1. Apache Spark 4.0.1 Connect (reference) - running in Podman container
+1. Apache Spark 4.1.1 Connect (reference) - running in Podman container
 2. Thunderduck Connect (test) - system under test
 
 Results are compared row-by-row with detailed diff output on mismatch.

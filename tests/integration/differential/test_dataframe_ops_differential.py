@@ -1,7 +1,7 @@
 """
 Differential Tests for DataFrame Operations
 
-Tests DataFrame API operations comparing Thunderduck against Apache Spark 4.0.1.
+Tests DataFrame API operations comparing Thunderduck against Apache Spark 4.1.1.
 Converted from test_dataframe_operations.py.
 """
 

@@ -2,7 +2,7 @@
 Multi-dimensional Aggregation Differential Tests
 
 Tests DataFrame API multi-dimensional aggregation functions for parity
-between Apache Spark 4.0.1 and Thunderduck.
+between Apache Spark 4.1.1 and Thunderduck.
 
 Categories tested:
 - pivot() - Rotate rows to columns with aggregation

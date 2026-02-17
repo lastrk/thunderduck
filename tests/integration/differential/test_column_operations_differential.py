@@ -1,6 +1,6 @@
 """
 Differential tests for column manipulation operations: drop, withColumnRenamed, withColumn.
-Verifies Thunderduck matches Spark 4.0.1 behavior exactly.
+Verifies Thunderduck matches Spark 4.1.1 behavior exactly.
 """
 import sys
 from pathlib import Path

@@ -1,7 +1,7 @@
 """
 DataFrame Functions Differential Tests
 
-Tests DataFrame API functions for parity between Apache Spark 4.0.1 and Thunderduck.
+Tests DataFrame API functions for parity between Apache Spark 4.1.1 and Thunderduck.
 Based on Apache Spark's DataFrameFunctionsSuite.
 
 Categories tested:

@@ -1,7 +1,7 @@
 """
 Window Functions Differential Tests
 
-Tests DataFrame API window functions for parity between Apache Spark 4.0.1 and Thunderduck.
+Tests DataFrame API window functions for parity between Apache Spark 4.1.1 and Thunderduck.
 
 Categories tested:
 - Ranking functions: rank(), dense_rank(), row_number(), ntile(), percent_rank(), cume_dist()

@@ -141,7 +141,7 @@ thunderduck/
 
 ### Via Differential Tests (Recommended)
 
-The differential testing framework runs TPC-H queries on both Apache Spark 4.0.1 and Thunderduck, comparing results:
+The differential testing framework runs TPC-H queries on both Apache Spark 4.1.1 and Thunderduck, comparing results:
 
 ```bash
 # One-time setup
@@ -196,7 +196,7 @@ tests/integration/sql/
 
 Based on differential tests at scale factor 0.01:
 
-| Query | Thunderduck | Spark 4.0.1 | Speedup |
+| Query | Thunderduck | Spark 4.1.1 | Speedup |
 |-------|-------------|-------------|---------|
 | Q1 (Scan + Agg) | ~13ms | ~76ms | 5.9x |
 | Q6 (Selective Scan) | ~8ms | ~45ms | 5.6x |

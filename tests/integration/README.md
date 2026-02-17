@@ -1,10 +1,10 @@
 # Thunderduck Integration Tests
 
-Pytest-based integration tests for Thunderduck Spark Connect server using PySpark 4.0.1 client.
+Pytest-based integration tests for Thunderduck Spark Connect server using PySpark 4.1.1 client.
 
 ## Overview
 
-This test suite validates the Spark Connect server implementation by running queries against both Thunderduck and Apache Spark 4.0.1, comparing results for correctness.
+This test suite validates the Spark Connect server implementation by running queries against both Thunderduck and Apache Spark 4.1.1, comparing results for correctness.
 
 ## Directory Structure
 
@@ -13,7 +13,7 @@ tests/integration/
 ├── conftest.py                         # Pytest fixtures
 ├── README.md                           # This file
 │
-├── differential/                       # All tests (vs Apache Spark 4.0.1)
+├── differential/                       # All tests (vs Apache Spark 4.1.1)
 │   ├── test_differential_v2.py         # TPC-H SQL + DataFrame (34 tests)
 │   ├── test_tpcds_differential.py      # TPC-DS SQL + DataFrame (124 tests)
 │   ├── test_tpcds_dataframe_differential.py  # TPC-DS DataFrame API (33 tests)
@@ -42,7 +42,7 @@ tests/integration/
 
 ### Run Differential Tests (Recommended)
 
-Compare Thunderduck against Apache Spark 4.0.1:
+Compare Thunderduck against Apache Spark 4.1.1:
 
 ```bash
 # One-time setup
@@ -84,7 +84,7 @@ python3 -m pytest differential/test_catalog_operations.py -v
 
 ### Differential Tests (`differential/`)
 
-These tests run the same query on both Thunderduck and Apache Spark 4.0.1, comparing results row-by-row.
+These tests run the same query on both Thunderduck and Apache Spark 4.1.1, comparing results row-by-row.
 
 | Suite | Tests | Description |
 |-------|-------|-------------|

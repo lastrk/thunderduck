@@ -2,7 +2,7 @@
 Differential tests for integer overflow behavior.
 
 Validates that Thunderduck produces identical overflow/underflow results
-to Apache Spark 4.0.1 for SUM, arithmetic operations, and aggregate functions.
+to Apache Spark 4.1.1 for SUM, arithmetic operations, and aggregate functions.
 
 Key insight: Spark 4.0 has ANSI mode enabled by default, which throws
 ArithmeticException on overflow instead of silently wrapping. This test

@@ -1,6 +1,6 @@
 """
 Differential tests for JOIN operations with ambiguous column names.
-Verifies Thunderduck matches Spark 4.0.1 behavior exactly.
+Verifies Thunderduck matches Spark 4.1.1 behavior exactly.
 
 These tests verify that Thunderduck correctly handles joins where both
 DataFrames have columns with the same name, using DataFrame column references

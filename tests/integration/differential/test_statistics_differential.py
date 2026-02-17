@@ -2,7 +2,7 @@
 Differential Tests for Statistics Operations
 
 Tests for Spark Connect statistics operations (cov, corr, describe, etc.)
-comparing Thunderduck against Apache Spark 4.0.1.
+comparing Thunderduck against Apache Spark 4.1.1.
 
 Converted from test_statistics_operations.py.
 """

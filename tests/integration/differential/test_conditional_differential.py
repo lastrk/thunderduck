@@ -1,7 +1,7 @@
 """
 Differential tests for conditional expressions (when/otherwise, CASE WHEN).
 
-Compares Thunderduck against Apache Spark 4.0.1 for conditional logic.
+Compares Thunderduck against Apache Spark 4.1.1 for conditional logic.
 """
 
 import pytest

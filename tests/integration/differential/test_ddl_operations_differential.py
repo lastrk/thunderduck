@@ -1,9 +1,9 @@
 """
 Differential tests for DDL/DML operations.
 
-Verifies that Thunderduck's DDL/DML behavior matches Spark 4.0.1 where comparable.
+Verifies that Thunderduck's DDL/DML behavior matches Spark 4.1.1 where comparable.
 
-NOTE: Spark 4.0.1 only supports UPDATE/DELETE on V2 table formats (Delta Lake, Iceberg).
+NOTE: Spark 4.1.1 only supports UPDATE/DELETE on V2 table formats (Delta Lake, Iceberg).
       Standard CREATE TABLE statements create V1 tables that don't support UPDATE/DELETE.
       Therefore, we only test INSERT operations which work on both systems.
 

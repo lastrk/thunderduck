@@ -273,7 +273,7 @@ def main():
     parser.add_argument(
         "--engine",
         required=True,
-        help="Engine to benchmark (thunderduck, spark-3.5.3, spark-4.0.1)",
+        help="Engine to benchmark (thunderduck, spark-3.5.3, spark-4.1.1)",
     )
     parser.add_argument(
         "--benchmark",

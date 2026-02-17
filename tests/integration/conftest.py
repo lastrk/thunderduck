@@ -384,7 +384,7 @@ def dual_server_manager():
     Session-scoped fixture that starts both servers for differential testing.
 
     Starts:
-    - Apache Spark Connect 4.0.1 (reference) on SPARK_PORT or auto-allocated port
+    - Apache Spark Connect 4.1.1 (reference) on SPARK_PORT or auto-allocated port
     - Thunderduck Connect (test) on THUNDERDUCK_PORT or auto-allocated port
 
     When env vars are not set, ports are auto-allocated from the OS, enabling
@@ -464,7 +464,7 @@ def spark_reference(orchestrator, dual_server_manager):
     """
     Module-scoped Spark session connected to Apache Spark Connect (reference).
 
-    This is the reference implementation (official Apache Spark 4.0.1).
+    This is the reference implementation (official Apache Spark 4.1.1).
     One session per test module reduces session creation overhead (143 -> ~36 pairs).
     Includes health check with auto-restart before session creation.
     """

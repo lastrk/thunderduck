@@ -697,7 +697,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                         SqlCommand sqlCommand = plan.getCommand().getSqlCommand();
 
                         String sparkSQL = null;
-                        // In Spark 4.0.1, the 'sql' field is deprecated and replaced with 'input' relation
+                        // In Spark 4.1.1, the 'sql' field is deprecated and replaced with 'input' relation
                         if (sqlCommand.hasInput() && sqlCommand.getInput().hasSql()) {
                             sparkSQL = sqlCommand.getInput().getSql().getQuery();
                         } else if (!sqlCommand.getSql().isEmpty()) {

@@ -1,7 +1,7 @@
 """
 Catalog Operations Differential Tests
 
-Tests for Spark Connect catalog operations comparing Thunderduck against Apache Spark 4.0.1.
+Tests for Spark Connect catalog operations comparing Thunderduck against Apache Spark 4.1.1.
 
 Note: Only operations that have consistent behavior between Spark and DuckDB are tested
 differentially. Operations specific to DuckDB storage (table creation, database management)

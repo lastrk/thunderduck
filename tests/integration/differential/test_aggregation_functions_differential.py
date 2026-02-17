@@ -1,7 +1,7 @@
 """
 Differential tests for aggregation functions (collect_list, collect_set, countDistinct, first, last).
 
-Validates that Thunderduck produces identical results to Apache Spark 4.0.1
+Validates that Thunderduck produces identical results to Apache Spark 4.1.1
 for all aggregation function variants.
 """
 

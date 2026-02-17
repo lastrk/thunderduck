@@ -2,7 +2,7 @@
 Empty DataFrame Differential Tests
 
 Tests that empty DataFrames with schemas are handled identically between
-Thunderduck and Apache Spark 4.0.1.
+Thunderduck and Apache Spark 4.1.1.
 
 This tests the fix for: "No analyze result found!" error when creating
 empty DataFrames with spark.createDataFrame([], schema).

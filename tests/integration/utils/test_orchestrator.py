@@ -422,7 +422,7 @@ class TestOrchestrator:
 
         # Build start commands
         spark_cmd = self.config.get('spark_start_cmd') or [
-            str(Path(self.workspace_dir) / 'tests' / 'scripts' / 'start-spark-4.0.1-reference.sh')
+            str(Path(self.workspace_dir) / 'tests' / 'scripts' / 'start-spark-4.1.1-reference.sh')
         ]
 
         thunderduck_cmd = self.config.get('thunderduck_start_cmd') or [

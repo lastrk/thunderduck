@@ -156,6 +156,12 @@ public class DuckDBRuntime implements AutoCloseable {
             // Set NULL ordering to match Spark SQL
             stmt.execute("SET default_null_order='NULLS FIRST'");
 
+            // Set timezone to match the JVM system timezone so that DuckDB
+            // TIMESTAMPTZ functions (hour, dayofweek, date_trunc, etc.)
+            // return results in the local timezone, matching Spark behavior.
+            stmt.execute(String.format("SET TimeZone='%s'",
+                java.util.TimeZone.getDefault().getID()));
+
             // Register Spark-compatible UDF macros not available natively in DuckDB
             registerSparkCompatMacros(stmt);
 

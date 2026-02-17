@@ -105,7 +105,7 @@ class DualServerManager:
                 self.stop_spark_reference()
 
         # Start the native Spark server
-        script_path = self.workspace_dir / "tests/scripts/start-spark-4.0.1-reference.sh"
+        script_path = self.workspace_dir / "tests/scripts/start-spark-4.1.1-reference.sh"
         if not script_path.exists():
             raise FileNotFoundError(f"Spark Connect start script not found: {script_path}")
 
@@ -152,7 +152,7 @@ class DualServerManager:
             return
 
         print("\nStopping Apache Spark Connect reference server...")
-        script_path = self.workspace_dir / "tests/scripts/stop-spark-4.0.1-reference.sh"
+        script_path = self.workspace_dir / "tests/scripts/stop-spark-4.1.1-reference.sh"
 
         if script_path.exists():
             try:

@@ -297,7 +297,7 @@ Test SQL generation for each operation:
 
 ### Integration Tests (Differential)
 
-Compare against Spark 4.0.1:
+Compare against Spark 4.1.1:
 ```python
 # test_catalog_operations.py
 def test_list_tables(spark_session, thunderduck_session):
@@ -345,7 +345,7 @@ def test_list_tables(spark_session, thunderduck_session):
 
 ## References
 
-- [Spark Catalog API](https://spark.apache.org/docs/4.0.1/api/python/reference/pyspark.sql/api/pyspark.sql.Catalog.html)
+- [Spark Catalog API](https://spark.apache.org/docs/4.1.1/api/python/reference/pyspark.sql/api/pyspark.sql.Catalog.html)
 - [DuckDB Information Schema](https://duckdb.org/docs/sql/information_schema)
 - [Spark Connect Protocol - catalog.proto](../../connect-server/src/main/proto/spark/connect/catalog.proto)
 - [Gap Analysis](../../CURRENT_FOCUS_SPARK_CONNECT_GAP_ANALYSIS.md)

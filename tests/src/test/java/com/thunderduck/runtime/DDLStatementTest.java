@@ -172,11 +172,11 @@ public class DDLStatementTest extends TestBase {
     }
 
     // CATEGORY 2: UPDATE OPERATIONS - REMOVED
-    // UPDATE is only supported on V2 tables (Delta Lake, Iceberg, Hudi) in Spark 4.0.1
+    // UPDATE is only supported on V2 tables (Delta Lake, Iceberg, Hudi) in Spark 4.1.1
     // Standard CREATE TABLE creates V1 tables that don't support UPDATE
 
     // CATEGORY 3: DELETE OPERATIONS - REMOVED
-    // DELETE is only supported on V2 tables (Delta Lake, Iceberg, Hudi) in Spark 4.0.1
+    // DELETE is only supported on V2 tables (Delta Lake, Iceberg, Hudi) in Spark 4.1.1
     // Standard CREATE TABLE creates V1 tables that don't support DELETE
 
     // ========================================

@@ -2,7 +2,7 @@
 TPC-DS DataFrame API Differential Tests
 
 Tests 33 TPC-DS queries implemented using pure PySpark DataFrame API,
-comparing Thunderduck against Apache Spark 4.0.1.
+comparing Thunderduck against Apache Spark 4.1.1.
 
 These queries use only DataFrame operations (no SQL-specific features like
 CTEs, ROLLUP/CUBE, EXISTS, INTERSECT/EXCEPT, or correlated subqueries).

@@ -7,7 +7,7 @@
 # Usage:
 #   ./remote_setup.sh thunderduck          # Setup for Thunderduck
 #   ./remote_setup.sh spark-3.5.3 3.5.3    # Setup for Spark 3.5.3
-#   ./remote_setup.sh spark-4.0.1 4.0.1    # Setup for Spark 4.0.1
+#   ./remote_setup.sh spark-4.1.1 4.1.1    # Setup for Spark 4.1.1
 
 set -e
 

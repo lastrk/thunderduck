@@ -1,7 +1,7 @@
 """
 Temporary View Differential Tests
 
-Tests createOrReplaceTempView functionality comparing Thunderduck against Apache Spark 4.0.1.
+Tests createOrReplaceTempView functionality comparing Thunderduck against Apache Spark 4.1.1.
 """
 
 import pytest

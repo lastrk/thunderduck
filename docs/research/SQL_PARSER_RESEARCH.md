@@ -61,7 +61,7 @@ Spark's Catalyst parser is an ANTLR4-based SQL parser that transforms SQL into l
 <dependency>
     <groupId>org.apache.spark</groupId>
     <artifactId>spark-catalyst_2.13</artifactId>
-    <version>4.0.1</version>
+    <version>4.1.1</version>
     <scope>provided</scope>  <!-- Already in your project -->
 </dependency>
 ```
@@ -350,7 +350,7 @@ If the Scala dependency is a **hard blocker**, the custom ANTLR4 parser is the b
 ### Maven Dependencies
 - [Maven Repository: org.apache.spark » spark-catalyst](https://mvnrepository.com/artifact/org.apache.spark/spark-catalyst)
 - [spark/sql/catalyst/pom.xml at master · apache/spark](https://github.com/apache/spark/blob/master/sql/catalyst/pom.xml)
-- [Building Spark - Spark 4.0.1 Documentation](https://spark.apache.org/docs/latest/building-spark.html)
+- [Building Spark - Spark 4.1.1 Documentation](https://spark.apache.org/docs/latest/building-spark.html)
 
 ---
 

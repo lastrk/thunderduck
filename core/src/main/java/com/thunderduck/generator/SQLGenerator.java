@@ -3721,9 +3721,14 @@ public class SQLGenerator implements com.thunderduck.logical.SQLGenerator {
         } else if (value instanceof java.sql.Timestamp) {
             return "TIMESTAMP '" + value.toString() + "'";
         } else if (value instanceof java.time.Instant instant) {
-            // Format Instant as TIMESTAMP literal
+            // Format Instant as TIMESTAMPTZ literal to preserve UTC semantics.
+            // PySpark sends TIMESTAMP_LTZ values as UTC Instants via Arrow.
+            // Using TIMESTAMPTZ ensures DuckDB functions (hour, dayofweek, etc.)
+            // respect the session timezone (SET TimeZone), while epoch-based
+            // functions (unix_timestamp) correctly return UTC seconds.
             java.time.LocalDateTime ldt = java.time.LocalDateTime.ofInstant(instant, java.time.ZoneOffset.UTC);
-            return "TIMESTAMP '" + ldt.toString().replace("T", " ") + "'";
+            String formatted = ldt.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            return "TIMESTAMPTZ '" + formatted + " UTC'";
         } else if (value instanceof java.time.LocalDateTime) {
             // Format LocalDateTime as TIMESTAMP literal
             return "TIMESTAMP '" + value.toString().replace("T", " ") + "'";

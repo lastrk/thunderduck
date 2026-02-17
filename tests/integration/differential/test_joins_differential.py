@@ -1,7 +1,7 @@
 """
 Differential tests for JOIN operations with explicit ON conditions.
 
-Compares Thunderduck against Apache Spark 4.0.1 for all join types.
+Compares Thunderduck against Apache Spark 4.1.1 for all join types.
 This complements test_using_joins_differential.py which tests USING joins.
 """
 

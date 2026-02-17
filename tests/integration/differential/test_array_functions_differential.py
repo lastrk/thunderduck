@@ -1,6 +1,6 @@
 """
 Differential tests for array/list functions.
-Verifies Thunderduck matches Spark 4.0.1 behavior exactly for array operations.
+Verifies Thunderduck matches Spark 4.1.1 behavior exactly for array operations.
 
 Tests include: split, collect_list, collect_set, size, explode, array_contains, etc.
 """

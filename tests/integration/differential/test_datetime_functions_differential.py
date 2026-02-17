@@ -1,7 +1,7 @@
 """
 Differential tests for date/time functions.
 
-Compares Thunderduck results against Apache Spark 4.0.1 to ensure exact compatibility
+Compares Thunderduck results against Apache Spark 4.1.1 to ensure exact compatibility
 for date extraction, arithmetic, formatting, and truncation operations.
 """
 

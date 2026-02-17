@@ -65,7 +65,7 @@
         Solution: Use 'provided' scope and generate our own protobuf classes with
         the protobuf-maven-plugin using our specified protobuf version (3.25.1).
 
-        Validated: 2025-12-11 - Works with PySpark 4.0.1 client
+        Validated: 2025-12-11 - Works with PySpark 4.1.1 client
         ============================================================================
         -->
         <dependency>

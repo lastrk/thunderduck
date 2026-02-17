@@ -5,7 +5,7 @@ AWS CDK Application for Thunderduck Benchmark Infrastructure
 Deploys EC2 instances, security groups, SSH keys, and IAM roles for benchmarking.
 
 Usage:
-    cdk deploy -c instance_type=m8g.16xlarge -c engines=thunderduck,spark-3.5.3,spark-4.0.1
+    cdk deploy -c instance_type=m8g.16xlarge -c engines=thunderduck,spark-3.5.3,spark-4.1.1
     cdk destroy --force
 """
 import os
@@ -20,7 +20,7 @@ def main():
 
     # Read context parameters
     instance_type = app.node.try_get_context("instance_type") or "m6i.xlarge"
-    engines_str = app.node.try_get_context("engines") or "thunderduck,spark-3.5.3,spark-4.0.1"
+    engines_str = app.node.try_get_context("engines") or "thunderduck,spark-3.5.3,spark-4.1.1"
     engines = [e.strip() for e in engines_str.split(",")]
     stack_name = app.node.try_get_context("stack_name") or "ThunderduckBenchmark"
 

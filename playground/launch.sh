@@ -127,7 +127,7 @@ cleanup() {
     # Kill Spark reference
     if [ "$SPARK_STARTED" = true ]; then
         echo "Stopping Spark reference server..."
-        "$PROJECT_ROOT/tests/scripts/stop-spark-4.0.1-reference.sh" 2>/dev/null || true
+        "$PROJECT_ROOT/tests/scripts/stop-spark-4.1.1-reference.sh" 2>/dev/null || true
     fi
 
     # Force cleanup any remaining processes
@@ -369,7 +369,7 @@ start_spark_reference() {
     fi
 
     echo "Starting Spark reference on port $SPARK_PORT..."
-    "$PROJECT_ROOT/tests/scripts/start-spark-4.0.1-reference.sh"
+    "$PROJECT_ROOT/tests/scripts/start-spark-4.1.1-reference.sh"
     SPARK_STARTED=true
 
     echo -e "${GREEN}✓ Spark reference ready on sc://localhost:$SPARK_PORT${NC}"

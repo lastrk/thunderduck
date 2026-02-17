@@ -2,7 +2,7 @@
 TPC-DS Differential Testing: Apache Spark Connect vs Thunderduck
 
 This test suite runs TPC-DS queries on both:
-1. Apache Spark 4.0.1 Connect (reference) - running natively
+1. Apache Spark 4.1.1 Connect (reference) - running natively
 2. Thunderduck Connect (test) - system under test
 
 Results are compared row-by-row with detailed diff output on mismatch.
@@ -113,7 +113,7 @@ class TestTPCDS_Differential:
     """
     Differential tests for all TPC-DS queries.
 
-    Runs each query on both Apache Spark 4.0.1 and Thunderduck,
+    Runs each query on both Apache Spark 4.1.1 and Thunderduck,
     comparing results row-by-row.
     """
 

@@ -1,6 +1,6 @@
 """
 TPC-H benchmark differential tests (DataFrame API only).
-Verifies Thunderduck matches Spark 4.0.1 behavior exactly for TPC-H queries.
+Verifies Thunderduck matches Spark 4.1.1 behavior exactly for TPC-H queries.
 
 Thunderduck only supports the DataFrame API path (not SparkSQL via spark.sql()),
 so all tests use DataFrame operations exclusively.
