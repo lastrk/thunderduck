@@ -1,0 +1,3 @@
+# DuckDB security properties override for Thunderduck
+# Empty file = use all Java defaults, override nothing.
+# Referenced by tests/integration/utils/server_manager.py

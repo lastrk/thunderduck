@@ -5,7 +5,7 @@
 
 set -e
 
-SPARK_HOME="${SPARK_HOME:-/home/vscode/spark/current}"
+SPARK_HOME="${SPARK_HOME:-$HOME/spark/current}"
 SPARK_VERSION="4.1.1"
 SPARK_PORT="${SPARK_PORT:-15003}"
 SPARK_WAREHOUSE_DIR="${SPARK_WAREHOUSE_DIR:-}"
