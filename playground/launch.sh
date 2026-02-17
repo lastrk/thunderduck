@@ -204,7 +204,28 @@ check_prerequisites() {
 }
 
 # ------------------------------------------------------------------------------
-# Step 2: Setup Python virtual environment
+# Step 2: Ensure git submodules are initialized
+# ------------------------------------------------------------------------------
+
+ensure_submodules() {
+    print_header "Checking Git Submodules"
+
+    if [ -f "$PROJECT_ROOT/thunderduck-duckdb-extension/CMakeLists.txt" ]; then
+        echo -e "${GREEN}✓ Submodules already initialized${NC}"
+    else
+        echo "Initializing git submodules..."
+        cd "$PROJECT_ROOT"
+        git submodule update --init --recursive
+        if [ -f "$PROJECT_ROOT/thunderduck-duckdb-extension/CMakeLists.txt" ]; then
+            echo -e "${GREEN}✓ Submodules initialized${NC}"
+        else
+            echo -e "${YELLOW}! Submodule init failed — extension build will be skipped${NC}"
+        fi
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Step 3: Setup Python virtual environment
 # ------------------------------------------------------------------------------
 
 ensure_python_deps() {
@@ -228,8 +249,22 @@ ensure_python_deps() {
 }
 
 # ------------------------------------------------------------------------------
-# Step 3: Build Thunderduck if needed
+# Step 4: Build Thunderduck if needed
 # ------------------------------------------------------------------------------
+
+can_build_extension() {
+    # Extension build requires cmake, a C++ compiler, and initialized submodule
+    if ! command -v cmake &> /dev/null; then
+        return 1
+    fi
+    if ! command -v c++ &> /dev/null && ! command -v g++ &> /dev/null; then
+        return 1
+    fi
+    if [ ! -f "$PROJECT_ROOT/thunderduck-duckdb-extension/CMakeLists.txt" ]; then
+        return 1
+    fi
+    return 0
+}
 
 build_if_needed() {
     print_header "Checking Thunderduck Build"
@@ -237,8 +272,15 @@ build_if_needed() {
     if [ "$FORCE_REBUILD" = true ]; then
         echo "Force rebuild requested..."
         cd "$PROJECT_ROOT"
-        mvn clean package -DskipTests -pl connect-server -am
-        echo -e "${GREEN}✓ Build complete${NC}"
+        if can_build_extension; then
+            echo "C++ toolchain found — building with Spark compatibility extension..."
+            mvn clean package -DskipTests -Pbuild-extension
+            echo -e "${GREEN}✓ Build complete (strict mode enabled)${NC}"
+        else
+            echo "No C++ toolchain — building without extension (relaxed mode only)..."
+            mvn clean package -DskipTests -pl connect-server -am
+            echo -e "${GREEN}✓ Build complete (relaxed mode only)${NC}"
+        fi
         return
     fi
 
@@ -256,18 +298,25 @@ build_if_needed() {
 
     echo "Building Thunderduck (this may take a minute)..."
     cd "$PROJECT_ROOT"
-    mvn package -DskipTests -pl connect-server -am
-
-    if [ -f "$THUNDERDUCK_JAR" ]; then
-        echo -e "${GREEN}✓ Build complete${NC}"
+    if can_build_extension; then
+        echo "C++ toolchain found — building with Spark compatibility extension..."
+        mvn clean package -DskipTests -Pbuild-extension
+        echo -e "${GREEN}✓ Build complete (strict mode enabled)${NC}"
     else
-        echo -e "${RED}✗ Build failed - JAR not found${NC}"
-        exit 1
+        echo "No C++ toolchain — building without extension (relaxed mode only)..."
+        echo "  Install cmake + C++ compiler for strict Spark type parity"
+        mvn package -DskipTests -pl connect-server -am
+        if [ -f "$THUNDERDUCK_JAR" ]; then
+            echo -e "${GREEN}✓ Build complete (relaxed mode only)${NC}"
+        else
+            echo -e "${RED}✗ Build failed - JAR not found${NC}"
+            exit 1
+        fi
     fi
 }
 
 # ------------------------------------------------------------------------------
-# Step 4: Check and clear ports
+# Step 5: Check and clear ports
 # ------------------------------------------------------------------------------
 
 check_ports() {
@@ -308,7 +357,7 @@ check_ports() {
 }
 
 # ------------------------------------------------------------------------------
-# Step 5: Start Thunderduck server
+# Step 6: Start Thunderduck server
 # ------------------------------------------------------------------------------
 
 start_thunderduck() {
@@ -348,7 +397,7 @@ start_thunderduck() {
 }
 
 # ------------------------------------------------------------------------------
-# Step 6: Start Spark reference server
+# Step 7: Start Spark reference server
 # ------------------------------------------------------------------------------
 
 start_spark_reference() {
@@ -376,7 +425,7 @@ start_spark_reference() {
 }
 
 # ------------------------------------------------------------------------------
-# Step 7: Validate data directories
+# Step 8: Validate data directories
 # ------------------------------------------------------------------------------
 
 validate_data() {
@@ -398,7 +447,7 @@ validate_data() {
 }
 
 # ------------------------------------------------------------------------------
-# Step 8: Launch Marimo notebook
+# Step 9: Launch Marimo notebook
 # ------------------------------------------------------------------------------
 
 launch_marimo() {
@@ -440,6 +489,7 @@ main() {
     print_header "Thunderduck Interactive Playground"
 
     check_prerequisites
+    ensure_submodules
     ensure_python_deps
     build_if_needed
     check_ports
