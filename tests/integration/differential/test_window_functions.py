@@ -761,6 +761,7 @@ class TestAdvancedWindowFunctions:
 
         assert_dataframes_equal(result_ref, result_td, "cumulative_metrics", epsilon=1e-6)
 
+    @pytest.mark.filterwarnings("ignore:WARN WindowExpression.*:UserWarning")
     def test_global_window(self, spark_reference, spark_thunderduck, employee_data):
         """Test window without partition (global window)"""
         df_ref, df_td = employee_data

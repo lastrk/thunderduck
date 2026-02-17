@@ -214,7 +214,15 @@ mvn -f /workspace/pom.xml compile -pl connect-server -DskipTests
 
 ### Spark Compatibility Mode
 
+The run script is the **canonical entrypoint** for all differential tests (local, CI, and scripts). It handles venv detection, PID-file-based server cleanup, and test group selection.
+
 ```bash
+# Via run script (preferred — handles venv, cleanup, CI mode)
+THUNDERDUCK_COMPAT_MODE=strict ./tests/scripts/run-differential-tests-v2.sh tpch
+THUNDERDUCK_COMPAT_MODE=relaxed ./tests/scripts/run-differential-tests-v2.sh tpch
+./tests/scripts/run-differential-tests-v2.sh --ci tpch   # CI mode
+
+# Direct pytest (activate venv first, for development/debugging)
 THUNDERDUCK_COMPAT_MODE=strict python3 -m pytest ...   # strict mode
 THUNDERDUCK_COMPAT_MODE=relaxed python3 -m pytest ...  # relaxed mode
 python3 -m pytest ...                                   # auto mode (default)

@@ -1,8 +1,9 @@
 pytest>=8.0.0
 pytest-timeout>=2.1.0
-pyspark==4.1.1
+pyspark-client==4.1.1
 pandas>=2.0.0
 pyarrow>=11.0.0
 grpcio>=1.48.1
 grpcio-status>=1.48.1
 googleapis-common-protos>=1.56.4
+duckdb>=1.0.0

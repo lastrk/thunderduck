@@ -210,16 +210,9 @@ jobs:
           fi
 
       - name: Install Python dependencies
-        run: pip install pyspark-client==4.1.1 pandas numpy pytest pytest-timeout tabulate
+        run: pip install -r tests/integration/requirements.txt
 
       - name: Run TPC-H differential tests
         env:
-          THUNDERDUCK_TEST_SUITE_CONTINUE_ON_ERROR: 'true'
-          COLLECT_TIMEOUT: '30'
-        run: |
-          export SPARK_HOME="$HOME/spark/spark-4.1.1"
-          cd tests/integration
-          python3 -m pytest \
-            differential/test_differential_v2.py \
-            differential/test_tpch_differential.py \
-            -v --tb=short
+          SPARK_HOME: ~/spark/spark-4.1.1
+        run: ./tests/scripts/run-differential-tests-v2.sh --ci tpch

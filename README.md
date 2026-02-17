@@ -391,11 +391,24 @@ Run specific test suites using named groups:
 Tests support both compatibility modes:
 
 ```bash
-# Run in strict mode (extension loaded, exact Spark type parity)
-THUNDERDUCK_COMPAT_MODE=strict python3 -m pytest differential/ -v
+# Run in strict mode (requires extension build: mvn clean package -DskipTests -Pbuild-extension)
+THUNDERDUCK_COMPAT_MODE=strict ./tests/scripts/run-differential-tests-v2.sh
 
-# Run in relaxed mode (vanilla DuckDB, type-relaxed comparison)
-THUNDERDUCK_COMPAT_MODE=relaxed python3 -m pytest differential/ -v
+# Run in relaxed mode (vanilla DuckDB, no extension needed)
+THUNDERDUCK_COMPAT_MODE=relaxed ./tests/scripts/run-differential-tests-v2.sh
+
+# Auto mode (detect extension at runtime, default)
+./tests/scripts/run-differential-tests-v2.sh
+```
+
+### Advanced: Direct pytest
+
+For development and debugging, you can run pytest directly (activate venv first):
+
+```bash
+source .venv/bin/activate
+cd tests/integration
+THUNDERDUCK_COMPAT_MODE=strict python3 -m pytest differential/test_differential_v2.py -v --tb=long
 ```
 
 ### What It Does

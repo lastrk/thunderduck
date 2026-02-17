@@ -54,6 +54,55 @@ _load_env_file()
 # Track allocated ports for cleanup on exit/signal (set by dual_server_manager fixture)
 _allocated_ports = set()
 
+# PID file for external cleanup (run script, next-run stale process detection)
+_PID_FILE = Path(__file__).parent / "logs" / ".server-pids"
+
+
+def _write_pid_file(entries: list[tuple[str, int, int]]):
+    """Write server PIDs to file for external cleanup. entries: [(name, port, pid), ...]"""
+    _PID_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(_PID_FILE, 'w') as f:
+        for name, port, pid in entries:
+            f.write(f"{name}:{port}:{pid}\n")
+
+
+def _read_pid_file() -> list[tuple[str, int, int]]:
+    """Read server PIDs from file. Returns [(name, port, pid), ...]"""
+    if not _PID_FILE.exists():
+        return []
+    entries = []
+    for line in _PID_FILE.read_text().strip().split('\n'):
+        if ':' in line:
+            parts = line.split(':')
+            if len(parts) == 3:
+                entries.append((parts[0], int(parts[1]), int(parts[2])))
+    return entries
+
+
+def _cleanup_pid_file():
+    """Kill processes from PID file and delete it."""
+    for name, port, pid in _read_pid_file():
+        try:
+            os.killpg(os.getpgid(pid), signal.SIGKILL)
+        except (ProcessLookupError, PermissionError, OSError):
+            pass
+    _PID_FILE.unlink(missing_ok=True)
+
+
+def _get_pid_on_port(port: int) -> int | None:
+    """Get the PID of the process listening on a specific port."""
+    try:
+        result = subprocess.run(
+            ["lsof", "-ti", f":{port}"],
+            capture_output=True, text=True
+        )
+        for pid in result.stdout.strip().split('\n'):
+            if pid:
+                return int(pid)
+    except Exception:
+        pass
+    return None
+
 
 def _allocate_free_port():
     """Get a free port from the OS."""
@@ -84,6 +133,7 @@ def _cleanup_allocated_ports():
     """Kill processes on all ports allocated by this test session."""
     for port in _allocated_ports:
         _kill_process_on_port(port)
+    _PID_FILE.unlink(missing_ok=True)
 
 
 def signal_handler(signum, frame):
@@ -434,6 +484,9 @@ def dual_server_manager():
     """
     global _allocated_ports
 
+    # Kill orphan servers from crashed previous runs (reads stale PID file)
+    _cleanup_pid_file()
+
     compat_mode = os.environ.get('THUNDERDUCK_COMPAT_MODE', None)
     td_port = int(os.environ.get('THUNDERDUCK_PORT', 0)) or _allocate_free_port()
     spark_port = int(os.environ.get('SPARK_PORT', 0)) or _allocate_free_port()
@@ -464,12 +517,35 @@ def dual_server_manager():
         manager.stop_both()
         pytest.exit("Failed to start both servers for differential testing", returncode=1)
 
+    # Write PID file for external cleanup (run script, next-run orphan detection)
+    pid_entries = []
+    td_pid = (manager.thunderduck_manager.process.pid
+              if manager.thunderduck_manager.process else None)
+    spark_pid = _get_pid_on_port(spark_port)
+    if td_pid:
+        pid_entries.append(("thunderduck", td_port, td_pid))
+    if spark_pid:
+        pid_entries.append(("spark", spark_port, spark_pid))
+    if pid_entries:
+        _write_pid_file(pid_entries)
+
+    # Report compatibility mode
+    requested_mode = compat_mode or 'auto'
+    log_file = Path(__file__).parent / "logs" / "server_stderr.log"
+    extension_loaded = False
+    if log_file.exists():
+        log_content = log_file.read_text()
+        extension_loaded = "extension loaded" in log_content.lower()
+    actual_mode = "strict (extension loaded)" if extension_loaded else "relaxed (no extension)"
+    print(f"  Compat mode: requested={requested_mode}, actual={actual_mode}")
+
     yield manager
 
     print("\n" + "="*80)
     print("Stopping both servers...")
     print("="*80)
     manager.stop_both()
+    _PID_FILE.unlink(missing_ok=True)
 
 
 @pytest.fixture(scope="session")
