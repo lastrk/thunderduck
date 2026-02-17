@@ -329,7 +329,7 @@ public class ExpressionConverter {
                           "sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh|" +
                           "radians|degrees|cbrt|hypot|" +
                           "sign|signum|" +
-                          "round|bround|truncate")) {
+                          "round|bround|truncate|median")) {
             return DoubleType.get();
         }
 
@@ -348,8 +348,8 @@ public class ExpressionConverter {
             return IntegerType.get();
         }
 
-        // Functions that return Long (BIGINT) for counts
-        if (lower.matches("count|count_distinct")) {
+        // Functions that return Long (BIGINT) for counts and factorial
+        if (lower.matches("count|count_distinct|factorial|count_if")) {
             return LongType.get();
         }
 
@@ -415,6 +415,32 @@ public class ExpressionConverter {
                 return args.get(0).dataType();
             }
             return new ArrayType(UnresolvedType.arrayElement());
+        }
+
+        // array_append/prepend: appended element could be null → containsNull=true
+        // Both functions: first arg is the array, second is the element
+        if (lower.equals("array_append") || lower.equals("array_prepend")) {
+            com.thunderduck.expression.Expression arrArg = args.get(0);
+            if (arrArg.dataType() instanceof ArrayType arr) {
+                return new ArrayType(arr.elementType(), true);
+            }
+            return new ArrayType(UnresolvedType.arrayElement(), true);
+        }
+
+        // array_compact: removes nulls → containsNull=false
+        if (lower.equals("array_compact")) {
+            if (!args.isEmpty() && args.get(0).dataType() instanceof ArrayType arr) {
+                return new ArrayType(arr.elementType(), false);
+            }
+            return new ArrayType(UnresolvedType.arrayElement(), false);
+        }
+
+        // array_remove: preserves input array type as-is
+        if (lower.equals("array_remove")) {
+            if (!args.isEmpty() && args.get(0).dataType() instanceof ArrayType) {
+                return args.get(0).dataType();
+            }
+            return new ArrayType(UnresolvedType.arrayElement(), true);
         }
 
         // Array set operations (return ArrayType matching first input)
@@ -562,11 +588,45 @@ public class ExpressionConverter {
         if (lower.equals("from_unixtime")) {
             return StringType.get();
         }
-        if (lower.matches("date_add|date_sub|add_months")) {
+        if (lower.matches("date_add|date_sub|add_months|make_date")) {
             return DateType.get();
         }
         if (lower.equals("datediff")) {
             return IntegerType.get();
+        }
+
+        // Binary-returning functions
+        if (lower.equals("unhex") || lower.equals("encode")) {
+            return BinaryType.get();
+        }
+
+        // bit_get returns ByteType
+        if (lower.equals("bit_get")) {
+            return ByteType.get();
+        }
+
+        // json_object_keys returns ARRAY<STRING> (elements can be null)
+        if (lower.equals("json_object_keys")) {
+            return new ArrayType(StringType.get(), true);
+        }
+
+        // sequence returns ARRAY<input_type>
+        if (lower.equals("sequence")) {
+            if (!args.isEmpty()) {
+                return new ArrayType(args.get(0).dataType(), false);
+            }
+            return new ArrayType(IntegerType.get(), false);
+        }
+
+        // from_json with DDL schema
+        if (lower.equals("from_json") && args.size() >= 2) {
+            com.thunderduck.expression.Expression schemaArg = args.get(1);
+            if (schemaArg instanceof com.thunderduck.expression.Literal lit
+                    && lit.value() instanceof String ddl) {
+                try {
+                    return SchemaParser.parse(ddl);
+                } catch (Exception ignored) {}
+            }
         }
 
         // Default to UnresolvedType for unknown functions

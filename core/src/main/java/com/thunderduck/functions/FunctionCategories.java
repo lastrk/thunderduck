@@ -63,7 +63,8 @@ public final class FunctionCategories {
     public static final Set<String> TYPE_PRESERVING = Set.of(
         "abs", "negative", "positive", "unary_minus", "unary_plus",
         "greatest", "least", "mod", "pmod",
-        "coalesce", "nvl", "nvl2", "ifnull", "nullif", "if"
+        "coalesce", "nvl", "nvl2", "ifnull", "nullif", "if",
+        "shiftleft", "shiftright"
     );
 
     /**
@@ -71,7 +72,8 @@ public final class FunctionCategories {
      */
     public static final Set<String> BOOLEAN_RETURNING = Set.of(
         "array_contains", "arrays_overlap", "isnull", "isnotnull", "isnan",
-        "contains", "startswith", "endswith", "like", "rlike", "regexp", "regexp_like"
+        "contains", "startswith", "endswith", "like", "rlike", "regexp", "regexp_like",
+        "bool_and", "bool_or"
     );
 
     /**
@@ -79,7 +81,8 @@ public final class FunctionCategories {
      * Position functions in Spark return Int, not Long.
      */
     public static final Set<String> INTEGER_RETURNING = Set.of(
-        "instr", "locate", "position"
+        "instr", "locate", "position",
+        "levenshtein", "octet_length", "bit_length", "cardinality", "bit_count"
     );
 
     /**

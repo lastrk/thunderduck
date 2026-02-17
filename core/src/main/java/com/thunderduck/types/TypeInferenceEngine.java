@@ -60,10 +60,10 @@ public final class TypeInferenceEngine {
         "substring", "substr", "left", "right",
         "replace", "translate", "regexp_replace", "regexp_extract",
         "split_part", "initcap", "format_string", "printf",
-        "from_unixtime", "base64", "unbase64", "hex", "unhex", "md5", "sha1", "sha2");
+        "from_unixtime", "base64", "unbase64", "hex", "md5", "sha1", "sha2");
 
     private static final Set<String> DATE_RETURNING_FUNCTIONS = Set.of(
-        "to_date", "last_day", "next_day", "date_add", "date_sub", "add_months");
+        "to_date", "last_day", "next_day", "date_add", "date_sub", "add_months", "make_date");
 
     private static final Set<String> TIMESTAMP_RETURNING_FUNCTIONS = Set.of(
         "to_timestamp", "date_trunc");
@@ -76,7 +76,7 @@ public final class TypeInferenceEngine {
         "length", "char_length", "character_length");
 
     private static final Set<String> LONG_RETURNING_FUNCTIONS = Set.of(
-        "unix_timestamp", "array_position");
+        "unix_timestamp", "array_position", "factorial");
 
     private static final Set<String> DOUBLE_RETURNING_MATH_FUNCTIONS = Set.of(
         "sqrt", "log", "ln", "log10", "log2", "exp", "expm1",
@@ -1407,6 +1407,63 @@ public final class TypeInferenceEngine {
                 }
             }
 
+            // Binary-returning functions
+            if (funcName.equals("unhex") || funcName.equals("encode")) {
+                return BinaryType.get();
+            }
+
+            // bit_get returns ByteType (single bit value)
+            if (funcName.equals("bit_get")) {
+                return ByteType.get();
+            }
+
+            // array_append/array_prepend: result can contain nulls (appended element could be null)
+            // Both functions: first arg is the array, second is the element
+            if (funcName.equals("array_append") || funcName.equals("array_prepend")) {
+                DataType argType = resolveType(func.arguments().get(0), schema);
+                if (argType instanceof ArrayType arr) {
+                    return new ArrayType(arr.elementType(), true);
+                }
+                return new ArrayType(StringType.get(), true);
+            }
+
+            // array_compact: removes nulls, so containsNull = false
+            if (funcName.equals("array_compact")) {
+                DataType argType = resolveType(func.arguments().get(0), schema);
+                if (argType instanceof ArrayType arr) {
+                    return new ArrayType(arr.elementType(), false);
+                }
+                return new ArrayType(StringType.get(), false);
+            }
+
+            // array_remove: preserves input array type as-is
+            if (funcName.equals("array_remove")) {
+                DataType argType = resolveType(func.arguments().get(0), schema);
+                if (argType instanceof ArrayType) return argType;
+                return new ArrayType(StringType.get(), true);
+            }
+
+            // json_object_keys always returns ARRAY<STRING> (elements can be null)
+            if (funcName.equals("json_object_keys")) {
+                return new ArrayType(StringType.get(), true);
+            }
+
+            // sequence(start, stop) returns ARRAY<input_type>
+            if (funcName.equals("sequence")) {
+                DataType argType = resolveType(func.arguments().get(0), schema);
+                return new ArrayType(argType, false);
+            }
+
+            // from_json with DDL schema — parse schema to determine struct type
+            if (funcName.equals("from_json") && func.arguments().size() >= 2) {
+                Expression schemaArg = func.arguments().get(1);
+                if (schemaArg instanceof Literal lit && lit.value() instanceof String ddl) {
+                    try {
+                        return SchemaParser.parse(ddl);
+                    } catch (Exception ignored) {}
+                }
+            }
+
             // Aggregate functions: resolve return type based on argument type
             // This handles aggregate functions when used in composite expressions
             // (e.g., SUM(a) / SUM(b)) or in implicit aggregation (SELECT agg(col) FROM t
@@ -1425,6 +1482,10 @@ public final class TypeInferenceEngine {
                 upperFuncName.equals("SKEWNESS") || upperFuncName.equals("KURTOSIS") ||
                 upperFuncName.equals("PERCENTILE") || upperFuncName.equals("PERCENTILE_APPROX") ||
                 upperFuncName.equals("APPROX_COUNT_DISTINCT") ||
+                upperFuncName.equals("COUNT_IF") || upperFuncName.equals("MEDIAN") ||
+                upperFuncName.equals("BOOL_AND") || upperFuncName.equals("BOOL_OR") ||
+                upperFuncName.equals("BIT_AND") || upperFuncName.equals("BIT_OR") ||
+                upperFuncName.equals("BIT_XOR") ||
                 upperFuncName.equals("REGR_COUNT") || upperFuncName.equals("REGR_R2") ||
                 upperFuncName.equals("REGR_AVGX") || upperFuncName.equals("REGR_AVGY") ||
                 upperFuncName.equals("REGR_SXX") || upperFuncName.equals("REGR_SYY") ||
@@ -1650,6 +1711,21 @@ public final class TypeInferenceEngine {
                 return ByteType.get();
             case "GROUPING_ID":
                 return LongType.get();
+
+            // count_if returns Long (count of truthy values)
+            case "COUNT_IF":
+                return LongType.get();
+
+            // median returns Double
+            case "MEDIAN":
+                return DoubleType.get();
+
+            // bool_and/bool_or return Boolean
+            case "BOOL_AND":
+            case "BOOL_OR":
+                return BooleanType.get();
+
+            // BIT_AND, BIT_OR, BIT_XOR: default case returns argType (correct)
 
             default:
                 return argType != null ? argType : StringType.get();

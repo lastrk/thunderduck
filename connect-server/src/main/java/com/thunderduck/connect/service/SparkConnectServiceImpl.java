@@ -1651,6 +1651,10 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             return org.apache.spark.connect.proto.DataType.newBuilder()
                 .setBoolean(org.apache.spark.connect.proto.DataType.Boolean.newBuilder().build())
                 .build();
+        } else if (dataType instanceof com.thunderduck.types.BinaryType) {
+            return org.apache.spark.connect.proto.DataType.newBuilder()
+                .setBinary(org.apache.spark.connect.proto.DataType.Binary.newBuilder().build())
+                .build();
         } else if (dataType instanceof com.thunderduck.types.DateType) {
             return org.apache.spark.connect.proto.DataType.newBuilder()
                 .setDate(org.apache.spark.connect.proto.DataType.Date.newBuilder().build())
@@ -1906,6 +1910,9 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             return com.thunderduck.types.DateType.get();
         } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Timestamp) {
             return com.thunderduck.types.TimestampType.get();
+        } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Binary ||
+                   arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.LargeBinary) {
+            return com.thunderduck.types.BinaryType.get();
         } else if (arrowType instanceof org.apache.arrow.vector.types.pojo.ArrowType.Decimal decimalType) {
             return new com.thunderduck.types.DecimalType(decimalType.getPrecision(), decimalType.getScale());
         }
