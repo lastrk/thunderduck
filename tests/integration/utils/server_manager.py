@@ -4,25 +4,24 @@ Server Manager for Thunderduck Spark Connect Integration Tests
 Manages the lifecycle of the Spark Connect server for integration testing.
 """
 
-import subprocess
-import time
-import socket
 import os
 import signal
+import socket
+import subprocess
+import time
 from pathlib import Path
-from typing import Optional
 
-from port_utils import is_port_listening, wait_for_port
+from port_utils import wait_for_port
 
 
 class ServerManager:
     """Manages Spark Connect server lifecycle for integration tests"""
 
-    def __init__(self, host: str = "localhost", port: int = 15002, compat_mode: Optional[str] = None):
+    def __init__(self, host: str = "localhost", port: int = 15002, compat_mode: str | None = None):
         self.host = host
         self.port = port
         self.compat_mode = compat_mode  # "strict", "relaxed", or None (auto)
-        self.process: Optional[subprocess.Popen] = None
+        self.process: subprocess.Popen | None = None
         self.workspace_dir = Path(__file__).parent.parent.parent.parent
         # Allow overriding the JAR directory via environment variable
         jar_dir = os.environ.get("THUNDERDUCK_JAR_DIR")
@@ -125,7 +124,7 @@ class ServerManager:
             # Print last lines of error log
             if stderr_file.exists():
                 print("\nLast 20 lines of stderr:")
-                with open(stderr_file, 'r') as f:
+                with open(stderr_file) as f:
                     lines = f.readlines()
                     for line in lines[-20:]:
                         print(f"  {line.rstrip()}")

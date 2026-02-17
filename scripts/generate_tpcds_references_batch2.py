@@ -2,10 +2,12 @@
 """Generate Spark reference data for TPC-DS Batch 2 (Q6-Q10)"""
 
 import json
-from pathlib import Path
-from pyspark.sql import SparkSession
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+from pathlib import Path
+
+from pyspark.sql import SparkSession
+
 
 BATCH_2_QUERIES = [6, 7, 8, 9, 10]
 
@@ -81,7 +83,7 @@ def main():
 
             print(f"  ✓ {len(rows)} rows")
             print(f"  ✓ Columns: {', '.join(result.columns[:5])}{'...' if len(result.columns) > 5 else ''}")
-            print(f"  ✓ Saved")
+            print("  ✓ Saved")
             results[query_num] = {"success": True, "rows": len(rows)}
 
         except Exception as e:
@@ -97,7 +99,7 @@ def main():
     print(f"\n✓ Successful: {success}/{len(BATCH_2_QUERIES)}")
 
     if success > 0:
-        print(f"\nReady for validation:")
+        print("\nReady for validation:")
         for qnum in sorted(results.keys()):
             if results[qnum].get("success"):
                 print(f"  TPC-DS Q{qnum}: {results[qnum]['rows']} rows")

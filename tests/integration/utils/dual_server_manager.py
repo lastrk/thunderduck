@@ -7,14 +7,14 @@ for differential testing.
 
 import os
 import shutil
+import socket
 import subprocess
 import tempfile
 import time
-import socket
 from pathlib import Path
-from typing import Optional, Tuple
+
+from port_utils import wait_for_port as _wait_for_port
 from server_manager import ServerManager
-from port_utils import is_port_listening, wait_for_port as _wait_for_port
 
 
 class DualServerManager:
@@ -24,7 +24,7 @@ class DualServerManager:
         self,
         thunderduck_port: int = 15002,
         spark_reference_port: int = 15003,
-        compat_mode: Optional[str] = None
+        compat_mode: str | None = None
     ):
         """
         Initialize dual server manager
@@ -95,7 +95,7 @@ class DualServerManager:
 
         # Check if process is already running
         if self.is_spark_process_running():
-            print(f"✓ Spark Connect process already running")
+            print("✓ Spark Connect process already running")
             if self.wait_for_port(self.spark_reference_port, timeout=10):
                 print(f"✓ Spark Connect server ready on port {self.spark_reference_port}")
                 self.spark_container_running = True
@@ -109,7 +109,7 @@ class DualServerManager:
         if not script_path.exists():
             raise FileNotFoundError(f"Spark Connect start script not found: {script_path}")
 
-        print(f"Starting Spark Connect server...")
+        print("Starting Spark Connect server...")
         print(f"  Warehouse dir: {self._spark_warehouse_dir}")
         try:
             env = os.environ.copy()
@@ -125,13 +125,13 @@ class DualServerManager:
             )
 
             if result.returncode != 0:
-                print(f"✗ Failed to start Spark Connect server")
+                print("✗ Failed to start Spark Connect server")
                 print(f"STDOUT: {result.stdout}")
                 print(f"STDERR: {result.stderr}")
                 return False
 
         except subprocess.TimeoutExpired:
-            print(f"✗ Timeout starting Spark Connect server")
+            print("✗ Timeout starting Spark Connect server")
             return False
         except Exception as e:
             print(f"✗ Error starting Spark Connect server: {e}")
@@ -192,7 +192,7 @@ class DualServerManager:
         print("\nStopping Thunderduck Connect server...")
         self.thunderduck_manager.stop()
 
-    def start_both(self, timeout: int = 60) -> Tuple[bool, bool]:
+    def start_both(self, timeout: int = 60) -> tuple[bool, bool]:
         """
         Start both servers
 

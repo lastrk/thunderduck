@@ -2,10 +2,12 @@
 """Generate Spark reference data for TPC-DS Batch 4 (Q16-Q20)"""
 
 import json
-from pathlib import Path
-from pyspark.sql import SparkSession
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+from pathlib import Path
+
+from pyspark.sql import SparkSession
+
 
 BATCH_4_QUERIES = [16, 17, 18, 19, 20]
 
@@ -35,7 +37,7 @@ def main():
     print("="*80)
 
     spark = SparkSession.builder.appName("TPCDSRefBatch4").getOrCreate()
-    print(f"\n✓ Spark session created")
+    print("\n✓ Spark session created")
 
     # Load TPC-DS tables
     data_dir = Path("/workspace/data/tpcds_sf1")
@@ -46,7 +48,7 @@ def main():
         path = str(data_dir / f"{table}.parquet")
         df = spark.read.parquet(path)
         df.createOrReplaceTempView(table)
-    print(f"  ✓ All loaded")
+    print("  ✓ All loaded")
 
     # Generate references
     queries_dir = Path("/workspace/benchmarks/tpcds_queries")

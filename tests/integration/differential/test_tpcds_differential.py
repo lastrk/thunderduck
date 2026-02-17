@@ -18,10 +18,12 @@ Exclusions:
 - Q90: Thunderduck-only test (Spark reference server throws DIVIDE_BY_ZERO)
 """
 
-import pytest
-import time
 import sys
+import time
 from pathlib import Path
+
+import pytest
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -86,7 +88,7 @@ def run_differential_query(
     print(f"✓ Thunderduck completed in {td_time:.3f}s")
 
     # Performance summary
-    print(f"\nPerformance:")
+    print("\nPerformance:")
     print(f"  Spark Reference: {ref_time:.3f}s")
     print(f"  Thunderduck:     {td_time:.3f}s")
     if td_time > 0:

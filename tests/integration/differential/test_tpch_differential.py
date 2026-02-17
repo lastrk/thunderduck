@@ -10,12 +10,14 @@ the tpch_tables_reference and tpch_tables_thunderduck fixtures from conftest.py.
 """
 import sys
 from pathlib import Path
+
 import pytest
 
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.dataframe_diff import assert_dataframes_equal
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
+from utils.dataframe_diff import assert_dataframes_equal
 
 
 @pytest.mark.differential

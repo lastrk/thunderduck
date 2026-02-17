@@ -10,15 +10,15 @@ Categories tested:
 - Aggregate window functions: sum(), avg(), min(), max() over windows
 """
 
-import pytest
-from pyspark.sql import functions as F
-from pyspark.sql.window import Window
-from pyspark.sql.types import (
-    StructType, StructField, StringType, IntegerType, DoubleType, DateType
-)
-
 import sys
 from pathlib import Path
+
+import pytest
+from pyspark.sql import functions as F
+from pyspark.sql.types import DoubleType, IntegerType, StringType, StructField, StructType
+from pyspark.sql.window import Window
+
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal
 

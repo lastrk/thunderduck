@@ -2,10 +2,12 @@
 """Generate Spark reference data for first batch of TPC-DS queries (Q1-Q5)"""
 
 import json
-from pathlib import Path
-from pyspark.sql import SparkSession
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+from pathlib import Path
+
+from pyspark.sql import SparkSession
+
 
 # First batch - simpler queries to validate approach
 BATCH_1_QUERIES = [1, 2, 3, 4, 5]
@@ -98,7 +100,7 @@ def main():
     print(f"\n✓ Successful: {success}/{len(BATCH_1_QUERIES)}")
 
     if success > 0:
-        print(f"\nReady for validation:")
+        print("\nReady for validation:")
         for qnum, result in results.items():
             if result.get("success"):
                 print(f"  TPC-DS Q{qnum}: {result['rows']} rows")

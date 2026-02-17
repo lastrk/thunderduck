@@ -15,21 +15,22 @@ Based on analysis, 34 out of 99 TPC-DS queries can be implemented without:
 Compatible queries: [3, 7, 9, 12, 13, 15, 17, 19, 20, 25, 26, 29, 32, 37, 40, 41, 42, 43, 45, 48, 50, 52, 55, 62, 71, 72, 82, 84, 85, 91, 92, 96, 98, 99]
 """
 
-from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import (
-    col, sum as spark_sum, avg as spark_avg, count, max as spark_max, min as spark_min,
-    when, lit, round as spark_round, coalesce, substring, upper, lower, trim,
-    year, month, quarter, dayofmonth, weekofyear,
-    datediff, date_add, date_sub, to_date,
-    desc, asc, expr, broadcast, window, row_number, rank, dense_rank,
-    first, last, stddev, variance, collect_list, collect_set,
-    countDistinct, abs as spark_abs, sqrt, ceil, floor,
-    concat, concat_ws, split, regexp_extract, regexp_replace,
-    isnan, isnull, monotonically_increasing_id
-)
-from pyspark.sql.window import Window
-from typing import Dict, Callable, Optional
 import logging
+from collections.abc import Callable
+
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import avg as spark_avg
+from pyspark.sql.functions import (
+    col,
+    concat_ws,
+    count,
+    lit,
+    substring,
+    when,
+)
+from pyspark.sql.functions import sum as spark_sum
+from pyspark.sql.window import Window
+
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +119,6 @@ class TpcdsDataFrameQueries:
         Uses CASE statements for bucketing
         """
         store_sales = spark.table("store_sales")
-        reason = spark.table("reason")
 
         # First, let's understand the bucketing logic from the SQL
         # We'll need to read the SQL to implement the exact CASE logic
@@ -506,7 +506,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q29(spark: SparkSession) -> DataFrame:
         """Query 29: Store and catalog returns analysis"""
@@ -596,7 +596,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q37(spark: SparkSession) -> DataFrame:
         """Query 37: Item and inventory analysis"""
@@ -623,7 +623,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q40(spark: SparkSession) -> DataFrame:
         """Query 40: Catalog and store sales returns"""
@@ -660,7 +660,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q41(spark: SparkSession) -> DataFrame:
         """Query 41: Popular product items"""
@@ -686,7 +686,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q42(spark: SparkSession) -> DataFrame:
         """Query 42: Store sales by date and item category"""
@@ -711,7 +711,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q43(spark: SparkSession) -> DataFrame:
         """Query 43: Store sales by day of week analysis"""
@@ -743,7 +743,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q45(spark: SparkSession) -> DataFrame:
         """Query 45: Web sales for customers in specific zip codes"""
@@ -773,7 +773,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q48(spark: SparkSession) -> DataFrame:
         """Query 48: Store sales by customer demographics"""
@@ -817,7 +817,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q50(spark: SparkSession) -> DataFrame:
         """Query 50: Store returns analysis"""
@@ -856,7 +856,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q52(spark: SparkSession) -> DataFrame:
         """Query 52: Item brand year-over-year analysis"""
@@ -881,7 +881,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q55(spark: SparkSession) -> DataFrame:
         """Query 55: Item brand manager analysis"""
@@ -906,7 +906,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q62(spark: SparkSession) -> DataFrame:
         """Query 62: Web site shipping analysis"""
@@ -946,7 +946,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q71(spark: SparkSession) -> DataFrame:
         """Query 71: Cross-channel time analysis"""
@@ -1018,7 +1018,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q72(spark: SparkSession) -> DataFrame:
         """Query 72: Catalog and web promotional analysis"""
@@ -1066,7 +1066,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q82(spark: SparkSession) -> DataFrame:
         """Query 82: Item inventory and price comparison"""
@@ -1093,7 +1093,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q84(spark: SparkSession) -> DataFrame:
         """Query 84: Customer income and location"""
@@ -1127,7 +1127,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q85(spark: SparkSession) -> DataFrame:
         """Query 85: Web page and sales analysis"""
@@ -1186,7 +1186,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q91(spark: SparkSession) -> DataFrame:
         """Query 91: Catalog returns by call center"""
@@ -1235,7 +1235,7 @@ class TpcdsDataFrameQueries:
             web_sales
             .join(date_dim, web_sales.ws_sold_date_sk == date_dim.d_date_sk)
             .filter(
-                (date_dim.d_date.between(lit("2000-01-27"), lit("2000-04-26")))
+                date_dim.d_date.between(lit("2000-01-27"), lit("2000-04-26"))
             )
             .join(item, web_sales.ws_item_sk == item.i_item_sk)
             .filter(item.i_manufact_id == 350)
@@ -1252,7 +1252,7 @@ class TpcdsDataFrameQueries:
             .filter(item.i_manufact_id == 350)
             .join(date_dim, web_sales.ws_sold_date_sk == date_dim.d_date_sk)
             .filter(
-                (date_dim.d_date.between(lit("2000-01-27"), lit("2000-04-26")))
+                date_dim.d_date.between(lit("2000-01-27"), lit("2000-04-26"))
             )
             .agg(spark_sum("ws_ext_discount_amt").alias("excess_discount_amount"))
             .orderBy("excess_discount_amount")
@@ -1261,7 +1261,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q96(spark: SparkSession) -> DataFrame:
         """Query 96: Store sales time series count"""
@@ -1288,7 +1288,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q98(spark: SparkSession) -> DataFrame:
         """Query 98: Store sales by item category window"""
@@ -1328,7 +1328,7 @@ class TpcdsDataFrameQueries:
 
         return result
 
-    
+
     @staticmethod
     def q99(spark: SparkSession) -> DataFrame:
         """Query 99: Catalog shipping analysis"""
@@ -1371,7 +1371,7 @@ class TpcdsDataFrameQueries:
 COMPATIBLE_QUERIES = [3, 7, 9, 12, 13, 15, 17, 19, 20, 25, 26, 29, 32, 37, 40, 41, 42, 43, 45, 48, 50, 52, 55, 62, 71, 82, 84, 85, 91, 92, 96, 98, 99]
 
 # Query implementations mapping
-QUERY_IMPLEMENTATIONS: Dict[int, Callable] = {
+QUERY_IMPLEMENTATIONS: dict[int, Callable] = {
     3: TpcdsDataFrameQueries.q3,
     7: TpcdsDataFrameQueries.q7,
     9: TpcdsDataFrameQueries.q9,
@@ -1409,14 +1409,14 @@ QUERY_IMPLEMENTATIONS: Dict[int, Callable] = {
 }
 
 
-def get_query_implementation(query_num: int) -> Optional[Callable]:
+def get_query_implementation(query_num: int) -> Callable | None:
     """Get the DataFrame implementation for a query number"""
     if query_num not in COMPATIBLE_QUERIES:
         return None
     return QUERY_IMPLEMENTATIONS.get(query_num)
 
 
-def run_query(spark: SparkSession, query_num: int) -> Optional[DataFrame]:
+def run_query(spark: SparkSession, query_num: int) -> DataFrame | None:
     """Run a specific TPC-DS query using DataFrame API"""
     implementation = get_query_implementation(query_num)
     if implementation is None:
@@ -1434,4 +1434,4 @@ def list_incompatible_queries() -> list:
     """Return list of queries that require SQL features not available in DataFrame API"""
     all_queries = set(range(1, 100))
     compatible = set(COMPATIBLE_QUERIES)
-    return sorted(list(all_queries - compatible))
+    return sorted(all_queries - compatible)

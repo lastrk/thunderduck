@@ -9,8 +9,9 @@ Usage:
 """
 
 import argparse
-import duckdb
 from pathlib import Path
+
+import duckdb
 
 
 def parse_args():
@@ -89,7 +90,7 @@ def main():
         total_size += size_mb
         print(f"   Done - {table}.parquet ({size_mb:.2f} MB)")
 
-    print(f"\n5. Summary:")
+    print("\n5. Summary:")
     print(f"   Tables: {len(tables)}")
     print(f"   Total size: {total_size:.2f} MB")
     print(f"   Location: {output_dir}")
@@ -99,7 +100,7 @@ def main():
     print("\n" + "="*80)
     print("TPC-DS DATA GENERATION COMPLETE")
     print("="*80)
-    print(f"\nData ready for TPC-DS query validation!")
+    print("\nData ready for TPC-DS query validation!")
 
 if __name__ == "__main__":
     main()

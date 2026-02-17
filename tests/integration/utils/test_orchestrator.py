@@ -17,16 +17,14 @@ import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 from pyspark.sql import DataFrame, Row, SparkSession
 
 from .exceptions import (
-    HardError,
     HealthCheckError,
     QueryTimeoutError,
     ServerConnectionError,
-    ServerCrashError,
     ServerStartupError,
 )
 from .port_utils import is_port_listening
@@ -39,7 +37,7 @@ from .port_utils import is_port_listening
 @dataclass
 class TimingStats:
     """Statistics for a timing category."""
-    samples: List[float] = field(default_factory=list)
+    samples: list[float] = field(default_factory=list)
 
     @property
     def count(self) -> int:
@@ -154,15 +152,15 @@ class TimingCollector:
 class ServerSupervisor:
     """Manages server processes with health monitoring."""
 
-    def __init__(self, name: str, port: int, start_cmd: List[str], working_dir: str = None):
+    def __init__(self, name: str, port: int, start_cmd: list[str], working_dir: str = None):
         self.name = name
         self.port = port
         self.start_cmd = start_cmd
         self.working_dir = working_dir or os.getcwd()
-        self.process: Optional[subprocess.Popen] = None
-        self.stdout_log: List[str] = []
-        self.stderr_log: List[str] = []
-        self._monitor_thread: Optional[threading.Thread] = None
+        self.process: subprocess.Popen | None = None
+        self.stdout_log: list[str] = []
+        self.stderr_log: list[str] = []
+        self._monitor_thread: threading.Thread | None = None
         self._stop_monitoring = threading.Event()
         self._log_lock = threading.Lock()
 
@@ -262,7 +260,7 @@ class ServerSupervisor:
         """Check if server process is still running."""
         return self.process is not None and self.process.poll() is None
 
-    def check_health(self, timeout: int = 2) -> Tuple[bool, Optional[str]]:
+    def check_health(self, timeout: int = 2) -> tuple[bool, str | None]:
         """Active health check - verify server responds.
 
         Args:
@@ -279,7 +277,7 @@ class ServerSupervisor:
 
         return True, None
 
-    def get_logs(self, tail: int = 100) -> Dict[str, List[str]]:
+    def get_logs(self, tail: int = 100) -> dict[str, list[str]]:
         """Get recent stdout/stderr logs.
 
         Args:
@@ -364,7 +362,7 @@ class TestOrchestrator:
     DEFAULT_HEALTH_CHECK_TIMEOUT = 2
     DEFAULT_SERVER_STARTUP_TIMEOUT = 60
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """Initialize the orchestrator.
 
         Args:
@@ -397,14 +395,14 @@ class TestOrchestrator:
         self.workspace_dir = config.get('workspace_dir', '/workspace')
 
         # Server supervisors
-        self.spark_supervisor: Optional[ServerSupervisor] = None
-        self.thunderduck_supervisor: Optional[ServerSupervisor] = None
+        self.spark_supervisor: ServerSupervisor | None = None
+        self.thunderduck_supervisor: ServerSupervisor | None = None
 
         # Timing collector
         self.timings = TimingCollector()
 
         # Track active sessions for cleanup (set avoids duplicates, discard() is no-raise)
-        self._active_sessions: Set[SparkSession] = set()
+        self._active_sessions: set[SparkSession] = set()
 
         # Diagnostic log directory
         self.log_dir = Path(self.workspace_dir) / 'tests' / 'integration' / 'logs'
@@ -630,7 +628,7 @@ class TestOrchestrator:
 
         return result[0]
 
-    def collect_result(self, df: DataFrame, server: str, timeout: int = None) -> List[Row]:
+    def collect_result(self, df: DataFrame, server: str, timeout: int = None) -> list[Row]:
         """Collect DataFrame with timeout and timing.
 
         Args:
@@ -651,7 +649,7 @@ class TestOrchestrator:
         self.timings.record_collect_time(server, time.perf_counter() - start)
         return result
 
-    def _collect_with_timeout(self, df: DataFrame, timeout: int, server: str) -> List[Row]:
+    def _collect_with_timeout(self, df: DataFrame, timeout: int, server: str) -> list[Row]:
         """Collect with timeout to detect server hangs.
 
         Args:

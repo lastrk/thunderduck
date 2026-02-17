@@ -9,15 +9,12 @@ Converted from test_complex_types.py.
 Uses Spark-compatible SQL syntax for struct/array/map literals.
 """
 
-import pytest
 import sys
 from pathlib import Path
-from pyspark.sql import functions as F
+
+import pytest
 from pyspark.sql.functions import col, lit
-from pyspark.sql.types import (
-    StructType, StructField, StringType, IntegerType, LongType,
-    ArrayType, MapType
-)
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal

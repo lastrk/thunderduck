@@ -8,12 +8,13 @@ DataFrames have columns with the same name, using DataFrame column references
 """
 import sys
 from pathlib import Path
+
 import pytest
 
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.dataframe_diff import assert_dataframes_equal
 from pyspark.sql import functions as F
-from pyspark.sql import Row
+from utils.dataframe_diff import assert_dataframes_equal
 
 
 @pytest.mark.differential

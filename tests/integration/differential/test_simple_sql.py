@@ -4,9 +4,12 @@ Simple SQL Differential Tests
 Tests basic SQL connectivity comparing Thunderduck against Apache Spark 4.1.1.
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
+
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal
 

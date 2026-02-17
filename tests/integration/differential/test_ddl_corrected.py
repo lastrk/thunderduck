@@ -3,7 +3,9 @@ Corrected differential test - using proper Spark SQL syntax.
 """
 import sys
 from pathlib import Path
+
 import pytest
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal

@@ -5,13 +5,13 @@ Compares Thunderduck against Apache Spark 4.1.1 for all join types.
 This complements test_using_joins_differential.py which tests USING joins.
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 from pyspark.sql import functions as F
-from pyspark.sql.types import (
-    StructType, StructField, IntegerType, StringType, DoubleType
-)
+from pyspark.sql.types import IntegerType, StringType, StructField, StructType
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal

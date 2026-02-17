@@ -8,17 +8,25 @@ This tests the fix for: "No analyze result found!" error when creating
 empty DataFrames with spark.createDataFrame([], schema).
 """
 
-import pytest
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.dataframe_diff import assert_dataframes_equal
 
-from pyspark.sql.types import (
-    StructType, StructField, IntegerType, StringType, LongType,
-    DoubleType, FloatType, BooleanType
-)
+import pytest
+
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from pyspark.sql import functions as F
+from pyspark.sql.types import (
+    BooleanType,
+    DoubleType,
+    FloatType,
+    IntegerType,
+    LongType,
+    StringType,
+    StructField,
+    StructType,
+)
+from utils.dataframe_diff import assert_dataframes_equal
 
 
 class TestEmptyDataFrameCreation:

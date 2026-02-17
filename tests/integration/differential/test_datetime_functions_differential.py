@@ -5,15 +5,21 @@ Compares Thunderduck results against Apache Spark 4.1.1 to ensure exact compatib
 for date extraction, arithmetic, formatting, and truncation operations.
 """
 
-import pytest
+import sys
 from datetime import date, datetime
+from pathlib import Path
+
+import pytest
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
-    StructType, StructField, IntegerType, StringType,
-    DateType, TimestampType, LongType
+    DateType,
+    IntegerType,
+    StringType,
+    StructField,
+    StructType,
+    TimestampType,
 )
-import sys
-from pathlib import Path
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal

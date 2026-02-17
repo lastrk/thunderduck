@@ -9,14 +9,20 @@ Tests cover DataFrame.to(schema) which:
 Converted from test_to_schema.py.
 """
 
-import pytest
 import sys
 from pathlib import Path
-from pyspark.sql import functions as F
+
+import pytest
 from pyspark.sql.types import (
-    StructType, StructField, StringType, IntegerType, LongType,
-    DoubleType, FloatType, BooleanType, DateType, TimestampType
+    DoubleType,
+    FloatType,
+    IntegerType,
+    LongType,
+    StringType,
+    StructField,
+    StructType,
 )
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal

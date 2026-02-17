@@ -13,11 +13,12 @@ Converted from test_type_literals.py.
 Uses Spark-compatible SQL syntax.
 """
 
-import pytest
 import sys
 from pathlib import Path
-from pyspark.sql import functions as F
-from pyspark.sql.functions import col, lit, struct, array, create_map
+
+import pytest
+from pyspark.sql.functions import array, create_map, lit, struct
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal

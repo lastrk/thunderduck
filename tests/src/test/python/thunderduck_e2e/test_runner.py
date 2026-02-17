@@ -1,14 +1,14 @@
 """Base test runner for thunderduck end-to-end tests."""
 
-import unittest
-import subprocess
-import time
 import os
 import socket
+import subprocess
+import time
+import unittest
 from contextlib import closing
-from pyspark.sql import SparkSession
+
 import pandas as pd
-import numpy as np
+from pyspark.sql import SparkSession
 
 
 def is_port_open(host, port):

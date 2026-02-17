@@ -7,12 +7,13 @@ comparing Thunderduck against Apache Spark 4.1.1.
 Converted from test_statistics_operations.py.
 """
 
-import pytest
 import math
 import sys
 from pathlib import Path
-from pyspark.sql import functions as F
-from pyspark.sql.types import StructType, StructField, IntegerType, DoubleType, StringType, LongType
+
+import pytest
+from pyspark.sql.types import DoubleType, IntegerType, StringType, StructField, StructType
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal
@@ -83,7 +84,7 @@ class TestStatCov_Differential:
 
         assert abs(ref_cov1 - ref_cov2) < 1e-10, "Spark covariance should be symmetric"
         assert abs(test_cov1 - test_cov2) < 1e-10, "Thunderduck covariance should be symmetric"
-        print(f"✓ cov symmetry verified")
+        print("✓ cov symmetry verified")
 
 
 @pytest.mark.differential
@@ -112,7 +113,7 @@ class TestStatCorr_Differential:
 
         assert -1.0 <= ref_corr <= 1.0, f"Spark correlation out of range: {ref_corr}"
         assert -1.0 <= test_corr <= 1.0, f"Thunderduck correlation out of range: {test_corr}"
-        print(f"✓ corr range verified")
+        print("✓ corr range verified")
 
 
 @pytest.mark.differential
@@ -212,7 +213,7 @@ class TestStatCrosstab_Differential:
         ref_rows = ref_result.collect()
         test_rows = test_result.collect()
 
-        assert len(ref_rows) == len(test_rows), f"Crosstab row count mismatch"
+        assert len(ref_rows) == len(test_rows), "Crosstab row count mismatch"
         print(f"✓ crosstab: {len(ref_rows)} rows")
 
 
@@ -234,7 +235,7 @@ class TestStatFreqItems_Differential:
 
         assert "category_freqItems" in ref_cols, f"Spark missing column: {ref_cols}"
         assert "category_freqItems" in test_cols, f"Thunderduck missing column: {test_cols}"
-        print(f"✓ freqItems columns match")
+        print("✓ freqItems columns match")
 
 
 @pytest.mark.differential
@@ -266,7 +267,7 @@ class TestStatApproxQuantile_Differential:
         # Min should be 10, max should be 100
         assert abs(ref_q[0] - test_q[0]) < 1, f"Min mismatch: {ref_q[0]} vs {test_q[0]}"
         assert abs(ref_q[2] - test_q[2]) < 1, f"Max mismatch: {ref_q[2]} vs {test_q[2]}"
-        print(f"✓ approxQuantile multiple: matches")
+        print("✓ approxQuantile multiple: matches")
 
 
 @pytest.mark.differential
@@ -284,7 +285,7 @@ class TestStatSampleBy_Differential:
 
         assert ref_df.columns == ref_result.columns, "Spark schema should be preserved"
         assert test_df.columns == test_result.columns, "Thunderduck schema should be preserved"
-        print(f"✓ sampleBy schema preserved")
+        print("✓ sampleBy schema preserved")
 
 
 @pytest.mark.differential

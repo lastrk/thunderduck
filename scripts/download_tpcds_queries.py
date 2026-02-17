@@ -4,6 +4,7 @@
 import urllib.request
 from pathlib import Path
 
+
 def main():
     base_url = "https://raw.githubusercontent.com/databricks/spark-sql-perf/master/src/main/resources/tpcds_2_4"
     output_dir = Path("/workspace/benchmarks/tpcds_queries")
@@ -24,10 +25,10 @@ def main():
                 success += 1
                 if q % 10 == 0:
                     print(f"  ✓ Downloaded Q1-Q{q}")
-        except Exception as e:
+        except Exception:
             failed.append(q)
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  ✓ Successfully downloaded: {success}/99")
     if failed:
         print(f"  ✗ Failed: {len(failed)} queries")

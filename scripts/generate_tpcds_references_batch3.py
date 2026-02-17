@@ -2,10 +2,12 @@
 """Generate Spark reference data for TPC-DS Batch 3 (Q11-Q15)"""
 
 import json
-from pathlib import Path
-from pyspark.sql import SparkSession
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+from pathlib import Path
+
+from pyspark.sql import SparkSession
+
 
 BATCH_3_QUERIES = [11, 12, 13, '14a', '14b', 15]  # Note: Q14 has variants
 
@@ -83,7 +85,7 @@ def main():
                 json.dump(output, f, indent=2)
 
             print(f"  ✓ {len(rows)} rows")
-            print(f"  ✓ Saved")
+            print("  ✓ Saved")
             results[query_id] = {"success": True, "rows": len(rows)}
 
         except Exception as e:
@@ -99,7 +101,7 @@ def main():
     print(f"\n✓ Successful: {success}/{len(test_queries)}")
 
     if success > 0:
-        print(f"\nReady for validation:")
+        print("\nReady for validation:")
         for qid in test_queries:
             if results.get(qid, {}).get("success"):
                 print(f"  TPC-DS Q{qid}: {results[qid]['rows']} rows")

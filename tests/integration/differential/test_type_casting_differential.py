@@ -12,16 +12,14 @@ import pytest
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
     BooleanType,
-    DateType,
-    DecimalType,
     DoubleType,
     IntegerType,
     LongType,
     StringType,
     StructField,
     StructType,
-    TimestampType,
 )
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal

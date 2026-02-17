@@ -14,12 +14,15 @@ Q91-Q92, Q96, Q98-Q99
 Note: Q72 excluded due to Spark OOM in differential testing environment.
 """
 
-import pytest
 import sys
 from pathlib import Path
 
+import pytest
+
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal
+
 
 # Import query implementations
 sys.path.insert(0, str(Path(__file__).parent.parent / "tpcds_dataframe"))

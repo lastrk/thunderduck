@@ -9,8 +9,9 @@ For production, use: databricks/spark-sql-perf or download official TPC-DS kit.
 For testing: We'll use a small sample or pre-generated data.
 """
 
+
 from pyspark.sql import SparkSession
-from pathlib import Path
+
 
 def main():
     print("="*80)

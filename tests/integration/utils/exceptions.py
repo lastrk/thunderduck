@@ -12,7 +12,6 @@ class HardError(Exception):
     Hard errors indicate infrastructure failures (crashes, timeouts, connection issues)
     rather than test result differences.
     """
-    pass
 
 
 class ServerCrashError(HardError):
@@ -21,7 +20,6 @@ class ServerCrashError(HardError):
     This indicates the server process exited with a non-zero exit code
     or was killed by the OS (e.g., OOM).
     """
-    pass
 
 
 class QueryTimeoutError(HardError):
@@ -31,7 +29,6 @@ class QueryTimeoutError(HardError):
     server hang. Default timeouts are intentionally low to detect
     these issues quickly.
     """
-    pass
 
 
 class ServerConnectionError(HardError):
@@ -40,7 +37,6 @@ class ServerConnectionError(HardError):
     This indicates the server is not running, not accepting connections,
     or has a network issue.
     """
-    pass
 
 
 class ServerStartupError(HardError):
@@ -49,7 +45,6 @@ class ServerStartupError(HardError):
     This indicates the server process failed to start or become ready
     within the configured startup timeout.
     """
-    pass
 
 
 class HealthCheckError(HardError):
@@ -58,7 +53,6 @@ class HealthCheckError(HardError):
     This indicates the server is running but not responding to health
     checks within the timeout.
     """
-    pass
 
 
 class ResultMismatchError(Exception):

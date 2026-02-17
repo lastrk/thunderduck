@@ -4,13 +4,13 @@ Differential tests for conditional expressions (when/otherwise, CASE WHEN).
 Compares Thunderduck against Apache Spark 4.1.1 for conditional logic.
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 from pyspark.sql import functions as F
-from pyspark.sql.types import (
-    StructType, StructField, IntegerType, StringType, DoubleType, LongType
-)
+from pyspark.sql.types import DoubleType, IntegerType, StringType, StructField, StructType
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal

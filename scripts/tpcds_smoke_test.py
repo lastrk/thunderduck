@@ -3,9 +3,11 @@
 Smoke test all TPC-DS queries to see which work with current Thunderduck implementation
 """
 
-from pyspark.sql import SparkSession
-from pathlib import Path
 import time
+from pathlib import Path
+
+from pyspark.sql import SparkSession
+
 
 def main():
     print("="*80)
@@ -54,11 +56,6 @@ def main():
         try:
             query = query_file.read_text()
 
-            # Quick check for window functions
-            has_window = any(keyword in query.upper() for keyword in [
-                "ROW_NUMBER()", "RANK()", "DENSE_RANK()", "OVER (", "PARTITION BY"
-            ])
-
             start = time.time()
             result = spark.sql(query)
             row_count = result.count()
@@ -103,27 +100,27 @@ def main():
     print(f"  ✗ Other failures: {failed}")
 
     if success > 0:
-        print(f"\nWorking queries (ready for validation):")
-        for qname, rows, elapsed in sorted(results["success"])[:20]:
+        print("\nWorking queries (ready for validation):")
+        for qname, rows, _elapsed in sorted(results["success"])[:20]:
             print(f"  ✓ {qname}: {rows} rows")
         if len(results["success"]) > 20:
             remaining = len(results["success"]) - 20
             print(f"  ... and {remaining} more")
 
     if window > 0:
-        print(f"\nQueries needing window functions:")
+        print("\nQueries needing window functions:")
         print(f"  {', '.join(sorted(results['window_function'])[:30])}")
         if len(results["window_function"]) > 30:
             remaining_win = len(results['window_function']) - 30
             print(f"  ... and {remaining_win} more")
 
     if failed > 0:
-        print(f"\nOther failures (sample):")
+        print("\nOther failures (sample):")
         for qname, error in list(results["failed"].items())[:5]:
             print(f"  ✗ {qname}: {error}")
 
     print(f"\n{'='*80}")
-    print(f"RECOMMENDATION:")
+    print("RECOMMENDATION:")
     print(f"{'='*80}")
 
     if success >= 30:

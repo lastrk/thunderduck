@@ -9,11 +9,12 @@ Tests cover:
 Converted from test_lambda_functions.py.
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 from pyspark.sql import functions as F
-from pyspark.sql.types import IntegerType, ArrayType, StringType
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal

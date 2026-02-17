@@ -14,10 +14,12 @@ Key improvements over V1:
 - Session-scoped fixtures for performance
 """
 
-import pytest
-import time
 import sys
+import time
 from pathlib import Path
+
+import pytest
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal
@@ -59,7 +61,7 @@ class TestTPCH_Q1_Differential:
         print(f"✓ Thunderduck completed in {td_time:.3f}s")
 
         # Compare results with detailed diff
-        print(f"\nPerformance:")
+        print("\nPerformance:")
         print(f"  Spark Reference: {ref_time:.3f}s")
         print(f"  Thunderduck:     {td_time:.3f}s")
         print(f"  Speedup:         {ref_time/td_time:.2f}x")
@@ -104,7 +106,7 @@ class TestTPCH_Q3_Differential:
         print(f"✓ Thunderduck completed in {td_time:.3f}s")
 
         # Performance summary
-        print(f"\nPerformance:")
+        print("\nPerformance:")
         print(f"  Spark Reference: {ref_time:.3f}s")
         print(f"  Thunderduck:     {td_time:.3f}s")
         print(f"  Speedup:         {ref_time/td_time:.2f}x")
@@ -148,7 +150,7 @@ class TestTPCH_Q6_Differential:
         print(f"✓ Thunderduck completed in {td_time:.3f}s")
 
         # Performance summary
-        print(f"\nPerformance:")
+        print("\nPerformance:")
         print(f"  Spark Reference: {ref_time:.3f}s")
         print(f"  Thunderduck:     {td_time:.3f}s")
         print(f"  Speedup:         {ref_time/td_time:.2f}x")
@@ -201,7 +203,7 @@ class TestTPCH_AllQueries_Differential:
         print(f"✓ Thunderduck completed in {td_time:.3f}s")
 
         # Performance summary
-        print(f"\nPerformance:")
+        print("\nPerformance:")
         print(f"  Spark Reference: {ref_time:.3f}s")
         print(f"  Thunderduck:     {td_time:.3f}s")
         if td_time > 0:

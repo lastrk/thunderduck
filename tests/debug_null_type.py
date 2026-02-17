@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Debug script to see what type NULL gets in CASE WHEN expressions"""
 
+from decimal import Decimal
+
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
-from decimal import Decimal
+
 
 # Connect to Thunderduck
 spark = SparkSession.builder \

@@ -8,7 +8,6 @@ differentially. Operations specific to DuckDB storage (table creation, database 
 have been removed as they cannot be meaningfully compared.
 """
 
-import pytest
 
 
 class TestTableExists:
@@ -18,7 +17,7 @@ class TestTableExists:
         """Non-existent table should return False on both systems."""
         ref_result = spark_reference.catalog.tableExists("nonexistent_table_xyz_12345")
         td_result = spark_thunderduck.catalog.tableExists("nonexistent_table_xyz_12345")
-        assert ref_result == td_result == False, f"Mismatch: Spark={ref_result}, TD={td_result}"
+        assert ref_result is False and td_result is False, f"Mismatch: Spark={ref_result}, TD={td_result}"
 
 
 class TestDatabaseExists:
@@ -28,7 +27,7 @@ class TestDatabaseExists:
         """Non-existent database should return False on both systems."""
         ref_result = spark_reference.catalog.databaseExists("nonexistent_db_xyz_12345")
         td_result = spark_thunderduck.catalog.databaseExists("nonexistent_db_xyz_12345")
-        assert ref_result == td_result == False, f"Mismatch: Spark={ref_result}, TD={td_result}"
+        assert ref_result is False and td_result is False, f"Mismatch: Spark={ref_result}, TD={td_result}"
 
 
 class TestDropTempView:
@@ -38,7 +37,7 @@ class TestDropTempView:
         """Dropping non-existent temp view should return False on both systems."""
         ref_result = spark_reference.catalog.dropTempView("nonexistent_temp_view_xyz_12345")
         td_result = spark_thunderduck.catalog.dropTempView("nonexistent_temp_view_xyz_12345")
-        assert ref_result == td_result == False, f"Mismatch: Spark={ref_result}, TD={td_result}"
+        assert ref_result is False and td_result is False, f"Mismatch: Spark={ref_result}, TD={td_result}"
 
     def test_drop_existing_temp_view(self, spark_reference, spark_thunderduck):
         """Dropping existing temp view should return True on both systems."""
@@ -53,7 +52,7 @@ class TestDropTempView:
         ref_result = spark_reference.catalog.dropTempView("temp_view_to_drop_test")
         td_result = spark_thunderduck.catalog.dropTempView("temp_view_to_drop_test")
 
-        assert ref_result == td_result == True, f"Mismatch: Spark={ref_result}, TD={td_result}"
+        assert ref_result is True and td_result is True, f"Mismatch: Spark={ref_result}, TD={td_result}"
 
 
 class TestCurrentDatabase:
@@ -77,13 +76,13 @@ class TestFunctionExists:
         """functionExists should return True for 'abs' on both systems."""
         ref_result = spark_reference.catalog.functionExists("abs")
         td_result = spark_thunderduck.catalog.functionExists("abs")
-        assert ref_result == td_result == True, f"Mismatch for 'abs': Spark={ref_result}, TD={td_result}"
+        assert ref_result is True and td_result is True, f"Mismatch for 'abs': Spark={ref_result}, TD={td_result}"
 
     def test_function_exists_false(self, spark_reference, spark_thunderduck):
         """functionExists should return False for non-existent function on both systems."""
         ref_result = spark_reference.catalog.functionExists("nonexistent_function_xyz_12345")
         td_result = spark_thunderduck.catalog.functionExists("nonexistent_function_xyz_12345")
-        assert ref_result == td_result == False, f"Mismatch: Spark={ref_result}, TD={td_result}"
+        assert ref_result is False and td_result is False, f"Mismatch: Spark={ref_result}, TD={td_result}"
 
     def test_function_exists_common_functions(self, spark_reference, spark_thunderduck):
         """Common SQL functions should exist on both systems."""
@@ -91,7 +90,7 @@ class TestFunctionExists:
         for func in common_funcs:
             ref_result = spark_reference.catalog.functionExists(func)
             td_result = spark_thunderduck.catalog.functionExists(func)
-            assert ref_result == td_result == True, f"Function '{func}' mismatch: Spark={ref_result}, TD={td_result}"
+            assert ref_result is True and td_result is True, f"Function '{func}' mismatch: Spark={ref_result}, TD={td_result}"
 
 
 class TestListFunctions:
@@ -142,7 +141,7 @@ class TestTempViewDifferential:
         ref_exists = spark_reference.catalog.tableExists("diff_temp_view_test")
         td_exists = spark_thunderduck.catalog.tableExists("diff_temp_view_test")
 
-        assert ref_exists == td_exists == True, f"Temp view exists mismatch: Spark={ref_exists}, TD={td_exists}"
+        assert ref_exists is True and td_exists is True, f"Temp view exists mismatch: Spark={ref_exists}, TD={td_exists}"
 
         # Cleanup
         spark_reference.catalog.dropTempView("diff_temp_view_test")
@@ -161,7 +160,7 @@ class TestTempViewDifferential:
         ref_exists = spark_reference.catalog.tableExists("temp_view_lifecycle_test")
         td_exists = spark_thunderduck.catalog.tableExists("temp_view_lifecycle_test")
 
-        assert ref_exists == td_exists == False, f"After drop mismatch: Spark={ref_exists}, TD={td_exists}"
+        assert ref_exists is False and td_exists is False, f"After drop mismatch: Spark={ref_exists}, TD={td_exists}"
 
 
 class TestCurrentCatalog:

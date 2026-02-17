@@ -4,13 +4,15 @@ Verifies Thunderduck matches Spark 4.1.1 behavior exactly.
 """
 import sys
 from pathlib import Path
+
 import pytest
 
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.dataframe_diff import assert_dataframes_equal
-from pyspark.sql import functions as F
 from pyspark.sql import Row
+from pyspark.sql import functions as F
 from pyspark.sql.window import Window
+from utils.dataframe_diff import assert_dataframes_equal
 
 
 @pytest.mark.differential

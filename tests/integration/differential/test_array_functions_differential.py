@@ -6,11 +6,13 @@ Tests include: split, collect_list, collect_set, size, explode, array_contains, 
 """
 import sys
 from pathlib import Path
+
 import pytest
 
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.dataframe_diff import assert_dataframes_equal
 from pyspark.sql import functions as F
+from utils.dataframe_diff import assert_dataframes_equal
 
 
 @pytest.mark.differential

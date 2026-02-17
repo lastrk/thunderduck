@@ -13,15 +13,22 @@ Categories tested:
 - Math Functions
 """
 
+import sys
+from pathlib import Path
+
 import pytest
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
-    StructType, StructField, StringType, IntegerType, LongType,
-    DoubleType, ArrayType, MapType, BooleanType
+    ArrayType,
+    DoubleType,
+    IntegerType,
+    MapType,
+    StringType,
+    StructField,
+    StructType,
 )
 
-import sys
-from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal
 

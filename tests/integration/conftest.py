@@ -2,15 +2,17 @@
 Pytest configuration for Thunderduck Spark Connect integration tests
 """
 
-import pytest
-from pathlib import Path
-import os
-import socket
-import sys
 import atexit
+import os
 import signal
+import socket
 import subprocess
+import sys
 import time
+from pathlib import Path
+
+import pytest
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
@@ -81,7 +83,7 @@ def _read_pid_file() -> list[tuple[str, int, int]]:
 
 def _cleanup_pid_file():
     """Kill processes from PID file and delete it."""
-    for name, port, pid in _read_pid_file():
+    for _name, _port, pid in _read_pid_file():
         try:
             os.killpg(os.getpgid(pid), signal.SIGKILL)
         except (ProcessLookupError, PermissionError, OSError):
@@ -257,7 +259,7 @@ def load_query(query_num: int, queries_dir: Path) -> str:
     if not query_file.exists():
         pytest.skip(f"Query file not found: {query_file}")
 
-    with open(query_file, 'r') as f:
+    with open(query_file) as f:
         return f.read()
 
 
@@ -443,7 +445,6 @@ def load_tpcds_query(tpcds_queries_dir):
 # ============================================================================
 
 from utils.test_orchestrator import TestOrchestrator
-from utils.exceptions import HardError
 
 
 def _get_orchestrator_config():

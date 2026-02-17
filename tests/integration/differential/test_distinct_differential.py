@@ -11,12 +11,12 @@ from pathlib import Path
 import pytest
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
-    DoubleType,
     IntegerType,
     StringType,
     StructField,
     StructType,
 )
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal

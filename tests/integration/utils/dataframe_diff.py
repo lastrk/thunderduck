@@ -5,16 +5,16 @@ Provides detailed row-by-row comparison of DataFrames from Spark Reference
 and Thunderduck, with clear diff output for mismatches.
 """
 
-from typing import List, Tuple, Optional, Any
-from decimal import Decimal
-from pyspark.sql import DataFrame
-from pyspark.sql.types import StructType, StructField, DataType
-import difflib
 import os
 import threading
+from decimal import Decimal
+from typing import Any
+
+from pyspark.sql import DataFrame
+from pyspark.sql.types import StructType
 
 
-def collect_with_timeout(df: DataFrame, timeout: int, name: str) -> List:
+def collect_with_timeout(df: DataFrame, timeout: int, name: str) -> list:
     """
     Collect DataFrame with timeout.
 
@@ -76,7 +76,7 @@ class DataFrameDiff:
         max_diff_rows: int = 10,
         timeout: int = 10,
         ignore_nullable: bool = False
-    ) -> Tuple[bool, str, dict]:
+    ) -> tuple[bool, str, dict]:
         """
         Compare two DataFrames and produce detailed diff
 
@@ -111,7 +111,7 @@ class DataFrameDiff:
         stats['schemas_match'] = schema_match
 
         if not schema_match:
-            print(f"✗ Schema mismatch")
+            print("✗ Schema mismatch")
             print(schema_msg)
             return False, f"Schema mismatch:\n{schema_msg}", stats
 
@@ -170,7 +170,7 @@ class DataFrameDiff:
     def _compare_schemas(
         self, reference_schema: StructType, test_schema: StructType,
         ignore_nullable: bool = False
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """
         Compare two schemas
 
@@ -217,8 +217,8 @@ class DataFrameDiff:
         return True, ""
 
     def _compare_rows(
-        self, ref_row, test_row, row_index: int, columns: List[str]
-    ) -> Tuple[bool, str]:
+        self, ref_row, test_row, row_index: int, columns: list[str]
+    ) -> tuple[bool, str]:
         """
         Compare two rows
 
@@ -310,10 +310,10 @@ class DataFrameDiff:
 
     def _format_diff_output(
         self,
-        mismatches: List[Tuple[int, List[dict]]],
-        reference_rows: List,
-        test_rows: List,
-        columns: List[str]
+        mismatches: list[tuple[int, list[dict]]],
+        reference_rows: list,
+        test_rows: list,
+        columns: list[str]
     ) -> str:
         """
         Format diff output in a readable way
@@ -339,12 +339,12 @@ class DataFrameDiff:
             test_row = test_rows[row_idx].asDict()
 
             # Show full row context
-            output.append(f"Reference row:")
+            output.append("Reference row:")
             for col in columns:
                 val = ref_row[col]
                 output.append(f"  {col}: {val}")
 
-            output.append(f"\nTest row:")
+            output.append("\nTest row:")
             for col in columns:
                 val = test_row[col]
                 # Highlight mismatched columns
@@ -356,7 +356,7 @@ class DataFrameDiff:
                 output.append(f"{marker} {col}: {val}")
 
             # Show detailed diff for mismatched columns
-            output.append(f"\nDifferences:")
+            output.append("\nDifferences:")
             for diff in diffs:
                 col = diff['column']
                 ref_val = diff['reference']
@@ -492,11 +492,10 @@ def compare_differential(
         ResultMismatchError: On value differences (soft error)
     """
     from .exceptions import (
-        HardError,
-        QueryTimeoutError,
-        ServerCrashError,
         HealthCheckError,
+        QueryTimeoutError,
         ResultMismatchError,
+        ServerCrashError,
     )
 
     timeout = timeout or orchestrator.collect_timeout
@@ -519,7 +518,7 @@ def compare_differential(
     )
 
     if not schema_match:
-        print(f"✗ Schema mismatch")
+        print("✗ Schema mismatch")
         print(schema_msg)
         raise ResultMismatchError(
             f"Schema mismatch in {query_name}:\n{schema_msg}",

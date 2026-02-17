@@ -5,13 +5,14 @@ Tests DataFrame API operations comparing Thunderduck against Apache Spark 4.1.1.
 Converted from test_dataframe_operations.py.
 """
 
-import pytest
-import tempfile
 import os
 import sys
+import tempfile
 from pathlib import Path
-from pyspark.sql import functions as F
-from pyspark.sql.functions import col, lit, when
+
+import pytest
+from pyspark.sql.functions import col
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.dataframe_diff import assert_dataframes_equal
@@ -176,7 +177,7 @@ class TestSample_Differential:
         assert ref_count > 0
         assert test_count > 0
         assert ref_result.columns == test_result.columns
-        print(f"✓ sample_deterministic: both produce valid samples")
+        print("✓ sample_deterministic: both produce valid samples")
 
 
 @pytest.mark.differential
@@ -202,7 +203,7 @@ class TestWriteOperation_Differential:
 
             assert ref_readback.count() == td_readback.count()
             assert set(ref_readback.columns) == set(td_readback.columns)
-        print(f"✓ write_parquet: both write/read correctly")
+        print("✓ write_parquet: both write/read correctly")
 
     @pytest.mark.timeout(60)
     def test_write_csv(self, spark_reference, spark_thunderduck, tpch_data_dir):
@@ -219,7 +220,7 @@ class TestWriteOperation_Differential:
 
             assert os.path.exists(ref_path)
             assert os.path.exists(td_path)
-        print(f"✓ write_csv: both write correctly")
+        print("✓ write_csv: both write correctly")
 
     @pytest.mark.timeout(60)
     def test_write_json(self, spark_reference, spark_thunderduck, tpch_data_dir):
@@ -236,7 +237,7 @@ class TestWriteOperation_Differential:
 
             assert os.path.exists(ref_path)
             assert os.path.exists(td_path)
-        print(f"✓ write_json: both write correctly")
+        print("✓ write_json: both write correctly")
 
 
 @pytest.mark.differential

@@ -2,10 +2,12 @@
 """Generate Spark reference data for TPC-DS Batch 5 (Q21-Q25)"""
 
 import json
-from pathlib import Path
-from pyspark.sql import SparkSession
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+from pathlib import Path
+
+from pyspark.sql import SparkSession
+
 
 BATCH_5_QUERIES = [21, 22, '23a', '23b', '24a', '24b', 25]
 
