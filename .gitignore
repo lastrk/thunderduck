@@ -43,6 +43,10 @@ dependency-reduced-pom.xml
 .project
 .classpath
 
+# Java artifacts
+.sdkmanrc
+.java-version
+
 # OS artifacts
 .DS_Store
 Thumbs.db
