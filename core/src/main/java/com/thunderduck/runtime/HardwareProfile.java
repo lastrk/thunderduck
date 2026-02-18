@@ -96,7 +96,10 @@ public class HardwareProfile {
      * @return the recommended thread count
      */
     public int recommendedThreadCount() {
-        // Use 100% of cores, minimum 1, maximum 16
+        String override = System.getProperty("thunderduck.duckdb.threads");
+        if (override != null) {
+            return Integer.parseInt(override);
+        }
         return cpuCores;
     }
 
@@ -108,6 +111,10 @@ public class HardwareProfile {
      * @return the memory limit string (e.g., "8GB", "512MB")
      */
     public String recommendedMemoryLimit() {
+        String override = System.getProperty("thunderduck.duckdb.memory_limit");
+        if (override != null) {
+            return override;
+        }
         long limitBytes = Math.min((totalMemoryBytes * 4) / 5, cpuCores * 4L * 1024 * 1024 * 1024);
         return formatBytes(limitBytes);
     }

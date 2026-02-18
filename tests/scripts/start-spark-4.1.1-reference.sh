@@ -10,6 +10,7 @@ SPARK_VERSION="4.1.1"
 SPARK_PORT="${SPARK_PORT:-15003}"
 SPARK_WAREHOUSE_DIR="${SPARK_WAREHOUSE_DIR:-}"
 SPARK_DRIVER_MEMORY="${SPARK_DRIVER_MEMORY:-4g}"
+SPARK_MASTER="${SPARK_MASTER:-local[*]}"
 SPARK_AQE_ENABLED="${SPARK_AQE_ENABLED:-false}"
 SPARK_BROADCAST_THRESHOLD="${SPARK_BROADCAST_THRESHOLD:--1}"
 
@@ -61,7 +62,7 @@ fi
 
 # Start Spark Connect server (no pipe to avoid subprocess issues)
 "$SPARK_HOME/sbin/start-connect-server.sh" \
-    --master "local[*]" \
+    --master "${SPARK_MASTER}" \
     --driver-memory ${SPARK_DRIVER_MEMORY} \
     --conf spark.driver.host=localhost \
     --conf spark.driver.bindAddress=127.0.0.1 \

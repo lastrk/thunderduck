@@ -5,7 +5,10 @@
 # Starts both Thunderduck and Spark reference servers, then launches
 # a Marimo notebook for interactive comparison.
 #
-# Usage: ./playground/launch.sh [OPTIONS]
+# Usage: ./playground/launch.sh [bench] [OPTIONS]
+#
+# Positional:
+#   bench              Launch the TPC-H benchmark notebook instead of the playground
 #
 # Options:
 #   --no-build         Skip Maven build even if JAR missing
@@ -69,9 +72,14 @@ NO_BUILD=false
 FORCE_REBUILD=false
 FORCE_KILL=false
 THUNDERDUCK_ONLY=false
+NOTEBOOK="thunderduck_playground.py"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
+        bench)
+            NOTEBOOK="tpch_benchmark.py"
+            shift
+            ;;
         --no-build)
             NO_BUILD=true
             shift
@@ -91,7 +99,10 @@ while [[ $# -gt 0 ]]; do
         --help|-h)
             echo "Thunderduck Interactive Playground"
             echo ""
-            echo "Usage: ./playground/launch.sh [OPTIONS]"
+            echo "Usage: ./playground/launch.sh [bench] [OPTIONS]"
+            echo ""
+            echo "Positional:"
+            echo "  bench              Launch the TPC-H benchmark notebook"
             echo ""
             echo "Options:"
             echo "  --no-build         Skip Maven build even if JAR missing"
@@ -365,12 +376,14 @@ start_thunderduck() {
 
     mkdir -p "$LOG_DIR"
 
-    # JVM flags for Apache Arrow
+    # JVM flags for Apache Arrow + fixed resource limits for benchmarks
     local JAVA_OPTS="
-        -Xmx4g
-        -Xms2g
+        -Xmx2g
+        -Xms1g
         -XX:+UseG1GC
         -XX:MaxGCPauseMillis=200
+        -Dthunderduck.duckdb.threads=2
+        -Dthunderduck.duckdb.memory_limit=4GB
         --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED
         --add-opens=java.base/java.nio=ALL-UNNAMED
         --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
@@ -417,22 +430,12 @@ start_spark_reference() {
         return
     fi
 
-    # Calculate 80% of system RAM for Spark driver memory
-    if [[ "$(uname)" == "Darwin" ]]; then
-        TOTAL_MEM_BYTES=$(sysctl -n hw.memsize)
-    else
-        TOTAL_MEM_BYTES=$(awk '/^MemTotal:/{print $2 * 1024}' /proc/meminfo)
-    fi
-    TOTAL_MEM_GB=$((TOTAL_MEM_BYTES / 1073741824))
-    SPARK_MEM_GB=$((TOTAL_MEM_GB * 80 / 100))
-    if [ "$SPARK_MEM_GB" -lt 4 ]; then
-        SPARK_MEM_GB=4
-    fi
+    # Fixed resource limits for reproducible benchmarks
+    export SPARK_MASTER="local[2]"            # 2 threads
+    export SPARK_DRIVER_MEMORY="4g"           # 2 GB per core × 2 cores
 
-    echo "Starting Spark reference on port $SPARK_PORT (${SPARK_MEM_GB}g driver memory)..."
+    echo "Starting Spark reference on port $SPARK_PORT (${SPARK_DRIVER_MEMORY} driver memory, ${SPARK_MASTER})..."
 
-    # Override defaults for playground: give Spark full resources
-    export SPARK_DRIVER_MEMORY="${SPARK_MEM_GB}g"
     export SPARK_AQE_ENABLED=true
     export SPARK_BROADCAST_THRESHOLD=10485760  # 10MB (Spark default)
 
@@ -496,7 +499,8 @@ launch_marimo() {
     echo ""
 
     # Launch Marimo
-    marimo edit "$PLAYGROUND_DIR/thunderduck_playground.py" --port $MARIMO_PORT
+    echo -e "${BLUE}Notebook: $NOTEBOOK${NC}"
+    marimo edit "$PLAYGROUND_DIR/$NOTEBOOK" --port $MARIMO_PORT
 }
 
 # ------------------------------------------------------------------------------
