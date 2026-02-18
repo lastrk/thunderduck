@@ -202,9 +202,14 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                     }
 
                     // Transform SparkSQL to DuckDB SQL via schema-aware parser
+                    long sqlParseStart = System.nanoTime();
                     TransformResult result = transformSparkSQLWithPlan(query, duckdbConn, session.getViewSchemas());
                     sql = result.sql();
                     sqlPlan = result.plan();
+                    long sqlParseNanos = System.nanoTime() - sqlParseStart;
+                    logger.info("SQL parse+transform took {}ms for: {}",
+                        String.format("%.1f", sqlParseNanos / 1_000_000.0),
+                        query.length() > 80 ? query.substring(0, 80) + "..." : query);
                 } else if (root.hasCatalog()) {
                     // Handle catalog operations (dropTempView, etc.)
                     executeCatalogOperation(root.getCatalog(), session, responseObserver);
@@ -216,6 +221,9 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 }
             } else if (plan.hasCommand() && plan.getCommand().hasSqlCommand()) {
                 // Handle SQL commands (alternative path for spark.sql())
+                // Return SqlCommandResult with the transformed SQL as a Relation reference.
+                // PySpark wraps this in CachedRelation and sends it back when data is needed,
+                // avoiding double query execution.
                 SqlCommand sqlCommand = plan.getCommand().getSqlCommand();
                 String query = null;
 
@@ -244,9 +252,43 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
                 }
 
                 if (query != null && !query.isEmpty()) {
+                    // Check if this is a DDL statement — DDL must execute immediately
+                    // (need to transform first to detect DDL)
                     TransformResult result = transformSparkSQLWithPlan(query, duckdbConn, session.getViewSchemas());
-                    sql = result.sql();
-                    sqlPlan = result.plan();
+                    String transformedSQL = result.sql();
+
+                    if (isDDLStatement(transformedSQL)) {
+                        sql = transformedSQL;
+                        sqlPlan = result.plan();
+                    } else {
+                        // Return SqlCommandResult with the original SparkSQL as a SQL Relation.
+                        // PySpark wraps this in CachedRelation and sends it back on
+                        // .toPandas()/.collect(), entering the root.hasSql() path where
+                        // it gets transformed and executed exactly once.
+                        String operationId = java.util.UUID.randomUUID().toString();
+                        Relation sqlRelationRef = Relation.newBuilder()
+                            .setSql(SQL.newBuilder().setQuery(query))
+                            .build();
+
+                        ExecutePlanResponse.SqlCommandResult cmdResult =
+                            ExecutePlanResponse.SqlCommandResult.newBuilder()
+                                .setRelation(sqlRelationRef)
+                                .build();
+
+                        ExecutePlanResponse response = ExecutePlanResponse.newBuilder()
+                            .setSessionId(session.getSessionId())
+                            .setOperationId(operationId)
+                            .setSqlCommandResult(cmdResult)
+                            .build();
+
+                        logger.info("[{}] SqlCommand returning deferred relation for session {}: {}",
+                            operationId, session.getSessionId(),
+                            query.length() > 80 ? query.substring(0, 80) + "..." : query);
+
+                        responseObserver.onNext(response);
+                        responseObserver.onCompleted();
+                        return;
+                    }
                 } else {
                     logger.error("SqlCommand has no query");
                     throw new IllegalArgumentException("SqlCommand has no query");
@@ -1233,6 +1275,10 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             return;
         }
 
+        // Start timing for the SQL path
+        QueryTimingStats timing = new QueryTimingStats();
+        timing.startTotal();
+
         // Try to use the LogicalPlan schema for correct types and nullable flags
         StructType logicalSchema = null;
         if (plan != null) {
@@ -1250,11 +1296,13 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
 
         if (logicalSchema != null) {
             // Resolve any UnresolvedType fields (from raw SQL expressions)
+            timing.startSchemaResolve();
             logicalSchema = resolveUnresolvedSchemaFields(logicalSchema, sql, session.getSessionId());
-            executeSQLStreaming(sql, logicalSchema, session, responseObserver);
+            timing.stopSchemaResolve();
+            executeSQLStreaming(sql, logicalSchema, session, responseObserver, -1, timing);
         } else {
             // Fallback: no plan schema available — execute without schema correction
-            executeSQLStreaming(sql, session, responseObserver);
+            executeSQLStreaming(sql, null, session, responseObserver, -1, timing);
         }
     }
 
@@ -1719,7 +1767,7 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
         QueryExecutor executor = new QueryExecutor(sessionManager.getOrCreateSessionForMetadata(sessionId).getRuntime());
         String schemaQuery = "SELECT * FROM (" + sql + ") AS schema_infer LIMIT 0";
 
-        logger.debug("Inferring schema from SQL: {}", schemaQuery);
+        logger.info("DIAGNOSTIC: Executing LIMIT 0 schema inference: {}", schemaQuery);
 
         try (org.apache.arrow.vector.VectorSchemaRoot result = executor.executeQuery(schemaQuery)) {
             // Extract schema from Arrow VectorSchemaRoot
@@ -1777,7 +1825,8 @@ public class SparkConnectServiceImpl extends SparkConnectServiceGrpc.SparkConnec
             return logicalSchema;
         }
 
-        logger.debug("Schema has unresolved types, querying DuckDB for actual types");
+        logger.info("DIAGNOSTIC: Schema has unresolved types, querying DuckDB with LIMIT 0 for: {}",
+            sql.length() > 80 ? sql.substring(0, 80) + "..." : sql);
 
         try {
             StructType duckdbSchema = inferSchemaFromDuckDB(sql, sessionId);
