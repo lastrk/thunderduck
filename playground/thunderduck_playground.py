@@ -1,12 +1,13 @@
 import marimo
 
-__generated_with = "0.18.4"
+__generated_with = "0.19.11"
 app = marimo.App(width="full")
 
 
 @app.cell
 def _():
     import marimo as mo
+
     return (mo,)
 
 
@@ -301,6 +302,7 @@ def _(time):
     | **Rows** | {comp['rows_td']} | {comp['rows_ref']} |
     | **Match** | {match_symbol} | - |
     """
+
     return compare_results, format_comparison
 
 
