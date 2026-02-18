@@ -367,8 +367,8 @@ start_thunderduck() {
 
     # JVM flags for Apache Arrow
     local JAVA_OPTS="
-        -Xmx2g
-        -Xms1g
+        -Xmx4g
+        -Xms2g
         -XX:+UseG1GC
         -XX:MaxGCPauseMillis=200
         --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED
@@ -417,7 +417,25 @@ start_spark_reference() {
         return
     fi
 
-    echo "Starting Spark reference on port $SPARK_PORT..."
+    # Calculate 80% of system RAM for Spark driver memory
+    if [[ "$(uname)" == "Darwin" ]]; then
+        TOTAL_MEM_BYTES=$(sysctl -n hw.memsize)
+    else
+        TOTAL_MEM_BYTES=$(awk '/^MemTotal:/{print $2 * 1024}' /proc/meminfo)
+    fi
+    TOTAL_MEM_GB=$((TOTAL_MEM_BYTES / 1073741824))
+    SPARK_MEM_GB=$((TOTAL_MEM_GB * 80 / 100))
+    if [ "$SPARK_MEM_GB" -lt 4 ]; then
+        SPARK_MEM_GB=4
+    fi
+
+    echo "Starting Spark reference on port $SPARK_PORT (${SPARK_MEM_GB}g driver memory)..."
+
+    # Override defaults for playground: give Spark full resources
+    export SPARK_DRIVER_MEMORY="${SPARK_MEM_GB}g"
+    export SPARK_AQE_ENABLED=true
+    export SPARK_BROADCAST_THRESHOLD=10485760  # 10MB (Spark default)
+
     "$PROJECT_ROOT/tests/scripts/start-spark-4.1.1-reference.sh"
     SPARK_STARTED=true
 

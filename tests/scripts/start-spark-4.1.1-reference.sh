@@ -9,6 +9,9 @@ SPARK_HOME="${SPARK_HOME:-$HOME/spark/current}"
 SPARK_VERSION="4.1.1"
 SPARK_PORT="${SPARK_PORT:-15003}"
 SPARK_WAREHOUSE_DIR="${SPARK_WAREHOUSE_DIR:-}"
+SPARK_DRIVER_MEMORY="${SPARK_DRIVER_MEMORY:-4g}"
+SPARK_AQE_ENABLED="${SPARK_AQE_ENABLED:-false}"
+SPARK_BROADCAST_THRESHOLD="${SPARK_BROADCAST_THRESHOLD:--1}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -59,13 +62,13 @@ fi
 # Start Spark Connect server (no pipe to avoid subprocess issues)
 "$SPARK_HOME/sbin/start-connect-server.sh" \
     --master "local[*]" \
-    --driver-memory 4g \
+    --driver-memory ${SPARK_DRIVER_MEMORY} \
     --conf spark.driver.host=localhost \
     --conf spark.driver.bindAddress=127.0.0.1 \
     --conf spark.connect.grpc.binding.port=${SPARK_PORT} \
     --conf spark.sql.shuffle.partitions=4 \
-    --conf spark.sql.adaptive.enabled=false \
-    --conf spark.sql.autoBroadcastJoinThreshold=-1 \
+    --conf spark.sql.adaptive.enabled=${SPARK_AQE_ENABLED} \
+    --conf spark.sql.autoBroadcastJoinThreshold=${SPARK_BROADCAST_THRESHOLD} \
     --conf spark.ui.enabled=true \
     --conf spark.ui.port=4041 \
     ${WAREHOUSE_CONF} \

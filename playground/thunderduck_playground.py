@@ -311,28 +311,42 @@ def _(mo):
     mo.md("""
     ---
 
-    ## Example 1: Basic Aggregation
+    ## Example 1: Full Scan + Heavy Aggregation (TPC-H Q1)
 
-    Count orders by status - a simple GROUP BY query.
+    Scan the entire `lineitem` table and compute 8 aggregate functions grouped by return flag
+    and line status. This is the canonical OLAP benchmark -- pure vectorized scan and
+    aggregation speed with no joins, no limits, and no early termination.
+
+    At SF=20 this processes ~120 million rows.
     """)
     return
 
 
 @app.cell
 def _(F, compare_results, format_comparison, mo, spark_ref, spark_td):
-    # Orders by status - simple groupBy aggregation
-    def orders_by_status(spark):
+    def pricing_summary(spark):
+        lineitem = spark.table("lineitem")
         return (
-            spark.table("orders")
-            .groupBy("o_orderstatus")
-            .agg(F.count("*").alias("order_count"))
-            .orderBy("o_orderstatus")
+            lineitem
+            .filter(F.col("l_shipdate") <= "1998-09-02")
+            .groupBy("l_returnflag", "l_linestatus")
+            .agg(
+                F.sum("l_quantity").alias("sum_qty"),
+                F.sum("l_extendedprice").alias("sum_base_price"),
+                F.sum(F.col("l_extendedprice") * (1 - F.col("l_discount"))).alias("sum_disc_price"),
+                F.sum(F.col("l_extendedprice") * (1 - F.col("l_discount")) * (1 + F.col("l_tax"))).alias("sum_charge"),
+                F.avg("l_quantity").alias("avg_qty"),
+                F.avg("l_extendedprice").alias("avg_price"),
+                F.avg("l_discount").alias("avg_disc"),
+                F.count("*").alias("count_order"),
+            )
+            .orderBy("l_returnflag", "l_linestatus")
         )
 
     comp1 = compare_results(
-        orders_by_status(spark_td),
-        orders_by_status(spark_ref),
-        "Orders by Status"
+        pricing_summary(spark_td),
+        pricing_summary(spark_ref),
+        "Pricing Summary (TPC-H Q1)"
     )
 
     mo.vstack([
@@ -347,37 +361,37 @@ def _(mo):
     mo.md("""
     ---
 
-    ## Example 2: Filter and Select
+    ## Example 2: Vectorized Filter + Aggregation (TPC-H Q6)
 
-    Find high-value line items with discount applied.
+    Full scan of `lineitem` with multiple filter predicates and a single SUM.
+    Tests how fast the engine can evaluate compound filter expressions across
+    every row and aggregate the survivors. No joins, no grouping -- just raw
+    scan-filter-aggregate throughput.
     """)
     return
 
 
 @app.cell
 def _(F, compare_results, format_comparison, mo, spark_ref, spark_td):
-    # High-value line items with net price calculation
-    def high_value_items(spark):
+    def forecasting_revenue(spark):
         lineitem = spark.table("lineitem")
         return (
             lineitem
-            .select(
-                F.col("l_orderkey"),
-                F.col("l_partkey"),
-                F.col("l_quantity"),
-                F.col("l_extendedprice"),
-                F.col("l_discount"),
-                (F.col("l_extendedprice") * (1 - F.col("l_discount"))).alias("net_price")
+            .filter(
+                (F.col("l_shipdate") >= "1994-01-01")
+                & (F.col("l_shipdate") < "1995-01-01")
+                & (F.col("l_discount").between(0.05, 0.07))
+                & (F.col("l_quantity") < 24)
             )
-            .filter(F.col("l_extendedprice") > 50000)
-            .orderBy(F.desc("net_price"))
-            .limit(20)
+            .agg(
+                F.sum(F.col("l_extendedprice") * F.col("l_discount")).alias("revenue")
+            )
         )
 
     comp2 = compare_results(
-        high_value_items(spark_td),
-        high_value_items(spark_ref),
-        "High-Value Line Items"
+        forecasting_revenue(spark_td),
+        forecasting_revenue(spark_ref),
+        "Forecasting Revenue Change (TPC-H Q6)"
     )
 
     mo.vstack([
@@ -392,37 +406,41 @@ def _(mo):
     mo.md("""
     ---
 
-    ## Example 3: DataFrame API
+    ## Example 3: Large-Table Hash Join
 
-    Same revenue-by-nation query using pure DataFrame operations (no SQL).
+    Join `lineitem` with `partsupp` -- both are large tables (120M x 16M rows at SF=20).
+    Neither table is small enough for broadcast, so both engines must use a hash or
+    sort-merge join. DuckDB's single-process hash join avoids Spark's shuffle overhead.
     """)
     return
 
 
 @app.cell
 def _(F, compare_results, format_comparison, mo, spark_ref, spark_td):
-    def revenue_by_nation_df(spark):
-        """Revenue by nation using DataFrame API."""
-        customer = spark.table("customer")
-        orders = spark.table("orders")
+    def large_join_profit(spark):
         lineitem = spark.table("lineitem")
-        nation = spark.table("nation")
-
+        partsupp = spark.table("partsupp")
         return (
-            customer
-            .join(orders, customer.c_custkey == orders.o_custkey)
-            .join(lineitem, orders.o_orderkey == lineitem.l_orderkey)
-            .join(nation, customer.c_nationkey == nation.n_nationkey)
-            .groupBy(nation.n_name.alias("nation"))
-            .agg(F.sum(lineitem.l_extendedprice * (1 - lineitem.l_discount)).alias("revenue"))
-            .orderBy(F.desc("revenue"))
-            .limit(10)
+            lineitem
+            .join(
+                partsupp,
+                (lineitem.l_partkey == partsupp.ps_partkey)
+                & (lineitem.l_suppkey == partsupp.ps_suppkey),
+            )
+            .groupBy("l_returnflag")
+            .agg(
+                F.sum(
+                    F.col("l_extendedprice") - F.col("ps_supplycost") * F.col("l_quantity")
+                ).alias("profit"),
+                F.count("*").alias("row_count"),
+            )
+            .orderBy("l_returnflag")
         )
 
     comp3 = compare_results(
-        revenue_by_nation_df(spark_td),
-        revenue_by_nation_df(spark_ref),
-        "Revenue by Nation (DataFrame API)"
+        large_join_profit(spark_td),
+        large_join_profit(spark_ref),
+        "Lineitem-Partsupp Join Profit"
     )
 
     mo.vstack([
@@ -437,45 +455,50 @@ def _(mo):
     mo.md("""
     ---
 
-    ## Example 4: Window Functions
+    ## Example 4: Multi-Level Aggregation Rollup
 
-    Rank customers by total spending within each nation.
+    Two-stage aggregation: first compute per-customer spending totals (join + GROUP BY
+    over millions of rows), then roll up to nation-level statistics. Tests nested
+    aggregation pipelines where Spark must shuffle twice.
     """)
     return
 
 
 @app.cell
-def _(F, Window, compare_results, format_comparison, mo, spark_ref, spark_td):
-    def top_customers_per_nation(spark):
-        """Top 3 customers by spending in each nation."""
+def _(F, compare_results, format_comparison, mo, spark_ref, spark_td):
+    def multi_level_rollup(spark):
         customer = spark.table("customer")
         orders = spark.table("orders")
         nation = spark.table("nation")
 
-        # Calculate customer spending
-        customer_spending = (
+        per_customer = (
             customer
             .join(orders, customer.c_custkey == orders.o_custkey)
             .join(nation, customer.c_nationkey == nation.n_nationkey)
-            .groupBy("n_name", "c_custkey", "c_name")
-            .agg(F.sum("o_totalprice").alias("total_spending"))
+            .groupBy("n_name", "c_custkey")
+            .agg(
+                F.sum("o_totalprice").alias("spending"),
+                F.count("*").alias("order_count"),
+            )
         )
 
-        # Rank within nation
-        window = Window.partitionBy("n_name").orderBy(F.desc("total_spending"))
-
         return (
-            customer_spending
-            .withColumn("rank", F.rank().over(window))
-            .filter(F.col("rank") <= 3)
-            .select("n_name", "c_name", "total_spending", "rank")
-            .orderBy("n_name", "rank")
+            per_customer
+            .groupBy("n_name")
+            .agg(
+                F.count("*").alias("num_customers"),
+                F.sum("spending").alias("total_revenue"),
+                F.avg("spending").alias("avg_spending"),
+                F.max("spending").alias("max_spending"),
+                F.avg("order_count").alias("avg_orders"),
+            )
+            .orderBy(F.desc("total_revenue"))
         )
 
     comp4 = compare_results(
-        top_customers_per_nation(spark_td),
-        top_customers_per_nation(spark_ref),
-        "Top 3 Customers per Nation"
+        multi_level_rollup(spark_td),
+        multi_level_rollup(spark_ref),
+        "Nation-Level Customer Rollup"
     )
 
     mo.vstack([
@@ -490,20 +513,62 @@ def _(mo):
     mo.md("""
     ---
 
-    ## Example 5: TPC-H Query 1 (Pricing Summary)
+    ## Example 5: Window Functions at Scale
 
-    **KNOWN ISSUE**: This example is currently disabled due to a Thunderduck compatibility gap.
-
-    The query uses `F.date_sub(F.lit("1998-12-01"), 90)` which Spark handles by auto-casting
-    the string to a DATE. Thunderduck/DuckDB requires explicit casting and throws:
-    ```
-    Binder Error: Could not choose a best candidate function for "-(STRING_LITERAL, INTERVAL)"
-    ```
-
-    This needs to be fixed in Thunderduck to match Spark's behavior.
-    See: `docs/SPARK_CONNECT_GAP_ANALYSIS.md`
+    Compute running revenue totals per customer using a window function over the full
+    `orders` table, then find each nation's top 3 customers. The window must sort and
+    scan all rows -- no shortcut via LIMIT.
     """)
     return
+
+
+@app.cell
+def _(F, Window, compare_results, format_comparison, mo, spark_ref, spark_td):
+    def window_top_customers(spark):
+        customer = spark.table("customer")
+        orders = spark.table("orders")
+        nation = spark.table("nation")
+
+        # Window over full orders table: cumulative spending per customer
+        customer_spending = (
+            customer
+            .join(orders, customer.c_custkey == orders.o_custkey)
+            .join(nation, customer.c_nationkey == nation.n_nationkey)
+            .groupBy("n_name", "c_custkey", "c_name")
+            .agg(F.sum("o_totalprice").alias("total_spending"))
+        )
+
+        # Rank all customers within each nation (full sort, no limit pushdown)
+        window = Window.partitionBy("n_name").orderBy(F.desc("total_spending"))
+
+        ranked = (
+            customer_spending
+            .withColumn("nation_rank", F.rank().over(window))
+            .withColumn(
+                "pct_of_nation",
+                F.col("total_spending") / F.sum("total_spending").over(
+                    Window.partitionBy("n_name")
+                ) * 100,
+            )
+        )
+
+        return (
+            ranked
+            .filter(F.col("nation_rank") <= 3)
+            .select("n_name", "c_name", "total_spending", "nation_rank", "pct_of_nation")
+            .orderBy("n_name", "nation_rank")
+        )
+
+    comp5 = compare_results(
+        window_top_customers(spark_td),
+        window_top_customers(spark_ref),
+        "Top 3 Customers per Nation (Window)"
+    )
+
+    mo.vstack([
+        mo.md(format_comparison(comp5)),
+        mo.ui.table(comp5['result'], label="Results")
+    ])
 
 
 @app.cell
