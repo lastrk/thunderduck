@@ -298,7 +298,7 @@ The streaming approach is fully compatible with Spark Connect protocol:
 ### 6.2 DuckDB Requirements
 
 - Requires DuckDB JDBC 0.9.0+ for `arrowExportStream()` support
-- Current Thunderduck uses DuckDB 1.1.3+ (LTS)
+- Current Thunderduck uses DuckDB 1.4.4+
 
 ---
 

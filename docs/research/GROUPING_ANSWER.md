@@ -67,7 +67,7 @@ All major databases implement GROUPING() with identical semantics:
 
 ### DuckDB Specific Notes
 
-DuckDB (v1.4.1.0 used in this project) **does implement standard GROUPING() semantics**:
+DuckDB (v1.4.4.0 used in this project) **does implement standard GROUPING() semantics**:
 - Returns 1 for aggregated NULLs
 - Returns 0 for actual values
 - Supports GROUPING() with ROLLUP and CUBE
