@@ -70,7 +70,7 @@ install_duckdb() {
                 ;;
         esac
 
-        DUCKDB_VERSION="1.1.3"
+        DUCKDB_VERSION="1.4.4"
         DUCKDB_URL="https://github.com/duckdb/duckdb/releases/download/v${DUCKDB_VERSION}/duckdb_cli-linux-${DUCKDB_ARCH}.zip"
 
         curl -L -o /tmp/duckdb.zip "$DUCKDB_URL"

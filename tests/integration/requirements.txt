@@ -6,4 +6,4 @@ pyarrow>=11.0.0
 grpcio>=1.48.1
 grpcio-status>=1.48.1
 googleapis-common-protos>=1.56.4
-duckdb>=1.0.0
+duckdb>=1.4.4
