@@ -11,7 +11,7 @@ def _():
     return (mo,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     # Thunderduck Playground
@@ -20,7 +20,7 @@ def _(mo):
 
     This notebook provides:
     - Pre-configured PySpark clients for both engines
-    - TPC-H sample data (SF0.01 - ~3MB, 8 tables)
+    - TPC-H sample data (8 tables, SF0.01 - ~3MB by default, but can be changed to generate more realistic size sample data)
     - Example DataFrame API transformations
     - Performance comparison utilities
 
@@ -41,15 +41,20 @@ def _(mo):
 @app.cell
 def _():
     import os
-    import subprocess
-    import time
     from pathlib import Path
 
-    import duckdb
-    import pandas as pd
     from pyspark.sql import SparkSession
     from pyspark.sql import functions as F
     from pyspark.sql.window import Window
+
+    from util import (
+        compare_results,
+        find_best_data_dir,
+        format_comparison,
+        generate_tpch_data,
+        load_tables,
+        warmup_tables,
+    )
 
     # Connection URLs from environment (set by launch.sh)
     THUNDERDUCK_URL = os.environ.get("THUNDERDUCK_URL", "sc://localhost:15002")
@@ -67,77 +72,16 @@ def _():
         SparkSession,
         THUNDERDUCK_URL,
         Window,
-        duckdb,
-        time,
+        compare_results,
+        find_best_data_dir,
+        format_comparison,
+        load_tables,
+        warmup_tables,
     )
 
 
-@app.cell
-def _(GENERATED_DATA_DIR, duckdb, mo):
-    import tempfile
-    import shutil
-
-    def generate_tpch_data(scale_factor: float = 1.0):
-        """
-        Generate TPC-H data using DuckDB's built-in tpch extension.
-
-        Uses a temporary disk-backed database to handle large scale factors
-        without running out of memory.
-
-        Args:
-            scale_factor: TPC-H scale factor (1.0 = ~1GB, 0.1 = ~100MB, 10 = ~10GB)
-        """
-        output_dir = GENERATED_DATA_DIR / f"tpch_sf{scale_factor}"
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        print(f"Generating TPC-H data (SF={scale_factor})...")
-        print(f"Output directory: {output_dir}")
-
-        # Use a temporary file-based database to handle large datasets
-        # DuckDB will spill to disk instead of running out of memory
-        temp_dir = tempfile.mkdtemp(prefix="tpch_gen_")
-        temp_db = f"{temp_dir}/tpch.duckdb"
-
-        try:
-            conn = duckdb.connect(temp_db)
-
-            # Configure for large data generation
-            conn.execute("SET memory_limit='4GB';")  # Limit memory, spill to disk
-            conn.execute("SET threads=4;")  # Parallel generation
-
-            # Install and load TPC-H extension
-            print("Installing TPC-H extension...")
-            conn.execute("INSTALL tpch;")
-            conn.execute("LOAD tpch;")
-
-            # Generate data
-            print(f"Generating data (this may take a while for SF={scale_factor})...")
-            conn.execute(f"CALL dbgen(sf={scale_factor});")
-
-            # Export each table to parquet
-            tables = ['lineitem', 'orders', 'customer', 'part',
-                      'supplier', 'partsupp', 'nation', 'region']
-
-            total_size = 0
-            for table in tables:
-                output_file = output_dir / f"{table}.parquet"
-                print(f"  Exporting {table}...")
-                conn.execute(f"COPY {table} TO '{output_file}' (FORMAT PARQUET);")
-                size_mb = output_file.stat().st_size / (1024 * 1024)
-                total_size += size_mb
-                count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
-                print(f"    {table}: {count:,} rows ({size_mb:.1f} MB)")
-
-            conn.close()
-
-            print(f"\nTotal size: {total_size:.1f} MB")
-            print(f"Data ready at: {output_dir}")
-            return output_dir
-
-        finally:
-            # Clean up temporary database
-            shutil.rmtree(temp_dir, ignore_errors=True)
-
+@app.cell(hide_code=True)
+def _(mo):
     mo.md("""
     ---
 
@@ -163,7 +107,7 @@ def _():
     # Uncomment to generate TPC-H data at SF=1 (~1GB)
     # This only needs to be run once - data is persisted to playground/data/
     #
-    # generate_tpch_data(scale_factor=20.0)
+    # generate_tpch_data(GENERATED_DATA_DIR, scale_factor=20.0)
     pass
     return
 
@@ -192,26 +136,16 @@ def _(SPARK_URL, SparkSession, THUNDERDUCK_URL):
 
 
 @app.cell
-def _(FALLBACK_DATA_DIR, GENERATED_DATA_DIR, spark_ref, spark_td):
-    # Load TPC-H tables into both sessions
-    TPCH_TABLES = ['lineitem', 'orders', 'customer', 'part',
-                   'supplier', 'partsupp', 'nation', 'region']
-
-    # Check for generated data (prefer larger scale factors)
-    def find_best_data_dir():
-        """Find the best available TPC-H data directory."""
-        # Check for generated data at various scale factors
-        # for sf in [20.0, 10.0, 1.0, 0.1]:
-        for sf in [20.0]:
-            sf_dir = GENERATED_DATA_DIR / f"tpch_sf{sf}"
-            if sf_dir.exists() and (sf_dir / "lineitem.parquet").exists():
-                return sf_dir, sf
-        # Fall back to default small dataset
-        if FALLBACK_DATA_DIR.exists():
-            return FALLBACK_DATA_DIR, 0.01
-        return None, None
-
-    data_dir, scale_factor = find_best_data_dir()
+def _(
+    FALLBACK_DATA_DIR,
+    GENERATED_DATA_DIR,
+    find_best_data_dir,
+    load_tables,
+    spark_ref,
+    spark_td,
+    warmup_tables,
+):
+    data_dir, scale_factor = find_best_data_dir(GENERATED_DATA_DIR, FALLBACK_DATA_DIR)
 
     if data_dir is None:
         print("ERROR: No TPC-H data found!")
@@ -219,94 +153,21 @@ def _(FALLBACK_DATA_DIR, GENERATED_DATA_DIR, spark_ref, spark_td):
         print(f"  - Fallback data expected at: {FALLBACK_DATA_DIR}")
         raise FileNotFoundError("TPC-H data not found")
 
-    def load_tables(spark, data_dir, tables):
-        """Load parquet tables and register as temp views."""
-        for table in tables:
-            path = str(data_dir / f"{table}.parquet")
-            df = spark.read.parquet(path)
-            df.createOrReplaceTempView(table)
+    # Load tables into both sessions
+    load_tables(spark_td, data_dir)
+    load_tables(spark_ref, data_dir)
+    print(f"Loaded TPC-H tables (SF={scale_factor}) from {data_dir}")
 
-    # Load into both sessions
-    load_tables(spark_td, data_dir, TPCH_TABLES)
-    load_tables(spark_ref, data_dir, TPCH_TABLES)
-
-    print(f"Loaded {len(TPCH_TABLES)} TPC-H tables (SF={scale_factor})")
-    print(f"Data source: {data_dir}")
+    # Warm up caches so neither engine pays cold-read penalty
+    print("Warming up Thunderduck cache...")
+    warmup_tables(spark_td)
+    print("Warming up Spark cache...")
+    warmup_tables(spark_ref)
+    print("Cache warmup complete.")
     return
 
 
-@app.cell
-def _(time):
-    def compare_results(df_td, df_ref, title="Comparison"):
-        """
-        Execute query on both engines, compare results and timing.
-
-        Args:
-            df_td: DataFrame from Thunderduck session
-            df_ref: DataFrame from Spark reference session
-            title: Title for the comparison
-
-        Returns:
-            Dictionary with timing and result comparison
-        """
-        # Execute Thunderduck
-        start_td = time.time()
-        result_td = df_td.toPandas()
-        time_td = time.time() - start_td
-
-        # Execute Spark
-        start_ref = time.time()
-        result_ref = df_ref.toPandas()
-        time_ref = time.time() - start_ref
-
-        # Compare results
-        rows_match = len(result_td) == len(result_ref)
-
-        # Sort both for comparison (order may differ)
-        if rows_match and len(result_td) > 0:
-            cols = list(result_td.columns)
-            result_td_sorted = result_td.sort_values(by=cols).reset_index(drop=True)
-            result_ref_sorted = result_ref.sort_values(by=cols).reset_index(drop=True)
-            try:
-                values_match = result_td_sorted.equals(result_ref_sorted)
-            except Exception:
-                values_match = False
-        else:
-            values_match = rows_match
-
-        # Calculate speedup
-        speedup = time_ref / time_td if time_td > 0 else float('inf')
-
-        return {
-            'title': title,
-            'thunderduck_time_ms': time_td * 1000,
-            'spark_time_ms': time_ref * 1000,
-            'speedup': speedup,
-            'rows_td': len(result_td),
-            'rows_ref': len(result_ref),
-            'match': rows_match and values_match,
-            'result': result_td
-        }
-
-
-    def format_comparison(comp):
-        """Format comparison result as a summary string."""
-        match_symbol = "✓" if comp['match'] else "✗"
-        return f"""
-    ### {comp['title']}
-
-    | Metric | Thunderduck | Spark |
-    |--------|-------------|-------|
-    | **Time** | {comp['thunderduck_time_ms']:.1f}ms | {comp['spark_time_ms']:.1f}ms |
-    | **Speedup** | **{comp['speedup']:.1f}x** | 1.0x |
-    | **Rows** | {comp['rows_td']} | {comp['rows_ref']} |
-    | **Match** | {match_symbol} | - |
-    """
-
-    return compare_results, format_comparison
-
-
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ---
@@ -356,7 +217,7 @@ def _(F, compare_results, format_comparison, mo, spark_ref, spark_td):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ---
@@ -401,7 +262,7 @@ def _(F, compare_results, format_comparison, mo, spark_ref, spark_td):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ---
@@ -450,7 +311,7 @@ def _(F, compare_results, format_comparison, mo, spark_ref, spark_td):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ---
@@ -569,6 +430,7 @@ def _(F, Window, compare_results, format_comparison, mo, spark_ref, spark_td):
         mo.md(format_comparison(comp5)),
         mo.ui.table(comp5['result'], label="Results")
     ])
+    return
 
 
 @app.cell

@@ -8,7 +8,7 @@
 # Usage: ./playground/launch.sh [bench] [OPTIONS]
 #
 # Positional:
-#   bench              Launch the TPC-H benchmark notebook instead of the playground
+#   bench              Launch the TPC-DS compute benchmark notebook instead of the playground
 #
 # Options:
 #   --no-build         Skip Maven build even if JAR missing
@@ -27,6 +27,8 @@ set -e
 THUNDERDUCK_PORT=15002
 SPARK_PORT=15003
 MARIMO_PORT=2718
+BENCH_THREADS=$(nproc)
+TOTAL_MEM_MB=$(awk '/MemTotal/ {printf "%d", $2/1024}' /proc/meminfo 2>/dev/null || echo 16384)
 
 # Colors
 RED='\033[0;31m'
@@ -58,7 +60,7 @@ THUNDERDUCK_JAR="$PROJECT_ROOT/connect-server/target/thunderduck-connect-server-
 
 # Data directories
 TPCH_DATA_DIR="$PROJECT_ROOT/tests/integration/tpch_sf001"
-TPCDS_DATA_DIR="$PROJECT_ROOT/data/tpcds_sf1"
+TPCDS_DATA_DIR="$PLAYGROUND_DIR/data"  # TPC-DS data generated on demand under playground/data/
 
 # PIDs for cleanup
 THUNDERDUCK_PID=""
@@ -77,7 +79,7 @@ NOTEBOOK="thunderduck_playground.py"
 while [[ $# -gt 0 ]]; do
     case $1 in
         bench)
-            NOTEBOOK="tpch_benchmark.py"
+            NOTEBOOK="tpch_benchmark.py"  # filename kept for compatibility
             shift
             ;;
         --no-build)
@@ -102,7 +104,7 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: ./playground/launch.sh [bench] [OPTIONS]"
             echo ""
             echo "Positional:"
-            echo "  bench              Launch the TPC-H benchmark notebook"
+            echo "  bench              Launch the TPC-DS compute benchmark notebook"
             echo ""
             echo "Options:"
             echo "  --no-build         Skip Maven build even if JAR missing"
@@ -376,14 +378,11 @@ start_thunderduck() {
 
     mkdir -p "$LOG_DIR"
 
-    # JVM flags for Apache Arrow + fixed resource limits for benchmarks
+    # JVM flags for Apache Arrow — no artificial resource caps
     local JAVA_OPTS="
-        -Xmx2g
-        -Xms1g
+        -Xmx${TOTAL_MEM_MB}m
         -XX:+UseG1GC
         -XX:MaxGCPauseMillis=200
-        -Dthunderduck.duckdb.threads=2
-        -Dthunderduck.duckdb.memory_limit=4GB
         --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED
         --add-opens=java.base/java.nio=ALL-UNNAMED
         --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
@@ -430,11 +429,11 @@ start_spark_reference() {
         return
     fi
 
-    # Fixed resource limits for reproducible benchmarks
-    export SPARK_MASTER="local[2]"            # 2 threads
-    export SPARK_DRIVER_MEMORY="4g"           # 2 GB per core × 2 cores
+    # No artificial resource caps — let Spark use all available hardware
+    export SPARK_MASTER="local[${BENCH_THREADS}]"
+    export SPARK_DRIVER_MEMORY="${TOTAL_MEM_MB}m"
 
-    echo "Starting Spark reference on port $SPARK_PORT (${SPARK_DRIVER_MEMORY} driver memory, ${SPARK_MASTER})..."
+    echo "Starting Spark reference on port $SPARK_PORT (${SPARK_DRIVER_MEMORY} driver memory, local[${BENCH_THREADS}])..."
 
     export SPARK_AQE_ENABLED=true
     export SPARK_BROADCAST_THRESHOLD=10485760  # 10MB (Spark default)
@@ -455,15 +454,20 @@ validate_data() {
     if [ -d "$TPCH_DATA_DIR" ]; then
         echo -e "${GREEN}✓ TPC-H data found at $TPCH_DATA_DIR${NC}"
     else
-        echo -e "${RED}✗ TPC-H data not found${NC}"
-        echo "  Expected: $TPCH_DATA_DIR"
-        exit 1
+        echo -e "${YELLOW}! TPC-H data not found (optional — playground notebook uses it)${NC}"
     fi
 
-    if [ -d "$TPCDS_DATA_DIR" ]; then
-        echo -e "${GREEN}✓ TPC-DS data found at $TPCDS_DATA_DIR${NC}"
-    else
-        echo -e "${YELLOW}! TPC-DS data not found (optional)${NC}"
+    # Check for any pre-generated TPC-DS data (generated on demand by benchmark notebook)
+    local tpcds_found=false
+    for sf_dir in "$TPCDS_DATA_DIR"/tpcds_sf*; do
+        if [ -d "$sf_dir" ] && [ -f "$sf_dir/store_sales.parquet" ]; then
+            echo -e "${GREEN}✓ TPC-DS data found at $sf_dir${NC}"
+            tpcds_found=true
+            break
+        fi
+    done
+    if [ "$tpcds_found" = false ]; then
+        echo -e "${YELLOW}! TPC-DS data not found (will be generated on first benchmark run)${NC}"
     fi
 }
 
@@ -482,6 +486,7 @@ launch_marimo() {
     export SPARK_URL="sc://localhost:$SPARK_PORT"
     export TPCH_DATA_DIR="$TPCH_DATA_DIR"
     export TPCDS_DATA_DIR="$TPCDS_DATA_DIR"
+    export BENCH_THREADS="$BENCH_THREADS"
 
     echo ""
     echo -e "${GREEN}╔════════════════════════════════════════════════════════════════╗${NC}"

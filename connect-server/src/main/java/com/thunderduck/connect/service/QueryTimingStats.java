@@ -40,13 +40,17 @@ package com.thunderduck.connect.service;
 public class QueryTimingStats {
 
     private long totalStartNanos;
+    private long sqlParseStartNanos;
     private long planConvertStartNanos;
     private long sqlGenerateStartNanos;
+    private long schemaResolveStartNanos;
     private long duckdbExecuteStartNanos;
     private long resultStreamStartNanos;
 
+    private long sqlParseNanos;
     private long planConvertNanos;
     private long sqlGenerateNanos;
+    private long schemaResolveNanos;
     private long duckdbExecuteNanos;
     private long resultStreamNanos;
     private long totalNanos;
@@ -68,6 +72,15 @@ public class QueryTimingStats {
         totalNanos = System.nanoTime() - totalStartNanos;
     }
 
+    // SQL parsing timing (SparkSQL → DuckDB SQL via ANTLR)
+    public void startSqlParse() {
+        sqlParseStartNanos = System.nanoTime();
+    }
+
+    public void stopSqlParse() {
+        sqlParseNanos = System.nanoTime() - sqlParseStartNanos;
+    }
+
     // Plan conversion timing
     public void startPlanConvert() {
         planConvertStartNanos = System.nanoTime();
@@ -84,6 +97,15 @@ public class QueryTimingStats {
 
     public void stopSqlGenerate() {
         sqlGenerateNanos = System.nanoTime() - sqlGenerateStartNanos;
+    }
+
+    // Schema resolution timing (resolveUnresolvedSchemaFields / inferSchemaFromDuckDB)
+    public void startSchemaResolve() {
+        schemaResolveStartNanos = System.nanoTime();
+    }
+
+    public void stopSchemaResolve() {
+        schemaResolveNanos = System.nanoTime() - schemaResolveStartNanos;
     }
 
     // DuckDB execution timing (time to first batch)
@@ -114,12 +136,20 @@ public class QueryTimingStats {
     }
 
     // Getters for milliseconds
+    public double getSqlParseMs() {
+        return sqlParseNanos / 1_000_000.0;
+    }
+
     public double getPlanConvertMs() {
         return planConvertNanos / 1_000_000.0;
     }
 
     public double getSqlGenerateMs() {
         return sqlGenerateNanos / 1_000_000.0;
+    }
+
+    public double getSchemaResolveMs() {
+        return schemaResolveNanos / 1_000_000.0;
     }
 
     public double getDuckdbExecuteMs() {
@@ -142,11 +172,17 @@ public class QueryTimingStats {
     public String toLogString() {
         StringBuilder sb = new StringBuilder();
 
+        if (sqlParseNanos > 0) {
+            sb.append(String.format("sql_parse=%.1fms, ", getSqlParseMs()));
+        }
         if (planConvertNanos > 0) {
             sb.append(String.format("plan_convert=%.1fms, ", getPlanConvertMs()));
         }
         if (sqlGenerateNanos > 0) {
             sb.append(String.format("sql_generate=%.1fms, ", getSqlGenerateMs()));
+        }
+        if (schemaResolveNanos > 0) {
+            sb.append(String.format("schema_resolve=%.1fms, ", getSchemaResolveMs()));
         }
         if (duckdbExecuteNanos > 0) {
             sb.append(String.format("duckdb_execute=%.1fms, ", getDuckdbExecuteMs()));
@@ -171,7 +207,7 @@ public class QueryTimingStats {
      */
     public double getOverheadPercent() {
         if (totalNanos == 0) return 0;
-        long overheadNanos = planConvertNanos + sqlGenerateNanos;
+        long overheadNanos = sqlParseNanos + planConvertNanos + sqlGenerateNanos + schemaResolveNanos;
         return (overheadNanos * 100.0) / totalNanos;
     }
 }
