@@ -52,6 +52,30 @@ These documents capture critical discoveries and insights gained while implement
    - All major databases implement identical semantics
    - Confirms DuckDB follows the standard for basic usage
 
+### Performance & Architecture
+
+9. **[THUNDERDUCK_PERFORMANCE_ANALYSIS.md](THUNDERDUCK_PERFORMANCE_ANALYSIS.md)**
+   - Root cause analysis of the double query execution bug
+   - Thunderduck executed every `spark.sql()` query twice due to missing `SqlCommandResult` protocol
+   - Status: **Fixed** (commit `a56d6fb`, 2026-02-18)
+
+10. **[GO_RUST_REIMPLEMENTATION_ANALYSIS.md](GO_RUST_REIMPLEMENTATION_ANALYSIS.md)**
+    - Feasibility analysis of reimplementing Thunderduck in Go or Rust
+    - Analyzes data copy chains (4 copies in Java vs 1 in Rust)
+    - Conclusion: rewrite unnecessary after double-execution fix reduced overhead to <20ms
+
+### Spark SQL Parser
+
+11. **[SQL_PARSER_RESEARCH.md](SQL_PARSER_RESEARCH.md)**
+    - Research into Spark SQL parsing approaches
+    - ANTLR4 grammar analysis and implementation strategy
+
+### Statistical Functions
+
+12. **[STATISTICAL_FUNCTIONS_REPORT.md](STATISTICAL_FUNCTIONS_REPORT.md)**
+    - Analysis of statistical function compatibility between Spark and DuckDB
+    - Covers stddev, variance, and related functions
+
 ## Key Findings Summary
 
 ### DuckDB Limitations Discovered
@@ -85,4 +109,4 @@ When adding new research documents:
 3. Document findings with evidence (code samples, references)
 4. Add summary to this README
 
-**Last Updated**: 2025-10-29
+**Last Updated**: 2026-02-19

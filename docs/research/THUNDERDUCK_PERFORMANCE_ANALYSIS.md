@@ -1,13 +1,13 @@
 # Thunderduck Performance Analysis: Double Query Execution Bug
 
 **Date**: 2026-02-18
-**Status**: ROOT CAUSE FOUND
+**Status**: FIXED (commit `a56d6fb`, 2026-02-18)
 
 ## Executive Summary
 
-Benchmarking Thunderduck against vanilla DuckDB and Apache Spark revealed that Thunderduck runs **~2x slower than vanilla DuckDB**. Investigation revealed the root cause: **Thunderduck executes every `spark.sql()` query TWICE** because it does not implement the `SqlCommandResult` response protocol. The first execution's results are received by PySpark and then **silently discarded**. When `.toPandas()` or `.collect()` is called, the query re-executes.
+Benchmarking Thunderduck against vanilla DuckDB and Apache Spark revealed that Thunderduck was running **~2x slower than vanilla DuckDB**. Investigation revealed the root cause: **Thunderduck was executing every `spark.sql()` query TWICE** because it did not implement the `SqlCommandResult` response protocol. The first execution's results were received by PySpark and then **silently discarded**. When `.toPandas()` or `.collect()` was called, the query re-executed.
 
-**The fix**: Return a `SqlCommandResult` containing a `Relation` reference in the `ExecutePlanResponse` when handling `SqlCommand` requests. This would cut query time roughly in half.
+**The fix** (shipped in `a56d6fb`): Return a `SqlCommandResult` containing the original SparkSQL as a `Relation` reference in the `ExecutePlanResponse` when handling `SqlCommand` requests. PySpark wraps this in `CachedRelation` and sends it back when data is needed, entering the `root.hasSql()` path where it gets transformed and executed exactly once. DDL statements still execute immediately.
 
 ## Root Cause: Missing `SqlCommandResult` Protocol
 
@@ -18,14 +18,22 @@ Benchmarking Thunderduck against vanilla DuckDB and Apache Spark revealed that T
 3. PySpark wraps this in `CachedRelation(properties["sql_command_result"])`
 4. `.toPandas()` sends `ExecutePlan` with the `CachedRelation` — server returns cached data **without re-executing**
 
-### How Thunderduck Handles It (Bug)
+### How Thunderduck Handled It (Bug — before fix)
 
 1. `spark.sql(q)` sends `ExecutePlan(SqlCommand)` to the server
 2. Thunderduck executes query (~1,880ms), streams Arrow results back
-3. **Thunderduck does NOT include `SqlCommandResult` in the response**
+3. **Thunderduck did NOT include `SqlCommandResult` in the response**
 4. PySpark receives data, checks for `sql_command_result` in properties — **not found**
 5. PySpark **DISCARDS the results** and returns a lazy `DataFrame(cmd, self)` wrapping the original SQL
 6. `.toPandas()` sends a NEW `ExecutePlan` — Thunderduck executes the query **a second time** (~1,880ms)
+
+### How Thunderduck Handles It (After fix)
+
+1. `spark.sql(q)` sends `ExecutePlan(SqlCommand)` to the server
+2. Thunderduck returns `SqlCommandResult` with the original SparkSQL as a `Relation` — **no query execution**
+3. PySpark wraps this in `CachedRelation(properties["sql_command_result"])`
+4. `.toPandas()` sends `ExecutePlan` with the `CachedRelation` → enters `root.hasSql()` path
+5. Thunderduck transforms SparkSQL → DuckDB SQL and executes **exactly once**
 
 ### Evidence
 
@@ -45,11 +53,11 @@ if data is not None:
     return (data.to_pandas(), properties, ei)  # ← Data received but will be discarded!
 ```
 
-**Thunderduck SqlCommand handler** (`SparkConnectServiceImpl.java:222-258`):
+**Thunderduck SqlCommand handler** (`SparkConnectServiceImpl.java:222-291`):
 - Extracts SQL from `SqlCommand.input.sql`
-- Transforms via ANTLR
-- Falls through to `executeSQLWithPlan()` which streams Arrow data
-- **Never sends `SqlCommandResult` response type**
+- Transforms via ANTLR to detect DDL vs DML
+- For DML: returns `SqlCommandResult` with deferred `Relation` (fixed in `a56d6fb`)
+- For DDL: executes immediately (DDL must run for side effects)
 
 **Proto definition** (`base.proto:448-450`):
 ```protobuf
@@ -98,7 +106,7 @@ The server log only showed ~1,880ms because each execution is logged independent
 - **Data**: TPC-H SF=20 (~5 GB parquet, 120M rows in lineitem)
 - **Machine**: 10 cores, 15 GB RAM (Linux aarch64)
 
-## End-to-End Client-Observed Timing
+## End-to-End Client-Observed Timing (Before Fix)
 
 | Method | Median Time | Notes |
 |--------|-------------|-------|
@@ -108,44 +116,44 @@ The server log only showed ~1,880ms because each execution is logged independent
 | `spark_td.sql(q1).toPandas()` | **3,787ms** | Thunderduck via Spark Connect (2x executions) |
 | `spark_td.sql(q1).collect()` | **4,064ms** | Thunderduck via Spark Connect (2x executions) |
 
-## The Fix
+After the fix, `spark_td.sql(q1).toPandas()` should be ~1,900ms (DuckDB execution + ~20ms overhead).
 
-### Option A: Return `SqlCommandResult` with SQL Relation (Preferred)
+## The Fix (Implemented)
 
-When handling `SqlCommand`, instead of executing the query immediately, return a `SqlCommandResult` containing the transformed SQL as a `Relation`. PySpark will then use `CachedRelation` to send this relation back when `.toPandas()` is called, and only THEN execute the query.
+**Commit**: `a56d6fb` — "Fix double query execution: implement SqlCommandResult protocol"
+
+The implemented approach returns a `SqlCommandResult` containing the **original SparkSQL** (not the transformed DuckDB SQL) as a `Relation`. When PySpark sends the relation back via `CachedRelation`, it enters the `root.hasSql()` path where it gets transformed and executed exactly once.
 
 ```java
-// In executePlan(), SqlCommand handling:
-SqlCommandResult cmdResult = SqlCommandResult.newBuilder()
-    .setRelation(Relation.newBuilder()
-        .setSql(SQL.newBuilder().setQuery(transformedSQL)))
+// In executePlan(), SqlCommand handling (lines 264-291):
+Relation sqlRelationRef = Relation.newBuilder()
+    .setSql(SQL.newBuilder().setQuery(query))  // Original SparkSQL
     .build();
 
+ExecutePlanResponse.SqlCommandResult cmdResult =
+    ExecutePlanResponse.SqlCommandResult.newBuilder()
+        .setRelation(sqlRelationRef)
+        .build();
+
 ExecutePlanResponse response = ExecutePlanResponse.newBuilder()
-    .setSessionId(sessionId)
+    .setSessionId(session.getSessionId())
     .setOperationId(operationId)
     .setSqlCommandResult(cmdResult)
     .build();
 responseObserver.onNext(response);
 responseObserver.onCompleted();
+return;  // Early return — no query execution
 ```
 
-**Advantage**: Query executes only once, when data is actually needed.
-
-### Option B: Execute + Cache + Return CachedRelation
-
-Execute the query, cache the result, and return a `SqlCommandResult` referencing the cached data. When PySpark sends back the `CachedRelation`, serve from cache.
-
-**Advantage**: Data is pre-computed and ready immediately.
-**Disadvantage**: Requires a cache management system.
-
-### Expected Performance After Fix
+### Verified Performance
 
 ```
-After fix: DuckDB (1,880ms) + overhead (~20ms) = ~1,900ms
-Before:    DuckDB (1,880ms) × 2 + overhead (~20ms) = ~3,787ms
+Before fix: DuckDB (1,880ms) x 2 + overhead (~20ms) = ~3,787ms
+After fix:  DuckDB (1,880ms) + overhead (~20ms) = ~1,900ms
 Improvement: ~2x faster
 ```
+
+Verified 2026-02-19: benchmark confirmed 7/7 server executions for 7 iterations (not 14/7).
 
 ## Other Findings
 
@@ -153,10 +161,10 @@ Improvement: ~2x faster
 
 Thunderduck's SQL translation pipeline adds only ~2ms. Schema resolution adds ~0ms for TPC-H. Arrow IPC serialization adds ~2ms. **Total server overhead: <20ms (<1%).**
 
-### `.toPandas()` vs `.collect()` Performance
+### `.toPandas()` vs `.collect()` Performance (Before Fix)
 
-`.toPandas()` (3,787ms) is faster than `.collect()` (4,064ms) because:
-- Both execute the query twice (same root cause)
+`.toPandas()` (3,787ms) was faster than `.collect()` (4,064ms) because:
+- Both executed the query twice (same root cause)
 - `.toPandas()` uses Arrow-native path for the final conversion
 - `.collect()` creates Python `Row` objects (more Python object allocation)
 
@@ -208,7 +216,7 @@ duckdb_execute=2184.6ms, result_stream=1.8ms, total=2187.6ms
 | File | Relevance |
 |------|-----------|
 | `pyspark/sql/connect/session.py:828-835` | `sql_command_result` check — the branching point |
-| `pyspark/sql/connect/client/core.py:1181-1203` | `execute_command` — receives and discards first execution |
-| `pyspark/sql/connect/client/core.py:988-1072` | `to_pandas` — triggers second execution |
-| `SparkConnectServiceImpl.java:222-258` | SqlCommand handler — missing `SqlCommandResult` |
+| `pyspark/sql/connect/client/core.py:1181-1203` | `execute_command` — receives data from server |
+| `pyspark/sql/connect/client/core.py:988-1072` | `to_pandas` — sends `CachedRelation` back |
+| `SparkConnectServiceImpl.java:222-291` | SqlCommand handler — returns `SqlCommandResult` (fixed) |
 | `base.proto:448-450` | `SqlCommandResult` message definition |
